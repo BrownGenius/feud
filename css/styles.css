@@ -1616,7 +1616,8 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-top: 10px;
+  margin-bottom: 0;
   padding: 10px 12px;
   border-radius: 12px;
   background: rgba(15, 23, 42, 0.78);

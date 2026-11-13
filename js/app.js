@@ -1248,6 +1248,18 @@ window.Feud = window.Feud || {};
       return;
     }
 
+    if (phase === "faceoff-p2") {
+      await pushRoomPatch({
+        controllingTeam: cleanTeam,
+        buzzerWinner: cleanTeam,
+        turnTimerRemaining: dur,
+        turnTimerRunning: true
+      });
+      startLocalTurnTimerLoop();
+      Feud.showToast(`🎤 ${teamName} answering Face-Off Turn 2!`);
+      return;
+    }
+
     const dur = Number(roomState.turnTimerDuration) || 10;
     Feud.playFaceOffTone(cleanTeam);
     await pushRoomPatch({
@@ -1401,28 +1413,53 @@ window.Feud = window.Feud || {};
     }
 
     // 1. FACE-OFF TURN 1 (or if host clicked an answer right from faceoff-ready/buzz)
-    // Immediately enters "pass-or-play" so the Host can decide Play or Pass right away!
+    // #1 answer wins immediately -> "pass-or-play".
+    // Any lower-ranked answer (#2-#8) gives the other team a chance to beat it in "faceoff-p2".
     if (phase === "faceoff-ready" || phase === "faceoff-buzz" || phase === "faceoff-p1") {
       const firstTeam =
         roomState.controllingTeam || roomState.buzzerWinner || roomState.faceoffFirstTeam || 1;
       const firstName = getTeamNameByNum(firstTeam);
+      const secondTeam = firstTeam === 1 ? 2 : 1;
+      const secondName = getTeamNameByNum(secondTeam);
+
+      if (slotIdx === 0) {
+        await pushRoomPatch({
+          questionRevealed: true,
+          revealed: Array.from(revSet),
+          pot: newPot,
+          roundPhase: "pass-or-play",
+          faceoffFirstTeam: firstTeam,
+          faceoffBestRank: 0,
+          faceoffWinnerTeam: firstTeam,
+          controllingTeam: firstTeam,
+          buzzerWinner: firstTeam,
+          buzzerArmedTeam: 0,
+          turnTimerRunning: false,
+          turnTimerRemaining: dur
+        });
+        Feud.showToast(
+          `🏆 #1 Answer! ${firstName} Wins the Face-Off — Choose PLAY or PASS!`
+        );
+        return;
+      }
 
       await pushRoomPatch({
         questionRevealed: true,
         revealed: Array.from(revSet),
         pot: newPot,
-        roundPhase: "pass-or-play",
+        roundPhase: "faceoff-p2",
         faceoffFirstTeam: firstTeam,
         faceoffBestRank: slotIdx,
-        faceoffWinnerTeam: firstTeam,
-        controllingTeam: firstTeam,
-        buzzerWinner: firstTeam,
+        faceoffWinnerTeam: 0,
+        controllingTeam: secondTeam,
+        buzzerWinner: 0,
         buzzerArmedTeam: 0,
-        turnTimerRunning: false,
+        turnTimerRunning: true,
         turnTimerRemaining: dur
       });
+      startLocalTurnTimerLoop();
       Feud.showToast(
-        `🏆 #${slotIdx + 1} Answer! ${firstName} Wins the Face-Off — Choose PLAY or PASS!`
+        `🎤 #${slotIdx + 1} Answer! ${secondName}'s turn to try to beat #${slotIdx + 1}!`
       );
       return;
     }

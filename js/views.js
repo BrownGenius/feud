@@ -594,15 +594,25 @@ window.Feud = window.Feud || {};
               : ""
           }
         `;
+      } else if (phase === "faceoff-ready") {
+        inlineBarEl.className = "faceoff-decision-bar";
+        inlineBarEl.innerHTML = `<div class="fodb-actions">${actionsHtml}</div>`;
       } else if (String(phase).startsWith("faceoff")) {
         const activeTeam =
           roomState.controllingTeam || roomState.buzzerWinner || roomState.faceoffFirstTeam || 0;
         const otherTeam = activeTeam === 1 ? 2 : activeTeam === 2 ? 1 : 2;
+        const activeName = activeTeam ? getTeamLabel(roomState, activeTeam) : "";
         const otherName = getTeamLabel(roomState, otherTeam);
+        const bestRank = roomState.faceoffBestRank ?? 999;
+        const isBeatRankTurn = phase === "faceoff-p2" && bestRank < 999;
         inlineBarEl.className = "faceoff-decision-bar";
         inlineBarEl.innerHTML = `
           <div class="fodb-header">
-            <span class="fodb-title display-font">🔔 Face-Off: Select Team Answering, Then Click Answer Below</span>
+            <span class="fodb-title display-font">${
+              isBeatRankTurn
+                ? `🎤 Face-Off (2nd Turn): ${escapeHtml(activeName)} Must Beat #${bestRank + 1}`
+                : "🔔 Face-Off: Select Team Answering, Then Click Answer Below"
+            }</span>
           </div>
           <div class="fodb-actions">
             <button type="button" class="top-btn ${activeTeam === 1 ? "gold" : ""}" style="flex:1; min-width:130px;" onclick="hostSetFaceOffWinner(1)">
@@ -612,7 +622,11 @@ window.Feud = window.Feud || {};
               🔔 ${escapeHtml(t2)} ${activeTeam === 2 ? "✓ (Answering)" : "Buzzed"}
             </button>
             <button type="button" class="action-btn btn-red display-font" style="flex:1; min-width:170px; min-height:38px; font-size:12px;" onclick="hostFaceOffWrongGuess()">
-              ⚡ Wrong Guess (1 Temp X → ${escapeHtml(otherName)})
+              ${
+                isBeatRankTurn
+                  ? `⚡ Wrong Guess (1 Temp X → ${escapeHtml(otherName)} Wins)`
+                  : `⚡ Wrong Guess (1 Temp X → ${escapeHtml(otherName)})`
+              }
             </button>
           </div>
         `;
@@ -652,6 +666,9 @@ window.Feud = window.Feud || {};
           </div>
           <div class="fodb-actions">${actionsHtml}</div>
         `;
+      } else if (phase === "play") {
+        inlineBarEl.className = "faceoff-decision-bar";
+        inlineBarEl.innerHTML = `<div class="fodb-actions">${actionsHtml}</div>`;
       } else {
         inlineBarEl.className = "faceoff-decision-bar hidden";
         inlineBarEl.innerHTML = "";
@@ -889,7 +906,11 @@ window.Feud = window.Feud || {};
       buzzBanner.textContent = `Strikes: ${roomState.strikes || 0} / 3`;
     } else if (phase === "faceoff-p2" && roomState.controllingTeam) {
       const p2Name = getTeamLabel(roomState, roomState.controllingTeam);
-      buzzBanner.textContent = `🎤 Face-Off: ${p2Name}'s Turn to Answer!`;
+      const bestRank = roomState.faceoffBestRank ?? 999;
+      buzzBanner.textContent =
+        bestRank < 999
+          ? `⚡ Face-Off: ${p2Name} Can Steal Control by Beating Answer #${bestRank + 1}!`
+          : `🎤 Face-Off: ${p2Name}'s Turn to Answer!`;
       buzzBanner.classList.add("active");
     } else if (phase === "faceoff-p1" && (roomState.controllingTeam || roomState.buzzerWinner)) {
       const p1Name = getTeamLabel(roomState, roomState.controllingTeam || roomState.buzzerWinner);
