@@ -315,6 +315,7 @@ window.Feud = window.Feud || {};
     const rdsSel = document.getElementById("setupRoundsPerMatchSelect");
     const orderSel = document.getElementById("setupRoundOrderSelect");
     const fmCheck = document.getElementById("setupEnableFastMoneyCheckbox");
+    const autoXCheck = document.getElementById("setupAutoStartOnStrikeCheckbox");
     const pinIn = document.getElementById("setupHostPinInput");
     const lobbyPin = document.getElementById("hostPinCreate");
 
@@ -326,6 +327,7 @@ window.Feud = window.Feud || {};
     if (rdsSel) rdsSel.value = String(roomState.roundsPerMatch ?? 4);
     if (orderSel) orderSel.value = roomState.roundOrder || "sequential";
     if (fmCheck) fmCheck.checked = roomState.enableFastMoney !== false;
+    if (autoXCheck) autoXCheck.checked = Boolean(roomState.autoStartTimerOnStrike);
     if (pinIn && lobbyPin && lobbyPin.value.trim()) {
       pinIn.value = lobbyPin.value.trim();
     }
@@ -383,6 +385,9 @@ window.Feud = window.Feud || {};
     const enableFastMoney = Boolean(
       document.getElementById("setupEnableFastMoneyCheckbox")?.checked
     );
+    const autoStartTimerOnStrike = Boolean(
+      document.getElementById("setupAutoStartOnStrikeCheckbox")?.checked
+    );
     const pinVal = (document.getElementById("setupHostPinInput")?.value || "").trim() || "1234";
 
     if (!/^\d{4}$/.test(pinVal)) {
@@ -434,6 +439,7 @@ window.Feud = window.Feud || {};
       turnTimerDuration: timerDur,
       turnTimerRemaining: timerDur,
       turnTimerRunning: false,
+      autoStartTimerOnStrike,
       revealed: [],
       pot: 0,
       strikes: 0,
@@ -981,13 +987,10 @@ window.Feud = window.Feud || {};
         questionRevealed: true,
         roundPhase: roomState.buzzerWinner ? "faceoff-p1" : "faceoff-buzz",
         turnTimerRemaining: dur,
-        turnTimerRunning: Boolean(roomState.buzzerWinner)
+        turnTimerRunning: true
       });
-      if (roomState.buzzerWinner) {
-        startLocalTurnTimerLoop();
-      } else {
-        Feud.showToast("📺 Question Revealed! Waiting for first Face-Off buzz.");
-      }
+      startLocalTurnTimerLoop();
+      Feud.showToast("📺 Question Revealed & Face-Off Timer Started!");
       return;
     }
 
@@ -1050,13 +1053,13 @@ window.Feud = window.Feud || {};
 
   async function hostChoosePlayOrPass(decision) {
     Feud.unlockAudio();
+    stopLocalTurnTimerInterval();
     const winTeam = roomState.faceoffWinnerTeam || roomState.controllingTeam || 1;
     const passTeam = winTeam === 1 ? 2 : 1;
     const playingTeam = decision === "pass" ? passTeam : winTeam;
     const playingName = getTeamNameByNum(playingTeam);
     const dur = Number(roomState.turnTimerDuration) || 10;
 
-    Feud.playTick(false);
     await pushRoomPatch({
       questionRevealed: true,
       roundPhase: "playing",
@@ -1065,13 +1068,12 @@ window.Feud = window.Feud || {};
       buzzerWinner: 0,
       strikes: 0,
       turnTimerRemaining: dur,
-      turnTimerRunning: true
+      turnTimerRunning: false
     });
-    startLocalTurnTimerLoop();
     Feud.showToast(
       decision === "pass"
-        ? `🔀 Passed! 🎯 ${playingName} is now playing the board (${dur}s timer started)!`
-        : `▶️ ${playingName} is playing the board (${dur}s timer started)!`
+        ? `🔀 Passed! 🎯 ${playingName} is now playing the board. Press R (or Start Timer) when ready.`
+        : `▶️ ${playingName} is playing the board! Press R (or Start Timer) when ready.`
     );
   }
 
@@ -1116,25 +1118,78 @@ window.Feud = window.Feud || {};
     Feud.showToast(`⏱️ Player Answer Timer set to ${cleanSec}s!`);
   }
 
+  async function hostToggleAutoStartTimerOnStrike(enabled) {
+    const clean = Boolean(enabled);
+    await pushRoomPatch({ autoStartTimerOnStrike: clean });
+    Feud.showToast(
+      clean
+        ? "⏱️ Auto-start timer on 'X' is now ON."
+        : "⏱️ Auto-start timer on 'X' is now OFF."
+    );
+  }
+
+  async function hostSetFaceOffWinner(teamNum) {
+    Feud.unlockAudio();
+    const cleanTeam = Number(teamNum) === 2 ? 2 : 1;
+    const teamName = getTeamNameByNum(cleanTeam);
+    const phase =
+      roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
+
+    if (phase === "pass-or-play") {
+      await pushRoomPatch({
+        faceoffWinnerTeam: cleanTeam,
+        controllingTeam: cleanTeam,
+        buzzerWinner: cleanTeam
+      });
+      Feud.showToast(`🏆 ${teamName} selected as Face-Off Winner — choose Play or Pass!`);
+      return;
+    }
+
+    const dur = Number(roomState.turnTimerDuration) || 10;
+    Feud.playFaceOffTone(cleanTeam);
+    await pushRoomPatch({
+      questionRevealed: true,
+      roundPhase: "faceoff-p1",
+      faceoffFirstTeam: cleanTeam,
+      controllingTeam: cleanTeam,
+      buzzerWinner: cleanTeam,
+      buzzerArmedTeam: 0,
+      turnTimerRemaining: dur,
+      turnTimerRunning: true
+    });
+    startLocalTurnTimerLoop();
+    Feud.showToast(`🔔 ${teamName} answering Face-Off! Click their answer below or tap ❌ Wrong.`);
+  }
+
   async function hostSetControllingTeam(teamNum) {
     stopLocalTurnTimerInterval();
     const cleanTeam = [0, 1, 2].includes(Number(teamNum)) ? Number(teamNum) : 0;
     const dur = Number(roomState.turnTimerDuration) || 10;
+    const phase =
+      roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
+    const revCount = (roomState.revealed || []).length;
+
     if (cleanTeam === 0) {
       await pushRoomPatch({
         controllingTeam: 0,
         roundPhase: roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready",
         buzzerWinner: 0,
+        buzzerArmedTeam: 0,
         turnTimerRunning: false,
         turnTimerRemaining: dur
       });
       Feud.showToast("⚡ Face-Off Mode");
+    } else if (phase === "pass-or-play") {
+      await hostSetFaceOffWinner(cleanTeam);
+    } else if (String(phase).startsWith("faceoff") && revCount === 0) {
+      await hostSetFaceOffWinner(cleanTeam);
     } else {
       await pushRoomPatch({
         controllingTeam: cleanTeam,
         originalPlayingTeam: cleanTeam,
         roundPhase: "playing",
         buzzerWinner: 0,
+        buzzerArmedTeam: 0,
         turnTimerRunning: false,
         turnTimerRemaining: dur
       });
@@ -1200,94 +1255,64 @@ window.Feud = window.Feud || {};
     const allBoardRevealed = revSet.size >= round.answers.length;
 
     // 1. FACE-OFF TURN 1 (or if host clicked an answer right from faceoff-ready/buzz)
+    // Immediately enters "pass-or-play" so the Host can decide Play or Pass right away!
     if (phase === "faceoff-ready" || phase === "faceoff-buzz" || phase === "faceoff-p1") {
       const firstTeam =
-        roomState.faceoffFirstTeam || roomState.buzzerWinner || roomState.controllingTeam || 1;
-      const secondTeam = firstTeam === 1 ? 2 : 1;
+        roomState.controllingTeam || roomState.buzzerWinner || roomState.faceoffFirstTeam || 1;
       const firstName = getTeamNameByNum(firstTeam);
-      const secondName = getTeamNameByNum(secondTeam);
 
-      if (slotIdx === 0 || allBoardRevealed) {
-        // #1 answer on the board! First team wins Face-Off immediately!
-        await pushRoomPatch({
-          questionRevealed: true,
-          revealed: Array.from(revSet),
-          pot: newPot,
-          roundPhase: "pass-or-play",
-          faceoffFirstTeam: firstTeam,
-          faceoffBestRank: 0,
-          faceoffWinnerTeam: firstTeam,
-          controllingTeam: firstTeam,
-          buzzerWinner: firstTeam,
-          turnTimerRunning: false,
-          turnTimerRemaining: dur
-        });
-        Feud.showToast(`🏆 #1 Answer! ${firstName} Wins the Face-Off — Play or Pass?`);
-      } else {
-        // Non-#1 answer (#2..#8) -> automatically switch to 2nd team's Face-Off player & start their timer!
-        await pushRoomPatch({
-          questionRevealed: true,
-          revealed: Array.from(revSet),
-          pot: newPot,
-          roundPhase: "faceoff-p2",
-          faceoffFirstTeam: firstTeam,
-          faceoffBestRank: slotIdx,
-          faceoffWinnerTeam: firstTeam,
-          controllingTeam: secondTeam,
-          buzzerWinner: 0,
-          buzzerArmedTeam: secondTeam,
-          turnTimerRemaining: dur,
-          turnTimerRunning: true
-        });
-        startLocalTurnTimerLoop();
-        Feud.showToast(
-          `✅ #${slotIdx + 1} Answer! Now ${secondName} has ${dur}s to beat #${slotIdx + 1}!`
-        );
-      }
+      await pushRoomPatch({
+        questionRevealed: true,
+        revealed: Array.from(revSet),
+        pot: newPot,
+        roundPhase: "pass-or-play",
+        faceoffFirstTeam: firstTeam,
+        faceoffBestRank: slotIdx,
+        faceoffWinnerTeam: firstTeam,
+        controllingTeam: firstTeam,
+        buzzerWinner: firstTeam,
+        buzzerArmedTeam: 0,
+        turnTimerRunning: false,
+        turnTimerRemaining: dur
+      });
+      Feud.showToast(
+        `🏆 #${slotIdx + 1} Answer! ${firstName} Wins the Face-Off — Choose PLAY or PASS!`
+      );
       return;
     }
 
-    // 2. FACE-OFF TURN 2 (Second player trying to beat Player 1's rank)
-    if (phase === "faceoff-p2") {
-      const firstTeam = roomState.faceoffFirstTeam || 1;
-      const secondTeam = roomState.controllingTeam || (firstTeam === 1 ? 2 : 1);
+    // 2. FACE-OFF TURN 2 (After Team 1 missed with a Temp X, or if Team 2 is answering to beat Team 1's rank)
+    if (
+      phase === "faceoff-p2" ||
+      (phase === "pass-or-play" &&
+        (roomState.revealed || []).length === 1 &&
+        (roomState.faceoffBestRank ?? 0) > 0)
+    ) {
+      const firstTeam = roomState.faceoffFirstTeam || roomState.faceoffWinnerTeam || 1;
+      const secondTeam =
+        phase === "faceoff-p2"
+          ? roomState.controllingTeam || (firstTeam === 1 ? 2 : 1)
+          : firstTeam === 1
+          ? 2
+          : 1;
       const prevBest = roomState.faceoffBestRank ?? 999;
       const winTeam = slotIdx < prevBest ? secondTeam : firstTeam;
       const winName = getTeamNameByNum(winTeam);
 
-      if (allBoardRevealed) {
-        // Swept all answers during Face-Off! Auto-award pot to winner!
-        const nextFanfare = (roomState.fanfareSeq || 0) + 1;
-        setTimeout(() => Feud.playFanfare(), 400);
-        await pushRoomPatch({
-          questionRevealed: true,
-          revealed: Array.from(revSet),
-          pot: 0,
-          team1Score: winTeam === 1 ? (roomState.team1Score || 0) + newPot : roomState.team1Score || 0,
-          team2Score: winTeam === 2 ? (roomState.team2Score || 0) + newPot : roomState.team2Score || 0,
-          roundPhase: "round-over",
-          roundWinnerTeam: winTeam,
-          controllingTeam: winTeam,
-          buzzerWinner: 0,
-          turnTimerRunning: false,
-          fanfareSeq: nextFanfare
-        });
-        Feud.showToast(`🏆 ${winName} Swept the Board & Wins ${newPot} pts!`);
-      } else {
-        await pushRoomPatch({
-          questionRevealed: true,
-          revealed: Array.from(revSet),
-          pot: newPot,
-          roundPhase: "pass-or-play",
-          faceoffBestRank: Math.min(slotIdx, prevBest),
-          faceoffWinnerTeam: winTeam,
-          controllingTeam: winTeam,
-          buzzerWinner: winTeam,
-          turnTimerRunning: false,
-          turnTimerRemaining: dur
-        });
-        Feud.showToast(`🏆 ${winName} Wins the Face-Off! Choose Play or Pass.`);
-      }
+      await pushRoomPatch({
+        questionRevealed: true,
+        revealed: Array.from(revSet),
+        pot: newPot,
+        roundPhase: "pass-or-play",
+        faceoffBestRank: 0,
+        faceoffWinnerTeam: winTeam,
+        controllingTeam: winTeam,
+        buzzerWinner: winTeam,
+        buzzerArmedTeam: 0,
+        turnTimerRunning: false,
+        turnTimerRemaining: dur
+      });
+      Feud.showToast(`🏆 ${winName} Wins the Face-Off! Choose PLAY or PASS.`);
       return;
     }
 
@@ -1346,7 +1371,7 @@ window.Feud = window.Feud || {};
       });
       Feud.showToast(`🧹 Board Swept! 🏆 ${playName} Wins ${newPot} pts!`);
     } else {
-      // Correct answer during regular play -> automatically reset & restart the clock for the next player in line
+      // Correct answer during regular play -> reset timer to full duration (do NOT auto-start outside Face-Off)
       await pushRoomPatch({
         questionRevealed: true,
         revealed: Array.from(revSet),
@@ -1357,10 +1382,9 @@ window.Feud = window.Feud || {};
         buzzerWinner: 0,
         buzzerArmedTeam: 0,
         turnTimerRemaining: dur,
-        turnTimerRunning: true
+        turnTimerRunning: false
       });
-      startLocalTurnTimerLoop();
-      Feud.showToast(`✅ Correct! ${dur}s timer restarted for the next ${playName} player.`);
+      Feud.showToast(`✅ Correct! Press R (or Start Timer) when ready for the next ${playName} player.`);
     }
   }
 
@@ -1369,17 +1393,22 @@ window.Feud = window.Feud || {};
   async function hostFaceOffWrongGuess() {
     const phase =
       roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
-    if (!String(phase).startsWith("faceoff")) {
+    const canSecondGuessInPassPlay =
+      phase === "pass-or-play" &&
+      (roomState.revealed || []).length === 1 &&
+      (roomState.faceoffBestRank ?? 0) > 0;
+    if (!String(phase).startsWith("faceoff") && !canSecondGuessInPassPlay) {
       Feud.showToast("Face-Off is over — use the regular ❌ Strike buttons for round strikes.");
       return;
     }
-    await hostHandleWrongAnswer({ fromTimer: false });
+    await hostHandleWrongAnswer({ fromTimer: false, forceFaceOff: true });
   }
 
   async function hostHandleWrongAnswer(opts = {}) {
     Feud.unlockAudio();
     stopLocalTurnTimerInterval();
     const dur = Number(roomState.turnTimerDuration) || 10;
+    const autoStartOnX = Boolean(roomState.autoStartTimerOnStrike);
     const phase =
       roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
     const nextSeq = (roomState.strikeSeq || 0) + 1;
@@ -1390,7 +1419,7 @@ window.Feud = window.Feud || {};
       return;
     }
 
-    // 1. FACE-OFF TURN 1 MISS -> 1 temp X (round strikes untouched), re-arm the opposing buzzer & start their clock
+    // 1. FACE-OFF TURN 1 MISS -> 1 temp X (round strikes untouched), re-arm the opposing buzzer (do NOT auto-start timer on X)
     if (phase === "faceoff-ready" || phase === "faceoff-buzz" || phase === "faceoff-p1") {
       const firstTeam =
         roomState.faceoffFirstTeam || roomState.buzzerWinner || roomState.controllingTeam || 1;
@@ -1409,18 +1438,23 @@ window.Feud = window.Feud || {};
         lastOverlayXCount: 1,
         strikeSeq: nextSeq,
         turnTimerRemaining: dur,
-        turnTimerRunning: true
+        turnTimerRunning: false
       });
-      startLocalTurnTimerLoop();
       Feud.showToast(
-        `${prefix}❌ Face-Off Miss (temp X — no round strike)! ${secondName}'s buzzer re-armed (${dur}s).`
+        `${prefix}❌ Face-Off Miss (temp X — no round strike)! ${secondName}'s turn.`
       );
       return;
     }
 
-    // 2. FACE-OFF TURN 2 MISS -> 1 temp X; if Player 1 hit the board, Player 1 wins Face-Off!
-    if (phase === "faceoff-p2") {
-      const firstTeam = roomState.faceoffFirstTeam || 1;
+    // 2. FACE-OFF TURN 2 MISS (or 2nd Face-Off player miss after Player 1 hit a non-#1 answer) -> 1 temp X!
+    if (
+      phase === "faceoff-p2" ||
+      (phase === "pass-or-play" &&
+        opts.forceFaceOff &&
+        (roomState.revealed || []).length === 1 &&
+        (roomState.faceoffBestRank ?? 0) > 0)
+    ) {
+      const firstTeam = roomState.faceoffFirstTeam || roomState.faceoffWinnerTeam || 1;
       const firstName = getTeamNameByNum(firstTeam);
       const bestRank = roomState.faceoffBestRank ?? 999;
 
@@ -1429,6 +1463,7 @@ window.Feud = window.Feud || {};
         await pushRoomPatch({
           questionRevealed: true,
           roundPhase: "pass-or-play",
+          faceoffBestRank: 0,
           faceoffWinnerTeam: firstTeam,
           controllingTeam: firstTeam,
           buzzerWinner: firstTeam,
@@ -1440,7 +1475,7 @@ window.Feud = window.Feud || {};
         });
         Feud.showToast(`${prefix}❌ Miss! 🏆 ${firstName} Wins the Face-Off — Play or Pass?`);
       } else {
-        // Both missed! Re-arm the first team's buzzer for the next Face-Off attempt
+        // Both missed! Re-arm the first team's buzzer for the next Face-Off attempt (do NOT auto-start timer on X)
         await pushRoomPatch({
           questionRevealed: true,
           roundPhase: "faceoff-p1",
@@ -1450,9 +1485,8 @@ window.Feud = window.Feud || {};
           lastOverlayXCount: 1,
           strikeSeq: nextSeq,
           turnTimerRemaining: dur,
-          turnTimerRunning: true
+          turnTimerRunning: false
         });
-        startLocalTurnTimerLoop();
         Feud.showToast(`${prefix}❌ Both missed! Back to ${firstName} for the next Face-Off turn.`);
       }
       return;
@@ -1516,7 +1550,7 @@ window.Feud = window.Feud || {};
         `${prefix}🚨 3 Strikes (XXX)! Automatic switch to ${oppName} for the Steal! Press R to start 15s Steal Timer.`
       );
     } else {
-      // Strike 1 or 2 -> automatically reset & restart the clock for the next player in line
+      // Strike 1 or 2 -> reset clock for the next player; do NOT auto-start timer outside of Face-Off mode
       await pushRoomPatch({
         roundPhase: "playing",
         controllingTeam: playTeam,
@@ -1525,11 +1559,10 @@ window.Feud = window.Feud || {};
         lastOverlayXCount: nextStrikes,
         strikeSeq: nextSeq,
         turnTimerRemaining: dur,
-        turnTimerRunning: true
+        turnTimerRunning: false
       });
-      startLocalTurnTimerLoop();
       Feud.showToast(
-        `${prefix}❌ Strike ${nextStrikes} of 3! ${dur}s timer restarted for the next player.`
+        `${prefix}❌ Strike ${nextStrikes} of 3! Press R (or Start Timer) when ready for the next player.`
       );
     }
   }
@@ -1539,21 +1572,40 @@ window.Feud = window.Feud || {};
     const phase = roomState.roundPhase || "faceoff-ready";
     if (
       phase !== "round-over" &&
+      (roomState.pot || 0) > 0 &&
       !window.confirm(
-        "The pot hasn't been awarded yet. Reveal every answer on the TV anyway? (No points will be added.)"
+        "The round pot hasn't been awarded yet. Reveal the next unflipped answer on the TV for 0 points anyway?"
       )
     ) {
       return;
     }
     stopLocalTurnTimerInterval();
     const round = Feud.getRoundData(roomState, roomState.roundIdx);
-    const all = round.answers.map((_, i) => i);
+    const revSet = new Set(roomState.revealed || []);
+    let nextIdx = -1;
+    for (let i = 0; i < round.answers.length; i++) {
+      if (!revSet.has(i)) {
+        nextIdx = i;
+        break;
+      }
+    }
+    if (nextIdx === -1) {
+      Feud.showToast("✅ All answers on the board are already revealed!");
+      return;
+    }
+    revSet.add(nextIdx);
     Feud.playDing();
     await pushRoomPatch({
       questionRevealed: true,
-      revealed: all,
+      revealed: Array.from(revSet),
       turnTimerRunning: false
     });
+    const remaining = round.answers.length - revSet.size;
+    Feud.showToast(
+      remaining > 0
+        ? `👁️ Revealed #${nextIdx + 1}: "${round.answers[nextIdx].text}" (${remaining} remaining)`
+        : "✅ All answers on the board revealed!"
+    );
   }
 
   async function hostResetRound() {
@@ -2360,6 +2412,8 @@ window.Feud = window.Feud || {};
     hostToggleTurnTimer,
     hostStopResetTurnTimer,
     hostSetTurnTimerDuration,
+    hostToggleAutoStartTimerOnStrike,
+    hostSetFaceOffWinner,
     hostSetControllingTeam,
     hostToggleAnswer,
     hostRevealAll,

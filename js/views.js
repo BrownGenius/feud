@@ -137,6 +137,11 @@ window.Feud = window.Feud || {};
     if (soloToggleBtn) {
       soloToggleBtn.textContent = running ? "⏸️ Pause (T)" : canResume ? "▶️ Resume (T)" : "▶️ Start (T)";
     }
+
+    const autoStartOnXCheck = document.getElementById("hostAutoStartOnStrikeCheckbox");
+    if (autoStartOnXCheck) {
+      autoStartOnXCheck.checked = Boolean(roomState.autoStartTimerOnStrike);
+    }
   }
 
   function populateRoundDropdowns(roomState) {
@@ -217,7 +222,16 @@ window.Feud = window.Feud || {};
     const t2 = roomState.team2Name || "Team 2";
     const dur = Number(roomState.turnTimerDuration) || 10;
     const round = Feud.getRoundData(roomState, roomState.roundIdx);
-    const allRevealed = (roomState.revealed || []).length >= round.answers.length;
+    const revSet = new Set(roomState.revealed || []);
+    let nextUnrevealedIdx = -1;
+    for (let i = 0; i < round.answers.length; i++) {
+      if (!revSet.has(i)) {
+        nextUnrevealedIdx = i;
+        break;
+      }
+    }
+    const remainingUnrevealedCount = Math.max(0, round.answers.length - revSet.size);
+    const allRevealed = remainingUnrevealedCount === 0;
     const isLastRound = roomState.roundIdx + 1 >= Feud.getRoundCount(roomState);
 
     const steps = [
@@ -328,10 +342,16 @@ window.Feud = window.Feud || {};
       subtext = `Ask ${winName} whether they want to PLAY the board or PASS control to ${passName}. Choosing either option starts the timer for the next player!`;
       actionsHtml = `
         <button type="button" class="action-btn btn-gold display-font" onclick="hostChoosePlayOrPass('play')">
-          ▶️ ${escapeHtml(winName)} PLAYS Board (Start Timer)
+          ▶️ PLAY — ${escapeHtml(winName)} Plays Board
         </button>
-        <button type="button" class="action-btn btn-slate display-font" onclick="hostChoosePlayOrPass('pass')">
-          🔀 PASS Board to ${escapeHtml(passName)}
+        <button type="button" class="action-btn btn-blue display-font" onclick="hostChoosePlayOrPass('pass')">
+          🔀 PASS — ${escapeHtml(passName)} Plays Board
+        </button>
+        <button type="button" class="top-btn ${winTeam === 1 ? "gold" : ""}" onclick="hostSetFaceOffWinner(1)">
+          Winner: ${escapeHtml(t1)}
+        </button>
+        <button type="button" class="top-btn ${winTeam === 2 ? "gold" : ""}" onclick="hostSetFaceOffWinner(2)">
+          Winner: ${escapeHtml(t2)}
         </button>
       `;
     } else if (phase === "playing") {
@@ -374,11 +394,13 @@ window.Feud = window.Feud || {};
       headline = `🎉 Round Complete — ${winName} Won the Round!`;
       subtext = allRevealed
         ? "All answers on the board have been revealed! Advance to the next round when ready."
-        : "Reveal the remaining unflipped answers on the TV (without adding points), then advance to the next round!";
+        : `Click 'Reveal Answers' to flip each remaining answer one at a time (${remainingUnrevealedCount} left, 0 pts), then advance to the next round!`;
       actionsHtml = `
         ${
           !allRevealed
-            ? `<button type="button" class="action-btn btn-gold display-font" onclick="hostRevealAll()">👁️ Reveal Remaining Answers (No Points)</button>`
+            ? `<button type="button" class="action-btn btn-gold display-font" onclick="hostRevealAll()">👁️ Reveal Answer #${
+                nextUnrevealedIdx + 1
+              } (${remainingUnrevealedCount} Left — No Points)</button>`
             : ""
         }
         ${
@@ -396,11 +418,126 @@ window.Feud = window.Feud || {};
     const subEl = document.getElementById("hostFlowSubtext");
     const actEl = document.getElementById("hostFlowActions");
     const soloActEl = document.getElementById("soloGuidedActions");
+    const inlineBarEl = document.getElementById("hostFaceOffDecisionBar");
 
     if (headEl) headEl.textContent = headline;
     if (subEl) subEl.textContent = subtext;
     if (actEl) actEl.innerHTML = actionsHtml;
     if (soloActEl) soloActEl.innerHTML = actionsHtml;
+
+    if (inlineBarEl) {
+      if (phase === "pass-or-play") {
+        const winTeam = roomState.faceoffWinnerTeam || roomState.controllingTeam || 1;
+        const passTeam = winTeam === 1 ? 2 : 1;
+        const winName = getTeamLabel(roomState, winTeam);
+        const passName = getTeamLabel(roomState, passTeam);
+        const canSecondGuess =
+          (roomState.revealed || []).length === 1 && (roomState.faceoffBestRank ?? 0) > 0;
+        const rankNum = (roomState.faceoffBestRank ?? 0) + 1;
+
+        inlineBarEl.className = "faceoff-decision-bar pass-play-highlight";
+        inlineBarEl.innerHTML = `
+          <div class="fodb-header">
+            <span class="fodb-title display-font">🏆 ${escapeHtml(winName)} Won the Face-Off! Play or Pass?</span>
+            <div class="fodb-winner-switch">
+              <span style="font-size:11px; color:#fde68a; font-weight:700;">Who answered?</span>
+              <button type="button" class="top-btn ${winTeam === 1 ? "gold" : ""}" style="min-height:28px; padding:3px 10px; font-size:11px;" onclick="hostSetFaceOffWinner(1)">
+                🏆 ${escapeHtml(t1)}
+              </button>
+              <button type="button" class="top-btn ${winTeam === 2 ? "gold" : ""}" style="min-height:28px; padding:3px 10px; font-size:11px;" onclick="hostSetFaceOffWinner(2)">
+                🏆 ${escapeHtml(t2)}
+              </button>
+            </div>
+          </div>
+          <div class="fodb-actions">
+            <button type="button" class="action-btn btn-gold display-font" style="flex:1; min-width:210px; min-height:46px; font-size:14px;" onclick="hostChoosePlayOrPass('play')">
+              ▶️ PLAY — ${escapeHtml(winName)} Plays Board
+            </button>
+            <button type="button" class="action-btn btn-blue display-font" style="flex:1; min-width:210px; min-height:46px; font-size:14px;" onclick="hostChoosePlayOrPass('pass')">
+              🔀 PASS — ${escapeHtml(passName)} Plays Board
+            </button>
+          </div>
+          ${
+            canSecondGuess
+              ? `<div class="fodb-subnote">
+                  <span>🎤 Since Answer #${rankNum} wasn't #1: if <strong>${escapeHtml(
+                  passName
+                )}</strong> gets a Face-Off guess to beat #${rankNum}, click their answer below or tap:</span>
+                  <button type="button" class="top-btn" style="background:#991b1b; border-color:#fca5a5; min-height:28px; padding:3px 10px; font-size:11px;" onclick="hostFaceOffWrongGuess()">
+                    ⚡ ${escapeHtml(passName)} Wrong Guess (1 Temp X)
+                  </button>
+                </div>`
+              : ""
+          }
+        `;
+      } else if (String(phase).startsWith("faceoff")) {
+        const activeTeam =
+          roomState.controllingTeam || roomState.buzzerWinner || roomState.faceoffFirstTeam || 0;
+        const otherTeam = activeTeam === 1 ? 2 : activeTeam === 2 ? 1 : 2;
+        const otherName = getTeamLabel(roomState, otherTeam);
+        inlineBarEl.className = "faceoff-decision-bar";
+        inlineBarEl.innerHTML = `
+          <div class="fodb-header">
+            <span class="fodb-title display-font">🔔 Face-Off: Select Team Answering, Then Click Answer Below</span>
+          </div>
+          <div class="fodb-actions">
+            <button type="button" class="top-btn ${activeTeam === 1 ? "gold" : ""}" style="flex:1; min-width:130px;" onclick="hostSetFaceOffWinner(1)">
+              🔔 ${escapeHtml(t1)} ${activeTeam === 1 ? "✓ (Answering)" : "Buzzed"}
+            </button>
+            <button type="button" class="top-btn ${activeTeam === 2 ? "gold" : ""}" style="flex:1; min-width:130px;" onclick="hostSetFaceOffWinner(2)">
+              🔔 ${escapeHtml(t2)} ${activeTeam === 2 ? "✓ (Answering)" : "Buzzed"}
+            </button>
+            <button type="button" class="action-btn btn-red display-font" style="flex:1; min-width:170px; min-height:38px; font-size:12px;" onclick="hostFaceOffWrongGuess()">
+              ⚡ Wrong Guess (1 Temp X → ${escapeHtml(otherName)})
+            </button>
+          </div>
+        `;
+      } else if (phase === "steal") {
+        const origTeam =
+          roomState.originalPlayingTeam || (roomState.controllingTeam === 1 ? 2 : 1);
+        const stealTeam = roomState.controllingTeam || (origTeam === 1 ? 2 : 1);
+        const origName = getTeamLabel(roomState, origTeam);
+        const stealName = getTeamLabel(roomState, stealTeam);
+        inlineBarEl.className = "faceoff-decision-bar steal-highlight";
+        inlineBarEl.innerHTML = `
+          <div class="fodb-header">
+            <span class="fodb-title display-font">🚨 STEAL MODE: ${escapeHtml(stealName)} Can Steal ${
+          roomState.pot || 0
+        } Pts!</span>
+          </div>
+          <div class="fodb-actions">
+            <button type="button" class="action-btn btn-gold display-font" style="flex:1; min-width:180px; min-height:42px; font-size:13px;" onclick="hostStartStealTimer()">
+              ⏱️ Start 15s Steal Timer (R)
+            </button>
+            <button type="button" class="action-btn btn-red display-font" style="flex:1; min-width:210px; min-height:42px; font-size:13px;" onclick="hostHandleWrongAnswer()">
+              ❌ Steal Missed → ${escapeHtml(origName)} Keeps ${roomState.pot || 0} Pts
+            </button>
+          </div>
+        `;
+      } else if (phase === "round-over" && !allRevealed) {
+        inlineBarEl.className = "faceoff-decision-bar pass-play-highlight";
+        inlineBarEl.innerHTML = `
+          <div class="fodb-header">
+            <span class="fodb-title display-font">🎉 Round Complete — ${remainingUnrevealedCount} Unrevealed Answer${
+          remainingUnrevealedCount === 1 ? "" : "s"
+        } Left</span>
+          </div>
+          <div class="fodb-actions">
+            <button type="button" class="action-btn btn-gold display-font" style="flex:1; min-width:220px; min-height:44px; font-size:13px;" onclick="hostRevealAll()">
+              👁️ Reveal Answer #${nextUnrevealedIdx + 1} (${remainingUnrevealedCount} Left — 0 pts)
+            </button>
+            ${
+              !isLastRound
+                ? `<button type="button" class="action-btn btn-blue display-font" style="min-height:44px; font-size:13px;" onclick="hostNextRound()">⏭️ Next Round ▶</button>`
+                : ""
+            }
+          </div>
+        `;
+      } else {
+        inlineBarEl.className = "faceoff-decision-bar hidden";
+        inlineBarEl.innerHTML = "";
+      }
+    }
   }
 
   function renderTvView(roomState, activeRole, handlers) {
@@ -755,6 +892,23 @@ window.Feud = window.Feud || {};
       `;
       list.appendChild(btn);
     });
+
+    const revRemBtn = document.getElementById("hostBtnRevealRemaining");
+    if (revRemBtn) {
+      let nextIdx = -1;
+      for (let i = 0; i < round.answers.length; i++) {
+        if (!revSet.has(i)) {
+          nextIdx = i;
+          break;
+        }
+      }
+      const remCount = Math.max(0, round.answers.length - revSet.size);
+      revRemBtn.disabled = remCount === 0;
+      revRemBtn.textContent =
+        remCount > 0
+          ? `👁️ Reveal Answer #${nextIdx + 1} (${remCount} Left • 0 pts)`
+          : "✅ All Answers Revealed";
+    }
 
     // Phase-aware strike controls: Face-Off temp X vs. round strikes
     const isFaceOff = String(phase).startsWith("faceoff");

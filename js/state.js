@@ -359,6 +359,7 @@ window.Feud = window.Feud || {};
       turnTimerDuration: 10,
       turnTimerRemaining: 10,
       turnTimerRunning: false,
+      autoStartTimerOnStrike: false,
       timeUpSeq: 0,
       zeroPtsSeq: 0,
       revealed: [],

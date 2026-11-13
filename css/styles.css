@@ -1583,3 +1583,67 @@ body.buzzer-nav-locked .top-bar .status-cluster > *:not(#roomCodeBadge):not(#wak
 body.buzzer-nav-locked .buzzer-exit-hold-btn {
   display: block;
 }
+
+/* Inline Face-Off & Play/Pass Decision Bar directly above the Host Answer List */
+.faceoff-decision-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.78);
+  border: 1.5px solid rgba(251, 191, 36, 0.45);
+}
+
+.faceoff-decision-bar.pass-play-highlight {
+  background: linear-gradient(135deg, rgba(120, 53, 15, 0.85), rgba(30, 41, 59, 0.92));
+  border: 2.5px solid #fbbf24;
+  box-shadow: 0 0 22px rgba(251, 191, 36, 0.4);
+}
+
+.faceoff-decision-bar.steal-highlight {
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.85), rgba(30, 41, 59, 0.92));
+  border: 2.5px solid #f87171;
+  box-shadow: 0 0 22px rgba(239, 68, 68, 0.4);
+}
+
+.fodb-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fodb-title {
+  font-size: 13px;
+  color: #fef08a;
+  letter-spacing: 0.04em;
+}
+
+.fodb-winner-switch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fodb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fodb-subnote {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(251, 191, 36, 0.35);
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
