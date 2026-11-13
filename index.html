@@ -120,11 +120,8 @@
       <!-- Launch Actions -->
       <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; margin-top:4px;">
         <button type="button" class="top-btn" onclick="closeNewGameModal()">Cancel</button>
-        <button type="button" class="action-btn btn-slate display-font" style="width:auto; min-height:46px; font-size:13px;" onclick="confirmStartNewGame('solo')">
-          🎮 Launch Single-Screen TV Mode
-        </button>
-        <button type="button" class="action-btn btn-gold display-font" style="width:auto; min-height:46px; font-size:13px;" onclick="confirmStartNewGame('host')">
-          🎙️ Launch 4-Phone Host Room
+        <button type="button" class="action-btn btn-gold display-font" style="width:auto; min-height:46px; font-size:14px; padding:10px 20px;" onclick="confirmStartNewGame('host')">
+          🚀 Start New Game (Opens TV Window + Host View)
         </button>
       </div>
     </div>
@@ -593,7 +590,8 @@
         <button id="hostTabMain" class="top-btn gold" onclick="hostSwitchStage('main')">Main Board</button>
         <button id="hostTabFm" class="top-btn" onclick="hostSwitchStage('fast')">⚡ Fast Money</button>
         <button id="hostTabWinner" class="top-btn gold" onclick="openNextMatchModal()">🏁 End Match / Next Game</button>
-        <button class="top-btn" onclick="switchSoloAndHostView()" title="Switch to TV Board view on this device">📺 View Board</button>
+        <button class="top-btn gold" onclick="reopenTvWindow()" title="Open or focus the separate TV Display window">📺 Open TV Window</button>
+        <button class="top-btn" onclick="switchSoloAndHostView()" title="Switch to TV Board view inside this window">🔄 View Board Here</button>
       </div>
     </div>
 

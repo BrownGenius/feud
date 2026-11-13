@@ -385,7 +385,7 @@ window.Feud = window.Feud || {};
     );
     const pinVal = (document.getElementById("setupHostPinInput")?.value || "").trim() || "1234";
 
-    if (mode === "host" && !/^\d{4}$/.test(pinVal)) {
+    if (!/^\d{4}$/.test(pinVal)) {
       Feud.showToast("Please enter a 4-digit numeric Host PIN (e.g., 1234).");
       return;
     }
@@ -397,7 +397,7 @@ window.Feud = window.Feud || {};
     clearInterval(hostFmTimerInterval);
     hostFmTimerInterval = null;
 
-    const fresh = Feud.createDefaultRoomState(mode === "host" ? pinVal : "0000");
+    const fresh = Feud.createDefaultRoomState(pinVal);
     const slice = Feud.buildMatchSlice(fresh, {
       roundsPerMatch,
       roundOrder,
@@ -445,24 +445,19 @@ window.Feud = window.Feud || {};
 
     closeNewGameModal();
 
-    if (mode === "solo") {
-      currentRoomCode = "SOLO";
-      syncSequenceCounters(roomState);
-      Feud.saveLastSession("solo", "SOLO");
-      enterRole("solo", "SOLO");
-      await Feud.startHostRoomSync("SOLO", roomState);
+    const code = Feud.generateRoomCode();
+    currentRoomCode = code;
+    syncSequenceCounters(roomState);
+    // Persist room state first so the new TV window can find it immediately (local/offline sync),
+    // then open the TV window synchronously while we're still inside the user's click.
+    Feud.saveRoomStateToStorage(code, roomState);
+    const tvOpened = openTvDisplayWindow(code);
+    enterRole("host", code);
+    Feud.saveLastSession("host", code, pinVal);
+    await Feud.startHostRoomSync(code, roomState);
+    if (tvOpened) {
       Feud.showToast(
-        `Match #${slice.matchNumber} Ready (${slice.matchSourceIndices.length} unplayed rounds)! Press Space to reveal Round 1.`
-      );
-    } else {
-      const code = Feud.generateRoomCode();
-      currentRoomCode = code;
-      syncSequenceCounters(roomState);
-      enterRole("host", code);
-      Feud.saveLastSession("host", code, pinVal);
-      await Feud.startHostRoomSync(code, roomState);
-      Feud.showToast(
-        `Room ${code} created (Match #${slice.matchNumber})! Share code ${code} or tap 📱 Join QR.`
+        `Room ${code} created (Match #${slice.matchNumber})! 📺 TV window opened — drag it to your TV screen.`
       );
     }
   }
@@ -497,7 +492,8 @@ window.Feud = window.Feud || {};
     Feud.showToast(`Unlocked Host Mode for Room ${code}!`);
   }
 
-  async function joinTvDisplay() {
+  async function joinTvDisplay(opts) {
+    const autoLaunched = Boolean(opts && opts.autoLaunched === true);
     Feud.unlockAudio();
     const code = document.getElementById("tvRoomInput").value.trim().toUpperCase();
     if (code.length < 4) {
@@ -515,9 +511,42 @@ window.Feud = window.Feud || {};
     roomState = { ...roomState, ...res.state };
     currentRoomCode = code;
     syncSequenceCounters(roomState);
-    Feud.saveLastSession("tv", code);
+    // An auto-launched TV window shares localStorage with the Host window — don't overwrite the Host's saved session/PIN
+    if (!autoLaunched) Feud.saveLastSession("tv", code);
     enterRole("tv", code);
-    Feud.showToast(`📺 TV Display connected to Room ${code}!`);
+    Feud.showToast(
+      autoLaunched
+        ? `📺 TV connected to Room ${code}! Drag this window to the TV, then click ⛶ TV Fullscreen (click once to enable sound).`
+        : `📺 TV Display connected to Room ${code}!`
+    );
+  }
+
+  // Opens (or reuses) a dedicated TV Display window that auto-joins the given room.
+  // Must be called synchronously inside the click handler so browsers don't block the popup.
+  function openTvDisplayWindow(code) {
+    const baseUrl = window.location.href.split("?")[0].split("#")[0];
+    const tvUrl = `${baseUrl}?room=${encodeURIComponent(code)}&role=tv`;
+    let win = null;
+    try {
+      win = window.open(tvUrl, "partyFeudTvDisplay", "popup=yes,width=1280,height=720");
+    } catch (e) {
+      win = null;
+    }
+    if (!win) {
+      Feud.showToast(
+        `⚠️ Popup blocked — allow popups for this site, or open a new window and join Room ${code} as TV Display.`
+      );
+      return false;
+    }
+    try {
+      win.focus();
+    } catch (e) {}
+    return true;
+  }
+
+  function reopenTvWindow() {
+    if (!currentRoomCode || currentRoomCode === "SOLO") return;
+    openTvDisplayWindow(currentRoomCode);
   }
 
   async function joinTeamBuzzer(teamNum) {
@@ -2297,6 +2326,7 @@ window.Feud = window.Feud || {};
     cycleNextMatchChallengerPreset,
     confirmStartNextMatch,
     openQrModal,
+    reopenTvWindow,
     closeQrModal,
     createHostRoom,
     joinHostRoom,
@@ -2385,11 +2415,17 @@ window.Feud = window.Feud || {};
     }
 
     const urlRoom = (params.get("room") || "").trim().toUpperCase();
+    const urlRole = (params.get("role") || "").trim().toLowerCase();
     if (urlRoom) {
       ["hostJoinCode", "tvRoomInput", "buzzerRoomInput"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = urlRoom;
       });
+      if (urlRole === "tv") {
+        // Auto-launched TV window: join immediately; unlock audio on the first click (browser autoplay policy)
+        document.addEventListener("pointerdown", () => Feud.unlockAudio(), { once: true });
+        joinTvDisplay({ autoLaunched: true });
+      }
     } else {
       const last = Feud.loadLastSession();
       if (last && last.code && last.code !== "SOLO") {
