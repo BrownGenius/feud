@@ -1,0 +1,675 @@
+// =====================================================================
+// DECK CATALOG & OFFLINE BUNDLE (decks/catalog.js)
+// Pre-registers decks in the /decks folder so they appear automatically
+// in the GUI selector and work 100% offline over file:// as well as
+// on GitHub Pages (where new files in /decks are also auto-discovered
+// via the GitHub Contents API).
+// =====================================================================
+
+window.Feud = window.Feud || {};
+
+window.Feud.DECK_CATALOG = [
+  {
+    id: "starter",
+    label: "🎉 Starter Party Deck (6 Rounds)",
+    file: null,
+    builtin: "starter"
+  },
+  {
+    id: "desi-thanksgiving.json",
+    label: "🦃 Desi Thanksgiving (37 Rounds • 5 Fast Money Sets)",
+    file: "./decks/desi-thanksgiving.json",
+    data: {
+  "gameTitle": "Party Feud",
+  "gameIcon": "🦃",
+  "deckName": "Desi Thanksgiving (37 Rounds)",
+  "teamPresets": [
+    ["Team Parents", "Team Kids"],
+    ["Side A Family", "Side B Family"],
+    ["Team Biryani", "Team Samosa"]
+  ],
+  "rounds": [
+    {
+      "theme": "🔥 Live Party Poll (House Survey - Editable!)",
+      "title": "House Poll 1",
+      "multiplier": 1,
+      "prompt": "What is the single best item on a Thanksgiving / Desi buffet plate?",
+      "answers": [
+        { "text": "Biryani / Pulao", "points": 35 },
+        { "text": "Tandoori / Masala Turkey", "points": 25 },
+        { "text": "Stuffing / Mashed Potatoes", "points": 16 },
+        { "text": "Samosas / Chaat Appetizers", "points": 12 },
+        { "text": "Garlic Naan", "points": 7 },
+        { "text": "Gulab Jamun / Pumpkin Pie", "points": 5 }
+      ]
+    },
+    {
+      "theme": "🔥 Live Party Poll (House Survey - Editable!)",
+      "title": "House Poll 2",
+      "multiplier": 1,
+      "prompt": "If you could only eat ONE Indian street food or chaat for the rest of your life, what are you picking?",
+      "answers": [
+        { "text": "Pani Puri / Golgappe / Puchka", "points": 42 },
+        { "text": "Samosa Chaat", "points": 22 },
+        { "text": "Pav Bhaji", "points": 15 },
+        { "text": "Bhel Puri / Sev Puri", "points": 10 },
+        { "text": "Vada Pav", "points": 6 },
+        { "text": "Aloo Tikki / Dahi Puri", "points": 5 }
+      ]
+    },
+    {
+      "theme": "🔥 Live Party Poll (House Survey - Editable!)",
+      "title": "House Poll 3",
+      "multiplier": 1,
+      "prompt": "What is the first thing you want to do right after finishing a massive holiday meal?",
+      "answers": [
+        { "text": "Take a nap on the couch", "points": 40 },
+        { "text": "Drink hot Masala Chai", "points": 24 },
+        { "text": "Unbutton pants / Put on sweatpants", "points": 15 },
+        { "text": "Eat dessert / Mithai", "points": 10 },
+        { "text": "Watch football / Cricket", "points": 6 },
+        { "text": "Go for a walk", "points": 5 }
+      ]
+    },
+    {
+      "theme": "🔥 Live Party Poll (House Survey - Editable!)",
+      "title": "House Poll 4",
+      "multiplier": 2,
+      "prompt": "How many minutes late is still considered 'on time' for an Indian party?",
+      "answers": [
+        { "text": "30 minutes late", "points": 38 },
+        { "text": "45 minutes late", "points": 26 },
+        { "text": "1 full hour late (60 mins)", "points": 20 },
+        { "text": "15 minutes late", "points": 10 },
+        { "text": "90+ minutes late (IST!)", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🔥 Live Party Poll (House Survey - Editable!)",
+      "title": "House Poll 5",
+      "multiplier": 2,
+      "prompt": "What is one item you will NEVER travel on an airplane without?",
+      "answers": [
+        { "text": "Headphones / AirPods", "points": 36 },
+        { "text": "Phone charger / Power bank", "points": 24 },
+        { "text": "Homemade snacks / Thepla / Trail mix", "points": 16 },
+        { "text": "Sweater / Jacket / Shawl", "points": 12 },
+        { "text": "Water bottle", "points": 7 },
+        { "text": "Neck pillow / Lip balm", "points": 5 }
+      ]
+    },
+    {
+      "theme": "🔥 Live Party Poll (House Survey - Editable!)",
+      "title": "House Poll 6",
+      "multiplier": 3,
+      "prompt": "What is the greatest Bollywood movie (or song) of all time?",
+      "answers": [
+        { "text": "Dilwale Dulhania Le Jayenge (DDLJ)", "points": 36 },
+        { "text": "Kabhi Khushi Kabhie Gham (K3G)", "points": 24 },
+        { "text": "3 Idiots", "points": 18 },
+        { "text": "Sholay", "points": 12 },
+        { "text": "Zindagi Na Milegi Dobara / Kuch Kuch Hota Hai", "points": 10 }
+      ]
+    },
+    {
+      "theme": "🦃 Desi Thanksgiving & Hospitality",
+      "title": "Round 7",
+      "multiplier": 1,
+      "prompt": "Name a dish that MUST be on the table for a proper Desi Thanksgiving—because turkey alone isn't cutting it.",
+      "answers": [
+        { "text": "Biryani / Pulao", "points": 36 },
+        { "text": "Tandoori / Masala Turkey", "points": 24 },
+        { "text": "Samosas / Pakoras", "points": 16 },
+        { "text": "Dal Makhani / Tarka Dal", "points": 10 },
+        { "text": "Naan / Roti", "points": 8 },
+        { "text": "Gulab Jamun / Rasmalai", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🦃 Desi Thanksgiving & Hospitality",
+      "title": "Round 8",
+      "multiplier": 1,
+      "prompt": "Name something an Indian parent or auntie says the second you walk through the door.",
+      "answers": [
+        { "text": "\"Have you eaten? / Come eat!\"", "points": 38 },
+        { "text": "\"You've lost / gained weight!\"", "points": 26 },
+        { "text": "\"Take off your shoes!\"", "points": 15 },
+        { "text": "\"Why are you so late?\"", "points": 10 },
+        { "text": "\"When are you getting married?\"", "points": 6 },
+        { "text": "\"How is work / school?\"", "points": 5 }
+      ]
+    },
+    {
+      "theme": "🦃 Desi Thanksgiving & Hospitality",
+      "title": "Round 9",
+      "multiplier": 2,
+      "prompt": "Name something inside an Indian auntie's purse or Tupperware stash at party's end.",
+      "answers": [
+        { "text": "Leftover food / Mithai in foil", "points": 35 },
+        { "text": "Saunf / Elaichi / Cloves", "points": 24 },
+        { "text": "Tylenol / Tiger Balm / Eno", "points": 18 },
+        { "text": "Extra napkins / Tissues", "points": 13 },
+        { "text": "Safety pins / Bobby pins", "points": 10 }
+      ]
+    },
+    {
+      "theme": "🦃 Desi Thanksgiving & Hospitality",
+      "title": "Round 10",
+      "multiplier": 2,
+      "prompt": "Name a classic excuse an Indian relative gives when grabbing the restaurant check.",
+      "answers": [
+        { "text": "\"I'm the elder, let me pay!\"", "points": 40 },
+        { "text": "\"I already gave my card to the waiter\"", "points": 25 },
+        { "text": "\"You pay next time we visit you\"", "points": 16 },
+        { "text": "\"Put your wallet away or I'm leaving!\"", "points": 11 },
+        { "text": "\"You're still a kid / student!\"", "points": 8 }
+      ]
+    },
+    {
+      "theme": "🦃 Desi Thanksgiving & Hospitality",
+      "title": "Round 11",
+      "multiplier": 3,
+      "prompt": "Name something that happens during the \"Indian Goodbye\" when guests finally say they are leaving.",
+      "answers": [
+        { "text": "Talking by the front door for 45 mins", "points": 42 },
+        { "text": "Host forcing leftover Tupperware on you", "points": 24 },
+        { "text": "\"One more cup of chai before you drive!\"", "points": 15 },
+        { "text": "Taking 15 group photos on the porch", "points": 11 },
+        { "text": "Standing by open car door talking", "points": 8 }
+      ]
+    },
+    {
+      "theme": "🦃 Desi Thanksgiving & Hospitality",
+      "title": "Round 12",
+      "multiplier": 3,
+      "prompt": "Name a spice or ingredient every Indian kitchen runs out of right before a big holiday party.",
+      "answers": [
+        { "text": "Fresh Cilantro / Dhaniya", "points": 35 },
+        { "text": "Garam Masala / Cumin (Jeera)", "points": 26 },
+        { "text": "Ginger-Garlic Paste", "points": 17 },
+        { "text": "Milk / Heavy Cream / Paneer", "points": 13 },
+        { "text": "Green Chilies / Onions", "points": 9 }
+      ]
+    },
+    {
+      "theme": "👨‍👩‍👧‍👦 Parents vs. Kids Showdown",
+      "title": "Round 13 (Kids Guess)",
+      "multiplier": 1,
+      "prompt": "Name a classic phrase an Indian parent says when you ask for a sleepover.",
+      "answers": [
+        { "text": "\"Who all is going? / Do I know their parents?\"", "points": 40 },
+        { "text": "\"Why sleep there? You have a bed at home!\"", "points": 24 },
+        { "text": "\"Did you finish your homework first?\"", "points": 16 },
+        { "text": "\"Ask your father / Ask your mother\"", "points": 10 },
+        { "text": "\"What time are you coming back?\"", "points": 6 },
+        { "text": "\"No.\" (Just flat-out no)", "points": 4 }
+      ]
+    },
+    {
+      "theme": "👨‍👩‍👧‍👦 Parents vs. Kids Showdown",
+      "title": "Round 14 (Parents Guess)",
+      "multiplier": 1,
+      "prompt": "Name something a teen/college kid says to avoid talking about grades or internships.",
+      "answers": [
+        { "text": "\"It's fine / Everything's good\"", "points": 38 },
+        { "text": "\"I don't know yet / Still figuring it out\"", "points": 26 },
+        { "text": "\"Stop stressing, I'm handling it\"", "points": 15 },
+        { "text": "\"Can we talk about something else?\"", "points": 10 },
+        { "text": "\"Everyone is in the same boat\"", "points": 6 },
+        { "text": "\"I have to go study / have a call\"", "points": 5 }
+      ]
+    },
+    {
+      "theme": "👨‍👩‍👧‍👦 Parents vs. Kids Showdown",
+      "title": "Round 15 (Kids Guess)",
+      "multiplier": 2,
+      "prompt": "Name something an Indian parent does right after buying a new gadget or car.",
+      "answers": [
+        { "text": "Leave the protective plastic film on forever", "points": 42 },
+        { "text": "Put a heavy-duty case / seat cover on it", "points": 24 },
+        { "text": "Compare price to how cheap it was at Costco", "points": 16 },
+        { "text": "Keep the cardboard box in the garage", "points": 11 },
+        { "text": "Ask kids how to set up the Wi-Fi", "points": 7 }
+      ]
+    },
+    {
+      "theme": "👨‍👩‍👧‍👦 Parents vs. Kids Showdown",
+      "title": "Round 16 (Parents Guess)",
+      "multiplier": 2,
+      "prompt": "Name something kids spend too much money on that drives Indian parents crazy.",
+      "answers": [
+        { "text": "Iced coffee / Matcha / Boba ($7 drinks)", "points": 38 },
+        { "text": "DoorDash / Uber Eats delivery fees", "points": 26 },
+        { "text": "Uber / Lyft instead of walking or train", "points": 16 },
+        { "text": "Concert tickets / Festivals", "points": 12 },
+        { "text": "Brand-name sneakers / Lululemon", "points": 8 }
+      ]
+    },
+    {
+      "theme": "👨‍👩‍👧‍👦 Parents vs. Kids Showdown",
+      "title": "Round 17 (Kids Guess)",
+      "multiplier": 3,
+      "prompt": "Name something an Indian parent refuses to pay full price for.",
+      "answers": [
+        { "text": "Airline tickets (checking at 2 AM)", "points": 36 },
+        { "text": "Groceries / Bulk items (Costco coupons)", "points": 25 },
+        { "text": "Shipping fees (\"I'll pick it up at store\")", "points": 18 },
+        { "text": "Hotel rooms / Rental cars", "points": 13 },
+        { "text": "Clothes / Designer brands (clearance rack)", "points": 8 }
+      ]
+    },
+    {
+      "theme": "👨‍👩‍👧‍👦 Parents vs. Kids Showdown",
+      "title": "Round 18 (Parents Guess)",
+      "multiplier": 3,
+      "prompt": "Name a slang word kids use today that leaves parents completely confused.",
+      "answers": [
+        { "text": "\"Bet\" / \"Say less\"", "points": 35 },
+        { "text": "\"No cap\" / \"Cap\"", "points": 25 },
+        { "text": "\"Cook\" / \"Let him cook\"", "points": 18 },
+        { "text": "\"Rizz\"", "points": 12 },
+        { "text": "\"Delulu\" / \"Mid\" / \"Slay\"", "points": 10 }
+      ]
+    },
+    {
+      "theme": "🏠 Indian Household Habits & WhatsApp",
+      "title": "Round 19",
+      "multiplier": 1,
+      "prompt": "Name what an Indian parent says when you have a headache or cold.",
+      "answers": [
+        { "text": "\"Always on that phone!\"", "points": 38 },
+        { "text": "\"Drink hot water / ginger chai / haldi doodh\"", "points": 25 },
+        { "text": "\"Put Vicks VapoRub / Tiger Balm on it\"", "points": 16 },
+        { "text": "\"You didn't eat / skipped breakfast\"", "points": 10 },
+        { "text": "\"Went outside with wet hair / no jacket\"", "points": 6 },
+        { "text": "\"Take a Tylenol / Crocin and sleep\"", "points": 5 }
+      ]
+    },
+    {
+      "theme": "🏠 Indian Household Habits & WhatsApp",
+      "title": "Round 20",
+      "multiplier": 1,
+      "prompt": "Name something you see in a family WhatsApp group every morning.",
+      "answers": [
+        { "text": "Glittery \"Good Morning\" flower GIFs", "points": 40 },
+        { "text": "Unverified health remedies (\"Eat garlic\")", "points": 24 },
+        { "text": "Political forwards / News clips", "points": 15 },
+        { "text": "Religious quotes / Devotional videos", "points": 10 },
+        { "text": "Birthday wishes with 50 emojis", "points": 6 },
+        { "text": "Blurry vacation photos from an uncle", "points": 5 }
+      ]
+    },
+    {
+      "theme": "🏠 Indian Household Habits & WhatsApp",
+      "title": "Round 21",
+      "multiplier": 1,
+      "prompt": "Name something in EVERY Indian spice box (masala dabba).",
+      "answers": [
+        { "text": "Turmeric / Haldi", "points": 36 },
+        { "text": "Cumin seeds / Jeera", "points": 25 },
+        { "text": "Red chili powder / Mirchi", "points": 16 },
+        { "text": "Garam masala", "points": 11 },
+        { "text": "Coriander powder / Dhaniya", "points": 7 },
+        { "text": "Mustard seeds / Rai / Hing", "points": 5 }
+      ]
+    },
+    {
+      "theme": "🏠 Indian Household Habits & WhatsApp",
+      "title": "Round 22",
+      "multiplier": 2,
+      "prompt": "Name a classic excuse an Indian kid gives to skip a family party.",
+      "answers": [
+        { "text": "\"Too much homework / studying for exam\"", "points": 42 },
+        { "text": "\"Big work deadline / project due\"", "points": 24 },
+        { "text": "\"Not feeling well / have a migraine\"", "points": 16 },
+        { "text": "\"Already have plans with friends\"", "points": 11 },
+        { "text": "\"I won't know anyone my age there!\"", "points": 7 }
+      ]
+    },
+    {
+      "theme": "🏠 Indian Household Habits & WhatsApp",
+      "title": "Round 23",
+      "multiplier": 2,
+      "prompt": "Name something an Indian dad insists on doing himself.",
+      "answers": [
+        { "text": "Fixing plumbing / appliances via YouTube", "points": 38 },
+        { "text": "Doing his own taxes / spreadsheets", "points": 25 },
+        { "text": "Mowing the lawn / Washing the car", "points": 16 },
+        { "text": "Assembling furniture / Mounting TV", "points": 12 },
+        { "text": "Cutting hair / Trimming trees", "points": 9 }
+      ]
+    },
+    {
+      "theme": "🏠 Indian Household Habits & WhatsApp",
+      "title": "Round 24",
+      "multiplier": 3,
+      "prompt": "Name something an Indian parent considers a \"waste of money.\"",
+      "answers": [
+        { "text": "Eating out (\"We have food at home!\")", "points": 38 },
+        { "text": "Buying bottled water at airport/park", "points": 25 },
+        { "text": "Paying for extended warranties / AppleCare", "points": 16 },
+        { "text": "Designer clothes / Luxury cars", "points": 12 },
+        { "text": "Valet parking or airport seat selection", "points": 9 }
+      ]
+    },
+    {
+      "theme": "💃 Weddings, Sangeets & Big Parties",
+      "title": "Round 25",
+      "multiplier": 1,
+      "prompt": "Name something guaranteed on the dance floor at an Indian wedding.",
+      "answers": [
+        { "text": "\"Screwing in the lightbulb\" bhangra move", "points": 38 },
+        { "text": "Aunties forming a tight circle pulling people in", "points": 25 },
+        { "text": "Uncles doing off-beat shoulder bounces", "points": 16 },
+        { "text": "Throwing fake cash / dollar bills in the air", "points": 10 },
+        { "text": "Kids sliding across the floor on knees", "points": 6 },
+        { "text": "Losing a safety pin, dupatta, or shoe", "points": 5 }
+      ]
+    },
+    {
+      "theme": "💃 Weddings, Sangeets & Big Parties",
+      "title": "Round 26",
+      "multiplier": 1,
+      "prompt": "Name a song that packs the dance floor at any Desi party.",
+      "answers": [
+        { "text": "\"Kala Chashma\"", "points": 36 },
+        { "text": "\"Mundian To Bach Ke\"", "points": 26 },
+        { "text": "\"London Thumakda\"", "points": 16 },
+        { "text": "\"Chaiyya Chaiyya\"", "points": 10 },
+        { "text": "\"Badtameez Dil\" / \"Gallan Goodiyaan\"", "points": 7 },
+        { "text": "\"Tunak Tunak Tun\"", "points": 5 }
+      ]
+    },
+    {
+      "theme": "💃 Weddings, Sangeets & Big Parties",
+      "title": "Round 27",
+      "multiplier": 2,
+      "prompt": "Name a complaint heard after a huge Indian wedding or party.",
+      "answers": [
+        { "text": "\"Food ran out / Catering too spicy or cold\"", "points": 38 },
+        { "text": "\"Started 2 hours late (Indian Standard Time)\"", "points": 26 },
+        { "text": "\"DJ music was way too loud to talk!\"", "points": 16 },
+        { "text": "\"Speeches / performances went on forever\"", "points": 12 },
+        { "text": "\"Parking nightmare / Not enough seating\"", "points": 8 }
+      ]
+    },
+    {
+      "theme": "💃 Weddings, Sangeets & Big Parties",
+      "title": "Round 28",
+      "multiplier": 3,
+      "prompt": "Name something that goes wrong right before a big Indian party starts.",
+      "answers": [
+        { "text": "Blouse, kurta, or zipper breaks last minute", "points": 36 },
+        { "text": "Caterer or biryani tray is 1 hour late", "points": 26 },
+        { "text": "Fighting over the bathroom / iron / curling iron", "points": 18 },
+        { "text": "Someone forgot the gift envelope (shagun)", "points": 12 },
+        { "text": "Mom stressed yelling to clean living room", "points": 8 }
+      ]
+    },
+    {
+      "theme": "✈️ Travel, Careers & Uncle Debates",
+      "title": "Round 29",
+      "multiplier": 2,
+      "prompt": "Name something you MUST pack in your suitcase when flying back from India to the US.",
+      "answers": [
+        { "text": "Snacks / Namkeen / Chakli / Banana chips", "points": 35 },
+        { "text": "Homemade pickles (Achar) / Masalas / Ghee", "points": 25 },
+        { "text": "Sweets / Mithai (Kaju Katli, Mysore Pak)", "points": 18 },
+        { "text": "Clothes / Kurtas / Sarees for weddings", "points": 13 },
+        { "text": "Indian medicines / Ayurvedic creams", "points": 9 }
+      ]
+    },
+    {
+      "theme": "✈️ Travel, Careers & Uncle Debates",
+      "title": "Round 30",
+      "multiplier": 2,
+      "prompt": "Name a way you can immediately tell an Indian family is at the airport.",
+      "answers": [
+        { "text": "Suitcases wrapped in plastic or bright ribbons", "points": 36 },
+        { "text": "Repacking overweight bags on floor at check-in", "points": 26 },
+        { "text": "15 relatives waving goodbye at security", "points": 17 },
+        { "text": "Carrying homemade parathas / thepla in foil", "points": 13 },
+        { "text": "Requesting wheelchair assistance for Grandma", "points": 8 }
+      ]
+    },
+    {
+      "theme": "✈️ Travel, Careers & Uncle Debates",
+      "title": "Round 31",
+      "multiplier": 2,
+      "prompt": "Name a career path that makes Indian parents beam with pride when bragging to relatives.",
+      "answers": [
+        { "text": "Doctor / Surgeon", "points": 45 },
+        { "text": "Software / AI / Computer Engineer", "points": 28 },
+        { "text": "Lawyer", "points": 12 },
+        { "text": "Finance / Wall Street / Investment Banker", "points": 9 },
+        { "text": "CEO / Startup Founder", "points": 6 }
+      ]
+    },
+    {
+      "theme": "✈️ Travel, Careers & Uncle Debates",
+      "title": "Round 32",
+      "multiplier": 3,
+      "prompt": "Name a topic that starts a 45-minute debate among uncles after chai.",
+      "answers": [
+        { "text": "Indian / US Politics", "points": 38 },
+        { "text": "Cricket (IPL, World Cup, team selection)", "points": 25 },
+        { "text": "Real estate / Interest rates / Stock market", "points": 18 },
+        { "text": "Whose kids got into which college / job", "points": 11 },
+        { "text": "Traffic / Which route has fewer tolls", "points": 8 }
+      ]
+    },
+    {
+      "theme": "✈️ Travel, Careers & Uncle Debates",
+      "title": "Round 33",
+      "multiplier": 3,
+      "prompt": "Name a classic trope or scene you see in almost every old-school Bollywood movie.",
+      "answers": [
+        { "text": "Choreographed dance in the rain or Swiss Alps", "points": 36 },
+        { "text": "Rich parents forbidding marriage to someone poor", "points": 25 },
+        { "text": "One punch sending 10 bad guys flying in slow-mo", "points": 18 },
+        { "text": "Dramatic courtroom / police arriving at the end", "points": 12 },
+        { "text": "Long-lost twins separated at a fair (Mela)", "points": 9 }
+      ]
+    },
+    {
+      "theme": "✈️ Travel, Careers & Uncle Debates",
+      "title": "Round 34",
+      "multiplier": 3,
+      "prompt": "Name something that always happens on an Indian family road trip.",
+      "answers": [
+        { "text": "Packing enough homemade thepla & snacks for 3 days", "points": 38 },
+        { "text": "Dad refusing to stop for bathroom breaks", "points": 25 },
+        { "text": "Leaving 2 hours after the '5:00 AM sharp' plan", "points": 16 },
+        { "text": "Arguing over Google Maps vs. Dad's shortcut", "points": 12 },
+        { "text": "Blasting 90s Bollywood songs the whole drive", "points": 9 }
+      ]
+    },
+    {
+      "theme": "⚡ Sudden-Death Tie-Breakers (#1 Answer Only)",
+      "title": "Tie-Breaker 1",
+      "multiplier": 3,
+      "prompt": "SUDDEN DEATH (#1 Answer Only): Name the ONE thing an Indian mom will NEVER let you leave her house without doing.",
+      "answers": [
+        { "text": "Eating food / Taking leftovers in Tupperware!", "points": 100 }
+      ]
+    },
+    {
+      "theme": "⚡ Sudden-Death Tie-Breakers (#1 Answer Only)",
+      "title": "Tie-Breaker 2",
+      "multiplier": 3,
+      "prompt": "SUDDEN DEATH (#1 Answer Only): Name the ultimate status symbol in an Indian-American household.",
+      "answers": [
+        { "text": "Kid in Med School / Ivy League (or Tesla in driveway)", "points": 100 }
+      ]
+    },
+    {
+      "theme": "⚡ Sudden-Death Tie-Breakers (#1 Answer Only)",
+      "title": "Tie-Breaker 3",
+      "multiplier": 3,
+      "prompt": "SUDDEN DEATH (#1 Answer Only): What time do guests actually show up when an Indian party invite says '6:00 PM'?",
+      "answers": [
+        { "text": "7:30 PM – 8:00 PM (Indian Standard Time!)", "points": 100 }
+      ]
+    }
+  ],
+  "fastMoney": [
+    {
+      "prompt": "Name a spice every Indian kitchen runs out of right before a big party.",
+      "hint": "Garam Masala (35), Cumin/Jeera (28), Cardamom/Elaichi (18), Turmeric/Haldi (12), Cilantro (7)"
+    },
+    {
+      "prompt": "Name something an Indian mom saves and reuses instead of throwing away.",
+      "hint": "Yogurt/Dahi tubs (45), Grocery bags (25), Pickle jars (15), Gift bags (10), Foil/Ziplocs (5)"
+    },
+    {
+      "prompt": "Name a popular Indian sweet (mithai) you see at every holiday gathering.",
+      "hint": "Gulab Jamun (40), Kaju Katli (26), Rasmalai (18), Jalebi (10), Ladoo (6)"
+    },
+    {
+      "prompt": "Name a major Indian city people always ask if you've visited recently.",
+      "hint": "Mumbai (36), Delhi (28), Bengaluru (18), Hyderabad (10), Ahmedabad/Kolkata (8)"
+    },
+    {
+      "prompt": "Name something you hear blasting from the TV in an Indian living room.",
+      "hint": "Cricket match (42), Bollywood movies/music (26), News debates (18), Serials (9), Bhajans (5)"
+    },
+    {
+      "prompt": "Name an Indian street food (chaat) everyone crowds around at a party.",
+      "hint": "Pani Puri / Golgappa (44), Samosa Chaat (24), Bhel Puri (15), Pav Bhaji (11), Aloo Tikki (6)"
+    },
+    {
+      "prompt": "Name a car brand you see parked in every Desi neighborhood driveway.",
+      "hint": "Tesla (38), Toyota / Lexus (26), Honda / Acura (16), BMW (12), Mercedes (8)"
+    },
+    {
+      "prompt": "Name something an Indian dad checks three times before leaving for the airport.",
+      "hint": "Passports (45), Stove / Gas off (22), Doors locked (16), Boarding passes (10), Luggage weight (7)"
+    },
+    {
+      "prompt": "Name a Bollywood actor even your grandparents know by name.",
+      "hint": "Amitabh Bachchan (42), Shah Rukh Khan (32), Salman Khan (12), Dharmendra (8), Raj Kapoor (6)"
+    },
+    {
+      "prompt": "Name something you put in masala chai besides tea leaves and milk.",
+      "hint": "Ginger / Adrak (42), Cardamom / Elaichi (30), Sugar (16), Cloves / Cinnamon (8), Tulsi (4)"
+    },
+    {
+      "prompt": "Name an aisle or store Indian parents never skip on a weekend.",
+      "hint": "Costco (44), Patel Brothers / Indian Grocery (30), Trader Joe's (12), Home Depot (8), Marshalls (6)"
+    },
+    {
+      "prompt": "Name a traditional Indian outfit people wear to a festive dinner.",
+      "hint": "Saree (38), Kurta Pajama (30), Lehenga (16), Salwar Kameez (10), Sherwani (6)"
+    },
+    {
+      "prompt": "Name a fruit Indian parents cut up and bring to your room without asking.",
+      "hint": "Mango (42), Apple (24), Pomegranate / Anar (16), Papaya (10), Orange / Guava (8)"
+    },
+    {
+      "prompt": "Name a game played at every big Desi family get-together.",
+      "hint": "Teen Patti / Poker (36), Antakshari (26), Carrom (16), Dumb Charades (14), Ludo (8)"
+    },
+    {
+      "prompt": "Name a home remedy an Indian mom gives you the second you sneeze.",
+      "hint": "Haldi Doodh / Turmeric Milk (40), Ginger / Masala Chai (25), Vicks VapoRub (18), Steam / Kadha (11), Honey & Warm Water (6)"
+    },
+    {
+      "prompt": "Name an Indian bread people order at every restaurant.",
+      "hint": "Garlic Naan (48), Butter Naan (22), Roti / Chapati (14), Aloo Paratha (10), Bhatura (6)"
+    },
+    {
+      "prompt": "Name a question aunties ask single twenty-somethings at every party.",
+      "hint": "When are you getting married? (48), Seeing anyone? (22), How's your job/salary? (15), Buying a house? (9), Grad school? (6)"
+    },
+    {
+      "prompt": "Name something you always find inside an Indian freezer.",
+      "hint": "Frozen Parathas / Naan (38), Green Peas / Mixed Veggies (24), Ginger-Garlic cubes (16), Kulfi / Ice Cream (12), Extra Rotis (10)"
+    },
+    {
+      "prompt": "Name a legendary Indian cricketer uncles still compare every new player to.",
+      "hint": "Sachin Tendulkar (45), MS Dhoni (24), Virat Kohli (16), Kapil Dev (9), Sunil Gavaskar (6)"
+    },
+    {
+      "prompt": "Name a condiment or side always on the table at an Indian meal.",
+      "hint": "Mango Pickle / Achaar (36), Raita / Yogurt (26), Mint-Cilantro Chutney (18), Tamarind Chutney (12), Papad (8)"
+    },
+    {
+      "prompt": "Name something that takes way longer than expected at an Indian wedding.",
+      "hint": "Family group photos on stage (40), Baraat procession (24), Ceremony / Pheras (16), Buffet line (12), Speeches & dances (8)"
+    },
+    {
+      "prompt": "Name a vegetable Indian moms sneak into almost every dish.",
+      "hint": "Potatoes / Aloo (38), Cauliflower / Gobi (24), Spinach / Palak (16), Peas / Matar (12), Bottle Gourd / Lauki (10)"
+    },
+    {
+      "prompt": "Name an excuse people give for showing up an hour late to a Desi party.",
+      "hint": "Traffic was terrible (40), Getting ready / ironing saree (24), Kids took forever (16), Making dish / chai at home (12), Parking (8)"
+    },
+    {
+      "prompt": "Name something an Indian dad does to save money on the utility bill.",
+      "hint": "Turning off lights in every room (44), Adjusting the thermostat (28), Unplugging chargers (14), Shorter showers (8), Opening windows (6)"
+    },
+    {
+      "prompt": "Name a song or artist that instantly gets every generation on the dance floor.",
+      "hint": "Punjabi / Daler Mehndi / Diljit (38), 90s Bollywood hits (26), Kajra Re / Chaiyya Chaiyya (16), Kala Chashma (12), Garba / Dandiya beats (8)"
+    }
+  ]
+}
+
+  },
+  {
+    id: "sample-friendly-feud.json",
+    label: "🤝 Friendly-Feud Sample Pack (3 Rounds)",
+    file: "./decks/sample-friendly-feud.json",
+    data: {
+  "rounds": [
+    {
+      "question": "Name something people always do right after finishing a huge meal.",
+      "multiply": 1,
+      "answers": [
+        { "ans": "Take a nap on the couch", "pnt": 40 },
+        { "ans": "Have coffee or tea", "pnt": 24 },
+        { "ans": "Put on stretchy pants", "pnt": 15 },
+        { "ans": "Eat dessert", "pnt": 10 },
+        { "ans": "Watch sports or a movie", "pnt": 6 },
+        { "ans": "Go for a walk", "pnt": 5 }
+      ]
+    },
+    {
+      "question": "Name a reason someone might be running 30 minutes late to a party.",
+      "multiply": 2,
+      "answers": [
+        { "ans": "Stuck in traffic / Parking", "pnt": 38 },
+        { "ans": "Couldn't decide what to wear", "pnt": 25 },
+        { "ans": "Stopped to pick up food or drinks", "pnt": 16 },
+        { "ans": "Lost track of time", "pnt": 12 },
+        { "ans": "Waiting on spouse or kids", "pnt": 9 }
+      ]
+    }
+  ],
+  "final_round": [
+    {
+      "question": "Name a pizza topping almost everyone can agree on.",
+      "answers": [
+        ["Cheese", 42],
+        ["Pepperoni", 30],
+        ["Mushrooms", 14],
+        ["Olives", 8],
+        ["Peppers", 6]
+      ]
+    },
+    {
+      "question": "Name something people save and reuse instead of throwing away.",
+      "answers": [
+        ["Plastic containers", 45],
+        ["Grocery bags", 25],
+        ["Glass jars", 15],
+        ["Gift bags", 10],
+        ["Foil", 5]
+      ]
+    }
+  ]
+}
+
+  }
+];

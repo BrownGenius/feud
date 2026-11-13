@@ -1,0 +1,690 @@
+// =====================================================================
+// VIEW RENDERING ENGINE (TV, SOLO BOARD, HOST REMOTE, PODIUM BUZZERS)
+// Supports dynamic deck sizes, match slicing, unplayed round tracking,
+// 1-tap Fast Money answer/score chips, 3-strike Steal banner, and
+// Winner celebration screen.
+// =====================================================================
+
+window.Feud = window.Feud || {};
+
+(function (Feud) {
+  let lastRenderedRoundIdx = -1;
+  let lastRenderedRevealed = new Set();
+  let fmHostSignature = "";
+
+  function escapeHtml(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function showToast(msg) {
+    const el = document.getElementById("toastBanner");
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => {
+      el.classList.add("hidden");
+    }, 2600);
+  }
+
+  function showBigRedXOverlay(count) {
+    Feud.playBuzzerHonk();
+    const overlay = document.getElementById("strikeOverlay");
+    if (!overlay) return;
+    overlay.innerHTML = "";
+    const num = Math.max(1, Math.min(3, Number(count) || 1));
+    for (let i = 0; i < num; i++) {
+      const box = document.createElement("div");
+      box.className = "big-red-x display-font";
+      box.textContent = "X";
+      overlay.appendChild(box);
+    }
+    overlay.classList.remove("hidden");
+    clearTimeout(window._xTimer);
+    window._xTimer = setTimeout(() => {
+      overlay.classList.add("hidden");
+    }, 1400);
+  }
+
+  function renderBranding(roomState) {
+    const title = (roomState && roomState.gameTitle) || "Party Feud";
+    const icon = (roomState && roomState.gameIcon) || "🎉";
+    const matchCount = Feud.getRoundCount(roomState);
+    const stats = Feud.getDeckPlayStats ? Feud.getDeckPlayStats(roomState) : null;
+    const totalDeckRounds = stats ? stats.totalRounds : matchCount;
+    const defaultDeckName =
+      (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) || "Starter Party Deck";
+    const deckName =
+      roomState && roomState.customDeck && roomState.customDeck.name
+        ? roomState.customDeck.name
+        : defaultDeckName;
+
+    const topIcon = document.getElementById("topBrandIcon");
+    if (topIcon) topIcon.textContent = icon;
+
+    const lobbyBadge = document.getElementById("lobbyBadgeText");
+    if (lobbyBadge) lobbyBadge.textContent = `${icon} 4-Phone Live Party Setup`;
+
+    const topTitle = document.getElementById("topBrandTitle");
+    if (topTitle) topTitle.textContent = title;
+
+    const lobbyTitle = document.getElementById("lobbyHeroTitle");
+    if (lobbyTitle) lobbyTitle.textContent = title;
+
+    const deckBadge = document.getElementById("activeDeckSummary");
+    if (deckBadge) {
+      deckBadge.textContent = `📚 Active Deck: ${deckName} (${totalDeckRounds} Total Rds)`;
+    }
+
+    const setupDeckBadge = document.getElementById("setupActiveDeckBadge");
+    if (setupDeckBadge) {
+      setupDeckBadge.textContent = `${deckName} (${totalDeckRounds} Rds)`;
+    }
+
+    const usageBadge = document.getElementById("setupDeckUsageBadge");
+    if (usageBadge && stats) {
+      usageBadge.textContent = `📊 ${stats.remainingRoundsCount} of ${stats.totalRounds} Rounds Unused`;
+      usageBadge.className =
+        stats.remainingRoundsCount > 0 ? "pill-badge awake-ok" : "pill-badge awake-warn";
+    }
+  }
+
+  function renderTurnTimerUI(roomState) {
+    const dur = Number(roomState.turnTimerDuration) || 10;
+    const rem =
+      roomState.turnTimerRemaining !== undefined && roomState.turnTimerRemaining !== null
+        ? Number(roomState.turnTimerRemaining)
+        : dur;
+    const running = Boolean(roomState.turnTimerRunning);
+    const isExpired = rem <= 0;
+    const isUrgent = running && rem > 0 && rem <= 3;
+
+    const labelText = isExpired ? "TIME!" : `${rem}s`;
+
+    const tvBadge = document.getElementById("tvTurnTimerBadge");
+    const tvVal = document.getElementById("tvTurnTimerValue");
+    if (tvBadge && tvVal) {
+      tvVal.textContent = labelText;
+      tvBadge.className = `turn-timer-pill display-font${running ? " running" : ""}${
+        isUrgent ? " urgent" : ""
+      }${isExpired ? " expired" : ""}`;
+    }
+
+    const hostPill = document.getElementById("hostTurnTimerPill");
+    const hostVal = document.getElementById("hostTurnTimerDisplay");
+    if (hostPill && hostVal) {
+      hostVal.textContent = labelText;
+      hostPill.className = `turn-timer-pill display-font${running ? " running" : ""}${
+        isUrgent ? " urgent" : ""
+      }${isExpired ? " expired" : ""}`;
+    }
+
+    const hostToggleBtn = document.getElementById("hostBtnTurnTimerToggle");
+    if (hostToggleBtn) {
+      hostToggleBtn.textContent = running ? "⏸️ Pause Timer (T)" : "▶️ Start Timer (T)";
+    }
+
+    const soloToggleBtn = document.getElementById("soloBtnTimerToggle");
+    if (soloToggleBtn) {
+      soloToggleBtn.textContent = running ? "⏸️ Pause (T)" : "▶️ Start (T)";
+    }
+  }
+
+  function populateRoundDropdowns(roomState) {
+    const selectors = [
+      document.getElementById("hostRoundSelect"),
+      document.getElementById("soloRoundSelect")
+    ];
+
+    const totalRounds = Feud.getRoundCount(roomState);
+
+    selectors.forEach((sel) => {
+      if (!sel) return;
+      sel.innerHTML = "";
+      const groups = new Map();
+      for (let idx = 0; idx < totalRounds; idx++) {
+        const r = Feud.getRoundData(roomState, idx);
+        const theme = r.theme || "🎉 Rounds";
+        if (!groups.has(theme)) groups.set(theme, []);
+        groups.get(theme).push({ r, idx });
+      }
+
+      groups.forEach((items, theme) => {
+        const og = document.createElement("optgroup");
+        og.label = theme;
+        items.forEach(({ r, idx }) => {
+          const opt = document.createElement("option");
+          opt.value = String(idx);
+          opt.textContent = `${r.title} (${r.multiplier}x): ${r.prompt.slice(0, 44)}…`;
+          if (idx === roomState.roundIdx) opt.selected = true;
+          og.appendChild(opt);
+        });
+        sel.appendChild(og);
+      });
+    });
+  }
+
+  function renderTvWinnerScreen(roomState) {
+    const t1 = roomState.team1Name || "Team 1";
+    const t2 = roomState.team2Name || "Team 2";
+    const s1 = Number(roomState.team1Score) || 0;
+    const s2 = Number(roomState.team2Score) || 0;
+
+    const winTitle = document.getElementById("tvWinnerTitle");
+    const winSub = document.getElementById("tvWinnerSubtitle");
+    if (winTitle && winSub) {
+      if (s1 > s2) {
+        winTitle.textContent = `👑 ${t1} Wins!`;
+        winSub.textContent = `Victory by ${s1 - s2} points!`;
+      } else if (s2 > s1) {
+        winTitle.textContent = `👑 ${t2} Wins!`;
+        winSub.textContent = `Victory by ${s2 - s1} points!`;
+      } else {
+        winTitle.textContent = "⚡ It's a Tie Match!";
+        winSub.textContent = "Play the Sudden-Death Tie-Breaker round to crown a champion!";
+      }
+    }
+
+    const n1 = document.getElementById("tvWinT1Name");
+    const v1 = document.getElementById("tvWinT1Score");
+    const n2 = document.getElementById("tvWinT2Name");
+    const v2 = document.getElementById("tvWinT2Score");
+    if (n1) n1.textContent = t1;
+    if (v1) v1.textContent = String(s1);
+    if (n2) n2.textContent = t2;
+    if (v2) v2.textContent = String(s2);
+  }
+
+  function renderTvView(roomState, activeRole, handlers) {
+    renderBranding(roomState);
+    renderTurnTimerUI(roomState);
+    const totalRounds = Feud.getRoundCount(roomState);
+    const round = Feud.getRoundData(roomState, roomState.roundIdx);
+    const multText =
+      round.multiplier === 1 ? "1x Single" : round.multiplier === 2 ? "2x Double" : "3x Triple";
+
+    document.getElementById("tvThemeBadge").textContent = round.theme;
+    document.getElementById("tvPotValue").textContent = String(roomState.pot || 0);
+    document.getElementById("tvMultBadge").textContent = `${multText} Points`;
+    document.getElementById("tvStrikesBadge").textContent = `Strikes: ${roomState.strikes || 0} / 3`;
+
+    document.getElementById("tvTeam1Name").textContent = roomState.team1Name;
+    document.getElementById("tvTeam1Score").textContent = String(roomState.team1Score || 0);
+    document.getElementById("tvTeam2Name").textContent = roomState.team2Name;
+    document.getElementById("tvTeam2Score").textContent = String(roomState.team2Score || 0);
+
+    const t1Card = document.getElementById("tvTeam1Card");
+    const t2Card = document.getElementById("tvTeam2Card");
+    t1Card.classList.toggle("winner-glow", roomState.buzzerWinner === 1);
+    t2Card.classList.toggle("winner-glow", roomState.buzzerWinner === 2);
+    t1Card.classList.toggle("playing-glow", roomState.controllingTeam === 1);
+    t2Card.classList.toggle("playing-glow", roomState.controllingTeam === 2);
+
+    const t1Ctrl = document.getElementById("tvTeam1ControlBadge");
+    const t2Ctrl = document.getElementById("tvTeam2ControlBadge");
+    if (t1Ctrl) {
+      t1Ctrl.classList.toggle("hidden", roomState.controllingTeam !== 1);
+      t1Ctrl.classList.toggle("active-control", roomState.controllingTeam === 1);
+    }
+    if (t2Ctrl) {
+      t2Ctrl.classList.toggle("hidden", roomState.controllingTeam !== 2);
+      t2Ctrl.classList.toggle("active-control", roomState.controllingTeam === 2);
+    }
+
+    const soloBar = document.getElementById("soloControlsBar");
+    if (soloBar) {
+      soloBar.classList.toggle("hidden", activeRole !== "solo");
+      const soloSel = document.getElementById("soloRoundSelect");
+      if (soloSel) soloSel.value = String(roomState.roundIdx);
+      const soloBtnQ = document.getElementById("soloBtnRevealQ");
+      if (soloBtnQ) {
+        soloBtnQ.textContent = roomState.questionRevealed
+          ? "🔄 Restart Timer (R)"
+          : "👁️ Show Q & Start Timer (Space)";
+      }
+    }
+
+    const mainWrap = document.getElementById("tvMainBoardWrap");
+    const fmWrap = document.getElementById("tvFastMoneyWrap");
+    const winWrap = document.getElementById("tvWinnerWrap");
+
+    if (roomState.stage === "winner") {
+      mainWrap.classList.add("hidden");
+      fmWrap.classList.add("hidden");
+      if (winWrap) winWrap.classList.remove("hidden");
+      renderTvWinnerScreen(roomState);
+      return;
+    } else if (roomState.stage === "fast") {
+      mainWrap.classList.add("hidden");
+      fmWrap.classList.remove("hidden");
+      if (winWrap) winWrap.classList.add("hidden");
+      renderTvFastMoney(roomState);
+      return;
+    } else {
+      mainWrap.classList.remove("hidden");
+      fmWrap.classList.add("hidden");
+      if (winWrap) winWrap.classList.add("hidden");
+    }
+
+    document.getElementById("tvRoundCounter").textContent = `${round.title} (${
+      roomState.roundIdx + 1
+    } of ${totalRounds})`;
+
+    const promptBanner = document.getElementById("tvPromptBanner");
+    const promptText = document.getElementById("tvPromptText");
+    if (roomState.questionRevealed) {
+      if (promptBanner) promptBanner.classList.remove("question-hidden");
+      promptText.textContent = round.prompt;
+    } else {
+      if (promptBanner) promptBanner.classList.add("question-hidden");
+      promptText.textContent =
+        activeRole === "solo"
+          ? "🔒 Question Hidden — Click 'Show Q & Start Timer' (or press Space) when ready!"
+          : "🔒 Question Hidden — Get Ready for the Face-Off!";
+    }
+
+    const grid = document.getElementById("tvAnswerGrid");
+    grid.innerHTML = "";
+    const colL = document.createElement("div");
+    colL.className = "answer-col";
+    const colR = document.createElement("div");
+    colR.className = "answer-col";
+
+    const revSet = new Set(roomState.revealed || []);
+    const isSameRound = lastRenderedRoundIdx === roomState.roundIdx;
+
+    const slotCount = Math.max(6, round.answers.length);
+    const halfCount = Math.ceil(slotCount / 2);
+
+    for (let i = 0; i < slotCount; i++) {
+      const ans = round.answers[i];
+      const target = i < halfCount ? colL : colR;
+      if (!ans) {
+        const empty = document.createElement("div");
+        empty.className = "feud-tile-empty";
+        target.appendChild(empty);
+        continue;
+      }
+
+      const tile = document.createElement("div");
+      const isRevealed = revSet.has(i);
+      const justFlipped = isRevealed && (!isSameRound || !lastRenderedRevealed.has(i));
+
+      if (isRevealed) {
+        tile.className = `feud-tile revealed-state${justFlipped ? " just-revealed" : ""}${
+          activeRole === "solo" ? " interactive-tile" : ""
+        }`;
+        tile.innerHTML = `
+          <span class="tile-ans-text">${escapeHtml(ans.text)}</span>
+          <span class="tile-pts-box display-font">${ans.points * round.multiplier}</span>
+        `;
+      } else {
+        tile.className = `feud-tile hidden-state${activeRole === "solo" ? " interactive-tile" : ""}`;
+        tile.innerHTML = `<span class="tile-num-badge display-font">${i + 1}</span>`;
+      }
+
+      if (activeRole === "solo" && handlers && handlers.onToggleAnswer) {
+        tile.title = isRevealed ? "Click to hide answer" : `Click or press ${i + 1} to reveal answer`;
+        tile.addEventListener("click", () => handlers.onToggleAnswer(i));
+      }
+
+      target.appendChild(tile);
+    }
+
+    lastRenderedRoundIdx = roomState.roundIdx;
+    lastRenderedRevealed = new Set(revSet);
+
+    grid.appendChild(colL);
+    grid.appendChild(colR);
+
+    const buzzBanner = document.getElementById("tvBuzzerBanner");
+    buzzBanner.classList.remove("active", "steal-alert");
+
+    if ((roomState.strikes || 0) >= 3) {
+      const stealTeam =
+        roomState.controllingTeam === 1
+          ? roomState.team2Name
+          : roomState.controllingTeam === 2
+          ? roomState.team1Name
+          : "Opposing Team";
+      buzzBanner.textContent = `🚨 3 STRIKES! STEAL OPPORTUNITY FOR ${stealTeam}! (15s Huddle)`;
+      buzzBanner.classList.add("steal-alert");
+    } else if (roomState.buzzerWinner === 1) {
+      buzzBanner.textContent = `🚨 ${roomState.team1Name} Buzzed In First!`;
+      buzzBanner.classList.add("active");
+    } else if (roomState.buzzerWinner === 2) {
+      buzzBanner.textContent = `🚨 ${roomState.team2Name} Buzzed In First!`;
+      buzzBanner.classList.add("active");
+    } else {
+      buzzBanner.textContent =
+        activeRole === "solo"
+          ? "💡 Click any numbered tile (or press keys 1–8) to reveal! Press Space to Reveal Question."
+          : "🔔 Podium Buzzers Ready!";
+    }
+  }
+
+  function renderTvFastMoney(roomState) {
+    const fmQuestions = Feud.getFastMoneyList(roomState);
+    document.getElementById("tvFmClock").textContent = String(roomState.fmClock ?? 20);
+    const entries = roomState.fmEntries || [];
+    const total = entries.reduce(
+      (s, r) => s + (Number(r.p1Pts) || 0) + (Number(r.p2Pts) || 0),
+      0
+    );
+    document.getElementById("tvFmTotal").textContent = String(total);
+
+    const box = document.getElementById("tvFmRows");
+    box.innerHTML = fmQuestions
+      .map((q, i) => {
+        const e = entries[i] || {};
+        const p1Shown = roomState.fmHideP1 ? "HIDDEN" : e.p1Ans || "—";
+        const p1PtsShown = roomState.fmHideP1 ? "-" : e.p1Pts || 0;
+        return `
+        <div class="fm-row">
+          <div style="font-weight:800; color:#fde68a; font-size:14px;">${i + 1}. ${escapeHtml(
+            q.prompt
+          )}</div>
+          <div style="display:flex; justify-content:space-between; background:#020617; padding:8px 12px; border-radius:8px; border:1px solid #334155;">
+            <span style="font-weight:900;">${escapeHtml(p1Shown)}</span>
+            <span style="color:var(--gold); font-weight:900;">${p1PtsShown}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; background:#020617; padding:8px 12px; border-radius:8px; border:1px solid #334155;">
+            <span style="font-weight:900;">${escapeHtml(e.p2Ans || "—")}</span>
+            <span style="color:var(--gold); font-weight:900;">${e.p2Pts || 0}</span>
+          </div>
+        </div>
+      `;
+      })
+      .join("");
+  }
+
+  function parseFmHintIntoChips(hintStr) {
+    if (!hintStr) return [];
+    const parts = String(hintStr)
+      .replace(/^Top\s*Answers:\s*/i, "")
+      .split(",");
+    const chips = [];
+    parts.forEach((part) => {
+      const m = part.trim().match(/^(.+?)\s*\((\d+)\)\s*$/);
+      if (m) {
+        chips.push({ text: m[1].trim(), pts: parseInt(m[2], 10) || 0 });
+      }
+    });
+    return chips;
+  }
+
+  function renderHostView(roomState, handlers) {
+    renderBranding(roomState);
+    renderTurnTimerUI(roomState);
+    const round = Feud.getRoundData(roomState, roomState.roundIdx);
+    const sel = document.getElementById("hostRoundSelect");
+    if (sel) sel.value = String(roomState.roundIdx);
+
+    const fmTab = document.getElementById("hostTabFm");
+    if (fmTab) {
+      fmTab.classList.toggle("hidden", roomState.enableFastMoney === false);
+      fmTab.classList.toggle("gold", roomState.stage === "fast");
+    }
+    document.getElementById("hostTabMain").classList.toggle("gold", roomState.stage === "main");
+
+    if (roomState.stage === "fast") {
+      document.getElementById("hostMainControls").classList.add("hidden");
+      document.getElementById("hostFmControls").classList.remove("hidden");
+      renderHostFastMoney(roomState, handlers);
+      return;
+    } else {
+      document.getElementById("hostMainControls").classList.remove("hidden");
+      document.getElementById("hostFmControls").classList.add("hidden");
+    }
+
+    document.getElementById("hostRoundBadge").textContent = `${round.title} • ${round.multiplier}x • ${round.theme}`;
+    document.getElementById("hostPotDisplay").textContent = String(roomState.pot || 0);
+    document.getElementById("hostPromptText").textContent = round.prompt;
+
+    const qStatusBadge = document.getElementById("hostQuestionStatusBadge");
+    if (qStatusBadge) {
+      if (roomState.questionRevealed) {
+        qStatusBadge.textContent = "📺 Question Shown on TV";
+        qStatusBadge.className = "pill-badge awake-ok";
+      } else {
+        qStatusBadge.textContent = "🙈 Question Hidden on TV";
+        qStatusBadge.className = "pill-badge awake-warn";
+      }
+    }
+
+    const revealBtn = document.getElementById("hostBtnRevealQuestion");
+    if (revealBtn) {
+      revealBtn.textContent = roomState.questionRevealed
+        ? "🔄 Question Live — Restart Timer (Space / R)"
+        : "👁️ Show Question & Start Timer (Space)";
+    }
+
+    const toggleOnlyBtn = document.getElementById("hostBtnToggleQuestionOnly");
+    if (toggleOnlyBtn) {
+      toggleOnlyBtn.textContent = roomState.questionRevealed
+        ? "🙈 Hide Question on TV"
+        : "👁️ Show Question (No Timer)";
+    }
+
+    const ctrl0 = document.getElementById("hostCtrlBtn0");
+    const ctrl1 = document.getElementById("hostCtrlBtn1");
+    const ctrl2 = document.getElementById("hostCtrlBtn2");
+    if (ctrl0) ctrl0.classList.toggle("gold", !roomState.controllingTeam);
+    if (ctrl1) {
+      ctrl1.textContent = `🎯 ${roomState.team1Name} Playing`;
+      ctrl1.classList.toggle("gold", roomState.controllingTeam === 1);
+    }
+    if (ctrl2) {
+      ctrl2.textContent = `🎯 ${roomState.team2Name} Playing`;
+      ctrl2.classList.toggle("gold", roomState.controllingTeam === 2);
+    }
+
+    const list = document.getElementById("hostAnswersList");
+    const revSet = new Set(roomState.revealed || []);
+    list.innerHTML = "";
+
+    round.answers.forEach((ans, idx) => {
+      const isRev = revSet.has(idx);
+      const pts = ans.points * round.multiplier;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `host-answer-btn ${isRev ? "is-revealed" : ""}`;
+      btn.addEventListener("click", () => handlers.onToggleAnswer(idx));
+      btn.innerHTML = `
+        <span class="host-ans-left">
+          <span class="host-rank-circle">${idx + 1}</span>
+          <span>${escapeHtml(ans.text)}</span>
+        </span>
+        <span class="host-pts-pill">${isRev ? "✅ " : ""}${pts}</span>
+      `;
+      list.appendChild(btn);
+    });
+
+    const buzzReadout = document.getElementById("hostBuzzerReadout");
+    buzzReadout.classList.remove("active", "steal-alert");
+    if ((roomState.strikes || 0) >= 3) {
+      const stealTeam =
+        roomState.controllingTeam === 1
+          ? roomState.team2Name
+          : roomState.controllingTeam === 2
+          ? roomState.team1Name
+          : "Opposing Team";
+      buzzReadout.textContent = `🚨 3 Strikes! Steal Opportunity for ${stealTeam} (15s Timer Ready)`;
+      buzzReadout.classList.add("steal-alert");
+    } else if (roomState.buzzerWinner === 1) {
+      buzzReadout.textContent = `🚨 ${roomState.team1Name} Buzzed First!`;
+      buzzReadout.classList.add("active");
+    } else if (roomState.buzzerWinner === 2) {
+      buzzReadout.textContent = `🚨 ${roomState.team2Name} Buzzed First!`;
+      buzzReadout.classList.add("active");
+    } else {
+      buzzReadout.textContent = "Ready — Waiting for Team Buzzers";
+    }
+
+    const t1In = document.getElementById("hostT1Name");
+    const t2In = document.getElementById("hostT2Name");
+    if (document.activeElement !== t1In) t1In.value = roomState.team1Name;
+    if (document.activeElement !== t2In) t2In.value = roomState.team2Name;
+    document.getElementById("hostT1Score").textContent = String(roomState.team1Score || 0);
+    document.getElementById("hostT2Score").textContent = String(roomState.team2Score || 0);
+  }
+
+  function renderHostFastMoney(roomState, handlers) {
+    const fmQuestions = Feud.getFastMoneyList(roomState);
+    document.getElementById("hostFmClock").textContent = `${roomState.fmClock ?? 20}s`;
+    const entries = roomState.fmEntries || [];
+    const total = entries.reduce(
+      (s, r) => s + (Number(r.p1Pts) || 0) + (Number(r.p2Pts) || 0),
+      0
+    );
+    document.getElementById("hostFmTotal").textContent = String(total);
+
+    const wrap = document.getElementById("hostFmRows");
+    const currentSig = fmQuestions.map((q) => `${q.prompt}::${q.hint}`).join("|");
+    if (fmHostSignature !== currentSig || wrap.children.length !== fmQuestions.length) {
+      wrap.innerHTML = "";
+      fmQuestions.forEach((q, i) => {
+        const chips = parseFmHintIntoChips(q.hint);
+        const row = document.createElement("div");
+        row.className = "fm-row";
+        row.innerHTML = `
+          <div>
+            <div style="font-weight:800; color:#fde68a; font-size:13px;">${i + 1}. ${escapeHtml(
+              q.prompt
+            )}</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:3px;">Tap chip below to auto-fill answer &amp; score:</div>
+          </div>
+          <div>
+            <div class="fm-in-pair">
+              <input id="fmHostP1Ans_${i}" class="fm-txt" type="text" placeholder="P1 Answer" />
+              <input id="fmHostP1Pts_${i}" class="fm-num display-font" type="number" min="0" max="100" placeholder="Pts" />
+            </div>
+            <div id="fmP1Chips_${i}" class="fm-chips-wrap"></div>
+          </div>
+          <div>
+            <div class="fm-in-pair">
+              <input id="fmHostP2Ans_${i}" class="fm-txt" type="text" placeholder="P2 Answer" />
+              <input id="fmHostP2Pts_${i}" class="fm-num display-font" type="number" min="0" max="100" placeholder="Pts" />
+            </div>
+            <div id="fmP2Chips_${i}" class="fm-chips-wrap"></div>
+          </div>
+        `;
+        wrap.appendChild(row);
+
+        const p1AnsEl = row.querySelector(`#fmHostP1Ans_${i}`);
+        const p1PtsEl = row.querySelector(`#fmHostP1Pts_${i}`);
+        const p2AnsEl = row.querySelector(`#fmHostP2Ans_${i}`);
+        const p2PtsEl = row.querySelector(`#fmHostP2Pts_${i}`);
+
+        p1AnsEl.addEventListener("input", (e) => handlers.onUpdateFm(i, "p1Ans", e.target.value));
+        p1PtsEl.addEventListener("change", (e) => handlers.onUpdateFm(i, "p1Pts", e.target.value));
+        p2AnsEl.addEventListener("input", (e) => handlers.onUpdateFm(i, "p2Ans", e.target.value));
+        p2PtsEl.addEventListener("change", (e) => handlers.onUpdateFm(i, "p2Pts", e.target.value));
+
+        [1, 2].forEach((playerNum) => {
+          const chipBox = row.querySelector(`#fmP${playerNum}Chips_${i}`);
+          if (!chipBox) return;
+          chips.forEach((c) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "fm-chip-btn";
+            b.textContent = `${c.text} • ${c.pts}`;
+            b.addEventListener("click", () => {
+              if (handlers.onSelectFmChip) {
+                handlers.onSelectFmChip(i, playerNum, c.text, c.pts);
+              }
+            });
+            chipBox.appendChild(b);
+          });
+          const zeroBtn = document.createElement("button");
+          zeroBtn.type = "button";
+          zeroBtn.className = "fm-chip-btn zero-chip";
+          zeroBtn.textContent = "❌ 0 Pts";
+          zeroBtn.addEventListener("click", () => {
+            if (handlers.onSelectFmChip) {
+              handlers.onSelectFmChip(i, playerNum, null, 0);
+            }
+          });
+          chipBox.appendChild(zeroBtn);
+        });
+      });
+      fmHostSignature = currentSig;
+    }
+
+    fmQuestions.forEach((_, i) => {
+      const e = entries[i] || { p1Ans: "", p1Pts: 0, p2Ans: "", p2Pts: 0 };
+      const p1AnsEl = document.getElementById(`fmHostP1Ans_${i}`);
+      const p1PtsEl = document.getElementById(`fmHostP1Pts_${i}`);
+      const p2AnsEl = document.getElementById(`fmHostP2Ans_${i}`);
+      const p2PtsEl = document.getElementById(`fmHostP2Pts_${i}`);
+
+      if (p1AnsEl && document.activeElement !== p1AnsEl) p1AnsEl.value = e.p1Ans || "";
+      if (p1PtsEl && document.activeElement !== p1PtsEl)
+        p1PtsEl.value = e.p1Pts !== undefined && e.p1Pts !== "" ? String(e.p1Pts) : "";
+      if (p2AnsEl && document.activeElement !== p2AnsEl) p2AnsEl.value = e.p2Ans || "";
+      if (p2PtsEl && document.activeElement !== p2PtsEl)
+        p2PtsEl.value = e.p2Pts !== undefined && e.p2Pts !== "" ? String(e.p2Pts) : "";
+    });
+  }
+
+  function renderBuzzerView(roomState, activeRole) {
+    renderBranding(roomState);
+    const myTeam = activeRole === "buzzer1" ? 1 : 2;
+    const myName = myTeam === 1 ? roomState.team1Name : roomState.team2Name;
+    const round = Feud.getRoundData(roomState, roomState.roundIdx);
+
+    document.getElementById("buzzerTeamLabel").textContent = `Team ${myTeam} Podium Buzzer`;
+    document.getElementById("buzzerTeamTitle").textContent = myName;
+    document.getElementById("buzzerRoundPrompt").textContent = roomState.questionRevealed
+      ? round.prompt
+      : "🔒 Waiting for Host to Reveal Question…";
+
+    document.getElementById("buzzFootT1Name").textContent = roomState.team1Name;
+    document.getElementById("buzzFootT1Score").textContent = String(roomState.team1Score || 0);
+    document.getElementById("buzzFootT2Name").textContent = roomState.team2Name;
+    document.getElementById("buzzFootT2Score").textContent = String(roomState.team2Score || 0);
+
+    const btn = document.getElementById("giantBuzzerBtn");
+    const icon = document.getElementById("giantBuzzIcon");
+    const text = document.getElementById("giantBuzzText");
+    const sub = document.getElementById("giantBuzzSub");
+
+    btn.className = `giant-buzzer-btn ${myTeam === 1 ? "team-1-theme" : "team-2-theme"}`;
+
+    if (roomState.buzzerWinner === 0) {
+      btn.disabled = false;
+      icon.textContent = "🔔";
+      text.textContent = "BUZZ IN!";
+      sub.textContent = "Tap anywhere on this pad first";
+    } else if (roomState.buzzerWinner === myTeam) {
+      btn.disabled = true;
+      btn.classList.add("won-state");
+      icon.textContent = "🚨";
+      text.textContent = "YOU BUZZED FIRST!";
+      sub.textContent = "Give your answer to the Host!";
+    } else {
+      btn.disabled = true;
+      btn.classList.add("locked-out-state");
+      icon.textContent = "🔒";
+      const otherName = roomState.buzzerWinner === 1 ? roomState.team1Name : roomState.team2Name;
+      text.textContent = "LOCKED OUT";
+      sub.textContent = `${otherName} buzzed in first`;
+    }
+  }
+
+  Object.assign(Feud, {
+    escapeHtml,
+    showToast,
+    showBigRedXOverlay,
+    renderBranding,
+    renderTurnTimerUI,
+    populateRoundDropdowns,
+    renderTvView,
+    renderHostView,
+    renderBuzzerView
+  });
+})(window.Feud);
