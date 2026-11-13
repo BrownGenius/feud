@@ -318,6 +318,106 @@
       font-weight: 500;
     }
 
+    /* Answer toggle buttons & reveal bars */
+    .ans-toggle-btn {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #334155;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .ans-toggle-btn:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+      border-color: #94a3b8;
+    }
+
+    .ans-reveal-placeholder {
+      margin-top: 8px;
+      display: flex;
+    }
+
+    .ans-reveal-bar-btn {
+      cursor: pointer;
+      width: 100%;
+      padding: 8px 12px;
+      background: #f8fafc;
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .ans-reveal-bar-btn:hover {
+      background: #eff6ff;
+      border-color: #3b82f6;
+      color: #1d4ed8;
+      border-style: solid;
+    }
+
+    /* Answers hidden states */
+    .q-card.answers-hidden .ans-table-wrap {
+      display: none;
+    }
+
+    .q-card:not(.answers-hidden) .ans-reveal-placeholder {
+      display: none;
+    }
+
+    .fm-card.answers-hidden .fm-hint {
+      display: none;
+    }
+
+    .fm-card.answers-hidden .fm-reveal-placeholder {
+      display: flex;
+    }
+
+    .fm-card:not(.answers-hidden) .fm-reveal-placeholder {
+      display: none;
+    }
+
+    .doc-subtitle-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .answer-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 800;
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      color: #92400e;
+    }
+
+    .answer-status-pill.all-visible {
+      background: #dcfce7;
+      border-color: #22c55e;
+      color: #166534;
+    }
+
     @media print {
       body {
         background: #ffffff;
@@ -338,6 +438,10 @@
         box-shadow: none;
         border-color: #94a3b8;
         padding: 9px 11px;
+      }
+      .ans-toggle-btn,
+      .ans-reveal-placeholder {
+        display: none !important;
       }
     }
   </style>
@@ -375,6 +479,9 @@
       </div>
 
       <div class="toolbar-right">
+        <button id="btnToggleAllAnswers" type="button" class="toolbar-btn secondary" title="Show or hide survey answers across all cards">
+          👁️ Show All Answers
+        </button>
         <button id="btnCopyShareUrl" type="button" class="toolbar-btn secondary" title="Copy shareable link to this deck review page">
           🔗 Copy Share Link
         </button>
@@ -392,7 +499,10 @@
     <header class="doc-header">
       <div>
         <h1 id="reviewDocTitle" class="doc-title">🎉 Party Feud — Question &amp; Answer Review</h1>
-        <p id="reviewDocSub" class="doc-subtitle">Printable Host &amp; Survey Review Sheet</p>
+        <div class="doc-subtitle-row">
+          <p id="reviewDocSub" class="doc-subtitle" style="margin:0;">Printable Host &amp; Survey Review Sheet</p>
+          <span id="reviewAnswersStatePill" class="answer-status-pill">🔒 Answers Hidden by Default</span>
+        </div>
       </div>
       <div id="reviewSummaryPills" class="summary-pills"></div>
     </header>
@@ -416,6 +526,11 @@
       const titleEl = document.getElementById("reviewDocTitle");
       const subEl = document.getElementById("reviewDocSub");
       const pillsEl = document.getElementById("reviewSummaryPills");
+      const toggleAllBtn = document.getElementById("btnToggleAllAnswers");
+      const statePill = document.getElementById("reviewAnswersStatePill");
+
+      let allAnswersRevealed = false; // Hidden by default
+      const revealedCardIds = new Set();
 
       let activeDeck = {
         gameTitle: (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameTitle) || "Party Feud",
@@ -473,6 +588,11 @@
           } else {
             url.searchParams.delete("q");
           }
+          if (allAnswersRevealed) {
+            url.searchParams.set("answers", "show");
+          } else {
+            url.searchParams.delete("answers");
+          }
           window.history.replaceState({}, "", url.toString());
         } catch (e) {}
       }
@@ -507,6 +627,10 @@
         const requestedDeck = (params.get("deck") || "").trim();
         const requestedLevel = (params.get("level") || "").trim().toLowerCase();
         const requestedQuery = (params.get("q") || "").trim();
+        const requestedAnswers = (params.get("answers") || "").trim().toLowerCase();
+
+        allAnswersRevealed =
+          requestedAnswers === "show" || requestedAnswers === "1" || requestedAnswers === "true";
 
         if (
           requestedLevel &&
@@ -540,6 +664,13 @@
       }
 
       async function loadSelectedDeck(val, updateUrl = true) {
+        if (updateUrl) {
+          revealedCardIds.clear();
+          const p = new URLSearchParams(window.location.search);
+          const reqAns = (p.get("answers") || "").trim().toLowerCase();
+          allAnswersRevealed = reqAns === "show" || reqAns === "1" || reqAns === "true";
+        }
+
         if (val === "__active_saved__") {
           const saved = Feud.loadSavedCustomDeck();
           if (saved) {
@@ -728,6 +859,11 @@
 
           const cardsHtml = matched
             .map(({ r, idx }) => {
+              const cardId = `card-r-${idx}`;
+              const isRevealed = allAnswersRevealed || revealedCardIds.has(cardId);
+              const hiddenClass = isRevealed ? "" : "answers-hidden";
+              const btnText = isRevealed ? "🙈 Hide Answers" : "👁️ Show Answers";
+
               const mult = Number(r.multiplier) || 1;
               const sumPts = (r.answers || []).reduce((s, a) => s + (Number(a.points) || 0), 0);
               const rowsHtml = (r.answers || [])
@@ -746,23 +882,35 @@
                 .join("");
 
               return `
-                <article class="q-card">
+                <article id="${cardId}" class="q-card ${hiddenClass}">
                   <div class="q-card-head">
                     <span>Deck #${idx + 1} • ${escapeHtml(r.title || `Round ${idx + 1}`)}</span>
-                    <span class="q-mult mult-${mult}">${mult}x Level (${sumPts} pts)</span>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span class="q-mult mult-${mult}">${mult}x Level (${sumPts} pts)</span>
+                      <button type="button" class="ans-toggle-btn card-header-toggle-btn" data-toggle-card="${cardId}" title="Toggle answers for this question">
+                        ${btnText}
+                      </button>
+                    </div>
                   </div>
                   <div class="q-theme">${escapeHtml(r.theme || "General")}</div>
                   <h3 class="q-prompt">${escapeHtml(r.prompt)}</h3>
-                  <table class="ans-table">
-                    <thead>
-                      <tr>
-                        <th>Rank</th>
-                        <th>Survey Answer</th>
-                        <th style="text-align:right;">Pts${mult > 1 ? ` (${mult}x)` : ""}</th>
-                      </tr>
-                    </thead>
-                    <tbody>${rowsHtml}</tbody>
-                  </table>
+                  <div class="ans-reveal-placeholder">
+                    <button type="button" class="ans-reveal-bar-btn" data-toggle-card="${cardId}">
+                      👁️ Reveal ${r.answers.length} Survey Answers
+                    </button>
+                  </div>
+                  <div class="ans-table-wrap">
+                    <table class="ans-table">
+                      <thead>
+                        <tr>
+                          <th>Rank</th>
+                          <th>Survey Answer</th>
+                          <th style="text-align:right;">Pts${mult > 1 ? ` (${mult}x)` : ""}</th>
+                        </tr>
+                      </thead>
+                      <tbody>${rowsHtml}</tbody>
+                    </table>
+                  </div>
                 </article>
               `;
             })
@@ -797,6 +945,11 @@
             if (slice.length === 0) continue;
             visibleSets++;
 
+            const cardId = `card-fm-${s}`;
+            const isRevealed = allAnswersRevealed || revealedCardIds.has(cardId);
+            const hiddenClass = isRevealed ? "" : "answers-hidden";
+            const btnText = isRevealed ? "🙈 Hide Answers" : "👁️ Show Answers";
+
             const rowsHtml = slice
               .map(
                 (fm, i) => `
@@ -818,10 +971,20 @@
               .join("");
 
             setsHtml += `
-              <article class="q-card">
+              <article id="${cardId}" class="q-card fm-card ${hiddenClass}">
                 <div class="q-card-head">
                   <span>⚡ Fast Money Set #${s + 1}</span>
-                  <span class="q-mult">${slice.length} Questions</span>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span class="q-mult">${slice.length} Questions</span>
+                    <button type="button" class="ans-toggle-btn card-header-toggle-btn" data-toggle-card="${cardId}" title="Toggle top answers for this set">
+                      ${btnText}
+                    </button>
+                  </div>
+                </div>
+                <div class="ans-reveal-placeholder fm-reveal-placeholder">
+                  <button type="button" class="ans-reveal-bar-btn" data-toggle-card="${cardId}">
+                    👁️ Reveal Top Answers for Set #${s + 1}
+                  </button>
                 </div>
                 <table class="ans-table" style="margin-top:6px;">
                   <tbody>${rowsHtml}</tbody>
@@ -846,6 +1009,97 @@
         rootEl.innerHTML =
           html ||
           `<div style="background:#fff; padding:24px; border-radius:12px; text-align:center; color:#475569; font-weight:700;">No questions matched your filter.</div>`;
+
+        updateAnswersStateUI();
+      }
+
+      function updateAnswersStateUI() {
+        const cards = rootEl.querySelectorAll(".q-card");
+        if (cards.length === 0) {
+          if (toggleAllBtn) {
+            toggleAllBtn.textContent = "👁️ Show All Answers";
+            toggleAllBtn.classList.add("secondary");
+          }
+          if (statePill) {
+            statePill.textContent = "🔒 Answers Hidden by Default";
+            statePill.className = "answer-status-pill";
+          }
+          return;
+        }
+
+        const hiddenCount = rootEl.querySelectorAll(".q-card.answers-hidden").length;
+        const totalCards = cards.length;
+        const allVisible = hiddenCount === 0;
+
+        if (toggleAllBtn) {
+          if (allVisible) {
+            toggleAllBtn.textContent = "🙈 Hide All Answers";
+            toggleAllBtn.classList.remove("secondary");
+            toggleAllBtn.title = "Hide survey answers across all cards";
+          } else {
+            toggleAllBtn.textContent = "👁️ Show All Answers";
+            toggleAllBtn.classList.add("secondary");
+            toggleAllBtn.title = "Reveal survey answers across all cards";
+          }
+        }
+
+        if (statePill) {
+          if (allVisible) {
+            statePill.textContent = "👁️ All Answers Revealed";
+            statePill.className = "answer-status-pill all-visible";
+          } else if (hiddenCount === totalCards) {
+            statePill.textContent = "🔒 Answers Hidden by Default";
+            statePill.className = "answer-status-pill";
+          } else {
+            statePill.textContent = `👁️ ${totalCards - hiddenCount} of ${totalCards} Revealed`;
+            statePill.className = "answer-status-pill";
+          }
+        }
+
+        allAnswersRevealed = allVisible;
+        syncUrlToSelection();
+      }
+
+      function toggleCard(cardId) {
+        const card = document.getElementById(cardId);
+        if (!card) return;
+        const isHidden = card.classList.contains("answers-hidden");
+        if (isHidden) {
+          card.classList.remove("answers-hidden");
+          revealedCardIds.add(cardId);
+          const btn = card.querySelector(".card-header-toggle-btn");
+          if (btn) btn.textContent = "🙈 Hide Answers";
+        } else {
+          card.classList.add("answers-hidden");
+          revealedCardIds.delete(cardId);
+          const btn = card.querySelector(".card-header-toggle-btn");
+          if (btn) btn.textContent = "👁️ Show Answers";
+        }
+        updateAnswersStateUI();
+      }
+
+      function toggleAllAnswers() {
+        const cards = rootEl.querySelectorAll(".q-card");
+        const anyHidden = Array.from(cards).some((c) => c.classList.contains("answers-hidden"));
+
+        if (anyHidden) {
+          cards.forEach((card) => {
+            card.classList.remove("answers-hidden");
+            revealedCardIds.add(card.id);
+            const btn = card.querySelector(".card-header-toggle-btn");
+            if (btn) btn.textContent = "🙈 Hide Answers";
+          });
+          allAnswersRevealed = true;
+        } else {
+          cards.forEach((card) => {
+            card.classList.add("answers-hidden");
+            const btn = card.querySelector(".card-header-toggle-btn");
+            if (btn) btn.textContent = "👁️ Show Answers";
+          });
+          revealedCardIds.clear();
+          allAnswersRevealed = false;
+        }
+        updateAnswersStateUI();
       }
 
       deckSelect.addEventListener("change", () => loadSelectedDeck(deckSelect.value, true));
@@ -902,6 +1156,18 @@
           }
         };
         reader.readAsText(file);
+      });
+
+      if (toggleAllBtn) {
+        toggleAllBtn.addEventListener("click", toggleAllAnswers);
+      }
+
+      rootEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-toggle-card]");
+        if (btn) {
+          const cardId = btn.getAttribute("data-toggle-card");
+          if (cardId) toggleCard(cardId);
+        }
       });
 
       buildCatalogOptions();
