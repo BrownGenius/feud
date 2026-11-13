@@ -275,7 +275,18 @@ window.Feud = window.Feud || {};
     const st = getLocalStateCallback ? getLocalStateCallback() : null;
     if (!st || st.buzzerWinner !== 0) return;
 
-    const updated = { ...st, buzzerWinner: teamNum, updatedAt: Date.now() };
+    const dur = Number(st.turnTimerDuration) || 10;
+    const updated = {
+      ...st,
+      buzzerWinner: teamNum,
+      controllingTeam: teamNum,
+      faceoffFirstTeam: teamNum,
+      roundPhase: "faceoff-p1",
+      questionRevealed: true,
+      turnTimerRemaining: dur,
+      turnTimerRunning: true,
+      updatedAt: Date.now()
+    };
     Feud.saveRoomStateToStorage(currentCode, updated);
     if (onRemoteStateCallback) onRemoteStateCallback(updated);
     broadcastFromHostToPeers(updated);

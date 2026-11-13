@@ -199,13 +199,215 @@ window.Feud = window.Feud || {};
     if (v2) v2.textContent = String(s2);
   }
 
+  function getTeamLabel(roomState, teamNum) {
+    if (teamNum === 1) return roomState.team1Name || "Team 1";
+    if (teamNum === 2) return roomState.team2Name || "Team 2";
+    return "Team";
+  }
+
+  function renderGuidedFlowUI(roomState) {
+    const phase =
+      roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
+    const t1 = roomState.team1Name || "Team 1";
+    const t2 = roomState.team2Name || "Team 2";
+    const dur = Number(roomState.turnTimerDuration) || 10;
+    const round = Feud.getRoundData(roomState, roomState.roundIdx);
+    const allRevealed = (roomState.revealed || []).length >= round.answers.length;
+    const isLastRound = roomState.roundIdx + 1 >= Feud.getRoundCount(roomState);
+
+    const steps = [
+      { id: "faceoff", label: "1. Face-Off" },
+      { id: "pass-or-play", label: "2. Play or Pass" },
+      { id: "playing", label: `3. Team Play (${roomState.strikes || 0}/3 X)` },
+      { id: "steal", label: "4. Steal" },
+      { id: "round-over", label: "5. Round Complete" }
+    ];
+
+    const phaseOrder = {
+      "faceoff-ready": 0,
+      "faceoff-buzz": 0,
+      "faceoff-p1": 0,
+      "faceoff-p2": 0,
+      "pass-or-play": 1,
+      playing: 2,
+      steal: 3,
+      "round-over": 4
+    };
+    const activeStepIdx = phaseOrder[phase] ?? 0;
+
+    const stepperEl = document.getElementById("hostFlowStepper");
+    if (stepperEl) {
+      stepperEl.innerHTML = steps
+        .map((s, idx) => {
+          const cls = idx === activeStepIdx ? "active" : idx < activeStepIdx ? "done" : "";
+          return `<span class="flow-step-pill ${cls}">${escapeHtml(s.label)}</span>`;
+        })
+        .join("");
+    }
+
+    const cardEl = document.getElementById("hostFlowCoachCard");
+    if (cardEl) {
+      cardEl.classList.toggle("steal-phase", phase === "steal");
+      cardEl.classList.toggle("win-phase", phase === "round-over");
+    }
+
+    let headline = "";
+    let subtext = "";
+    let actionsHtml = "";
+
+    if (phase === "faceoff-ready") {
+      headline = "🔔 Step 1: Ready for the Face-Off";
+      subtext = `Call one player from ${t1} and ${t2} to the podium. Reveal the question to unlock the buzzers!`;
+      actionsHtml = `
+        <button type="button" class="action-btn btn-gold display-font" onclick="hostRevealQuestionAndStartTimer()">
+          👁️ Show Question &amp; Start Face-Off (Space)
+        </button>
+        <button type="button" class="top-btn" onclick="hostManualBuzz(1)">🔔 ${escapeHtml(t1)} Buzzed</button>
+        <button type="button" class="top-btn" onclick="hostManualBuzz(2)">🔔 ${escapeHtml(t2)} Buzzed</button>
+      `;
+    } else if (phase === "faceoff-buzz") {
+      headline = "🔔 Face-Off: Which Team Buzzed In First?";
+      subtext =
+        "Waiting for a player to buzz in on their phone—or tap the team that buzzed first below to select them and start their timer:";
+      actionsHtml = `
+        <button type="button" class="action-btn btn-red display-font" onclick="hostManualBuzz(1)">
+          🔔 ${escapeHtml(t1)} Buzzed First
+        </button>
+        <button type="button" class="action-btn btn-blue display-font" onclick="hostManualBuzz(2)">
+          🔔 ${escapeHtml(t2)} Buzzed First
+        </button>
+      `;
+    } else if (phase === "faceoff-p1") {
+      const firstTeam = roomState.faceoffFirstTeam || roomState.controllingTeam || 1;
+      const secondTeam = firstTeam === 1 ? 2 : 1;
+      const firstName = getTeamLabel(roomState, firstTeam);
+      const secondName = getTeamLabel(roomState, secondTeam);
+      headline = `🎤 Face-Off (1st Turn): ${firstName} Answering!`;
+      subtext = `Tap their answer on the board below! (#1 answer wins Face-Off immediately; #2–#8 or Wrong/Time-Up automatically switches to ${secondName}!)`;
+      actionsHtml = `
+        <button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">
+          ❌ Wrong Answer → Switch to ${escapeHtml(secondName)} (X)
+        </button>
+        <button type="button" class="top-btn gold" onclick="hostRestartTurnTimer()">
+          🔄 Restart ${dur}s Timer (R)
+        </button>
+      `;
+    } else if (phase === "faceoff-p2") {
+      const firstTeam = roomState.faceoffFirstTeam || 1;
+      const secondTeam = roomState.controllingTeam || (firstTeam === 1 ? 2 : 1);
+      const firstName = getTeamLabel(roomState, firstTeam);
+      const secondName = getTeamLabel(roomState, secondTeam);
+      const bestRank = roomState.faceoffBestRank ?? 999;
+
+      if (bestRank < 999) {
+        headline = `🎤 Face-Off (2nd Turn): ${secondName} Must Beat Answer #${bestRank + 1}!`;
+        subtext = `${firstName} hit #${bestRank + 1}. Tap ${secondName}'s answer if on the board, or tap '❌ Wrong Answer' (${firstName} wins Face-Off).`;
+      } else {
+        headline = `🎤 Face-Off (2nd Turn): ${secondName} Can Win the Face-Off!`;
+        subtext = `${firstName} missed! If ${secondName} hits ANY answer on the board, they win the Face-Off!`;
+      }
+      actionsHtml = `
+        <button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">
+          ❌ Wrong Answer (X)
+        </button>
+        <button type="button" class="top-btn gold" onclick="hostRestartTurnTimer()">
+          🔄 Restart ${dur}s Timer (R)
+        </button>
+      `;
+    } else if (phase === "pass-or-play") {
+      const winTeam = roomState.faceoffWinnerTeam || roomState.controllingTeam || 1;
+      const passTeam = winTeam === 1 ? 2 : 1;
+      const winName = getTeamLabel(roomState, winTeam);
+      const passName = getTeamLabel(roomState, passTeam);
+      headline = `🏆 ${winName} Won the Face-Off! Play or Pass?`;
+      subtext = `Ask ${winName} whether they want to PLAY the board or PASS control to ${passName}. Choosing either option starts the timer for the next player!`;
+      actionsHtml = `
+        <button type="button" class="action-btn btn-gold display-font" onclick="hostChoosePlayOrPass('play')">
+          ▶️ ${escapeHtml(winName)} PLAYS Board (Start Timer)
+        </button>
+        <button type="button" class="action-btn btn-slate display-font" onclick="hostChoosePlayOrPass('pass')">
+          🔀 PASS Board to ${escapeHtml(passName)}
+        </button>
+      `;
+    } else if (phase === "playing") {
+      const playTeam = roomState.controllingTeam || roomState.originalPlayingTeam || 1;
+      const oppTeam = playTeam === 1 ? 2 : 1;
+      const playName = getTeamLabel(roomState, playTeam);
+      const oppName = getTeamLabel(roomState, oppTeam);
+      const curStrikes = Number(roomState.strikes) || 0;
+      headline = `🎯 ${playName} Playing the Board (${curStrikes} of 3 Strikes)`;
+      subtext = `Ask the next team member! Tap their answer below if right, or tap '❌ Wrong Answer' for Strike ${
+        curStrikes + 1
+      }/3. (Timer hitting 0 gives an automatic X; 3rd X automatically switches to ${oppName} for the Steal!)`;
+      actionsHtml = `
+        <button type="button" class="action-btn btn-gold display-font" onclick="hostRestartTurnTimer()">
+          🔄 Ask Next Player / Start ${dur}s Timer (R)
+        </button>
+        <button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">
+          ❌ Wrong Answer → Strike ${curStrikes + 1}/3 (X)
+        </button>
+      `;
+    } else if (phase === "steal") {
+      const origTeam =
+        roomState.originalPlayingTeam || (roomState.controllingTeam === 1 ? 2 : 1);
+      const stealTeam = roomState.controllingTeam || (origTeam === 1 ? 2 : 1);
+      const origName = getTeamLabel(roomState, origTeam);
+      const stealName = getTeamLabel(roomState, stealTeam);
+      headline = `🚨 STEAL MODE: ${stealName} Can Steal ${roomState.pot || 0} Points!`;
+      subtext = `${origName} got 3 Strikes (XXX)! Start the 15s Steal Timer for ${stealName}. Tap an unflipped board answer if they steal it (auto-awards pot to ${stealName}), or tap '❌ Steal Missed' (auto-awards pot to ${origName})!`;
+      actionsHtml = `
+        <button type="button" class="action-btn btn-gold display-font" onclick="hostStartStealTimer()">
+          ⏱️ Start 15s Steal Timer (R)
+        </button>
+        <button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">
+          ❌ Steal Missed → Award Pot to ${escapeHtml(origName)} (X)
+        </button>
+      `;
+    } else if (phase === "round-over") {
+      const winTeam = roomState.roundWinnerTeam || roomState.controllingTeam || 1;
+      const winName = getTeamLabel(roomState, winTeam);
+      headline = `🎉 Round Complete — ${winName} Won the Round!`;
+      subtext = allRevealed
+        ? "All answers on the board have been revealed! Advance to the next round when ready."
+        : "Reveal the remaining unflipped answers on the TV (without adding points), then advance to the next round!";
+      actionsHtml = `
+        ${
+          !allRevealed
+            ? `<button type="button" class="action-btn btn-gold display-font" onclick="hostRevealAll()">👁️ Reveal Remaining Answers (No Points)</button>`
+            : ""
+        }
+        ${
+          !isLastRound
+            ? `<button type="button" class="action-btn btn-blue display-font" onclick="hostNextRound()">⏭️ Next Round ▶</button>`
+            : roomState.enableFastMoney !== false
+            ? `<button type="button" class="action-btn btn-gold display-font" onclick="hostSwitchStage('fast')">⚡ Start Fast Money Bonus Round</button>`
+            : ""
+        }
+        <button type="button" class="top-btn gold" onclick="openNextMatchModal()">🏁 End Match / Next Game</button>
+      `;
+    }
+
+    const headEl = document.getElementById("hostFlowHeadline");
+    const subEl = document.getElementById("hostFlowSubtext");
+    const actEl = document.getElementById("hostFlowActions");
+    const soloActEl = document.getElementById("soloGuidedActions");
+
+    if (headEl) headEl.textContent = headline;
+    if (subEl) subEl.textContent = subtext;
+    if (actEl) actEl.innerHTML = actionsHtml;
+    if (soloActEl) soloActEl.innerHTML = actionsHtml;
+  }
+
   function renderTvView(roomState, activeRole, handlers) {
     renderBranding(roomState);
     renderTurnTimerUI(roomState);
+    renderGuidedFlowUI(roomState);
     const totalRounds = Feud.getRoundCount(roomState);
     const round = Feud.getRoundData(roomState, roomState.roundIdx);
     const multText =
       round.multiplier === 1 ? "1x Single" : round.multiplier === 2 ? "2x Double" : "3x Triple";
+    const phase =
+      roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
 
     document.getElementById("tvThemeBadge").textContent = round.theme;
     document.getElementById("tvPotValue").textContent = String(roomState.pot || 0);
@@ -219,18 +421,31 @@ window.Feud = window.Feud || {};
 
     const t1Card = document.getElementById("tvTeam1Card");
     const t2Card = document.getElementById("tvTeam2Card");
-    t1Card.classList.toggle("winner-glow", roomState.buzzerWinner === 1);
-    t2Card.classList.toggle("winner-glow", roomState.buzzerWinner === 2);
+    t1Card.classList.toggle("winner-glow", roomState.buzzerWinner === 1 || (phase === "round-over" && roomState.roundWinnerTeam === 1));
+    t2Card.classList.toggle("winner-glow", roomState.buzzerWinner === 2 || (phase === "round-over" && roomState.roundWinnerTeam === 2));
     t1Card.classList.toggle("playing-glow", roomState.controllingTeam === 1);
     t2Card.classList.toggle("playing-glow", roomState.controllingTeam === 2);
+
+    const badgeLabel =
+      phase === "faceoff-p1" || phase === "faceoff-p2"
+        ? "🎤 Face-Off Turn"
+        : phase === "pass-or-play"
+        ? "🏆 Won Face-Off!"
+        : phase === "steal"
+        ? "🚨 STEAL ATTEMPT!"
+        : phase === "round-over"
+        ? "🏆 Won Round!"
+        : "🎯 Playing Board";
 
     const t1Ctrl = document.getElementById("tvTeam1ControlBadge");
     const t2Ctrl = document.getElementById("tvTeam2ControlBadge");
     if (t1Ctrl) {
+      t1Ctrl.textContent = badgeLabel;
       t1Ctrl.classList.toggle("hidden", roomState.controllingTeam !== 1);
       t1Ctrl.classList.toggle("active-control", roomState.controllingTeam === 1);
     }
     if (t2Ctrl) {
+      t2Ctrl.textContent = badgeLabel;
       t2Ctrl.classList.toggle("hidden", roomState.controllingTeam !== 2);
       t2Ctrl.classList.toggle("active-control", roomState.controllingTeam === 2);
     }
@@ -240,12 +455,6 @@ window.Feud = window.Feud || {};
       soloBar.classList.toggle("hidden", activeRole !== "solo");
       const soloSel = document.getElementById("soloRoundSelect");
       if (soloSel) soloSel.value = String(roomState.roundIdx);
-      const soloBtnQ = document.getElementById("soloBtnRevealQ");
-      if (soloBtnQ) {
-        soloBtnQ.textContent = roomState.questionRevealed
-          ? "🔄 Restart Timer (R)"
-          : "👁️ Show Q & Start Timer (Space)";
-      }
     }
 
     const mainWrap = document.getElementById("tvMainBoardWrap");
@@ -346,15 +555,37 @@ window.Feud = window.Feud || {};
     const buzzBanner = document.getElementById("tvBuzzerBanner");
     buzzBanner.classList.remove("active", "steal-alert");
 
-    if ((roomState.strikes || 0) >= 3) {
-      const stealTeam =
-        roomState.controllingTeam === 1
-          ? roomState.team2Name
-          : roomState.controllingTeam === 2
-          ? roomState.team1Name
-          : "Opposing Team";
-      buzzBanner.textContent = `🚨 3 STRIKES! STEAL OPPORTUNITY FOR ${stealTeam}! (15s Huddle)`;
+    if (phase === "steal" || (roomState.strikes || 0) >= 3) {
+      const stealTeamName = getTeamLabel(
+        roomState,
+        roomState.controllingTeam ||
+          (roomState.originalPlayingTeam === 1 ? 2 : 1)
+      );
+      buzzBanner.textContent = `🚨 3 STRIKES! STEAL OPPORTUNITY FOR ${stealTeamName}!`;
       buzzBanner.classList.add("steal-alert");
+    } else if (phase === "round-over") {
+      const winName = getTeamLabel(
+        roomState,
+        roomState.roundWinnerTeam || roomState.controllingTeam || 1
+      );
+      buzzBanner.textContent = `🏆 ${winName} Wins the Round!`;
+      buzzBanner.classList.add("active");
+    } else if (phase === "pass-or-play") {
+      const winName = getTeamLabel(
+        roomState,
+        roomState.faceoffWinnerTeam || roomState.controllingTeam || 1
+      );
+      buzzBanner.textContent = `🏆 ${winName} Won the Face-Off — Play or Pass?`;
+      buzzBanner.classList.add("active");
+    } else if (phase === "playing" && roomState.controllingTeam) {
+      const playName = getTeamLabel(roomState, roomState.controllingTeam);
+      buzzBanner.textContent = `🎯 ${playName} Playing the Board (${
+        roomState.strikes || 0
+      } / 3 Strikes)`;
+    } else if (phase === "faceoff-p2" && roomState.controllingTeam) {
+      const p2Name = getTeamLabel(roomState, roomState.controllingTeam);
+      buzzBanner.textContent = `🎤 Face-Off: ${p2Name}'s Turn to Answer!`;
+      buzzBanner.classList.add("active");
     } else if (roomState.buzzerWinner === 1) {
       buzzBanner.textContent = `🚨 ${roomState.team1Name} Buzzed In First!`;
       buzzBanner.classList.add("active");
@@ -364,7 +595,7 @@ window.Feud = window.Feud || {};
     } else {
       buzzBanner.textContent =
         activeRole === "solo"
-          ? "💡 Click any numbered tile (or press keys 1–8) to reveal! Press Space to Reveal Question."
+          ? "💡 Follow the Guided Bar below (or press Space / 1–8 / X / R)!"
           : "🔔 Podium Buzzers Ready!";
     }
   }
@@ -420,7 +651,10 @@ window.Feud = window.Feud || {};
   function renderHostView(roomState, handlers) {
     renderBranding(roomState);
     renderTurnTimerUI(roomState);
+    renderGuidedFlowUI(roomState);
     const round = Feud.getRoundData(roomState, roomState.roundIdx);
+    const phase =
+      roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
     const sel = document.getElementById("hostRoundSelect");
     if (sel) sel.value = String(roomState.roundIdx);
 
@@ -506,15 +740,25 @@ window.Feud = window.Feud || {};
 
     const buzzReadout = document.getElementById("hostBuzzerReadout");
     buzzReadout.classList.remove("active", "steal-alert");
-    if ((roomState.strikes || 0) >= 3) {
-      const stealTeam =
-        roomState.controllingTeam === 1
-          ? roomState.team2Name
-          : roomState.controllingTeam === 2
-          ? roomState.team1Name
-          : "Opposing Team";
-      buzzReadout.textContent = `🚨 3 Strikes! Steal Opportunity for ${stealTeam} (15s Timer Ready)`;
+    if (phase === "steal" || (roomState.strikes || 0) >= 3) {
+      const stealTeam = getTeamLabel(
+        roomState,
+        roomState.controllingTeam ||
+          (roomState.originalPlayingTeam === 1 ? 2 : 1)
+      );
+      buzzReadout.textContent = `🚨 3 Strikes! Steal Mode: ${stealTeam}'s Turn (15s Timer Ready)`;
       buzzReadout.classList.add("steal-alert");
+    } else if (phase === "pass-or-play") {
+      const winTeam = getTeamLabel(
+        roomState,
+        roomState.faceoffWinnerTeam || roomState.controllingTeam || 1
+      );
+      buzzReadout.textContent = `🏆 ${winTeam} Won Face-Off — Choose Play or Pass`;
+      buzzReadout.classList.add("active");
+    } else if (phase === "faceoff-p2") {
+      const p2Team = getTeamLabel(roomState, roomState.controllingTeam || 2);
+      buzzReadout.textContent = `🎤 Face-Off 2nd Turn: ${p2Team} Answering`;
+      buzzReadout.classList.add("active");
     } else if (roomState.buzzerWinner === 1) {
       buzzReadout.textContent = `🚨 ${roomState.team1Name} Buzzed First!`;
       buzzReadout.classList.add("active");

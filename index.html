@@ -540,22 +540,19 @@
 
     <!-- SINGLE-SCREEN ("SOLO") INTERACTIVE CONTROL BAR -->
     <div id="soloControlsBar" class="marquee-panel solo-controls-bar hidden">
-      <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; flex:1; min-width:240px;">
+      <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; min-width:210px;">
         <button class="top-btn" onclick="hostPrevRound()">◀ Prev</button>
-        <select id="soloRoundSelect" class="lobby-input" style="flex:1; min-height:38px; font-size:12px; letter-spacing:normal; text-align:left;" onchange="hostSelectRound(Number(this.value))"></select>
+        <select id="soloRoundSelect" class="lobby-input" style="flex:1; min-height:36px; font-size:12px; letter-spacing:normal; text-align:left;" onchange="hostSelectRound(Number(this.value))"></select>
         <button class="top-btn gold" onclick="hostNextRound()">Next ▶</button>
       </div>
 
+      <div id="soloGuidedActions" style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; flex:1; justify-content:center;"></div>
+
       <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
-        <button id="soloBtnRevealQ" class="top-btn gold" onclick="hostRevealQuestionAndStartTimer()">👁️ Show Q &amp; Start Timer (Space)</button>
-        <button class="top-btn gold" onclick="hostRestartTurnTimer()">🔄 Next Player Timer (R)</button>
         <button id="soloBtnTimerToggle" class="top-btn" onclick="hostToggleTurnTimer()">⏯️ Pause/Start (T)</button>
-        <button class="top-btn" style="background:#991b1b; border-color:#fca5a5;" onclick="hostTriggerStrike()">❌ Strike (X)</button>
-        <button class="top-btn" onclick="hostClearStrikes()">Clear X</button>
-        <button class="top-btn gold" onclick="hostAwardPot(1)">🏆 Pot → T1</button>
-        <button class="top-btn gold" onclick="hostAwardPot(2)">🏆 Pot → T2</button>
-        <button class="top-btn gold" onclick="openNextMatchModal()">🏁 End Match / Next Game</button>
+        <button class="top-btn" style="background:#991b1b; border-color:#fca5a5;" onclick="hostHandleWrongAnswer()">❌ Wrong / X (X)</button>
         <button class="top-btn" onclick="hostResetRound()">Reset Round</button>
+        <button class="top-btn gold" onclick="openNextMatchModal()">🏁 End Match</button>
         <button class="top-btn" onclick="switchSoloAndHostView()">🎛️ Host Key</button>
       </div>
     </div>
@@ -585,6 +582,18 @@
 
     <!-- HOST MAIN ROUND CONTROLS -->
     <div id="hostMainControls" class="host-grid">
+      <!-- GUIDED GAME FLOW COACH / AUTOMATIC PHASE BAR -->
+      <div id="hostFlowCoachCard" class="marquee-panel flow-coach-card" style="grid-column: 1 / -1;">
+        <div class="flow-stepper" id="hostFlowStepper"></div>
+        <div class="flow-coach-body">
+          <div class="flow-coach-info">
+            <div id="hostFlowHeadline" class="flow-coach-headline display-font">Step 1: Face-Off Ready</div>
+            <div id="hostFlowSubtext" class="flow-coach-sub">Reveal the question to start the Face-Off!</div>
+          </div>
+          <div id="hostFlowActions" class="flow-coach-actions"></div>
+        </div>
+      </div>
+
       <!-- Left: Secret Answer Key (Tap to Flip Live on TV) -->
       <div class="marquee-panel">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">

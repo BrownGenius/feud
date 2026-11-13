@@ -1258,5 +1258,104 @@ body:has(#tvView:not(.hidden)) .top-bar {
   gap: 6px;
 }
 
+/* =====================================================================
+   11. GUIDED HOST GAME FLOW COACH BAR & PHASE STEPPER
+   ===================================================================== */
+.flow-coach-card {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #172554 100%);
+  border: 3px solid var(--gold);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.flow-coach-card.steal-phase {
+  background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 55%, #991b1b 100%);
+  border-color: #fef08a;
+  box-shadow: 0 0 28px rgba(220, 38, 38, 0.7);
+}
+
+.flow-coach-card.win-phase {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 55%, #047857 100%);
+  border-color: #fef08a;
+}
+
+.flow-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.flow-step-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1.5px solid rgba(148, 163, 184, 0.35);
+  color: #94a3b8;
+}
+
+.flow-step-pill.active {
+  background: var(--gold);
+  border-color: #ffffff;
+  color: #0f172a;
+}
+
+.flow-step-pill.done {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: #34d399;
+  color: #a7f3d0;
+}
+
+.flow-coach-body {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.flow-coach-info {
+  flex: 1 1 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.flow-coach-headline {
+  font-size: clamp(16px, 2.2vw, 22px);
+  font-weight: 900;
+  color: #ffffff;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.flow-coach-sub {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fde68a;
+  line-height: 1.35;
+}
+
+.flow-coach-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.flow-coach-actions .action-btn {
+  width: auto;
+  min-height: 44px;
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+
 
 

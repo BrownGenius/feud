@@ -56,19 +56,18 @@ Click **Play Single-Screen TV Mode** in the lobby to configure your game and lau
 
 ### Quick-Reference Cheat Sheet
 
-| Phase | Host Action (Button or Shortcut) | TV & Timer Behavior |
+| Phase | Host Action (Button or Shortcut) | Automatic Game Flow & TV Behavior |
 | :--- | :--- | :--- |
 | **1. New Game Setup** | Click **✨ Create New Game Room** or **🎮 Play Single-Screen TV Mode** (or **🆕 New Game**) | Select your question deck, choose **Rounds per Game** (`4`/`5`/`6`/`All`), toggle **Include Fast Money**, enter Team 1 & Team 2 names, and pick the shot-clock (`5s`/`7s`/`10s`/`15s`). |
-| **2. Start of Round** | Select round (`Next ▶` or dropdown) | TV & Buzzer phones show `🔒 Question Hidden` and mystery tiles `1–8`; Host Remote sees the full question and answer key. |
-| **3. The Face-Off** | Click **👁️ Show Question & Start Timer** (or press **`Space`**) | Reveals the question on the TV & Buzzer phones and starts the Player Answer Timer countdown. |
-| **4. Podium Buzz-In** | Player taps their Podium Buzzer phone (or Host clicks **Sim T1 / T2**) | Plays the Face-Off tone, locks out the other team, highlights the winner on the TV, and **automatically restarts the timer** for their answer. |
-| **5. Second Face-Off Turn** | Click **🔄 Next Player / Restart Timer** (or press **`R`**) | Resets the timer to full duration and starts counting down for the second Face-Off player. |
-| **6. Pass or Play** | Click **🎯 T1 Playing** or **🎯 T2 Playing** under **Board Control** | Highlights the active team's card on the TV with a green **🎯 Playing Board** badge. |
-| **7. Down the Line** | Click **🔄 Next Player / Restart Timer** (`R`) as you ask each team member | Resets and starts a fresh countdown for each team member. Flipping an answer (`1`–`8`) or hitting Strike (`X`) automatically stops the timer. |
-| **8. Pause / Reset Timer** | Click **▶️ Start / Pause** (`T`) or **⏹️ Stop & Reset** | Pauses/resumes the clock (e.g., while judging an answer) or stops and resets it to full duration. |
-| **9. 3 Strikes & Steal** | Trigger 3rd Strike (`XXX`), then click **🔄 Next Player / Restart Timer** (`R`) | Automatically flashes the **🚨 STEAL OPPORTUNITY!** banner on the TV for the opposing team and pre-loads the timer to `15s` for their huddle. |
-| **10. End of Round** | Click **Award Pot**, then **Reveal All (No Pot Add)**, then **Next ▶** | Plays win fanfare, adds the pot to the winning team's score, reveals any remaining answers, and advances to the next round. |
-| **11. End Match / Next Game** | Click **🏁 End Match / Next Game** | Displays the **🏆 Match Winner Celebration** on the TV and lets you deal the next batch of unplayed rounds with **👑 Winner Stays On**, **🔥 Rematch**, or **👥 Two New Teams**. |
+| **2. Start of Round** | Click **👁️ Show Question & Start Face-Off** (`Space`) | Reveals the question on the TV & Buzzer phones and unlocks the Face-Off buzzers. |
+| **3. Face-Off Buzz-In** | Player taps their Podium Buzzer phone (or Host taps **🔔 Team Buzzed First**) | Plays the Face-Off tone, locks out the other team, selects that team (`🎤 Face-Off Turn`), and **automatically starts their answer timer**. |
+| **4. Face-Off Turn 1** | Tap their answer (`1`–`8`) or tap **❌ Wrong Answer** (`X`) (or let timer hit `0`) | • **If `#1` Answer**: That team immediately wins the Face-Off (`Play or Pass?`).<br>• **If `#2`–`#8` Answer or Miss / Time-Up (`0s`)**: Automatically triggers `X` (if wrong/expired), **switches to the other team's Face-Off player**, and starts their timer! |
+| **5. Face-Off Turn 2** | Tap 2nd player's answer (`1`–`8`) or tap **❌ Wrong Answer** (`X`) (or let timer hit `0`) | Automatically compares ranks and advances to **Step 2: Play or Pass** for the higher-ranking team! |
+| **6. Play or Pass** | Click **▶️ [Winner] PLAYS Board** or **🔀 PASS Board to [Other Team]** | Assigns board control (`🎯 Playing Board`) and **automatically starts the countdown timer** for the first player down the line. |
+| **7. Team Play (`0–3 X`)** | Click **🔄 Ask Next Player (`R`)**, then tap answer (`1`–`8`) or **❌ Wrong (`X`)** | • **Timer hits `0s`**: Automatically gives the next Strike (`X`, `XX`, `XXX`)!<br>• **Board Swept**: If all answers are revealed, automatically awards the pot to the playing team!<br>• **3rd Strike (`XXX`)**: **Automatically switches teams to Steal Mode** and pre-loads the `15s` Steal Timer! |
+| **8. Steal Mode (`15s`)** | Click **⏱️ Start 15s Steal Timer (`R`)**, then tap board answer or **❌ Steal Missed (`X`)** | • **If Answer on Board**: Reveals tile and **automatically awards the pot to the stealing team**!<br>• **If Wrong or Timer Hits `0s`**: Triggers `X` and **automatically awards the pot to the original playing team**! |
+| **9. Round Complete** | Click **👁️ Reveal Remaining Answers (No Points)**, then **⏭️ Next Round ▶** | Reveals any remaining unflipped tiles on the TV without affecting scores, then advances to the next round. |
+| **10. End Match / Next Game** | Click **🏁 End Match / Next Game** | Displays the **🏆 Match Winner Celebration** on the TV and lets you deal the next batch of unplayed rounds with **👑 Winner Stays On**, **🔥 Rematch**, or **👥 Two New Teams**. |
 
 ---
 

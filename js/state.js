@@ -347,8 +347,15 @@ window.Feud = window.Feud || {};
       matchFastMoney: fmList,
       activeFmSetIdx: 0,
       roundIdx: 0,
+      roundPhase: "faceoff-ready", // 'faceoff-ready' | 'faceoff-buzz' | 'faceoff-p1' | 'faceoff-p2' | 'pass-or-play' | 'playing' | 'steal' | 'round-over'
       questionRevealed: false,
       controllingTeam: 0, // 0 = Face-Off, 1 = Team 1 Playing, 2 = Team 2 Playing
+      faceoffFirstTeam: 0,
+      faceoffBestRank: 999,
+      faceoffWinnerTeam: 0,
+      originalPlayingTeam: 0,
+      roundWinnerTeam: 0,
+      lastOverlayXCount: 1,
       turnTimerDuration: 10,
       turnTimerRemaining: 10,
       turnTimerRunning: false,
