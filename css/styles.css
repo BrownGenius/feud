@@ -1061,8 +1061,28 @@ body:has(#tvView:not(.hidden):not(.embedded-in-host)) {
 
 body.tv-viewport-lock .top-bar,
 body:has(#tvView:not(.hidden):not(.embedded-in-host)) .top-bar {
-  flex: 0 0 auto;
-  padding: clamp(4px, 0.7vh, 8px) clamp(10px, 1.5vw, 24px);
+  display: none !important;
+}
+
+.tv-floating-controls {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  z-index: 60;
+  display: flex;
+  gap: 6px;
+  opacity: 0.32;
+  transition: opacity 0.2s ease;
+}
+.tv-floating-controls:hover,
+.tv-floating-controls:focus-within {
+  opacity: 1;
+}
+#tvView.embedded-in-host .tv-floating-controls,
+:fullscreen .tv-floating-controls,
+:-webkit-full-screen .tv-floating-controls,
+body.is-fullscreen .tv-floating-controls {
+  display: none !important;
 }
 
 /* Hide the top navigation buttons completely when in Fullscreen Mode */
@@ -2018,6 +2038,35 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.deck-picker-pill {
+  cursor: pointer;
+  gap: 6px;
+  border-color: rgba(251, 191, 36, 0.5);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.deck-picker-pill:hover {
+  border-color: var(--gold);
+  background: rgba(251, 191, 36, 0.16);
+}
+
+.deck-pill-select {
+  background: transparent;
+  border: none;
+  color: #fde68a;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  outline: none;
+  max-width: 240px;
+}
+
+.deck-pill-select option {
+  background: #0f172a;
+  color: #f8fafc;
 }
 
 

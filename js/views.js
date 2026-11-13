@@ -75,9 +75,9 @@ window.Feud = window.Feud || {};
     const lobbyTitle = document.getElementById("lobbyHeroTitle");
     if (lobbyTitle) lobbyTitle.textContent = title;
 
-    const deckBadge = document.getElementById("activeDeckSummary");
-    if (deckBadge) {
-      deckBadge.textContent = `📚 Active Deck: ${deckName} (${totalDeckRounds} Total Rds)`;
+    const activeDeckNameText = document.getElementById("activeDeckNameText");
+    if (activeDeckNameText) {
+      activeDeckNameText.textContent = `${deckName} (${totalDeckRounds} Rds)`;
     }
 
     const setupDeckBadge = document.getElementById("setupActiveDeckBadge");
@@ -139,11 +139,6 @@ window.Feud = window.Feud || {};
         : canResume
         ? `▶️ Resume ${rem}s (T)`
         : "▶️ Start (T)";
-    }
-
-    const soloToggleBtn = document.getElementById("soloBtnTimerToggle");
-    if (soloToggleBtn) {
-      soloToggleBtn.textContent = running ? "⏸️ Pause (T)" : canResume ? "▶️ Resume (T)" : "▶️ Start (T)";
     }
 
     const autoStartOnXCheck = document.getElementById("hostAutoStartOnStrikeCheckbox");
@@ -526,7 +521,7 @@ window.Feud = window.Feud || {};
             ? `<button type="button" class="action-btn btn-red display-font" onclick="hostNextRound()">⚡ Start Sudden-Death Tie-Breaker ▶</button>`
             : !isLastRound
             ? `<button type="button" class="action-btn btn-blue display-font" onclick="hostNextRound()">⏭️ Next Round ▶</button>`
-            : roomState.enableFastMoney !== false
+            : Boolean(roomState.enableFastMoney)
             ? `<button type="button" class="action-btn btn-gold display-font" onclick="hostSwitchStage('fast')">⚡ Start Fast Money Bonus Round</button>`
             : ""
         }
@@ -537,8 +532,6 @@ window.Feud = window.Feud || {};
     const headEl = document.getElementById("hostFlowHeadline");
     const scriptEl = document.getElementById("hostFlowScriptBox");
     const subEl = document.getElementById("hostFlowSubtext");
-    const actEl = document.getElementById("hostFlowActions");
-    const soloActEl = document.getElementById("soloGuidedActions");
     const inlineBarEl = document.getElementById("hostFaceOffDecisionBar");
 
     if (headEl) headEl.textContent = headline;
@@ -555,8 +548,6 @@ window.Feud = window.Feud || {};
       `;
     }
     if (subEl) subEl.textContent = subtext;
-    if (actEl) actEl.innerHTML = actionsHtml;
-    if (soloActEl) soloActEl.innerHTML = actionsHtml;
 
     if (inlineBarEl) {
       if (phase === "pass-or-play") {
@@ -647,24 +638,19 @@ window.Feud = window.Feud || {};
             </button>
           </div>
         `;
-      } else if (phase === "round-over" && !allRevealed) {
+      } else if (phase === "round-over") {
         inlineBarEl.className = "faceoff-decision-bar pass-play-highlight";
         inlineBarEl.innerHTML = `
           <div class="fodb-header">
-            <span class="fodb-title display-font">🎉 Round Complete — ${remainingUnrevealedCount} Unrevealed Answer${
-          remainingUnrevealedCount === 1 ? "" : "s"
-        } Left</span>
+            <span class="fodb-title display-font">🎉 Round Complete${
+              allRevealed
+                ? " — All Answers Revealed"
+                : ` — ${remainingUnrevealedCount} Unrevealed Answer${
+                    remainingUnrevealedCount === 1 ? "" : "s"
+                  } Left`
+            }</span>
           </div>
-          <div class="fodb-actions">
-            <button type="button" class="action-btn btn-gold display-font" style="flex:1; min-width:220px; min-height:44px; font-size:13px;" onclick="hostRevealNextAnswer()">
-              👁️ Reveal Answer #${nextUnrevealedIdx + 1} (${remainingUnrevealedCount} Left — 0 pts)
-            </button>
-            ${
-              !isLastRound
-                ? `<button type="button" class="action-btn btn-blue display-font" style="min-height:44px; font-size:13px;" onclick="hostNextRound()">⏭️ Next Round ▶</button>`
-                : ""
-            }
-          </div>
+          <div class="fodb-actions">${actionsHtml}</div>
         `;
       } else {
         inlineBarEl.className = "faceoff-decision-bar hidden";
@@ -880,8 +866,8 @@ window.Feud = window.Feud || {};
         unrevealedLeft > 0
           ? `🏆 ${winName} Wins the Round! • ${unrevealedLeft} Survey Answer${
               unrevealedLeft === 1 ? "" : "s"
-            } Left to Reveal`
-          : `🏆 ${winName} Wins the Round! • All Survey Answers Revealed!`;
+            } Left`
+          : `🏆 ${winName} Wins the Round!`;
       buzzBanner.classList.add("active");
     } else if (phase === "steal") {
       const stealTeamName = getTeamLabel(
@@ -899,10 +885,8 @@ window.Feud = window.Feud || {};
       buzzBanner.textContent = `🏆 ${winName} Won the Face-Off — Play or Pass?`;
       buzzBanner.classList.add("active");
     } else if (phase === "playing" && roomState.controllingTeam) {
-      const playName = getTeamLabel(roomState, roomState.controllingTeam);
-      buzzBanner.textContent = `🎯 ${playName} Playing the Board (${
-        roomState.strikes || 0
-      } / 3 Strikes)`;
+      // Active team card already displays the glowing control badge; keep banner minimal
+      buzzBanner.textContent = `Strikes: ${roomState.strikes || 0} / 3`;
     } else if (phase === "faceoff-p2" && roomState.controllingTeam) {
       const p2Name = getTeamLabel(roomState, roomState.controllingTeam);
       buzzBanner.textContent = `🎤 Face-Off: ${p2Name}'s Turn to Answer!`;
@@ -918,12 +902,9 @@ window.Feud = window.Feud || {};
       buzzBanner.textContent = `🚨 ${roomState.team2Name} Buzzed In First!`;
       buzzBanner.classList.add("active");
     } else {
-      buzzBanner.textContent =
-        activeRole === "solo"
-          ? "💡 Follow the Guided Bar below (or press Space / 1–8 / X / R)!"
-          : roomState.questionRevealed
-          ? "🔔 Face-Off: Buzz In Now!"
-          : "🔔 Podium Buzzers Ready!";
+      buzzBanner.textContent = roomState.questionRevealed
+        ? "🔔 Face-Off: Buzz In Now!"
+        : "🔔 Podium Buzzers Ready!";
     }
   }
 
@@ -987,7 +968,7 @@ window.Feud = window.Feud || {};
 
     const fmTab = document.getElementById("hostTabFm");
     if (fmTab) {
-      fmTab.classList.toggle("hidden", roomState.enableFastMoney === false);
+      fmTab.classList.toggle("hidden", !roomState.enableFastMoney);
       fmTab.classList.toggle("gold", roomState.stage === "fast");
     }
     document.getElementById("hostTabMain").classList.toggle("gold", roomState.stage === "main");

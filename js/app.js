@@ -207,8 +207,9 @@ window.Feud = window.Feud || {};
   }
 
   function populateDeckCatalogSelect() {
-    const sel = document.getElementById("setupDeckSelect");
+    const sel = document.getElementById("deckManagerSelect");
     if (!sel) return;
+
     const catalog = getCatalogList();
     const activeDeckName =
       roomState.customDeck && roomState.customDeck.name ? roomState.customDeck.name : null;
@@ -244,11 +245,11 @@ window.Feud = window.Feud || {};
       sel.appendChild(customOpt);
     }
 
-    const selVal = sel.value || "starter";
+    const selectedVal = sel.value || "starter";
     const deckSlug =
-      selVal === "__custom__"
+      selectedVal === "__custom__"
         ? ""
-        : String(selVal).replace(/\.(json|csv)$/i, "");
+        : String(selectedVal).replace(/\.(json|csv)$/i, "");
     const reviewHref = deckSlug
       ? `./review.html?deck=${encodeURIComponent(deckSlug)}`
       : "./review.html";
@@ -350,7 +351,7 @@ window.Feud = window.Feud || {};
     if (timerSel) timerSel.value = String(roomState.turnTimerDuration || 10);
     if (rdsSel) rdsSel.value = String(roomState.roundsPerMatch ?? 4);
     if (orderSel) orderSel.value = roomState.roundOrder || "shuffle-by-level";
-    if (fmCheck) fmCheck.checked = roomState.enableFastMoney !== false;
+    if (fmCheck) fmCheck.checked = Boolean(roomState.enableFastMoney);
     if (autoXCheck) autoXCheck.checked = Boolean(roomState.autoStartTimerOnStrike);
     if (pinIn && lobbyPin && lobbyPin.value.trim()) {
       pinIn.value = lobbyPin.value.trim();
@@ -2130,7 +2131,7 @@ window.Feud = window.Feud || {};
   // 8. FAST MONEY CONTROLS & 1-TAP SCORING CHIPS
   // =====================================================================
   async function hostSwitchStage(stage) {
-    if (stage === "fast" && roomState.enableFastMoney === false) {
+    if (stage === "fast" && !roomState.enableFastMoney) {
       Feud.showToast("Fast Money is disabled for this match.");
       return;
     }
@@ -2449,7 +2450,7 @@ window.Feud = window.Feud || {};
       {
         roundsPerMatch: roomState.roundsPerMatch ?? 4,
         roundOrder: roomState.roundOrder || "shuffle-by-level",
-        enableFastMoney: roomState.enableFastMoney !== false
+        enableFastMoney: Boolean(roomState.enableFastMoney)
       }
     );
     const fmList =

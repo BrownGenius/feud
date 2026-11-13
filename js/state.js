@@ -522,7 +522,7 @@ window.Feud = window.Feud || {};
       gameTitle: loadSavedGameTitle(),
       gameIcon: loadSavedGameIcon(),
       stage: "main", // 'main' | 'fast' | 'winner'
-      enableFastMoney: true,
+      enableFastMoney: false,
       roundsPerMatch: 4,
       roundOrder: "shuffle-by-level",
       matchNumber: 1,
