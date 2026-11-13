@@ -231,6 +231,18 @@ window.Feud = window.Feud || {};
       customOpt.selected = true;
       sel.appendChild(customOpt);
     }
+
+    const selVal = sel.value || "starter";
+    const deckSlug =
+      selVal === "__custom__"
+        ? ""
+        : String(selVal).replace(/\.(json|csv)$/i, "");
+    const reviewHref = deckSlug
+      ? `./review.html?deck=${encodeURIComponent(deckSlug)}`
+      : "./review.html";
+    document.querySelectorAll(".review-deck-link").forEach((linkEl) => {
+      linkEl.setAttribute("href", reviewHref);
+    });
   }
 
   async function discoverGitHubDecksFolder() {
