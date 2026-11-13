@@ -1,0 +1,1009 @@
+{
+  "gameTitle": "Family Feud 2025",
+  "gameIcon": "⭐",
+  "deckName": "Family Feud 2025 (60 Rounds • 8 Fast Money Sets)",
+  "teamPresets": [
+    ["Team Red", "Team Blue"],
+    ["The Champs", "The Challengers"],
+    ["Family A", "Family B"],
+    ["Parents", "Kids"],
+    ["Celebrity All-Stars", "Hometown Heroes"]
+  ],
+  "rounds": [
+    {
+      "theme": "📺 Pop Culture & Celebrity Matchups",
+      "title": "Round 1",
+      "multiplier": 1,
+      "prompt": "Name a Britney Spears song that describes your energy in the bedroom.",
+      "answers": [
+        { "text": "\"Oops!... I Did It Again\"", "points": 49 },
+        { "text": "\"...Baby One More Time\"", "points": 19 },
+        { "text": "\"Toxic\"", "points": 11 },
+        { "text": "\"Circus\"", "points": 7 },
+        { "text": "\"I'm a Slave 4 U\"", "points": 3 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture & Celebrity Matchups",
+      "title": "Round 2",
+      "multiplier": 1,
+      "prompt": "Name a female American celebrity who is treated like absolute royalty.",
+      "answers": [
+        { "text": "Taylor Swift", "points": 21 },
+        { "text": "Oprah Winfrey", "points": 18 },
+        { "text": "Beyoncé", "points": 13 },
+        { "text": "Dolly Parton", "points": 12 },
+        { "text": "Martha Stewart", "points": 8 },
+        { "text": "Jennifer Lopez", "points": 6 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture & Celebrity Matchups",
+      "title": "Round 3",
+      "multiplier": 2,
+      "prompt": "Name someone who is widely considered the funniest person alive right now.",
+      "answers": [
+        { "text": "Steve Harvey", "points": 24 },
+        { "text": "Kevin Hart", "points": 21 },
+        { "text": "Dave Chappelle", "points": 16 },
+        { "text": "Jerry Seinfeld", "points": 14 },
+        { "text": "Chris Rock", "points": 10 },
+        { "text": "Adam Sandler", "points": 8 },
+        { "text": "Jim Carrey", "points": 5 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture & Celebrity Matchups",
+      "title": "Round 4",
+      "multiplier": 2,
+      "prompt": "Name a living celebrity you would love to share a relaxing smoke with.",
+      "answers": [
+        { "text": "Snoop Dogg", "points": 48 },
+        { "text": "Willie Nelson", "points": 22 },
+        { "text": "Barack Obama", "points": 12 },
+        { "text": "Tommy Chong / Cheech", "points": 8 },
+        { "text": "Woody Harrelson", "points": 5 },
+        { "text": "Seth Rogen", "points": 4 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture & Celebrity Matchups",
+      "title": "Round 5",
+      "multiplier": 3,
+      "prompt": "Name a specific smell that would instantly remind a woman of her ex-boyfriend.",
+      "answers": [
+        { "text": "His cologne / Aftershave", "points": 42 },
+        { "text": "Body odor / Sweaty gym clothes", "points": 24 },
+        { "text": "Beer / Stale alcohol", "points": 14 },
+        { "text": "Cigarette smoke", "points": 10 },
+        { "text": "Cheap deodorant / Axe spray", "points": 6 },
+        { "text": "Cheese", "points": 4 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture & Celebrity Matchups",
+      "title": "Round 6",
+      "multiplier": 1,
+      "prompt": "Admit it—which TV host, past or present, have people secretly had a crush on?",
+      "answers": [
+        { "text": "Steve Harvey", "points": 26 },
+        { "text": "Jimmy Fallon", "points": 18 },
+        { "text": "Bob Barker", "points": 15 },
+        { "text": "Alex Trebek", "points": 14 },
+        { "text": "Regis Philbin", "points": 11 },
+        { "text": "Conan O'Brien", "points": 9 },
+        { "text": "Jeff Probst", "points": 6 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture & Celebrity Matchups",
+      "title": "Round 7",
+      "multiplier": 2,
+      "prompt": "Name the greatest all-female R&B singing group of all time.",
+      "answers": [
+        { "text": "The Supremes", "points": 36 },
+        { "text": "TLC", "points": 27 },
+        { "text": "Destiny's Child", "points": 18 },
+        { "text": "En Vogue", "points": 9 },
+        { "text": "The Pointer Sisters", "points": 5 },
+        { "text": "SWV / Salt-N-Pepa", "points": 4 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture & Celebrity Matchups",
+      "title": "Round 8",
+      "multiplier": 3,
+      "prompt": "Name a job or role in an A-list celebrity's personal entourage.",
+      "answers": [
+        { "text": "Bodyguard / Security", "points": 44 },
+        { "text": "Stylist / Hair & Makeup Glam", "points": 22 },
+        { "text": "Personal Assistant", "points": 16 },
+        { "text": "Manager / Publicist", "points": 9 },
+        { "text": "Personal Chef", "points": 5 },
+        { "text": "Private Driver / Chauffeur", "points": 4 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 9",
+      "multiplier": 1,
+      "prompt": "We asked 100 single men: What is your move if your date simply will not stop talking?",
+      "answers": [
+        { "text": "Fake bathroom break / Escape", "points": 40 },
+        { "text": "Smile, nod, and say \"uh-huh\"", "points": 31 },
+        { "text": "Zone out / Think about sports", "points": 16 },
+        { "text": "Lean in and kiss her to shush her", "points": 11 },
+        { "text": "Pretend to get an emergency call", "points": 2 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 10",
+      "multiplier": 1,
+      "prompt": "We asked 100 married women: You start choking during dinner—what is your husband doing?",
+      "answers": [
+        { "text": "Staring at his phone screen", "points": 24 },
+        { "text": "Glued to the TV / Watching sports", "points": 21 },
+        { "text": "Still chewing his own food", "points": 15 },
+        { "text": "Calling 911 / Shouting for help", "points": 14 },
+        { "text": "Performing the Heimlich maneuver", "points": 11 },
+        { "text": "Asking \"Are you okay, babe?\"", "points": 8 },
+        { "text": "Completely freezing in panic", "points": 6 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 11",
+      "multiplier": 2,
+      "prompt": "We asked 100 married women: What would you do if you found a dating app on your husband's phone?",
+      "answers": [
+        { "text": "Smash / Throw his phone", "points": 35 },
+        { "text": "Open it and read all the messages", "points": 26 },
+        { "text": "Delete his profile and the app", "points": 16 },
+        { "text": "Pack my bags / Call a divorce lawyer", "points": 12 },
+        { "text": "Confront and scream at him", "points": 8 },
+        { "text": "Create a fake profile and catfish him", "points": 3 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 12",
+      "multiplier": 2,
+      "prompt": "We asked 100 women: You discover the diamond in your engagement ring is fake—what do you do?",
+      "answers": [
+        { "text": "Confront him and demand an upgrade", "points": 38 },
+        { "text": "Keep quiet and wear it anyway", "points": 24 },
+        { "text": "Call off the wedding / Break up", "points": 16 },
+        { "text": "Throw the ring in his face", "points": 12 },
+        { "text": "Cry hysterically to my mom", "points": 6 },
+        { "text": "Take it to a pawn shop to check value", "points": 4 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 13",
+      "multiplier": 3,
+      "prompt": "Name something you pray a new partner doesn't do when you take your clothes off for the first time.",
+      "answers": [
+        { "text": "Burst out laughing or giggling", "points": 52 },
+        { "text": "Gag or make a sick face", "points": 18 },
+        { "text": "Look away / Turn the lights off fast", "points": 12 },
+        { "text": "Stare wide-eyed in horror", "points": 8 },
+        { "text": "Point at something and ask \"What's that?\"", "points": 6 },
+        { "text": "Make an excuse and run out", "points": 4 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 14",
+      "multiplier": 1,
+      "prompt": "Name something an angry wife might place right on top of her cheating husband's birthday cake.",
+      "answers": [
+        { "text": "Signed divorce papers", "points": 38 },
+        { "text": "A photo of him with his mistress", "points": 24 },
+        { "text": "Her wedding ring / band", "points": 16 },
+        { "text": "The mistress's phone number", "points": 10 },
+        { "text": "His packed suitcases / car keys", "points": 7 },
+        { "text": "A mean message piped in icing", "points": 5 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 15",
+      "multiplier": 2,
+      "prompt": "We asked 100 women: If you think your boyfriend will propose tonight, what do you do to prepare?",
+      "answers": [
+        { "text": "Get a fresh manicure / Nails done", "points": 36 },
+        { "text": "Shave legs and full body wax", "points": 24 },
+        { "text": "Pick out the perfect stunning outfit", "points": 18 },
+        { "text": "Get hair professionally styled", "points": 11 },
+        { "text": "Put on full glam makeup", "points": 7 },
+        { "text": "Practice looking surprised and crying", "points": 4 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 16",
+      "multiplier": 3,
+      "prompt": "We asked 100 single men: Your new girlfriend has a 10/10 body and 0/10 breath—what do you do?",
+      "answers": [
+        { "text": "Constantly offer mints or gum", "points": 44 },
+        { "text": "Hold breath / Breathe through mouth", "points": 22 },
+        { "text": "Tell her gently / Buy her mouthwash", "points": 15 },
+        { "text": "Stick strictly to cheek kisses", "points": 10 },
+        { "text": "Tough it out—she's out of my league!", "points": 6 },
+        { "text": "Break up immediately", "points": 3 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 17",
+      "multiplier": 1,
+      "prompt": "Complete the sentence: \"Before going on a big first date, I always have to shave my...\"",
+      "answers": [
+        { "text": "Legs", "points": 42 },
+        { "text": "Face / Beard / Stubble", "points": 29 },
+        { "text": "Bikini zone / Down under", "points": 16 },
+        { "text": "Underarms / Armpits", "points": 6 },
+        { "text": "Chest / Back", "points": 4 },
+        { "text": "Nose hairs / Unibrow", "points": 3 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 18",
+      "multiplier": 2,
+      "prompt": "Name an animal that some men accidentally sound like when they make love.",
+      "answers": [
+        { "text": "Pig / Warthog (Oinking / Grunting)", "points": 42 },
+        { "text": "Grizzly Bear (Roaring / Growling)", "points": 19 },
+        { "text": "Bull / Steer (Snorting)", "points": 13 },
+        { "text": "Gorilla / Monkey (Pounding chest)", "points": 10 },
+        { "text": "Horse / Stallion (Neighing)", "points": 7 },
+        { "text": "Howling Dog / Wolf", "points": 5 },
+        { "text": "Donkey / Jackass (Braying)", "points": 4 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 19",
+      "multiplier": 2,
+      "prompt": "You'd be mortified to find out the romantic flowers your date gave you were picked from where?",
+      "answers": [
+        { "text": "A cemetery / Fresh grave plot", "points": 45 },
+        { "text": "A neighbor's private flowerbed", "points": 23 },
+        { "text": "The gas station / 99-cent rack", "points": 16 },
+        { "text": "The trash can / Dumpster", "points": 10 },
+        { "text": "Another date he went on earlier", "points": 6 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 20",
+      "multiplier": 3,
+      "prompt": "When a cheesy magician proposes, he might pull the engagement ring out of his girlfriend's what?",
+      "answers": [
+        { "text": "Ear", "points": 44 },
+        { "text": "Mouth", "points": 22 },
+        { "text": "Cleavage / Bra", "points": 15 },
+        { "text": "Hair", "points": 9 },
+        { "text": "Purse / Handbag", "points": 6 },
+        { "text": "Nose", "points": 4 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 21",
+      "multiplier": 1,
+      "prompt": "A woman might tell her boyfriend: \"I love your hugs, but stop squeezing me like I'm a...\" what?",
+      "answers": [
+        { "text": "Lemon / Orange / Fresh fruit", "points": 37 },
+        { "text": "Stuffed animal / Teddy bear", "points": 24 },
+        { "text": "Wet kitchen sponge", "points": 13 },
+        { "text": "Foam stress ball", "points": 11 },
+        { "text": "Throw pillow", "points": 8 },
+        { "text": "Balloon / Tube of toothpaste", "points": 7 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 22",
+      "multiplier": 2,
+      "prompt": "Name something you would hate to have happen while being romantic outside in the backyard.",
+      "answers": [
+        { "text": "Caught by neighbors / Peeping tom", "points": 58 },
+        { "text": "Sudden thunderstorm / Downpour", "points": 19 },
+        { "text": "Swarm of mosquitoes / Bees / Ants", "points": 12 },
+        { "text": "Lawn sprinklers blast on", "points": 6 },
+        { "text": "Rolling over into dog poop", "points": 3 },
+        { "text": "Blinding motion floodlights turn on", "points": 2 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 23",
+      "multiplier": 2,
+      "prompt": "We asked 100 women: \"My partner would be way more fun if he enjoyed ________ just like a woman!\"",
+      "answers": [
+        { "text": "Gossiping / Spilling hot tea", "points": 38 },
+        { "text": "Going shopping at the mall", "points": 29 },
+        { "text": "Dancing at the club", "points": 16 },
+        { "text": "Watching reality TV / Rom-coms", "points": 10 },
+        { "text": "Spa days / Mani-pedis", "points": 7 }
+      ]
+    },
+    {
+      "theme": "💍 Love, Dating & Marriage Fails",
+      "title": "Round 24",
+      "multiplier": 3,
+      "prompt": "Grandma warned us: \"Every time your Grandpa ________, his fake teeth fly right across the room!\"",
+      "answers": [
+        { "text": "Sneezes or coughs hard", "points": 43 },
+        { "text": "Laughs / Chuckles loudly", "points": 27 },
+        { "text": "Burps / Belches", "points": 12 },
+        { "text": "Farts / Passes gas", "points": 9 },
+        { "text": "Takes a bite of corn on the cob", "points": 5 },
+        { "text": "Yells at the referee on TV", "points": 4 }
+      ]
+    },
+    {
+      "theme": "💼 Work, Tech & Modern Daily Life",
+      "title": "Round 25",
+      "multiplier": 1,
+      "prompt": "You look like a CEO on the Zoom camera, but from the waist down, what are you actually wearing?",
+      "answers": [
+        { "text": "Nothing at all! (Buck naked)", "points": 42 },
+        { "text": "Flannel pajama bottoms", "points": 26 },
+        { "text": "Boxer shorts / Underwear", "points": 16 },
+        { "text": "Baggy sweatpants", "points": 10 },
+        { "text": "Gym / Running shorts", "points": 4 },
+        { "text": "Bathrobe / Towel", "points": 2 }
+      ]
+    },
+    {
+      "theme": "💼 Work, Tech & Modern Daily Life",
+      "title": "Round 26",
+      "multiplier": 1,
+      "prompt": "Name an app on your smartphone that you would NEVER want your parents to see you opening.",
+      "answers": [
+        { "text": "Dating app (Tinder / Hinge / Bumble)", "points": 51 },
+        { "text": "TikTok", "points": 20 },
+        { "text": "OnlyFans / Adult streaming", "points": 14 },
+        { "text": "Hidden Photo Vault / Camera roll", "points": 8 },
+        { "text": "Bank / Credit card account", "points": 4 },
+        { "text": "Reddit / Discord chat", "points": 3 }
+      ]
+    },
+    {
+      "theme": "💼 Work, Tech & Modern Daily Life",
+      "title": "Round 27",
+      "multiplier": 2,
+      "prompt": "Name something riders do to avoid making conversation with an overly chatty Uber driver.",
+      "answers": [
+        { "text": "Stare at phone / Fake a phone call", "points": 43 },
+        { "text": "Pop in earbuds / Over-ear headphones", "points": 35 },
+        { "text": "Close eyes and pretend to be asleep", "points": 14 },
+        { "text": "Stare straight out the window", "points": 5 },
+        { "text": "Say \"I have a pounding migraine\"", "points": 3 }
+      ]
+    },
+    {
+      "theme": "💼 Work, Tech & Modern Daily Life",
+      "title": "Round 28",
+      "multiplier": 2,
+      "prompt": "Bad news—your phone was hacked! Worse news—they mass-texted your spicy selfies to who?",
+      "answers": [
+        { "text": "Mom and Dad / Parents", "points": 48 },
+        { "text": "The Boss / Work colleagues", "points": 24 },
+        { "text": "In-laws / Mother-in-law", "points": 12 },
+        { "text": "The entire family group chat", "points": 8 },
+        { "text": "Church congregation / Pastor", "points": 5 },
+        { "text": "My own kids", "points": 3 }
+      ]
+    },
+    {
+      "theme": "💼 Work, Tech & Modern Daily Life",
+      "title": "Round 29",
+      "multiplier": 3,
+      "prompt": "Name an old-school reference source nobody buys anymore because everyone just Googles it.",
+      "answers": [
+        { "text": "Hardcover Encyclopedia set", "points": 42 },
+        { "text": "Giant Dictionary", "points": 32 },
+        { "text": "Yellow Pages / Phone book", "points": 18 },
+        { "text": "Thesaurus", "points": 5 },
+        { "text": "Road Atlas / Paper map", "points": 3 }
+      ]
+    },
+    {
+      "theme": "💼 Work, Tech & Modern Daily Life",
+      "title": "Round 30",
+      "multiplier": 1,
+      "prompt": "Name something people stick their noses into when they really ought to mind their own business.",
+      "answers": [
+        { "text": "Other people's personal drama / Gossip", "points": 74 },
+        { "text": "Someone else's phone screen", "points": 13 },
+        { "text": "Their kid's / neighbor's marriage", "points": 7 },
+        { "text": "The refrigerator at midnight", "points": 4 },
+        { "text": "A baby's dirty diaper", "points": 2 }
+      ]
+    },
+    {
+      "theme": "💼 Work, Tech & Modern Daily Life",
+      "title": "Round 31",
+      "multiplier": 2,
+      "prompt": "If you could see all the microscopic bacteria on it, name something you would never touch again.",
+      "answers": [
+        { "text": "Public bathroom door handle / knob", "points": 32 },
+        { "text": "Smartphone touchscreen", "points": 26 },
+        { "text": "Paper cash / Coins", "points": 16 },
+        { "text": "Toilet flush lever / seat", "points": 12 },
+        { "text": "Hotel TV remote control", "points": 7 },
+        { "text": "Kitchen dish sponge", "points": 4 },
+        { "text": "Airplane tray table / Gas pump", "points": 3 }
+      ]
+    },
+    {
+      "theme": "💼 Work, Tech & Modern Daily Life",
+      "title": "Round 32",
+      "multiplier": 3,
+      "prompt": "Complete the panic phrase: \"Oh no—my ________ is leaking all over the place!\"",
+      "answers": [
+        { "text": "Kitchen faucet / Sink pipe", "points": 38 },
+        { "text": "Car engine oil / Radiator", "points": 24 },
+        { "text": "House roof / Ceiling", "points": 17 },
+        { "text": "Bathroom toilet / Plumbing", "points": 10 },
+        { "text": "Ink pen in my shirt pocket", "points": 6 },
+        { "text": "Baby's diaper", "points": 5 }
+      ]
+    },
+    {
+      "theme": "💼 Work, Tech & Modern Daily Life",
+      "title": "Round 33",
+      "multiplier": 1,
+      "prompt": "Name something people do in the bathroom mirror when they are 100% sure nobody is looking.",
+      "answers": [
+        { "text": "Flex muscles / Practice sexy poses", "points": 42 },
+        { "text": "Pop pimples / Pluck stray hairs", "points": 26 },
+        { "text": "Make funny faces / Test smiles", "points": 14 },
+        { "text": "Turn around and inspect their butt", "points": 9 },
+        { "text": "Sing into a hairbrush microphone", "points": 5 },
+        { "text": "Rehearse arguments they will never have", "points": 4 }
+      ]
+    },
+    {
+      "theme": "💼 Work, Tech & Modern Daily Life",
+      "title": "Round 34",
+      "multiplier": 2,
+      "prompt": "Name a reason you give someone an awkward \"side-hug\" instead of a warm, normal hug.",
+      "answers": [
+        { "text": "Don't like them / Creepy vibes", "points": 45 },
+        { "text": "They smell like terrible body odor", "points": 24 },
+        { "text": "Barely know them / Professional boundary", "points": 16 },
+        { "text": "They are soaking wet / Sweaty", "points": 8 },
+        { "text": "Rushing out the door / In a hurry", "points": 4 },
+        { "text": "Holding a hot cup of coffee", "points": 3 }
+      ]
+    },
+    {
+      "theme": "👶 Family, Home & Growing Up",
+      "title": "Round 35",
+      "multiplier": 1,
+      "prompt": "Fill in the family flex: \"Out of all my family members, I am officially the...\"",
+      "answers": [
+        { "text": "Smartest", "points": 26 },
+        { "text": "Funniest", "points": 21 },
+        { "text": "Best looking / Prettiest", "points": 17 },
+        { "text": "Hardest working", "points": 13 },
+        { "text": "Only sane one / Peacemaker", "points": 10 },
+        { "text": "Oldest / Youngest", "points": 8 },
+        { "text": "Tallest", "points": 5 }
+      ]
+    },
+    {
+      "theme": "👶 Family, Home & Growing Up",
+      "title": "Round 36",
+      "multiplier": 1,
+      "prompt": "What would you do if a DNA test revealed that your long-term spouse is actually your cousin?",
+      "answers": [
+        { "text": "Pack my bags and break up instantly", "points": 30 },
+        { "text": "Freak out and cry hysterically", "points": 23 },
+        { "text": "Stay together / Too late to change now!", "points": 15 },
+        { "text": "Check Ancestry to see how distant", "points": 11 },
+        { "text": "Faint / Throw up", "points": 9 },
+        { "text": "Vow never to speak of it to anyone", "points": 8 },
+        { "text": "Make hillbilly / banjo jokes", "points": 4 }
+      ]
+    },
+    {
+      "theme": "👶 Family, Home & Growing Up",
+      "title": "Round 37",
+      "multiplier": 2,
+      "prompt": "When little kids play pretend with their friends, what do they always pretend to be?",
+      "answers": [
+        { "text": "Doctors or Nurses", "points": 25 },
+        { "text": "Superheroes (Batman / Spider-Man)", "points": 22 },
+        { "text": "Cops and Robbers", "points": 18 },
+        { "text": "Mom and Dad / Playing house", "points": 16 },
+        { "text": "Wild Animals / Dinosaurs", "points": 11 },
+        { "text": "Princesses / Kings / Royalty", "points": 8 }
+      ]
+    },
+    {
+      "theme": "👶 Family, Home & Growing Up",
+      "title": "Round 38",
+      "multiplier": 2,
+      "prompt": "Besides your phone, what one item would you desperately want if you were stuck in an elevator?",
+      "answers": [
+        { "text": "Bottled water and snacks", "points": 54 },
+        { "text": "An attractive crush to pass the time with", "points": 16 },
+        { "text": "A cold bottle of wine / Beer", "points": 12 },
+        { "text": "A private portable toilet / Bucket", "points": 8 },
+        { "text": "A good paperback novel / Puzzle", "points": 5 },
+        { "text": "A battery-powered fan / Air flow", "points": 3 },
+        { "text": "A crowbar / Escape ladder", "points": 2 }
+      ]
+    },
+    {
+      "theme": "👶 Family, Home & Growing Up",
+      "title": "Round 39",
+      "multiplier": 3,
+      "prompt": "Name something many women have been known to stretch the truth about the size of.",
+      "answers": [
+        { "text": "Dress / Clothing size", "points": 48 },
+        { "text": "Body weight on the bathroom scale", "points": 38 },
+        { "text": "Shoe size", "points": 6 },
+        { "text": "Size of their home / Closet", "points": 4 },
+        { "text": "Carat size of diamond jewelry", "points": 4 }
+      ]
+    },
+    {
+      "theme": "👶 Family, Home & Growing Up",
+      "title": "Round 40",
+      "multiplier": 1,
+      "prompt": "Name something identical twins are usually forced to share on their birthday.",
+      "answers": [
+        { "text": "The birthday cake & candles", "points": 58 },
+        { "text": "The birthday party venue & guests", "points": 22 },
+        { "text": "Presents and toys", "points": 12 },
+        { "text": "Birthday card from relatives", "points": 5 },
+        { "text": "The spotlight and birthday song", "points": 3 }
+      ]
+    },
+    {
+      "theme": "👶 Family, Home & Growing Up",
+      "title": "Round 41",
+      "multiplier": 2,
+      "prompt": "Name a nightmare disaster that an Olympic torch runner prays does not happen on live TV.",
+      "answers": [
+        { "text": "Tripping and eating asphalt face-first", "points": 53 },
+        { "text": "A gust of wind blowing the flame out", "points": 24 },
+        { "text": "Setting their own hair / jersey on fire", "points": 13 },
+        { "text": "A sudden torrential rainstorm", "points": 6 },
+        { "text": "Running the completely wrong way", "points": 2 },
+        { "text": "Running shorts falling down", "points": 2 }
+      ]
+    },
+    {
+      "theme": "👶 Family, Home & Growing Up",
+      "title": "Round 42",
+      "multiplier": 3,
+      "prompt": "Name an activity that is awesome for a 6-year-old's party, but disastrous for a bachelor party.",
+      "answers": [
+        { "text": "Musical chairs", "points": 34 },
+        { "text": "Face painting", "points": 28 },
+        { "text": "Hitting a donkey piñata", "points": 17 },
+        { "text": "Hide and seek / Tag", "points": 10 },
+        { "text": "A silly children's magic show", "points": 6 },
+        { "text": "Pin the tail on the donkey", "points": 5 }
+      ]
+    },
+    {
+      "theme": "👶 Family, Home & Growing Up",
+      "title": "Round 43",
+      "multiplier": 1,
+      "prompt": "Complete the classic insult: \"Would you please go get a ________!\"",
+      "answers": [
+        { "text": "Life!", "points": 71 },
+        { "text": "Job!", "points": 17 },
+        { "text": "Grip!", "points": 5 },
+        { "text": "Clue!", "points": 4 },
+        { "text": "Room!", "points": 3 }
+      ]
+    },
+    {
+      "theme": "👶 Family, Home & Growing Up",
+      "title": "Round 44",
+      "multiplier": 2,
+      "prompt": "Name an extreme activity a woman should probably avoid when she is 9 months pregnant.",
+      "answers": [
+        { "text": "Riding roller coasters / Bungee jumping", "points": 43 },
+        { "text": "Going out drinking / Bar hopping", "points": 24 },
+        { "text": "Running a marathon / CrossFit", "points": 14 },
+        { "text": "Flying long-distance on a plane", "points": 9 },
+        { "text": "Wearing 6-inch stiletto heels", "points": 6 },
+        { "text": "Lifting heavy couches / Moving", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 45",
+      "multiplier": 3,
+      "prompt": "Tell us what you are doing when you mutter: \"I am SO going to regret this tomorrow morning!\"",
+      "answers": [
+        { "text": "Taking extra tequila shots / Binge drinking", "points": 55 },
+        { "text": "Devouring an entire pizza at 2:00 AM", "points": 22 },
+        { "text": "Texting or dialing my ex-partner", "points": 12 },
+        { "text": "Binge-watching TV until 4:00 AM", "points": 7 },
+        { "text": "Impulse buying expensive stuff online", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 46",
+      "multiplier": 1,
+      "prompt": "Scientists should genetically engineer dairy cows to produce what drink instead of milk?",
+      "answers": [
+        { "text": "Ice cold Beer", "points": 42 },
+        { "text": "Red / White Wine", "points": 26 },
+        { "text": "Iced Coffee / Caramel Macchiato", "points": 16 },
+        { "text": "Creamy Chocolate Milkshake", "points": 10 },
+        { "text": "Coca-Cola / Dr Pepper", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 47",
+      "multiplier": 2,
+      "prompt": "Fill in the universal wish: \"Man, I really wish I was ________ right now!\"",
+      "answers": [
+        { "text": "Filthy rich / A multi-millionaire", "points": 44 },
+        { "text": "Twenty years younger", "points": 20 },
+        { "text": "In shape / 20 pounds lighter", "points": 16 },
+        { "text": "A few inches taller", "points": 10 },
+        { "text": "Lying on a sunny beach in Maui", "points": 6 },
+        { "text": "Sound asleep in bed", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 48",
+      "multiplier": 3,
+      "prompt": "At a funeral visitation, name a shocking clue that makes you suspect the deceased is still alive.",
+      "answers": [
+        { "text": "Fingers twitch or hand moves", "points": 35 },
+        { "text": "Chest visibly rising and falling (Breathing)", "points": 28 },
+        { "text": "Eyelids flutter open or wink", "points": 16 },
+        { "text": "Sitting straight up and speaking", "points": 10 },
+        { "text": "Sneezing or coughing loudly", "points": 6 },
+        { "text": "Loud knocking sound from inside the casket", "points": 5 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 49",
+      "multiplier": 1,
+      "prompt": "Name something that can turn a somber memorial service into a surprisingly fun celebration.",
+      "answers": [
+        { "text": "Live upbeat music and joyful dancing", "points": 44 },
+        { "text": "A fully stocked open bar with cocktails", "points": 29 },
+        { "text": "Hilarious roast speeches & funny stories", "points": 15 },
+        { "text": "A video montage of wild, funny memories", "points": 6 },
+        { "text": "A gourmet buffet with favorite comfort foods", "points": 4 },
+        { "text": "A massive colorful balloon release", "points": 2 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 50",
+      "multiplier": 2,
+      "prompt": "Name something well-known that swings back and forth.",
+      "answers": [
+        { "text": "Playground swing / Tire swing", "points": 49 },
+        { "text": "A monkey / Chimpanzee in trees", "points": 18 },
+        { "text": "A grandfather clock pendulum", "points": 12 },
+        { "text": "A baseball bat or golf club", "points": 9 },
+        { "text": "Saloon / Double-hinged doors", "points": 7 },
+        { "text": "An adventurous swinger couple", "points": 5 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 51",
+      "multiplier": 3,
+      "prompt": "Name a famous term or title that includes the word \"Beauty\".",
+      "answers": [
+        { "text": "Beauty and the Beast", "points": 45 },
+        { "text": "Beauty Queen / Beauty Pageant", "points": 25 },
+        { "text": "Sleeping Beauty", "points": 16 },
+        { "text": "Beauty Salon / Parlor", "points": 8 },
+        { "text": "Black Beauty", "points": 4 },
+        { "text": "Beauty Mark", "points": 2 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 52",
+      "multiplier": 1,
+      "prompt": "Complete the phrase: \"Knock ________!\"",
+      "answers": [
+        { "text": "Knock knock (joke)", "points": 44 },
+        { "text": "Knockout / Knock out", "points": 30 },
+        { "text": "Knock on wood", "points": 16 },
+        { "text": "Knock it off!", "points": 6 },
+        { "text": "Knockdown", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 53",
+      "multiplier": 2,
+      "prompt": "Name a sovereign nation whose name begins with the letter \"S\".",
+      "answers": [
+        { "text": "Spain", "points": 42 },
+        { "text": "Sweden", "points": 25 },
+        { "text": "Switzerland", "points": 18 },
+        { "text": "South Africa", "points": 8 },
+        { "text": "Scotland", "points": 5 },
+        { "text": "Singapore", "points": 2 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 54",
+      "multiplier": 3,
+      "prompt": "Name a U.S. President whose portrait appears on American paper currency.",
+      "answers": [
+        { "text": "George Washington ($1)", "points": 41 },
+        { "text": "Abraham Lincoln ($5)", "points": 29 },
+        { "text": "Alexander Hamilton ($10) / Ben Franklin ($100)", "points": 14 },
+        { "text": "Thomas Jefferson ($2)", "points": 9 },
+        { "text": "Andrew Jackson ($20)", "points": 7 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 55",
+      "multiplier": 1,
+      "prompt": "Name something very slippery that is almost impossible to hold onto.",
+      "answers": [
+        { "text": "A wet bar of shower soap", "points": 48 },
+        { "text": "A fresh live fish / Eel", "points": 24 },
+        { "text": "A melting ice cube", "points": 14 },
+        { "text": "A soapy, wriggling baby in the bath", "points": 8 },
+        { "text": "A greased watermelon", "points": 4 },
+        { "text": "A water balloon", "points": 2 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 56",
+      "multiplier": 2,
+      "prompt": "Name a fruit or vegetable that a proud farmer says reminds him of his wife's bottom.",
+      "answers": [
+        { "text": "A plump, juicy Peach", "points": 42 },
+        { "text": "A round Watermelon", "points": 24 },
+        { "text": "A giant Pumpkin", "points": 16 },
+        { "text": "A ripe red Tomato", "points": 9 },
+        { "text": "A sweet Cantaloupe", "points": 5 },
+        { "text": "A Bartlett Pear", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 57",
+      "multiplier": 2,
+      "prompt": "Instead of classic strip poker, name a hilarious card game to play strip-style.",
+      "answers": [
+        { "text": "UNO", "points": 42 },
+        { "text": "Go Fish", "points": 26 },
+        { "text": "Blackjack / 21", "points": 16 },
+        { "text": "Old Maid", "points": 8 },
+        { "text": "Cards Against Humanity / Exploding Kittens", "points": 5 },
+        { "text": "Solitaire", "points": 3 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 58",
+      "multiplier": 3,
+      "prompt": "Name the scariest instrument a dentist can pick up while you're trapped in the chair.",
+      "answers": [
+        { "text": "The high-pitched tooth drill", "points": 64 },
+        { "text": "Giant Novocaine syringe & needle", "points": 22 },
+        { "text": "Heavy tooth extraction pliers", "points": 8 },
+        { "text": "Sharp metal scraping hook / Pick", "points": 4 },
+        { "text": "The shocking final bill", "points": 2 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 59",
+      "multiplier": 1,
+      "prompt": "Name a terrible smell you hope the mall Santa Claus does NOT reek of when you sit on his lap.",
+      "answers": [
+        { "text": "Cheap whiskey / Hard liquor", "points": 42 },
+        { "text": "Urine / Stale diaper smell", "points": 22 },
+        { "text": "Weed / Marijuana smoke", "points": 13 },
+        { "text": "Stale cigarette smoke", "points": 11 },
+        { "text": "Rank body odor / Gym sweat", "points": 8 },
+        { "text": "Heavy cheap perfume", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🎉 Late Night Parties, Wild Quirks & Steve's Favorites",
+      "title": "Round 60",
+      "multiplier": 2,
+      "prompt": "On Christmas morning you find Santa Claus firmly wedged in your chimney—what's your first move?",
+      "answers": [
+        { "text": "Dial 911 / Call the fire department", "points": 40 },
+        { "text": "Grab his boots and tug with all my might", "points": 22 },
+        { "text": "Burst out laughing hysterically", "points": 14 },
+        { "text": "Take a viral selfie / Post to TikTok", "points": 12 },
+        { "text": "Ask \"Did you remember my PS5 first?\"", "points": 7 },
+        { "text": "Hand him a warm mug of milk and cookies", "points": 5 }
+      ]
+    }
+  ],
+  "fastMoney": [
+    {
+      "prompt": "In school, you would get in serious trouble for bringing home what report card grade?",
+      "hint": "F (54), D (28), C (14), B (4)"
+    },
+    {
+      "prompt": "Name a legendary classic horror movie franchise.",
+      "hint": "Halloween / Michael Myers (38), Friday the 13th (25), Scream (18), A Nightmare on Elm Street (12), Saw (7)"
+    },
+    {
+      "prompt": "Name something you genuinely, deeply love that is NOT a human being.",
+      "hint": "My Dog / Pet (48), Money / Cash (22), Pizza / Comfort Food (15), Morning Coffee (9), My Phone / Car (6)"
+    },
+    {
+      "prompt": "Name something people drink or take to soothe a scratchy sore throat.",
+      "hint": "Hot tea with lemon & honey (45), Throat lozenge / Cough drop (28), Warm salt water gargle (15), Chicken noodle soup (8), Cough syrup (4)"
+    },
+    {
+      "prompt": "Name a trusty hand tool everyone keeps around the house to fix things.",
+      "hint": "Hammer (46), Screwdriver (32), Adjustable wrench (14), Pliers (5), Roll of duct tape (3)"
+    },
+    {
+      "prompt": "Name something you reach for in the pitch black in the middle of the night.",
+      "hint": "Smartphone (46), Eyeglasses (24), Glass of ice water (16), Nightstand lamp switch (10), Partner (4)"
+    },
+    {
+      "prompt": "How many total strings does a standard string bikini have?",
+      "hint": "4 strings (42), 6 strings (28), 2 strings (18), 3 strings (12)"
+    },
+    {
+      "prompt": "Name an occupation where you routinely make people groan and say \"Ouch!\".",
+      "hint": "Dentist (48), Nurse / Phlebotomist (25), Tattoo artist (14), Waxing esthetician (9), Physical therapist / Chiropractor (4)"
+    },
+    {
+      "prompt": "Name a venue or travel option where people willingly pay extra for a better seat.",
+      "hint": "Airplane / First class (45), Concert / Front row (28), Sports stadium / VIP box (16), Movie theater (8), Broadway show (3)"
+    },
+    {
+      "prompt": "Name any major brand of toothpaste.",
+      "hint": "Colgate (52), Crest (36), Sensodyne (8), Aquafresh (3), Arm & Hammer (1)"
+    },
+    {
+      "prompt": "To the exact degree Fahrenheit, what do you set the hotel thermostat to?",
+      "hint": "68 degrees (38), 70 degrees (26), 72 degrees (18), 65 degrees (12), 69 degrees (6)"
+    },
+    {
+      "prompt": "In what calendar month does the most baby-making happen?",
+      "hint": "February (38), December (26), November (18), January (12), July (6)"
+    },
+    {
+      "prompt": "Name something people absolutely despise having pulled.",
+      "hint": "A rotten tooth (46), Hair / Eyebrows (24), A hamstring / Muscle (18), Their leg (8), A fire alarm (4)"
+    },
+    {
+      "prompt": "Name something you always buy inside a gas station convenience store on a road trip.",
+      "hint": "Salty chips / Beef jerky / Snacks (42), Gasoline (24), Energy drink / Hot coffee (18), Cold soda / Water (11), Pack of gum (5)"
+    },
+    {
+      "prompt": "According to women, what color is your favorite sexy go-to dress?",
+      "hint": "Classic Black (56), Fiery Red (32), Royal Blue (6), White (4), Hot Pink (2)"
+    },
+    {
+      "prompt": "According to men, admit it—who in your life are you secretly a little bit afraid of?",
+      "hint": "My Wife / Spouse (38), My Mom (28), My Mother-in-law (18), My Boss (12), The IRS (4)"
+    },
+    {
+      "prompt": "At what age did you realize you were as tall as you were ever going to get?",
+      "hint": "18 years old (32), 16 years old (28), 15 years old (18), 20 years old (12), 14 years old (10)"
+    },
+    {
+      "prompt": "Name a sport where an athlete is very likely to take a blow to the head.",
+      "hint": "Football (42), Boxing / MMA (30), Soccer (14), Baseball (9), Hockey (5)"
+    },
+    {
+      "prompt": "What is the single most heavily used color in an entire box of crayons?",
+      "hint": "Bold Red (48), Sky Blue (26), Deep Black (14), Sunny Yellow (8), Emerald Green (4)"
+    },
+    {
+      "prompt": "Complete the phrase: \"Leap ________\".",
+      "hint": "Leap Frog (50), Leap Year (45), Leap of Faith (5)"
+    },
+    {
+      "prompt": "How many consecutive months of gym workouts does it take to see real muscle in the mirror?",
+      "hint": "3 months (45), 1 month (24), 2 months (18), 6 months (10), 12 months (3)"
+    },
+    {
+      "prompt": "Name the single best thing to come home to after an exhausting day at work.",
+      "hint": "My Dog / Excited Pet (38), My Spouse / Partner / Kids (30), The Soft Couch / Warm Bed (20), A Hot Cooked Dinner (8), Total Peace & Silence (4)"
+    },
+    {
+      "prompt": "What does a talented street musician place on the pavement to collect tips?",
+      "hint": "Open guitar / violin case (48), Upturned fedora / baseball cap (26), Glass jar / paper cup (14), Bucket (8), Cardboard sign (4)"
+    },
+    {
+      "prompt": "Name a face card in a standard deck of playing cards.",
+      "hint": "King (46), Queen (32), Jack (18), Ace (4)"
+    },
+    {
+      "prompt": "If you accidentally drop a piece of candy, where is the nastiest place it could land?",
+      "hint": "Public bathroom floor / Toilet (44), Subway / Street sidewalk (28), Deep carpet full of pet hair (16), Kitchen trash can (8), Under the couch (4)"
+    },
+    {
+      "prompt": "Name a public place where you'd be furious if someone talked loudly through the whole event.",
+      "hint": "Movie theater (48), Live concert / Opera (24), Sunday church service (15), Broadway stage play (9), Library (4)"
+    },
+    {
+      "prompt": "Who is the one relative at Thanksgiving dinner you desperately hope you don't sit next to?",
+      "hint": "Mother-in-law (36), The Loud Opinionated Uncle (26), An Ex / Former flame (18), Nosy Aunt (12), Father-in-law (8)"
+    },
+    {
+      "prompt": "Which high school graduation class reunion usually draws the biggest crowd?",
+      "hint": "10-year reunion (46), 20-year reunion (31), 50-year reunion (13), 25-year reunion (7), 5-year reunion (3)"
+    },
+    {
+      "prompt": "Name a mode of winter transportation that has metal runners instead of wheels.",
+      "hint": "Snow Sled / Toboggan (44), Ice skates (26), Santa's Sleigh (18), Snowmobile (8), Dog sled (4)"
+    },
+    {
+      "prompt": "What is the very first hot beverage people pour themselves in the morning?",
+      "hint": "Fresh brewed Coffee (58), Hot Tea (32), Hot Chocolate (6), Warm water with lemon (4)"
+    },
+    {
+      "prompt": "According to married couples, what is the very last phrase you say before falling asleep?",
+      "hint": "\"I love you\" (48), \"Goodnight\" (32), \"Turn off the light\" (12), \"Don't snore tonight!\" (8)"
+    },
+    {
+      "prompt": "How many total hours does it take to prepare and cook a full Thanksgiving feast?",
+      "hint": "4 hours (35), 5 hours (26), 6 hours (20), 3 hours (11), 8+ hours (8)"
+    },
+    {
+      "prompt": "Name something Santa Claus would panic to discover was missing on Christmas Eve night.",
+      "hint": "Rudolph / The Flying Reindeer (42), His giant Bag of Toys (30), The Flying Sleigh (16), The Naughty & Nice List (8), His Red Velvet Hat (4)"
+    },
+    {
+      "prompt": "Name a profession where people literally save human lives every single day.",
+      "hint": "Doctor / Trauma Surgeon (50), Firefighter (26), Paramedic / EMT (14), Police Officer (7), Beach Lifeguard (3)"
+    },
+    {
+      "prompt": "Give me a common English word that rhymes with \"turkey\".",
+      "hint": "Perky (45), Jerky (35), Murky (14), Quirky (6)"
+    },
+    {
+      "prompt": "How many weeks does it take an average man to grow an impressive mustache?",
+      "hint": "4 weeks (38), 2 weeks (26), 3 weeks (18), 6 weeks (12), 1 week (6)"
+    },
+    {
+      "prompt": "What is the absolute first physical object you reach for when your alarm rings?",
+      "hint": "Smartphone (55), Eyeglasses (22), Snooze button (14), Cup of water (6), The bedsheet (3)"
+    },
+    {
+      "prompt": "Name something that millions of people are allergic to.",
+      "hint": "Peanuts / Tree nuts (38), Spring pollen / Ragweed (28), Cat & dog fur (16), Dust mites & mold (12), Penicillin (6)"
+    },
+    {
+      "prompt": "On which night of the entire week do people stay up latest past their bedtime?",
+      "hint": "Saturday night (68), Friday night (28), Sunday night (3), New Year's Eve (1)"
+    },
+    {
+      "prompt": "Name a prestigious entertainment trophy that every performer dreams of holding.",
+      "hint": "The Oscar / Academy Award (54), Grammy Award (24), Emmy Award (14), Tony Award (5), Golden Globe (3)"
+    }
+  ]
+}

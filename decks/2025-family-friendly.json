@@ -1,0 +1,974 @@
+{
+  "gameTitle": "Family Feud 2025",
+  "gameIcon": "🌟",
+  "deckName": "Family Feud 2025 (Family-Friendly Edition • 60 Rounds)",
+  "teamPresets": [
+    ["Team Parents", "Team Kids"],
+    ["The Champs", "The Challengers"],
+    ["Team Gold", "Team Blue"],
+    ["Cousins", "Siblings"],
+    ["Grandparents", "Grandkids"]
+  ],
+  "rounds": [
+    {
+      "theme": "📺 Pop Culture, Famous Faces & Entertainment",
+      "title": "Round 1",
+      "multiplier": 1,
+      "prompt": "Name a female American celebrity who is treated like absolute royalty.",
+      "answers": [
+        { "text": "Taylor Swift", "points": 21 },
+        { "text": "Oprah Winfrey", "points": 18 },
+        { "text": "Beyoncé", "points": 13 },
+        { "text": "Dolly Parton", "points": 12 },
+        { "text": "Martha Stewart", "points": 8 },
+        { "text": "Jennifer Lopez", "points": 6 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture, Famous Faces & Entertainment",
+      "title": "Round 2",
+      "multiplier": 1,
+      "prompt": "Name someone who is widely considered the funniest person alive right now.",
+      "answers": [
+        { "text": "Steve Harvey", "points": 24 },
+        { "text": "Kevin Hart", "points": 21 },
+        { "text": "Dave Chappelle", "points": 16 },
+        { "text": "Jerry Seinfeld", "points": 14 },
+        { "text": "Chris Rock", "points": 10 },
+        { "text": "Adam Sandler", "points": 8 },
+        { "text": "Jim Carrey", "points": 5 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture, Famous Faces & Entertainment",
+      "title": "Round 3",
+      "multiplier": 2,
+      "prompt": "Name the greatest all-female singing group of all time.",
+      "answers": [
+        { "text": "The Supremes", "points": 36 },
+        { "text": "TLC", "points": 27 },
+        { "text": "Destiny's Child", "points": 18 },
+        { "text": "The Spice Girls", "points": 10 },
+        { "text": "En Vogue", "points": 5 },
+        { "text": "The Pointer Sisters", "points": 4 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture, Famous Faces & Entertainment",
+      "title": "Round 4",
+      "multiplier": 2,
+      "prompt": "Name a job or role in an A-list superstar's personal entourage.",
+      "answers": [
+        { "text": "Bodyguard / Security", "points": 44 },
+        { "text": "Stylist / Hair & Makeup Glam", "points": 22 },
+        { "text": "Personal Assistant", "points": 16 },
+        { "text": "Manager / Publicist", "points": 9 },
+        { "text": "Personal Chef", "points": 5 },
+        { "text": "Private Driver / Chauffeur", "points": 4 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture, Famous Faces & Entertainment",
+      "title": "Round 5",
+      "multiplier": 3,
+      "prompt": "Name an actor who would be fantastic at playing Santa Claus in a holiday movie.",
+      "answers": [
+        { "text": "Tim Allen", "points": 38 },
+        { "text": "Tom Hanks", "points": 24 },
+        { "text": "Jack Black", "points": 16 },
+        { "text": "Will Ferrell", "points": 10 },
+        { "text": "Danny DeVito", "points": 7 },
+        { "text": "Steve Harvey", "points": 5 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture, Famous Faces & Entertainment",
+      "title": "Round 6",
+      "multiplier": 1,
+      "prompt": "Name someone Winnie the Pooh probably has on speed dial in the Hundred Acre Wood.",
+      "answers": [
+        { "text": "Piglet", "points": 42 },
+        { "text": "Christopher Robin", "points": 26 },
+        { "text": "Tigger", "points": 16 },
+        { "text": "Eeyore", "points": 8 },
+        { "text": "The Beekeeper / Honey maker", "points": 5 },
+        { "text": "Rabbit", "points": 3 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture, Famous Faces & Entertainment",
+      "title": "Round 7",
+      "multiplier": 2,
+      "prompt": "Besides a bird, name a real-life creature that can fly through the air.",
+      "answers": [
+        { "text": "Flying insects (Fly / Bee / Butterfly)", "points": 46 },
+        { "text": "Bat", "points": 32 },
+        { "text": "Flying squirrel", "points": 12 },
+        { "text": "Flying fish", "points": 6 },
+        { "text": "Pterodactyl", "points": 4 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture, Famous Faces & Entertainment",
+      "title": "Round 8",
+      "multiplier": 3,
+      "prompt": "Complete the famous fairy tale or movie title: \"Beauty ________\".",
+      "answers": [
+        { "text": "Beauty and the Beast", "points": 52 },
+        { "text": "Sleeping Beauty", "points": 26 },
+        { "text": "Beauty Queen / Pageant", "points": 12 },
+        { "text": "Beauty Salon / Parlor", "points": 6 },
+        { "text": "Black Beauty", "points": 4 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture, Famous Faces & Entertainment",
+      "title": "Round 9",
+      "multiplier": 1,
+      "prompt": "Name a superhero that kids always pretend to be on the playground.",
+      "answers": [
+        { "text": "Spider-Man", "points": 38 },
+        { "text": "Batman", "points": 28 },
+        { "text": "Superman", "points": 16 },
+        { "text": "Iron Man", "points": 10 },
+        { "text": "Captain America", "points": 5 },
+        { "text": "Wonder Woman", "points": 3 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture, Famous Faces & Entertainment",
+      "title": "Round 10",
+      "multiplier": 2,
+      "prompt": "Name a superhero whose power would make doing house chores effortless.",
+      "answers": [
+        { "text": "The Flash / Super Speed", "points": 45 },
+        { "text": "Superman / Super Strength", "points": 24 },
+        { "text": "Telekinesis / Mind Power", "points": 15 },
+        { "text": "Stretchy Arms / Mr. Fantastic", "points": 10 },
+        { "text": "Invisibility", "points": 6 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture, Famous Faces & Entertainment",
+      "title": "Round 11",
+      "multiplier": 2,
+      "prompt": "Name a famous cartoon character who rarely ever wears pants.",
+      "answers": [
+        { "text": "Donald Duck", "points": 42 },
+        { "text": "Porky Pig", "points": 26 },
+        { "text": "Winnie the Pooh", "points": 16 },
+        { "text": "SpongeBob SquarePants", "points": 8 },
+        { "text": "Mickey Mouse", "points": 5 },
+        { "text": "Yogi Bear", "points": 3 }
+      ]
+    },
+    {
+      "theme": "📺 Pop Culture, Famous Faces & Entertainment",
+      "title": "Round 12",
+      "multiplier": 3,
+      "prompt": "Name an entertainment trophy that every performer dreams of winning one day.",
+      "answers": [
+        { "text": "The Oscar / Academy Award", "points": 54 },
+        { "text": "Grammy Award", "points": 24 },
+        { "text": "Emmy Award", "points": 14 },
+        { "text": "Tony Award", "points": 5 },
+        { "text": "Golden Globe", "points": 3 }
+      ]
+    },
+    {
+      "theme": "🏠 Home, Daily Habits & Everyday Life",
+      "title": "Round 13",
+      "multiplier": 1,
+      "prompt": "Name something people do as soon as they get home from a long day at work or school.",
+      "answers": [
+        { "text": "Take off shoes / Change into comfy clothes", "points": 42 },
+        { "text": "Wash hands with soap", "points": 22 },
+        { "text": "Grab a snack and a cold drink", "points": 16 },
+        { "text": "Slump down on the living room sofa", "points": 12 },
+        { "text": "Pet the excited dog or cat", "points": 8 }
+      ]
+    },
+    {
+      "theme": "🏠 Home, Daily Habits & Everyday Life",
+      "title": "Round 14",
+      "multiplier": 1,
+      "prompt": "Name something you clean only when you know guests are coming over.",
+      "answers": [
+        { "text": "The guest bathroom / Toilet", "points": 38 },
+        { "text": "Living room sofa / Fluff cushions", "points": 24 },
+        { "text": "Baseboards / Dust the blinds", "points": 16 },
+        { "text": "Inside of the refrigerator", "points": 12 },
+        { "text": "Guest bedroom sheets", "points": 10 }
+      ]
+    },
+    {
+      "theme": "🏠 Home, Daily Habits & Everyday Life",
+      "title": "Round 15",
+      "multiplier": 2,
+      "prompt": "Name something you might find buried deep underneath the couch cushions.",
+      "answers": [
+        { "text": "Loose change and coins", "points": 45 },
+        { "text": "Food crumbs and popcorn", "points": 24 },
+        { "text": "The TV remote control", "points": 15 },
+        { "text": "Lost socks", "points": 8 },
+        { "text": "Children's toys / Lego bricks", "points": 5 },
+        { "text": "Hairpins and ink pens", "points": 3 }
+      ]
+    },
+    {
+      "theme": "🏠 Home, Daily Habits & Everyday Life",
+      "title": "Round 16",
+      "multiplier": 2,
+      "prompt": "Name something parents hide from their children around the house.",
+      "answers": [
+        { "text": "Holiday & birthday presents", "points": 42 },
+        { "text": "Candy and secret snacks", "points": 28 },
+        { "text": "Emergency cash stash", "points": 14 },
+        { "text": "Video game controllers / iPad", "points": 10 },
+        { "text": "Car keys", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🏠 Home, Daily Habits & Everyday Life",
+      "title": "Round 17",
+      "multiplier": 3,
+      "prompt": "Name an item that always gets lost in a messy kitchen junk drawer.",
+      "answers": [
+        { "text": "Extra batteries", "points": 34 },
+        { "text": "Roll of clear tape", "points": 24 },
+        { "text": "Kitchen scissors", "points": 18 },
+        { "text": "Rubber bands", "points": 12 },
+        { "text": "Pens and Sharpie markers", "points": 8 },
+        { "text": "Random mystery keys", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🏠 Home, Daily Habits & Everyday Life",
+      "title": "Round 18",
+      "multiplier": 1,
+      "prompt": "Name something you might forget to put on in the morning and feel weird all day long.",
+      "answers": [
+        { "text": "Deodorant", "points": 48 },
+        { "text": "Wristwatch / Smartwatch", "points": 22 },
+        { "text": "Matching socks", "points": 14 },
+        { "text": "Pants belt", "points": 8 },
+        { "text": "Eyeglasses / Contact lenses", "points": 5 },
+        { "text": "Jewelry / Earrings", "points": 3 }
+      ]
+    },
+    {
+      "theme": "🏠 Home, Daily Habits & Everyday Life",
+      "title": "Round 19",
+      "multiplier": 2,
+      "prompt": "Name an item that looks completely ruined and terrible after it gets soaking wet.",
+      "answers": [
+        { "text": "Cardboard box / Paper documents", "points": 42 },
+        { "text": "A fluffy dog or cat", "points": 28 },
+        { "text": "Suede shoes or jacket", "points": 15 },
+        { "text": "Slice of bread / Toast", "points": 9 },
+        { "text": "Silk clothing", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🏠 Home, Daily Habits & Everyday Life",
+      "title": "Round 20",
+      "multiplier": 3,
+      "prompt": "Name something people stick their noses into when they really should mind their own business.",
+      "answers": [
+        { "text": "Other people's drama / Gossip", "points": 72 },
+        { "text": "Someone else's smartphone screen", "points": 14 },
+        { "text": "A neighbor's private business", "points": 8 },
+        { "text": "The refrigerator at midnight", "points": 4 },
+        { "text": "A scented candle / Flower", "points": 2 }
+      ]
+    },
+    {
+      "theme": "🏠 Home, Daily Habits & Everyday Life",
+      "title": "Round 21",
+      "multiplier": 1,
+      "prompt": "Complete the panic phrase: \"Oh no—my ________ is leaking all over the floor!\"",
+      "answers": [
+        { "text": "Refrigerator / Freezer", "points": 38 },
+        { "text": "Washing machine / Dishwasher", "points": 26 },
+        { "text": "Bathroom toilet / Pipe", "points": 18 },
+        { "text": "Kitchen sink faucet", "points": 10 },
+        { "text": "Coffee maker", "points": 5 },
+        { "text": "Pet's water bowl", "points": 3 }
+      ]
+    },
+    {
+      "theme": "🏠 Home, Daily Habits & Everyday Life",
+      "title": "Round 22",
+      "multiplier": 2,
+      "prompt": "Name something people do in the bathroom mirror when they think nobody is watching.",
+      "answers": [
+        { "text": "Flex muscles / Strike heroic poses", "points": 42 },
+        { "text": "Pop a pimple / Check teeth", "points": 26 },
+        { "text": "Make silly and goofy faces", "points": 16 },
+        { "text": "Practice their best smile", "points": 9 },
+        { "text": "Sing into a hairbrush microphone", "points": 7 }
+      ]
+    },
+    {
+      "theme": "🏠 Home, Daily Habits & Everyday Life",
+      "title": "Round 23",
+      "multiplier": 2,
+      "prompt": "Fill in the family flex: \"Out of all my family members, I am officially the...\"",
+      "answers": [
+        { "text": "Smartest", "points": 28 },
+        { "text": "Funniest", "points": 24 },
+        { "text": "Best looking", "points": 16 },
+        { "text": "Hardest working", "points": 14 },
+        { "text": "Most organized / Sane one", "points": 10 },
+        { "text": "Tallest", "points": 8 }
+      ]
+    },
+    {
+      "theme": "🏠 Home, Daily Habits & Everyday Life",
+      "title": "Round 24",
+      "multiplier": 3,
+      "prompt": "Name something identical twins are usually expected to share on their birthday.",
+      "answers": [
+        { "text": "The birthday cake & candles", "points": 58 },
+        { "text": "The party venue & friends", "points": 22 },
+        { "text": "Toys and presents", "points": 12 },
+        { "text": "Birthday card from relatives", "points": 5 },
+        { "text": "The spotlight and birthday song", "points": 3 }
+      ]
+    },
+    {
+      "theme": "🏫 School, Work & Modern Tech",
+      "title": "Round 25",
+      "multiplier": 1,
+      "prompt": "Name something people do to avoid having to talk to a chatty driver or stranger.",
+      "answers": [
+        { "text": "Put in headphones / Earbuds", "points": 44 },
+        { "text": "Stare at smartphone / Fake a call", "points": 36 },
+        { "text": "Close eyes and pretend to sleep", "points": 14 },
+        { "text": "Look out the window silently", "points": 4 },
+        { "text": "Say \"I have a huge headache\"", "points": 2 }
+      ]
+    },
+    {
+      "theme": "🏫 School, Work & Modern Tech",
+      "title": "Round 26",
+      "multiplier": 1,
+      "prompt": "Name an old-school reference source nobody opens anymore because of Google.",
+      "answers": [
+        { "text": "Hardcover Encyclopedia set", "points": 44 },
+        { "text": "Giant Dictionary", "points": 30 },
+        { "text": "Yellow Pages / Phonebook", "points": 18 },
+        { "text": "Road Atlas / Paper Map", "points": 5 },
+        { "text": "Thesaurus", "points": 3 }
+      ]
+    },
+    {
+      "theme": "🏫 School, Work & Modern Tech",
+      "title": "Round 27",
+      "multiplier": 2,
+      "prompt": "Name an app on a teenager's phone that their grandparents have no idea how to use.",
+      "answers": [
+        { "text": "TikTok", "points": 46 },
+        { "text": "Snapchat", "points": 28 },
+        { "text": "Discord", "points": 14 },
+        { "text": "BeReal / Twitch", "points": 8 },
+        { "text": "Reddit", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🏫 School, Work & Modern Tech",
+      "title": "Round 28",
+      "multiplier": 2,
+      "prompt": "If you could see all the microscopic bacteria on it, name something you'd never touch again.",
+      "answers": [
+        { "text": "Public door handle / Push bar", "points": 34 },
+        { "text": "Smartphone touchscreen", "points": 28 },
+        { "text": "Paper dollar bills & coins", "points": 18 },
+        { "text": "Toilet flush lever / Handle", "points": 11 },
+        { "text": "Hotel TV remote control", "points": 6 },
+        { "text": "Kitchen dish sponge", "points": 3 }
+      ]
+    },
+    {
+      "theme": "🏫 School, Work & Modern Tech",
+      "title": "Round 29",
+      "multiplier": 3,
+      "prompt": "Name an excuse people use when they show up 20 minutes late to work or school.",
+      "answers": [
+        { "text": "Stuck in terrible traffic", "points": 48 },
+        { "text": "Alarm didn't go off / Overslept", "points": 28 },
+        { "text": "Couldn't find car keys or backpack", "points": 12 },
+        { "text": "Car wouldn't start / Flat tire", "points": 8 },
+        { "text": "Spilled breakfast on clothes", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🏫 School, Work & Modern Tech",
+      "title": "Round 30",
+      "multiplier": 1,
+      "prompt": "Name something people borrow from coworkers or classmates and constantly forget to return.",
+      "answers": [
+        { "text": "Ink pens and pencils", "points": 58 },
+        { "text": "Desktop stapler", "points": 22 },
+        { "text": "Charging cable / Phone charger", "points": 11 },
+        { "text": "Tape dispenser", "points": 5 },
+        { "text": "A dollar / Lunch change", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🏫 School, Work & Modern Tech",
+      "title": "Round 31",
+      "multiplier": 2,
+      "prompt": "Name a reason you give someone an awkward \"side-hug\" instead of a normal hug.",
+      "answers": [
+        { "text": "Barely know the person / Acquaintance", "points": 44 },
+        { "text": "Person has terrible body odor", "points": 26 },
+        { "text": "Awkward professional boundary", "points": 18 },
+        { "text": "In a huge rush out the door", "points": 8 },
+        { "text": "Person is sweaty from workout", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🏫 School, Work & Modern Tech",
+      "title": "Round 32",
+      "multiplier": 3,
+      "prompt": "Besides a cell phone, what one item would you want if you were stuck in an elevator for 3 hours?",
+      "answers": [
+        { "text": "Bottle of water and snacks", "points": 54 },
+        { "text": "A comfortable chair or pillow", "points": 18 },
+        { "text": "A deck of cards or book", "points": 14 },
+        { "text": "A good friend for company", "points": 8 },
+        { "text": "A battery-powered mini fan", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🏫 School, Work & Modern Tech",
+      "title": "Round 33",
+      "multiplier": 1,
+      "prompt": "Name an activity that is awesome for a 6-year-old's birthday, but terrible for grown-ups.",
+      "answers": [
+        { "text": "Bouncing in an inflatable bounce house", "points": 36 },
+        { "text": "Full face painting", "points": 26 },
+        { "text": "Whacking a candy piñata blindfolded", "points": 18 },
+        { "text": "Playing musical chairs", "points": 12 },
+        { "text": "Pin the tail on the donkey", "points": 8 }
+      ]
+    },
+    {
+      "theme": "🏫 School, Work & Modern Tech",
+      "title": "Round 34",
+      "multiplier": 2,
+      "prompt": "Complete the classic phrase: \"Would you please go get a ________!\"",
+      "answers": [
+        { "text": "Life!", "points": 70 },
+        { "text": "Job!", "points": 18 },
+        { "text": "Grip!", "points": 6 },
+        { "text": "Clue!", "points": 4 },
+        { "text": "Glass of water!", "points": 2 }
+      ]
+    },
+    {
+      "theme": "🏫 School, Work & Modern Tech",
+      "title": "Round 35",
+      "multiplier": 2,
+      "prompt": "Name a place where one single minute feels like an entire hour.",
+      "answers": [
+        { "text": "The DMV waiting room", "points": 42 },
+        { "text": "Doctor or Dentist waiting room", "points": 26 },
+        { "text": "Airport security TSA checkpoint", "points": 18 },
+        { "text": "Holding a plank at gym class", "points": 10 },
+        { "text": "Waiting for microwave to finish", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🏫 School, Work & Modern Tech",
+      "title": "Round 36",
+      "multiplier": 3,
+      "prompt": "Name something a student dreads hearing their teacher say right before the bell rings.",
+      "answers": [
+        { "text": "\"Pop quiz tomorrow!\"", "points": 48 },
+        { "text": "\"Here is tonight's heavy homework\"", "points": 28 },
+        { "text": "\"I need to speak to you after class\"", "points": 14 },
+        { "text": "\"Big group project assigned!\"", "points": 7 },
+        { "text": "\"Phones on my desk right now\"", "points": 3 }
+      ]
+    },
+    {
+      "theme": "🍔 Food, Fun, Quirks & Favorites",
+      "title": "Round 37",
+      "multiplier": 1,
+      "prompt": "Name a food that people love to drown in ranch dressing.",
+      "answers": [
+        { "text": "Buffalo chicken wings / Tenders", "points": 38 },
+        { "text": "Crisp Pizza slice", "points": 28 },
+        { "text": "French fries", "points": 16 },
+        { "text": "Carrots, celery, and veggies", "points": 12 },
+        { "text": "Potato chips / Pretzels", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🍔 Food, Fun, Quirks & Favorites",
+      "title": "Round 38",
+      "multiplier": 1,
+      "prompt": "Name a topping almost everyone likes to put on a juicy hamburger.",
+      "answers": [
+        { "text": "Cheddar / American Cheese", "points": 44 },
+        { "text": "Crisp Lettuce", "points": 22 },
+        { "text": "Fresh sliced Tomato", "points": 15 },
+        { "text": "Ketchup & Mustard", "points": 10 },
+        { "text": "Pickles", "points": 6 },
+        { "text": "Crispy Bacon", "points": 3 }
+      ]
+    },
+    {
+      "theme": "🍔 Food, Fun, Quirks & Favorites",
+      "title": "Round 39",
+      "multiplier": 2,
+      "prompt": "Name something that might completely ruin a family outdoor picnic in the park.",
+      "answers": [
+        { "text": "Sudden downpour / Thunderstorm", "points": 52 },
+        { "text": "Ants, bees, and mosquitoes", "points": 28 },
+        { "text": "High gusty winds blowing napkins", "points": 10 },
+        { "text": "Forgetting the picnic basket / Cooler", "points": 6 },
+        { "text": "Stray dogs trying to steal burgers", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🍔 Food, Fun, Quirks & Favorites",
+      "title": "Round 40",
+      "multiplier": 2,
+      "prompt": "Name a food that makes an undeniably loud crunching sound when you bite into it.",
+      "answers": [
+        { "text": "Potato chips / Tortilla chips", "points": 46 },
+        { "text": "Fresh raw celery / Carrots", "points": 24 },
+        { "text": "Crisp Honeycrisp apple", "points": 16 },
+        { "text": "Buttery movie Popcorn", "points": 8 },
+        { "text": "Hard taco shell", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🍔 Food, Fun, Quirks & Favorites",
+      "title": "Round 41",
+      "multiplier": 3,
+      "prompt": "Name something well-known that swings back and forth.",
+      "answers": [
+        { "text": "Playground swing / Tire swing", "points": 48 },
+        { "text": "Grandfather clock pendulum", "points": 24 },
+        { "text": "Monkey swinging in jungle trees", "points": 14 },
+        { "text": "Baseball bat or golf club", "points": 8 },
+        { "text": "Double-hinged saloon doors", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🍔 Food, Fun, Quirks & Favorites",
+      "title": "Round 42",
+      "multiplier": 1,
+      "prompt": "Complete the popular phrase: \"Knock ________!\".",
+      "answers": [
+        { "text": "Knock knock (joke)", "points": 45 },
+        { "text": "Knockout / Knock out", "points": 28 },
+        { "text": "Knock on wood", "points": 18 },
+        { "text": "Knock it off!", "points": 6 },
+        { "text": "Knockdown", "points": 3 }
+      ]
+    },
+    {
+      "theme": "🍔 Food, Fun, Quirks & Favorites",
+      "title": "Round 43",
+      "multiplier": 2,
+      "prompt": "Name a sovereign nation whose name begins with the letter \"S\".",
+      "answers": [
+        { "text": "Spain", "points": 42 },
+        { "text": "Sweden", "points": 25 },
+        { "text": "Switzerland", "points": 18 },
+        { "text": "South Africa", "points": 8 },
+        { "text": "Scotland", "points": 5 },
+        { "text": "Singapore", "points": 2 }
+      ]
+    },
+    {
+      "theme": "🍔 Food, Fun, Quirks & Favorites",
+      "title": "Round 44",
+      "multiplier": 3,
+      "prompt": "Name a U.S. President whose portrait appears on American paper currency.",
+      "answers": [
+        { "text": "George Washington ($1)", "points": 42 },
+        { "text": "Abraham Lincoln ($5)", "points": 28 },
+        { "text": "Alexander Hamilton ($10) / Ben Franklin ($100)", "points": 15 },
+        { "text": "Thomas Jefferson ($2)", "points": 9 },
+        { "text": "Andrew Jackson ($20)", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🍔 Food, Fun, Quirks & Favorites",
+      "title": "Round 45",
+      "multiplier": 1,
+      "prompt": "Name something very slippery that is almost impossible to hold onto with wet hands.",
+      "answers": [
+        { "text": "A wet bar of bath soap", "points": 48 },
+        { "text": "A fresh live fish / Eel", "points": 25 },
+        { "text": "A melting ice cube", "points": 14 },
+        { "text": "A soapy baby in the tub", "points": 8 },
+        { "text": "A slippery water balloon", "points": 5 }
+      ]
+    },
+    {
+      "theme": "🍔 Food, Fun, Quirks & Favorites",
+      "title": "Round 46",
+      "multiplier": 2,
+      "prompt": "Name a sport where players are allowed to kick the ball with their feet.",
+      "answers": [
+        { "text": "Soccer", "points": 55 },
+        { "text": "American Football", "points": 28 },
+        { "text": "Rugby", "points": 10 },
+        { "text": "Kickball", "points": 5 },
+        { "text": "Australian Rules", "points": 2 }
+      ]
+    },
+    {
+      "theme": "🍔 Food, Fun, Quirks & Favorites",
+      "title": "Round 47",
+      "multiplier": 2,
+      "prompt": "Name an animal that people are surprisingly terrified of, even though it is tiny.",
+      "answers": [
+        { "text": "Spider", "points": 46 },
+        { "text": "Mouse / Rat", "points": 26 },
+        { "text": "Cockroach / Bug", "points": 14 },
+        { "text": "Wasp / Hornet / Bee", "points": 10 },
+        { "text": "Tiny garden snake", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🍔 Food, Fun, Quirks & Favorites",
+      "title": "Round 48",
+      "multiplier": 3,
+      "prompt": "Name something you frequently lose track of during a busy day.",
+      "answers": [
+        { "text": "Time / What time it is", "points": 42 },
+        { "text": "House or car keys", "points": 26 },
+        { "text": "Smartphone", "points": 18 },
+        { "text": "Reading glasses", "points": 8 },
+        { "text": "TV remote control", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🎄 Holidays, Travel & Wild Laughs",
+      "title": "Round 49",
+      "multiplier": 1,
+      "prompt": "On Christmas morning you find Santa Claus firmly wedged in your chimney—what is your first move?",
+      "answers": [
+        { "text": "Dial 911 / Call the fire department", "points": 40 },
+        { "text": "Grab his boots and pull as hard as possible", "points": 24 },
+        { "text": "Burst out laughing", "points": 16 },
+        { "text": "Take a fun selfie with him", "points": 12 },
+        { "text": "Hand him warm cookies and milk", "points": 8 }
+      ]
+    },
+    {
+      "theme": "🎄 Holidays, Travel & Wild Laughs",
+      "title": "Round 50",
+      "multiplier": 1,
+      "prompt": "Name something Santa Claus would wear if he delivered presents to kids in sunny Hawaii.",
+      "answers": [
+        { "text": "Bermuda shorts / Board shorts", "points": 38 },
+        { "text": "Colorful flower lei", "points": 28 },
+        { "text": "Hawaiian floral shirt", "points": 16 },
+        { "text": "Sunglasses", "points": 10 },
+        { "text": "Flip-flops / Sandals", "points": 5 },
+        { "text": "Red swimming trunks", "points": 3 }
+      ]
+    },
+    {
+      "theme": "🎄 Holidays, Travel & Wild Laughs",
+      "title": "Round 51",
+      "multiplier": 2,
+      "prompt": "Name something that is on almost every teenager's holiday wish list.",
+      "answers": [
+        { "text": "New iPhone / Smartphone", "points": 44 },
+        { "text": "Cold hard cash", "points": 26 },
+        { "text": "Video game console (PS5 / Xbox / Switch)", "points": 16 },
+        { "text": "Laptop or iPad", "points": 8 },
+        { "text": "New designer sneakers", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🎄 Holidays, Travel & Wild Laughs",
+      "title": "Round 52",
+      "multiplier": 2,
+      "prompt": "Name an Olympic disaster that a torch runner prays does not happen on live international TV.",
+      "answers": [
+        { "text": "Tripping and falling flat on the ground", "points": 54 },
+        { "text": "The torch flame blowing out", "points": 24 },
+        { "text": "Setting their own sleeve or hair on fire", "points": 12 },
+        { "text": "Sudden heavy rain storm", "points": 6 },
+        { "text": "Running in the wrong direction", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🎄 Holidays, Travel & Wild Laughs",
+      "title": "Round 53",
+      "multiplier": 3,
+      "prompt": "Name something you should always keep inside your car trunk for roadside emergencies.",
+      "answers": [
+        { "text": "Jumper cables", "points": 42 },
+        { "text": "Spare tire and tire jack", "points": 28 },
+        { "text": "First aid kit", "points": 14 },
+        { "text": "Heavy-duty flashlight", "points": 10 },
+        { "text": "Warm blanket", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🎄 Holidays, Travel & Wild Laughs",
+      "title": "Round 54",
+      "multiplier": 1,
+      "prompt": "Name a place where you would never in a million years want to hear someone say, \"Oops!\".",
+      "answers": [
+        { "text": "Hospital operating room / Surgery", "points": 48 },
+        { "text": "Airplane cockpit", "points": 28 },
+        { "text": "Hair salon / Barber shop", "points": 14 },
+        { "text": "Nuclear power plant", "points": 6 },
+        { "text": "Dentist's chair", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🎄 Holidays, Travel & Wild Laughs",
+      "title": "Round 55",
+      "multiplier": 2,
+      "prompt": "Name a reason people change seats inside a movie theater.",
+      "answers": [
+        { "text": "Tall person sitting right in front", "points": 44 },
+        { "text": "People talking loudly / On phones", "points": 28 },
+        { "text": "Want a better centered screen view", "points": 16 },
+        { "text": "Sticky or broken seat", "points": 8 },
+        { "text": "Loud crunchy popcorn eater next door", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🎄 Holidays, Travel & Wild Laughs",
+      "title": "Round 56",
+      "multiplier": 3,
+      "prompt": "Name something people kick with their feet.",
+      "answers": [
+        { "text": "Soccer ball / Football", "points": 62 },
+        { "text": "Car tires at the car lot", "points": 16 },
+        { "text": "Small pebbles on the sidewalk", "points": 11 },
+        { "text": "A bad habit", "points": 7 },
+        { "text": "A bedroom door shut", "points": 4 }
+      ]
+    },
+    {
+      "theme": "🎄 Holidays, Travel & Wild Laughs",
+      "title": "Round 57",
+      "multiplier": 1,
+      "prompt": "Name something people spread onto food with a butter knife.",
+      "answers": [
+        { "text": "Creamy butter / Margarine", "points": 46 },
+        { "text": "Peanut butter & Jelly", "points": 32 },
+        { "text": "Cream cheese on bagels", "points": 14 },
+        { "text": "Chocolate Nutella spread", "points": 5 },
+        { "text": "Mayonnaise", "points": 3 }
+      ]
+    },
+    {
+      "theme": "🎄 Holidays, Travel & Wild Laughs",
+      "title": "Round 58",
+      "multiplier": 2,
+      "prompt": "Tell me something many people do faithfully just once every week.",
+      "answers": [
+        { "text": "Attend church / Religious service", "points": 38 },
+        { "text": "Big grocery store shopping trip", "points": 28 },
+        { "text": "Mow the lawn / Yard work", "points": 16 },
+        { "text": "Deep clean the house", "points": 11 },
+        { "text": "Sleep in late on Saturday", "points": 7 }
+      ]
+    },
+    {
+      "theme": "🎄 Holidays, Travel & Wild Laughs",
+      "title": "Round 59",
+      "multiplier": 2,
+      "prompt": "Name an excuse people give when trying to talk their way out of a speeding ticket.",
+      "answers": [
+        { "text": "\"I have a medical emergency!\"", "points": 38 },
+        { "text": "\"I didn't realize how fast I was going\"", "points": 28 },
+        { "text": "\"I really have to use the restroom!\"", "points": 18 },
+        { "text": "\"I didn't see the speed limit sign\"", "points": 10 },
+        { "text": "\"I'm running late for work / school\"", "points": 6 }
+      ]
+    },
+    {
+      "theme": "🎄 Holidays, Travel & Wild Laughs",
+      "title": "Round 60",
+      "multiplier": 3,
+      "prompt": "Name a classic board game or card game that has caused real family arguments.",
+      "answers": [
+        { "text": "Monopoly", "points": 58 },
+        { "text": "UNO", "points": 22 },
+        { "text": "Scrabble", "points": 10 },
+        { "text": "Risk", "points": 6 },
+        { "text": "Clue", "points": 4 }
+      ]
+    }
+  ],
+  "fastMoney": [
+    {
+      "prompt": "In school, you would get in serious trouble for bringing home what report card grade?",
+      "hint": "F (54), D (28), C (14), B (4)"
+    },
+    {
+      "prompt": "Name a popular Disney animated movie of all time.",
+      "hint": "The Lion King (42), Frozen (28), Beauty and the Beast (16), Aladdin (10), Moana (4)"
+    },
+    {
+      "prompt": "Name something you genuinely love that is NOT a human being.",
+      "hint": "My Dog / Pet (48), Money / Cash (22), Pizza / Ice Cream (15), Morning Coffee (9), My Phone / Video Games (6)"
+    },
+    {
+      "prompt": "Name something people drink or take to soothe a scratchy sore throat.",
+      "hint": "Hot tea with lemon & honey (45), Throat lozenge / Cough drop (28), Warm salt water gargle (15), Chicken noodle soup (8), Cough syrup (4)"
+    },
+    {
+      "prompt": "Name a trusty hand tool everyone keeps around the house to fix things.",
+      "hint": "Hammer (46), Screwdriver (32), Adjustable wrench (14), Pliers (5), Roll of duct tape (3)"
+    },
+    {
+      "prompt": "Name something you reach for in the pitch black in the middle of the night.",
+      "hint": "Smartphone (46), Eyeglasses (24), Glass of ice water (16), Nightstand lamp switch (10), Pillow (4)"
+    },
+    {
+      "prompt": "How many slices of pizza can the average hungry teenager eat in one sitting?",
+      "hint": "3 slices (42), 4 slices (30), 2 slices (16), 5+ slices (12)"
+    },
+    {
+      "prompt": "Name an occupation where you routinely make people groan and say \"Ouch!\".",
+      "hint": "Dentist (48), Nurse giving a shot (25), Physical therapist (14), Tattoo artist (9), Doctor (4)"
+    },
+    {
+      "prompt": "Name a venue or travel option where people willingly pay extra for a better seat.",
+      "hint": "Airplane / First class (45), Concert / Front row (28), Sports stadium / VIP box (16), Movie theater (8), Broadway show (3)"
+    },
+    {
+      "prompt": "Name any major brand of toothpaste.",
+      "hint": "Colgate (52), Crest (36), Sensodyne (8), Aquafresh (3), Arm & Hammer (1)"
+    },
+    {
+      "prompt": "To the exact degree Fahrenheit, what do you set the hotel thermostat to?",
+      "hint": "68 degrees (38), 70 degrees (26), 72 degrees (18), 65 degrees (12), 69 degrees (6)"
+    },
+    {
+      "prompt": "In what calendar month do most families take their big summer vacation?",
+      "hint": "July (48), August (28), June (16), December (8)"
+    },
+    {
+      "prompt": "Name something people absolutely despise having pulled.",
+      "hint": "A loose tooth (48), Hair / Eyebrows (24), A hamstring / Muscle (18), Their leg (6), A fire alarm (4)"
+    },
+    {
+      "prompt": "Name something you always buy inside a gas station convenience store on a road trip.",
+      "hint": "Salty chips / Beef jerky / Snacks (42), Gasoline (24), Energy drink / Hot coffee (18), Cold soda / Water (11), Pack of gum (5)"
+    },
+    {
+      "prompt": "What is the most popular color for a brand new sports car?",
+      "hint": "Radiant Red (52), Sleek Black (24), Pure White (12), Electric Blue (8), Bright Yellow (4)"
+    },
+    {
+      "prompt": "Name a person in your family whose opinion you respect the most.",
+      "hint": "Mom (44), Dad (28), Grandma / Grandpa (16), Older Sibling (8), Spouse (4)"
+    },
+    {
+      "prompt": "At what age did you realize you were as tall as you were ever going to get?",
+      "hint": "18 years old (32), 16 years old (28), 15 years old (18), 20 years old (12), 14 years old (10)"
+    },
+    {
+      "prompt": "Name a sport where an athlete is very likely to take a blow to the head.",
+      "hint": "Football (44), Boxing / MMA (28), Soccer (14), Baseball (9), Hockey (5)"
+    },
+    {
+      "prompt": "What is the single most heavily used color in an entire box of crayons?",
+      "hint": "Bold Red (48), Sky Blue (26), Deep Black (14), Sunny Yellow (8), Emerald Green (4)"
+    },
+    {
+      "prompt": "Complete the phrase: \"Leap ________\".",
+      "hint": "Leap Frog (50), Leap Year (45), Leap of Faith (5)"
+    },
+    {
+      "prompt": "How many consecutive months of gym workouts does it take to see real muscle in the mirror?",
+      "hint": "3 months (45), 1 month (24), 2 months (18), 6 months (10), 12 months (3)"
+    },
+    {
+      "prompt": "Name the single best thing to come home to after an exhausting day at school or work.",
+      "hint": "My Dog / Excited Pet (42), Family / Parents (28), Soft Couch / Warm Bed (18), Hot Dinner / Pizza (8), Total Peace & Quiet (4)"
+    },
+    {
+      "prompt": "What does a talented street musician place on the pavement to collect tips?",
+      "hint": "Open guitar / violin case (48), Upturned fedora / baseball cap (26), Glass jar / paper cup (14), Bucket (8), Cardboard sign (4)"
+    },
+    {
+      "prompt": "Name a face card in a standard deck of playing cards.",
+      "hint": "King (46), Queen (32), Jack (18), Ace (4)"
+    },
+    {
+      "prompt": "If you accidentally drop a piece of candy, where is the nastiest place it could land?",
+      "hint": "Public bathroom floor / Toilet (44), Subway / Street sidewalk (28), Deep carpet full of pet hair (16), Kitchen trash can (8), Under the couch (4)"
+    },
+    {
+      "prompt": "Name a public place where you'd be furious if someone talked loudly through the whole event.",
+      "hint": "Movie theater (48), Live concert / Opera (24), Sunday church service (15), Broadway stage play (9), Public library (4)"
+    },
+    {
+      "prompt": "Who is the one relative at Thanksgiving dinner who always starts a debate?",
+      "hint": "Opinionated Uncle (38), Grandparent (24), Older Brother / Sister (18), In-laws (12), Cousin (8)"
+    },
+    {
+      "prompt": "Which high school graduation class reunion usually draws the biggest crowd?",
+      "hint": "10-year reunion (46), 20-year reunion (31), 50-year reunion (13), 25-year reunion (7), 5-year reunion (3)"
+    },
+    {
+      "prompt": "Name a mode of winter transportation that has metal runners instead of wheels.",
+      "hint": "Snow Sled / Toboggan (44), Ice skates (26), Santa's Sleigh (18), Snowmobile (8), Dog sled (4)"
+    },
+    {
+      "prompt": "What is the very first hot beverage people pour themselves in the morning?",
+      "hint": "Fresh brewed Coffee (58), Hot Tea (32), Hot Chocolate (6), Warm water with lemon (4)"
+    },
+    {
+      "prompt": "Name something that kids always leave lying on the living room floor.",
+      "hint": "Toys / Lego bricks (48), Shoes and sneakers (24), Backpacks / Books (14), Dirty socks (8), Video game controllers (6)"
+    },
+    {
+      "prompt": "How many total hours does it take to prepare and cook a full Thanksgiving feast?",
+      "hint": "4 hours (35), 5 hours (26), 6 hours (20), 3 hours (11), 8+ hours (8)"
+    },
+    {
+      "prompt": "Name something Santa Claus would panic to discover was missing on Christmas Eve night.",
+      "hint": "Rudolph / The Flying Reindeer (42), His giant Bag of Toys (30), The Flying Sleigh (16), The Naughty & Nice List (8), His Red Velvet Hat (4)"
+    },
+    {
+      "prompt": "Name a profession where people literally save human lives every single day.",
+      "hint": "Doctor / Trauma Surgeon (50), Firefighter (26), Paramedic / EMT (14), Police Officer (7), Beach Lifeguard (3)"
+    },
+    {
+      "prompt": "Give me a common English word that rhymes with \"turkey\".",
+      "hint": "Perky (45), Jerky (35), Murky (14), Quirky (6)"
+    },
+    {
+      "prompt": "How many weeks does it take an average man to grow an impressive mustache?",
+      "hint": "4 weeks (38), 2 weeks (26), 3 weeks (18), 6 weeks (12), 1 week (6)"
+    },
+    {
+      "prompt": "What is the absolute first physical object you reach for when your alarm rings?",
+      "hint": "Smartphone (55), Eyeglasses (22), Snooze button (14), Cup of water (6), The bedsheet (3)"
+    },
+    {
+      "prompt": "Name something that millions of people are allergic to.",
+      "hint": "Peanuts / Tree nuts (38), Spring pollen / Ragweed (28), Cat & dog fur (16), Dust mites & mold (12), Penicillin (6)"
+    },
+    {
+      "prompt": "On which night of the entire week do people stay up latest past their bedtime?",
+      "hint": "Saturday night (68), Friday night (28), Sunday night (3), New Year's Eve (1)"
+    },
+    {
+      "prompt": "Name a musical instrument that almost every school band includes.",
+      "hint": "Flute (35), Trumpet (28), Drums / Snare (18), Clarinet (12), Saxophone (7)"
+    }
+  ]
+}
