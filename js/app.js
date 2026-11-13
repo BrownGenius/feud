@@ -165,6 +165,11 @@ window.Feud = window.Feud || {};
   });
 
   async function pushRoomPatch(patch) {
+    // Any buzzer change that doesn't explicitly re-arm a team disarms the Face-Off re-arm flag,
+    // so a stale "armed" buzzer can never steal control mid-round.
+    if ("buzzerWinner" in patch && !("buzzerArmedTeam" in patch)) {
+      patch = { ...patch, buzzerArmedTeam: 0 };
+    }
     roomState = { ...roomState, ...patch, updatedAt: Date.now() };
     syncSequenceCounters(roomState);
     Feud.renderBranding(roomState);
@@ -546,6 +551,8 @@ window.Feud = window.Feud || {};
   function enterRole(role, code) {
     activeRole = role;
     document.body.classList.toggle("tv-viewport-lock", role === "tv" || role === "solo");
+    // Anti-accident lock: Buzzer phones hide the top mode-switcher behind a 3-second hold
+    document.body.classList.toggle("buzzer-nav-locked", role === "buzzer1" || role === "buzzer2");
     requestWakeLock();
     Feud.renderBranding(roomState);
 
@@ -593,7 +600,53 @@ window.Feud = window.Feud || {};
     }
   }
 
-  function leaveToLobby() {
+  // ---------------------------------------------------------------------
+  // Buzzer-phone anti-accident exit: press & hold for 3 seconds to leave
+  // ---------------------------------------------------------------------
+  const BUZZER_EXIT_HOLD_MS = 3000;
+  let buzzerExitTimer = null;
+  let buzzerExitTick = null;
+
+  function buzzerExitHoldStart(ev) {
+    if (ev && ev.preventDefault) ev.preventDefault();
+    buzzerExitHoldCancel();
+    const btn = document.getElementById("buzzerExitHoldBtn");
+    const startedAt = Date.now();
+    if (btn) btn.classList.add("holding");
+    buzzerExitTick = setInterval(() => {
+      const left = Math.max(0, BUZZER_EXIT_HOLD_MS - (Date.now() - startedAt));
+      if (btn) {
+        btn.style.setProperty("--hold-pct", `${Math.round((1 - left / BUZZER_EXIT_HOLD_MS) * 100)}%`);
+        btn.textContent = `🔓 Keep holding… ${Math.ceil(left / 1000)}s`;
+      }
+    }, 100);
+    buzzerExitTimer = setTimeout(() => {
+      buzzerExitHoldCancel();
+      if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+      leaveToLobby({ force: true });
+    }, BUZZER_EXIT_HOLD_MS);
+  }
+
+  function buzzerExitHoldCancel() {
+    clearTimeout(buzzerExitTimer);
+    clearInterval(buzzerExitTick);
+    buzzerExitTimer = null;
+    buzzerExitTick = null;
+    const btn = document.getElementById("buzzerExitHoldBtn");
+    if (btn) {
+      btn.classList.remove("holding");
+      btn.style.setProperty("--hold-pct", "0%");
+      btn.textContent = "🔒 Hold 3s to Exit Buzzer";
+    }
+  }
+
+  function leaveToLobby(opts) {
+    const force = Boolean(opts && opts.force === true);
+    // Guard: buzzer phones may only leave via the 3-second hold (or an explicit confirm)
+    if ((activeRole === "buzzer1" || activeRole === "buzzer2") && !force) {
+      if (!window.confirm("Leave Buzzer Mode and return to the Lobby?")) return;
+    }
+    document.body.classList.remove("buzzer-nav-locked");
     Feud.cleanupSync();
     Feud.clearLastSession();
     stopLocalTurnTimerInterval();
@@ -1062,8 +1115,9 @@ window.Feud = window.Feud || {};
 
   async function pressTeamBuzzer() {
     Feud.unlockAudio();
-    if (roomState.buzzerWinner !== 0) return;
     const myTeam = activeRole === "buzzer1" ? 1 : 2;
+    // Local first-tap guard (the Host re-validates authoritatively in sync.js#buildBuzzPatch)
+    if (Feud.buildBuzzPatch && !Feud.buildBuzzPatch(roomState, myTeam)) return;
     Feud.playFaceOffTone(myTeam);
     if (navigator.vibrate) navigator.vibrate(120);
     await Feud.syncSendTeamBuzz(myTeam);
@@ -1151,7 +1205,8 @@ window.Feud = window.Feud || {};
           faceoffBestRank: slotIdx,
           faceoffWinnerTeam: firstTeam,
           controllingTeam: secondTeam,
-          buzzerWinner: secondTeam,
+          buzzerWinner: 0,
+          buzzerArmedTeam: secondTeam,
           turnTimerRemaining: dur,
           turnTimerRunning: true
         });
@@ -1262,6 +1317,7 @@ window.Feud = window.Feud || {};
       });
       Feud.showToast(`🧹 Board Swept! 🏆 ${playName} Wins ${newPot} pts!`);
     } else {
+      // Correct answer during regular play -> automatically reset & restart the clock for the next player in line
       await pushRoomPatch({
         questionRevealed: true,
         revealed: Array.from(revSet),
@@ -1270,11 +1326,25 @@ window.Feud = window.Feud || {};
         controllingTeam: playTeam,
         originalPlayingTeam: playTeam,
         buzzerWinner: 0,
-        turnTimerRunning: false,
-        turnTimerRemaining: dur
+        buzzerArmedTeam: 0,
+        turnTimerRemaining: dur,
+        turnTimerRunning: true
       });
-      Feud.showToast(`✅ Correct! Tap '🔄 Ask Next Player' (R) for the next team member.`);
+      startLocalTurnTimerLoop();
+      Feud.showToast(`✅ Correct! ${dur}s timer restarted for the next ${playName} player.`);
     }
+  }
+
+  // Dedicated Face-Off wrong guess: flashes 1 temporary X + buzzer WITHOUT touching the round's 3-strike counter,
+  // then re-arms the opposing team's podium buzzer so their player can answer.
+  async function hostFaceOffWrongGuess() {
+    const phase =
+      roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
+    if (!String(phase).startsWith("faceoff")) {
+      Feud.showToast("Face-Off is over — use the regular ❌ Strike buttons for round strikes.");
+      return;
+    }
+    await hostHandleWrongAnswer({ fromTimer: false });
   }
 
   async function hostHandleWrongAnswer(opts = {}) {
@@ -1286,7 +1356,12 @@ window.Feud = window.Feud || {};
     const nextSeq = (roomState.strikeSeq || 0) + 1;
     const prefix = opts.fromTimer ? "⏰ Time's Up! " : "";
 
-    // 1. FACE-OFF TURN 1 MISS -> Show 1 X, automatically switch to Team 2's Face-Off player & start timer!
+    if (phase === "round-over") {
+      Feud.showToast("Round already complete — tap a tile to reveal it (0 pts) or go to the next round.");
+      return;
+    }
+
+    // 1. FACE-OFF TURN 1 MISS -> 1 temp X (round strikes untouched), re-arm the opposing buzzer & start their clock
     if (phase === "faceoff-ready" || phase === "faceoff-buzz" || phase === "faceoff-p1") {
       const firstTeam =
         roomState.faceoffFirstTeam || roomState.buzzerWinner || roomState.controllingTeam || 1;
@@ -1300,18 +1375,21 @@ window.Feud = window.Feud || {};
         faceoffFirstTeam: firstTeam,
         faceoffBestRank: 999,
         controllingTeam: secondTeam,
-        buzzerWinner: secondTeam,
+        buzzerWinner: 0,
+        buzzerArmedTeam: secondTeam,
         lastOverlayXCount: 1,
         strikeSeq: nextSeq,
         turnTimerRemaining: dur,
         turnTimerRunning: true
       });
       startLocalTurnTimerLoop();
-      Feud.showToast(`${prefix}❌ Miss! Switching to ${secondName} (${dur}s timer started)!`);
+      Feud.showToast(
+        `${prefix}❌ Face-Off Miss (temp X — no round strike)! ${secondName}'s buzzer re-armed (${dur}s).`
+      );
       return;
     }
 
-    // 2. FACE-OFF TURN 2 MISS -> Show 1 X; if Player 1 hit the board, Player 1 wins Face-Off!
+    // 2. FACE-OFF TURN 2 MISS -> 1 temp X; if Player 1 hit the board, Player 1 wins Face-Off!
     if (phase === "faceoff-p2") {
       const firstTeam = roomState.faceoffFirstTeam || 1;
       const firstName = getTeamNameByNum(firstTeam);
@@ -1325,6 +1403,7 @@ window.Feud = window.Feud || {};
           faceoffWinnerTeam: firstTeam,
           controllingTeam: firstTeam,
           buzzerWinner: firstTeam,
+          buzzerArmedTeam: 0,
           lastOverlayXCount: 1,
           strikeSeq: nextSeq,
           turnTimerRunning: false,
@@ -1332,12 +1411,13 @@ window.Feud = window.Feud || {};
         });
         Feud.showToast(`${prefix}❌ Miss! 🏆 ${firstName} Wins the Face-Off — Play or Pass?`);
       } else {
-        // Both missed! Switch back to firstTeam for the next Face-Off pair
+        // Both missed! Re-arm the first team's buzzer for the next Face-Off attempt
         await pushRoomPatch({
           questionRevealed: true,
           roundPhase: "faceoff-p1",
           controllingTeam: firstTeam,
-          buzzerWinner: firstTeam,
+          buzzerWinner: 0,
+          buzzerArmedTeam: firstTeam,
           lastOverlayXCount: 1,
           strikeSeq: nextSeq,
           turnTimerRemaining: dur,
@@ -1407,6 +1487,7 @@ window.Feud = window.Feud || {};
         `${prefix}🚨 3 Strikes (XXX)! Automatic switch to ${oppName} for the Steal! Press R to start 15s Steal Timer.`
       );
     } else {
+      // Strike 1 or 2 -> automatically reset & restart the clock for the next player in line
       await pushRoomPatch({
         roundPhase: "playing",
         controllingTeam: playTeam,
@@ -1414,17 +1495,27 @@ window.Feud = window.Feud || {};
         strikes: nextStrikes,
         lastOverlayXCount: nextStrikes,
         strikeSeq: nextSeq,
-        turnTimerRunning: false,
-        turnTimerRemaining: dur
+        turnTimerRemaining: dur,
+        turnTimerRunning: true
       });
+      startLocalTurnTimerLoop();
       Feud.showToast(
-        `${prefix}❌ Strike ${nextStrikes} of 3! Tap '🔄 Ask Next Player' (R) when ready.`
+        `${prefix}❌ Strike ${nextStrikes} of 3! ${dur}s timer restarted for the next player.`
       );
     }
   }
 
   async function hostRevealAll() {
     Feud.unlockAudio();
+    const phase = roomState.roundPhase || "faceoff-ready";
+    if (
+      phase !== "round-over" &&
+      !window.confirm(
+        "The pot hasn't been awarded yet. Reveal every answer on the TV anyway? (No points will be added.)"
+      )
+    ) {
+      return;
+    }
     stopLocalTurnTimerInterval();
     const round = Feud.getRoundData(roomState, roomState.roundIdx);
     const all = round.answers.map((_, i) => i);
@@ -1499,9 +1590,39 @@ window.Feud = window.Feud || {};
 
   async function hostManualBuzz(team) {
     Feud.unlockAudio();
-    Feud.playFaceOffTone(team);
     const dur = Number(roomState.turnTimerDuration) || 10;
     const teamName = getTeamNameByNum(team);
+    const phase =
+      roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
+
+    // Re-armed opposing buzzer (after a Face-Off miss / non-#1 answer): confirm their turn only
+    if (roomState.buzzerArmedTeam) {
+      if (roomState.buzzerArmedTeam !== team) {
+        Feud.showToast(`🔒 Only ${getTeamNameByNum(roomState.buzzerArmedTeam)}'s buzzer is armed right now.`);
+        return;
+      }
+      Feud.playFaceOffTone(team);
+      await pushRoomPatch({
+        buzzerWinner: team,
+        buzzerArmedTeam: 0,
+        controllingTeam: team,
+        turnTimerRemaining: dur,
+        turnTimerRunning: true
+      });
+      startLocalTurnTimerLoop();
+      return;
+    }
+
+    if (phase !== "faceoff-ready" && phase !== "faceoff-buzz") {
+      Feud.showToast("🔒 Buzzers are locked — the Face-Off is already decided this round.");
+      return;
+    }
+    if (roomState.buzzerWinner) {
+      Feud.showToast(`🔒 ${getTeamNameByNum(roomState.buzzerWinner)} already buzzed first.`);
+      return;
+    }
+
+    Feud.playFaceOffTone(team);
     await pushRoomPatch({
       buzzerWinner: team,
       controllingTeam: team,
@@ -1531,8 +1652,15 @@ window.Feud = window.Feud || {};
   }
 
   async function hostTriggerStrike(count) {
-    if (!count) {
+    const curPhase =
+      roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
+    // During a Face-Off, a strike is only ever a single temporary X (round strikes stay at 0)
+    if (!count || String(curPhase).startsWith("faceoff")) {
       await hostHandleWrongAnswer({ fromTimer: false });
+      return;
+    }
+    if (curPhase === "round-over") {
+      Feud.showToast("Round already complete — strikes are disabled.");
       return;
     }
     Feud.unlockAudio();
@@ -2196,6 +2324,9 @@ window.Feud = window.Feud || {};
     hostStartStealTimer,
     hostChoosePlayOrPass,
     hostHandleWrongAnswer,
+    hostFaceOffWrongGuess,
+    buzzerExitHoldStart,
+    buzzerExitHoldCancel,
     hostToggleTurnTimer,
     hostStopResetTurnTimer,
     hostSetTurnTimerDuration,

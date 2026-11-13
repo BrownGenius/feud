@@ -270,26 +270,57 @@ window.Feud = window.Feud || {};
     }
   }
 
-  function handleIncomingBuzzOnHost(teamNum) {
-    if (teamNum !== 1 && teamNum !== 2) return;
-    const st = getLocalStateCallback ? getLocalStateCallback() : null;
-    if (!st || st.buzzerWinner !== 0) return;
-
+  // Single source of truth for whether a buzz is legal in the current room state.
+  // Returns the patch to apply, or null if the buzz must be rejected (late tap / wrong phase).
+  function buildBuzzPatch(st, teamNum) {
+    if (!st || (teamNum !== 1 && teamNum !== 2)) return null;
+    const phase = st.roundPhase || (st.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
     const dur = Number(st.turnTimerDuration) || 10;
-    const updated = {
-      ...st,
-      buzzerWinner: teamNum,
-      controllingTeam: teamNum,
-      faceoffFirstTeam: teamNum,
-      roundPhase: "faceoff-p1",
-      questionRevealed: true,
-      turnTimerRemaining: dur,
-      turnTimerRunning: true,
-      updatedAt: Date.now()
-    };
+    if (st.stage && st.stage !== "main") return null;
+
+    // A) Open Face-Off (question revealed): the first buzz wins; every later tap is locked out.
+    if (phase === "faceoff-buzz" && st.questionRevealed && !st.buzzerWinner) {
+      return {
+        buzzerWinner: teamNum,
+        buzzerArmedTeam: 0,
+        controllingTeam: teamNum,
+        faceoffFirstTeam: teamNum,
+        roundPhase: "faceoff-p1",
+        questionRevealed: true,
+        turnTimerRemaining: dur,
+        turnTimerRunning: true
+      };
+    }
+
+    // B) Re-armed Face-Off buzzer: only the armed (opposing) team may confirm its turn.
+    if (st.buzzerArmedTeam && st.buzzerArmedTeam === teamNum && !st.buzzerWinner) {
+      return {
+        buzzerWinner: teamNum,
+        buzzerArmedTeam: 0,
+        controllingTeam: teamNum,
+        turnTimerRemaining: dur,
+        turnTimerRunning: true
+      };
+    }
+
+    return null; // Locked out
+  }
+
+  function handleIncomingBuzzOnHost(teamNum) {
+    const st = getLocalStateCallback ? getLocalStateCallback() : null;
+    const patch = buildBuzzPatch(st, teamNum);
+    if (!patch) return;
+
+    const updated = { ...st, ...patch, updatedAt: Date.now() };
     Feud.saveRoomStateToStorage(currentCode, updated);
     if (onRemoteStateCallback) onRemoteStateCallback(updated);
     broadcastFromHostToPeers(updated);
+
+    if (firebaseReady && db && firestoreMod && currentRole !== "solo") {
+      firestoreMod
+        .updateDoc(getFirestoreRoomRef(currentCode), { ...patch, updatedAt: Date.now() })
+        .catch(() => {});
+    }
   }
 
   function broadcastFromHostToPeers(fullState) {
@@ -494,8 +525,9 @@ window.Feud = window.Feud || {};
           const snap = await tx.get(ref);
           if (!snap.exists()) return;
           const data = snap.data();
-          if (!data.buzzerWinner || data.buzzerWinner === 0) {
-            tx.update(ref, { buzzerWinner: teamNum, updatedAt: Date.now() });
+          const patch = buildBuzzPatch(data, teamNum);
+          if (patch) {
+            tx.update(ref, { ...patch, updatedAt: Date.now() });
           }
         });
       } catch (e) {}
@@ -562,6 +594,7 @@ window.Feud = window.Feud || {};
     joinExistingRoomSync,
     syncPushPatch,
     syncSendTeamBuzz,
+    buildBuzzPatch,
     cleanupSync
   });
 })(window.Feud);

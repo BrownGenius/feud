@@ -124,13 +124,18 @@ window.Feud = window.Feud || {};
     }
 
     const hostToggleBtn = document.getElementById("hostBtnTurnTimerToggle");
+    const canResume = !running && rem > 0 && rem < dur;
     if (hostToggleBtn) {
-      hostToggleBtn.textContent = running ? "⏸️ Pause Timer (T)" : "▶️ Start Timer (T)";
+      hostToggleBtn.textContent = running
+        ? "⏸️ Pause Timer (T)"
+        : canResume
+        ? `▶️ Resume Timer — ${rem}s (T)`
+        : "▶️ Start Timer (T)";
     }
 
     const soloToggleBtn = document.getElementById("soloBtnTimerToggle");
     if (soloToggleBtn) {
-      soloToggleBtn.textContent = running ? "⏸️ Pause (T)" : "▶️ Start (T)";
+      soloToggleBtn.textContent = running ? "⏸️ Pause (T)" : canResume ? "▶️ Resume (T)" : "▶️ Start (T)";
     }
   }
 
@@ -285,8 +290,8 @@ window.Feud = window.Feud || {};
       headline = `🎤 Face-Off (1st Turn): ${firstName} Answering!`;
       subtext = `Tap their answer on the board below! (#1 answer wins Face-Off immediately; #2–#8 or tapping '❌ Wrong Answer' automatically switches to ${secondName}!)`;
       actionsHtml = `
-        <button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">
-          ❌ Wrong Answer → Switch to ${escapeHtml(secondName)} (X)
+        <button type="button" class="action-btn btn-red display-font" onclick="hostFaceOffWrongGuess()">
+          ⚡ Face-Off Wrong Guess (1 Temp X) → Re-arm ${escapeHtml(secondName)} (X)
         </button>
         <button type="button" class="top-btn gold" onclick="hostRestartTurnTimer()">
           🔄 Restart ${dur}s Timer (R)
@@ -307,8 +312,8 @@ window.Feud = window.Feud || {};
         subtext = `${firstName} missed! If ${secondName} hits ANY answer on the board, they win the Face-Off!`;
       }
       actionsHtml = `
-        <button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">
-          ❌ Wrong Answer (X)
+        <button type="button" class="action-btn btn-red display-font" onclick="hostFaceOffWrongGuess()">
+          ⚡ Face-Off Wrong Guess (1 Temp X)
         </button>
         <button type="button" class="top-btn gold" onclick="hostRestartTurnTimer()">
           🔄 Restart ${dur}s Timer (R)
@@ -425,6 +430,9 @@ window.Feud = window.Feud || {};
     t2Card.classList.toggle("winner-glow", roomState.buzzerWinner === 2 || (phase === "round-over" && roomState.roundWinnerTeam === 2));
     t1Card.classList.toggle("playing-glow", roomState.controllingTeam === 1);
     t2Card.classList.toggle("playing-glow", roomState.controllingTeam === 2);
+    const isStealPhase = phase === "steal";
+    t1Card.classList.toggle("steal-glow", isStealPhase && roomState.controllingTeam === 1);
+    t2Card.classList.toggle("steal-glow", isStealPhase && roomState.controllingTeam === 2);
 
     const badgeLabel =
       phase === "faceoff-p1" || phase === "faceoff-p2"
@@ -432,7 +440,7 @@ window.Feud = window.Feud || {};
         : phase === "pass-or-play"
         ? "🏆 Won Face-Off!"
         : phase === "steal"
-        ? "🚨 STEAL ATTEMPT!"
+        ? `🚨 CHANCE TO STEAL ${roomState.pot || 0}!`
         : phase === "round-over"
         ? "🏆 Won Round!"
         : "🎯 Playing Board";
@@ -565,7 +573,7 @@ window.Feud = window.Feud || {};
         roomState.controllingTeam ||
           (roomState.originalPlayingTeam === 1 ? 2 : 1)
       );
-      buzzBanner.textContent = `🚨 3 STRIKES! STEAL OPPORTUNITY FOR ${stealTeamName}!`;
+      buzzBanner.textContent = `🚨 ${stealTeamName}: CHANCE TO STEAL ${roomState.pot || 0} PTS!`;
       buzzBanner.classList.add("steal-alert");
     } else if (phase === "round-over") {
       const winName = getTeamLabel(
@@ -723,6 +731,7 @@ window.Feud = window.Feud || {};
 
     const list = document.getElementById("hostAnswersList");
     const revSet = new Set(roomState.revealed || []);
+    const isRoundOver = phase === "round-over";
     list.innerHTML = "";
 
     round.answers.forEach((ans, idx) => {
@@ -730,16 +739,61 @@ window.Feud = window.Feud || {};
       const pts = ans.points * round.multiplier;
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = `host-answer-btn ${isRev ? "is-revealed" : ""}`;
+      btn.className = `host-answer-btn ${isRev ? "is-revealed" : ""}${
+        isRoundOver && !isRev ? " is-missed-reveal" : ""
+      }`;
+      btn.title = isRoundOver && !isRev ? "Pot already awarded — reveals on TV for 0 pts" : "";
       btn.addEventListener("click", () => handlers.onToggleAnswer(idx));
       btn.innerHTML = `
         <span class="host-ans-left">
           <span class="host-rank-circle">${idx + 1}</span>
           <span>${escapeHtml(ans.text)}</span>
         </span>
-        <span class="host-pts-pill">${isRev ? "✅ " : ""}${pts}</span>
+        <span class="host-pts-pill">${
+          isRev ? `✅ ${pts}` : isRoundOver ? `👁️ Reveal (0 pts)` : pts
+        }</span>
       `;
       list.appendChild(btn);
+    });
+
+    // Phase-aware strike controls: Face-Off temp X vs. round strikes
+    const isFaceOff = String(phase).startsWith("faceoff");
+    const foBtn = document.getElementById("hostBtnFaceOffWrong");
+    const strikeRow = document.getElementById("hostRoundStrikeRow");
+    const strikeHint = document.getElementById("hostStrikeHint");
+    if (foBtn) {
+      foBtn.disabled = !isFaceOff;
+      foBtn.classList.toggle("hidden", !isFaceOff);
+    }
+    if (strikeRow) {
+      strikeRow.querySelectorAll("button.action-btn").forEach((b) => {
+        b.disabled = isFaceOff || isRoundOver;
+      });
+    }
+    if (strikeHint) {
+      strikeHint.textContent = isFaceOff
+        ? "Face-Off: a wrong guess shows 1 temporary X and does NOT count toward the round's 3 strikes."
+        : isRoundOver
+        ? "Round complete — strikes disabled."
+        : `Round strikes: ${roomState.strikes || 0} / 3 (3rd strike switches to the Steal automatically).`;
+    }
+
+    // Award Pot buttons: pre-highlight the stealing team; disable once the pot is awarded
+    const stealTeamNum = phase === "steal" ? roomState.controllingTeam || 0 : 0;
+    const origTeamNum = phase === "steal" ? roomState.originalPlayingTeam || 0 : 0;
+    [1, 2].forEach((n) => {
+      const ab = document.getElementById(`hostAwardPotBtn${n}`);
+      if (!ab) return;
+      ab.classList.toggle("steal-award-highlight", stealTeamNum === n);
+      ab.disabled = isRoundOver || !(roomState.pot > 0);
+      ab.textContent =
+        stealTeamNum === n
+          ? `🚨 Steal! Award ${roomState.pot || 0}`
+          : origTeamNum === n
+          ? `Steal Failed → Award ${roomState.pot || 0}`
+          : isRoundOver
+          ? "✅ Pot Awarded"
+          : `Award Pot (${roomState.pot || 0})`;
     });
 
     const buzzReadout = document.getElementById("hostBuzzerReadout");
@@ -903,7 +957,19 @@ window.Feud = window.Feud || {};
 
     btn.className = `giant-buzzer-btn ${myTeam === 1 ? "team-1-theme" : "team-2-theme"}`;
 
-    if (roomState.buzzerWinner === 0) {
+    const phase =
+      roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
+    const canBuzz = Feud.buildBuzzPatch ? Boolean(Feud.buildBuzzPatch(roomState, myTeam)) : roomState.buzzerWinner === 0;
+    const otherTeam = myTeam === 1 ? 2 : 1;
+    const otherName = otherTeam === 1 ? roomState.team1Name : roomState.team2Name;
+
+    if (canBuzz && roomState.buzzerArmedTeam === myTeam) {
+      // Re-armed after the opponent's Face-Off miss / non-#1 answer
+      btn.disabled = false;
+      icon.textContent = "⚡";
+      text.textContent = "YOUR TURN — BUZZ!";
+      sub.textContent = "Opponent missed — tap to lock in your answer";
+    } else if (canBuzz) {
       btn.disabled = false;
       icon.textContent = "🔔";
       text.textContent = "BUZZ IN!";
@@ -912,15 +978,32 @@ window.Feud = window.Feud || {};
       btn.disabled = true;
       btn.classList.add("won-state");
       icon.textContent = "🚨";
-      text.textContent = "YOU BUZZED FIRST!";
+      text.textContent = String(phase).startsWith("faceoff") ? "YOU BUZZED FIRST!" : "YOUR TEAM HAS IT!";
       sub.textContent = "Give your answer to the Host!";
+    } else if (roomState.buzzerWinner === otherTeam) {
+      btn.disabled = true;
+      btn.classList.add("locked-out-state");
+      icon.textContent = "🔒";
+      text.textContent = "LOCKED OUT";
+      sub.textContent = `${otherName} buzzed in first`;
+    } else if (roomState.buzzerArmedTeam === otherTeam) {
+      btn.disabled = true;
+      btn.classList.add("locked-out-state");
+      icon.textContent = "⏳";
+      text.textContent = "OPPONENT'S TURN";
+      sub.textContent = `${otherName} is answering the Face-Off`;
+    } else if (!roomState.questionRevealed || phase === "faceoff-ready") {
+      btn.disabled = true;
+      btn.classList.add("locked-out-state");
+      icon.textContent = "⏳";
+      text.textContent = "GET READY…";
+      sub.textContent = "Buzzer unlocks when the Host reveals the question";
     } else {
       btn.disabled = true;
       btn.classList.add("locked-out-state");
       icon.textContent = "🔒";
-      const otherName = roomState.buzzerWinner === 1 ? roomState.team1Name : roomState.team2Name;
-      text.textContent = "LOCKED OUT";
-      sub.textContent = `${otherName} buzzed in first`;
+      text.textContent = "BUZZERS LOCKED";
+      sub.textContent = "Face-Off decided — watch the TV!";
     }
   }
 

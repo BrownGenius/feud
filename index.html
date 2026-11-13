@@ -636,7 +636,7 @@
         <div id="hostAnswersList"></div>
 
         <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
-          <button class="top-btn gold" onclick="hostRevealAll()">Reveal All (No Pot Add)</button>
+          <button class="top-btn gold" onclick="hostRevealAll()">👁️ Reveal All Remaining (0 pts)</button>
           <button class="top-btn" onclick="hostResetRound()">Reset Round</button>
           <button class="top-btn" onclick="openEditRoundModal()">✏️ Customize Answers</button>
         </div>
@@ -687,12 +687,16 @@
         <!-- Strikes -->
         <div class="marquee-panel">
           <div class="field-label" style="margin-bottom:8px;">❌ Wrong Answer Strikes</div>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px;">
+          <button id="hostBtnFaceOffWrong" type="button" class="action-btn btn-red display-font" style="min-height:44px; font-size:13px; margin-bottom:8px;" onclick="hostFaceOffWrongGuess()">
+            ⚡ Face-Off Wrong Guess (1 Temp X — No Round Strike)
+          </button>
+          <div id="hostRoundStrikeRow" style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px;">
             <button class="action-btn btn-red display-font" style="min-height:46px;" onclick="hostTriggerStrike(1)">X</button>
             <button class="action-btn btn-red display-font" style="min-height:46px;" onclick="hostTriggerStrike(2)">XX</button>
             <button class="action-btn btn-red display-font" style="min-height:46px;" onclick="hostTriggerStrike(3)">XXX</button>
             <button class="top-btn" onclick="hostClearStrikes()">Clear</button>
           </div>
+          <div id="hostStrikeHint" style="font-size:11px; color:#94a3b8; margin-top:6px;"></div>
         </div>
 
         <!-- Teams, Board Control & Scores -->
@@ -716,7 +720,7 @@
             <div style="display:flex; gap:8px;">
               <button class="top-btn" onclick="hostAdjustScore(1, -10)">-10</button>
               <button class="top-btn" onclick="hostAdjustScore(1, 10)">+10</button>
-              <button class="action-btn btn-gold" style="min-height:40px; font-size:12px;" onclick="hostAwardPot(1)">Award Pot</button>
+              <button id="hostAwardPotBtn1" class="action-btn btn-gold" style="min-height:40px; font-size:12px;" onclick="hostAwardPot(1)">Award Pot</button>
             </div>
           </div>
 
@@ -728,7 +732,7 @@
             <div style="display:flex; gap:8px;">
               <button class="top-btn" onclick="hostAdjustScore(2, -10)">-10</button>
               <button class="top-btn" onclick="hostAdjustScore(2, 10)">+10</button>
-              <button class="action-btn btn-gold" style="min-height:40px; font-size:12px;" onclick="hostAwardPot(2)">Award Pot</button>
+              <button id="hostAwardPotBtn2" class="action-btn btn-gold" style="min-height:40px; font-size:12px;" onclick="hostAwardPot(2)">Award Pot</button>
             </div>
           </div>
         </div>
@@ -782,6 +786,18 @@
         <div id="buzzFootT2Score" class="display-font" style="font-size:28px; color:var(--gold);">0</div>
       </div>
     </div>
+
+    <!-- Anti-accident exit: replaces the hidden top-bar navigation on buzzer phones -->
+    <button
+      id="buzzerExitHoldBtn"
+      type="button"
+      class="buzzer-exit-hold-btn"
+      onpointerdown="buzzerExitHoldStart(event)"
+      onpointerup="buzzerExitHoldCancel()"
+      onpointerleave="buzzerExitHoldCancel()"
+      onpointercancel="buzzerExitHoldCancel()"
+      oncontextmenu="return false;"
+    >🔒 Hold 3s to Exit Buzzer</button>
   </section>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->

@@ -1488,3 +1488,98 @@ body.is-fullscreen .top-bar {
 
 
 
+
+/* =====================================================================
+   12. AUTHENTIC-RULES AUDIT: BOARD CONTROL, STEAL, REVEALS & BUZZER LOCK
+   ===================================================================== */
+
+/* Active board control = glowing GOLD scoreboard panel (overrides older green glow) */
+.team-display-card.playing-glow {
+  border-color: #fde047;
+  box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.55), 0 0 34px rgba(251, 191, 36, 0.85);
+}
+
+.control-badge.active-control {
+  background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+  border-color: #fef08a;
+  color: #0f172a;
+}
+
+/* Stealing team during "Chance to Steal" */
+.team-display-card.steal-glow {
+  border-color: #fca5a5;
+  background: linear-gradient(165deg, #7f1d1d 0%, #450a0a 100%);
+  animation: stealPulse 0.8s ease-in-out infinite alternate;
+}
+
+.team-display-card.steal-glow .control-badge.active-control {
+  background: #dc2626;
+  border-color: #fef08a;
+  color: #ffffff;
+}
+
+@keyframes stealPulse {
+  0% { box-shadow: 0 0 14px rgba(220, 38, 38, 0.55); }
+  100% { box-shadow: 0 0 40px rgba(250, 204, 21, 0.95); }
+}
+
+/* Host: pre-highlighted Award Pot button for the stealing team */
+.action-btn.steal-award-highlight {
+  background: linear-gradient(180deg, #ef4444 0%, #991b1b 100%);
+  color: #ffffff;
+  border-color: #fef08a;
+  animation: stealPulse 0.8s ease-in-out infinite alternate;
+}
+
+/* Host: unrevealed tiles after the pot is awarded (0-point "missed answer" reveals) */
+.host-answer-btn.is-missed-reveal {
+  border-style: dashed;
+  background: rgba(15, 23, 42, 0.75);
+  opacity: 0.92;
+}
+
+.host-answer-btn.is-missed-reveal .host-pts-pill {
+  color: #cbd5e1;
+  border-color: #64748b;
+  font-size: 12px;
+}
+
+/* Buzzer phones: hide the mode-switcher nav to prevent accidental exits mid-round */
+body.buzzer-nav-locked .top-bar .status-cluster > *:not(#roomCodeBadge):not(#wakeLockBadge) {
+  display: none !important;
+}
+
+.buzzer-exit-hold-btn {
+  display: none;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1.5px dashed rgba(148, 163, 184, 0.55);
+  background: rgba(15, 23, 42, 0.8);
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+  --hold-pct: 0%;
+  background: linear-gradient(
+    90deg,
+    rgba(220, 38, 38, 0.55) var(--hold-pct),
+    rgba(15, 23, 42, 0.8) var(--hold-pct)
+  );
+}
+
+.buzzer-exit-hold-btn.holding {
+  color: #ffffff;
+  border-color: #fca5a5;
+}
+
+body.buzzer-nav-locked .buzzer-exit-hold-btn {
+  display: block;
+}
