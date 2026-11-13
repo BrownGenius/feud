@@ -84,6 +84,11 @@ window.Feud = window.Feud || {};
 
   Feud.initSyncCallbacks({
     getLocalState: () => roomState,
+    onForcedExit: (reason) => {
+      Feud.playBuzzerHonk();
+      leaveToLobby({ force: true });
+      Feud.showToast(reason || "🔒 This buzzer is already open on another device.");
+    },
     onStatusChange: (statusText) => {
       const codeBadge = document.getElementById("roomCodeBadge");
       if (codeBadge && activeRole !== "lobby") {
@@ -1569,7 +1574,7 @@ window.Feud = window.Feud || {};
   }
 
   // Dedicated Face-Off wrong guess: flashes 1 temporary X + buzzer WITHOUT touching the round's 3-strike counter,
-  // then re-arms the opposing team's podium buzzer so their player can answer.
+  // then passes the Face-Off turn to the other team (podium buzzers stay locked until the next round).
   async function hostFaceOffWrongGuess() {
     const phase =
       roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
@@ -1599,7 +1604,7 @@ window.Feud = window.Feud || {};
       return;
     }
 
-    // 1. FACE-OFF TURN 1 MISS -> 1 temp X (round strikes untouched), re-arm the opposing buzzer (do NOT auto-start timer on X)
+    // 1. FACE-OFF TURN 1 MISS -> 1 temp X (round strikes untouched), turn passes to the other team (buzzers stay locked; do NOT auto-start timer on X)
     if (phase === "faceoff-ready" || phase === "faceoff-buzz" || phase === "faceoff-p1") {
       const firstTeam =
         roomState.faceoffFirstTeam || roomState.buzzerWinner || roomState.controllingTeam || 1;
@@ -1614,7 +1619,7 @@ window.Feud = window.Feud || {};
         faceoffBestRank: 999,
         controllingTeam: secondTeam,
         buzzerWinner: 0,
-        buzzerArmedTeam: secondTeam,
+        buzzerArmedTeam: 0,
         lastOverlayXCount: 1,
         strikeSeq: nextSeq,
         turnTimerRemaining: dur,
@@ -1655,13 +1660,13 @@ window.Feud = window.Feud || {};
         });
         Feud.showToast(`${prefix}❌ Miss! 🏆 ${firstName} Wins the Face-Off — Play or Pass?`);
       } else {
-        // Both missed! Re-arm the first team's buzzer for the next Face-Off attempt (do NOT auto-start timer on X)
+        // Both missed! Back to the first team for another Face-Off guess (buzzers stay locked; do NOT auto-start timer on X)
         await pushRoomPatch({
           questionRevealed: true,
           roundPhase: "faceoff-p1",
           controllingTeam: firstTeam,
           buzzerWinner: 0,
-          buzzerArmedTeam: firstTeam,
+          buzzerArmedTeam: 0,
           lastOverlayXCount: 1,
           strikeSeq: nextSeq,
           turnTimerRemaining: dur,
@@ -1948,48 +1953,27 @@ window.Feud = window.Feud || {};
     Feud.unlockAudio();
     const dur = Number(roomState.turnTimerDuration) || 10;
     const teamName = getTeamNameByNum(team);
-    const phase =
-      roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
 
-    // Re-armed opposing buzzer (after a Face-Off miss / non-#1 answer): confirm their turn only
-    if (roomState.buzzerArmedTeam) {
-      if (roomState.buzzerArmedTeam !== team) {
-        Feud.showToast(`🔒 Only ${getTeamNameByNum(roomState.buzzerArmedTeam)}'s buzzer is armed right now.`);
-        return;
+    // Same rules as the remote podium buzzers (sync.js#buildBuzzPatch); the Host may also
+    // record a buzz before the question is shown on TV.
+    const evalState =
+      (roomState.roundPhase || "faceoff-ready") === "faceoff-ready"
+        ? { ...roomState, roundPhase: "faceoff-buzz", questionRevealed: true }
+        : roomState;
+    const patch = Feud.buildBuzzPatch(evalState, team);
+    if (!patch) {
+      if (roomState.buzzerWinner) {
+        Feud.showToast(`🔒 ${getTeamNameByNum(roomState.buzzerWinner)} already buzzed in.`);
+      } else {
+        Feud.showToast("🔒 Buzzers are locked — the Face-Off is already decided this round.");
       }
-      Feud.playFaceOffTone(team);
-      await pushRoomPatch({
-        buzzerWinner: team,
-        buzzerArmedTeam: 0,
-        controllingTeam: team,
-        turnTimerRemaining: dur,
-        turnTimerRunning: true
-      });
-      startLocalTurnTimerLoop();
-      return;
-    }
-
-    if (phase !== "faceoff-ready" && phase !== "faceoff-buzz") {
-      Feud.showToast("🔒 Buzzers are locked — the Face-Off is already decided this round.");
-      return;
-    }
-    if (roomState.buzzerWinner) {
-      Feud.showToast(`🔒 ${getTeamNameByNum(roomState.buzzerWinner)} already buzzed first.`);
       return;
     }
 
     Feud.playFaceOffTone(team);
-    await pushRoomPatch({
-      buzzerWinner: team,
-      controllingTeam: team,
-      faceoffFirstTeam: team,
-      roundPhase: "faceoff-p1",
-      questionRevealed: true,
-      turnTimerRemaining: dur,
-      turnTimerRunning: true
-    });
+    await pushRoomPatch(patch);
     startLocalTurnTimerLoop();
-    Feud.showToast(`🔔 ${teamName} Buzzed First! ${dur}s Face-Off Timer Started.`);
+    Feud.showToast(`🔔 ${teamName} Buzzed In! ${dur}s Face-Off Timer Started.`);
   }
 
   async function hostResetBuzzers() {

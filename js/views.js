@@ -1350,47 +1350,43 @@ window.Feud = window.Feud || {};
     const otherTeam = myTeam === 1 ? 2 : 1;
     const otherName = otherTeam === 1 ? roomState.team1Name : roomState.team2Name;
 
-    if (canBuzz && roomState.buzzerArmedTeam === myTeam) {
-      // Re-armed after the opponent's Face-Off miss / non-#1 answer
-      btn.disabled = false;
-      icon.textContent = "⚡";
-      text.textContent = "YOUR TURN — BUZZ!";
-      sub.textContent = "Opponent missed — tap to lock in your answer";
-    } else if (canBuzz) {
+    // Buzzers are only live at the start of each Face-Off. Afterwards, show who buzzed first
+    // (faceoffFirstTeam) until the next round's Face-Off begins.
+    const firstBuzzTeam =
+      roomState.buzzerWinner && String(phase).startsWith("faceoff")
+        ? roomState.buzzerWinner
+        : roomState.faceoffFirstTeam || 0;
+    const isFaceOffUnderway = String(phase).startsWith("faceoff") && phase !== "faceoff-ready" && phase !== "faceoff-buzz";
+
+    if (canBuzz) {
       btn.disabled = false;
       icon.textContent = "🔔";
       text.textContent = "BUZZ IN!";
       sub.textContent = "Tap anywhere on this pad first";
-    } else if (roomState.buzzerWinner === myTeam) {
-      btn.disabled = true;
-      btn.classList.add("won-state");
-      icon.textContent = "🚨";
-      text.textContent = String(phase).startsWith("faceoff") ? "YOU BUZZED FIRST!" : "YOUR TEAM HAS IT!";
-      sub.textContent = "Give your answer to the Host!";
-    } else if (roomState.buzzerWinner === otherTeam) {
-      btn.disabled = true;
-      btn.classList.add("locked-out-state");
-      icon.textContent = "🔒";
-      text.textContent = "LOCKED OUT";
-      sub.textContent = `${otherName} buzzed in first`;
-    } else if (roomState.buzzerArmedTeam === otherTeam) {
-      btn.disabled = true;
-      btn.classList.add("locked-out-state");
-      icon.textContent = "⏳";
-      text.textContent = "OPPONENT'S TURN";
-      sub.textContent = `${otherName} is answering the Face-Off`;
     } else if (!roomState.questionRevealed || phase === "faceoff-ready") {
       btn.disabled = true;
       btn.classList.add("locked-out-state");
       icon.textContent = "⏳";
       text.textContent = "GET READY…";
-      sub.textContent = "Buzzer unlocks when the Host reveals the question";
+      sub.textContent = "Buzzer unlocks when the Host shows the Face-Off question";
+    } else if (isFaceOffUnderway && firstBuzzTeam === myTeam) {
+      btn.disabled = true;
+      btn.classList.add("won-state");
+      icon.textContent = "🚨";
+      text.textContent = "YOU BUZZED FIRST!";
+      sub.textContent = "Give your answer to the Host!";
+    } else if (isFaceOffUnderway && firstBuzzTeam === otherTeam) {
+      btn.disabled = true;
+      btn.classList.add("locked-out-state");
+      icon.textContent = "🔒";
+      text.textContent = "LOCKED OUT";
+      sub.textContent = `${otherName} buzzed in first`;
     } else {
       btn.disabled = true;
       btn.classList.add("locked-out-state");
       icon.textContent = "🔒";
       text.textContent = "BUZZERS LOCKED";
-      sub.textContent = "Face-Off decided — watch the TV!";
+      sub.textContent = "Buzzers re-open at the next round's Face-Off — watch the TV!";
     }
   }
 

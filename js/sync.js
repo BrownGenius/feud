@@ -19,6 +19,12 @@ window.Feud = window.Feud || {};
   let currentRole = "lobby";
   let isPrimaryHostPeer = false;
   let reconnectTimer = null;
+  let hostRetryTimer = null;
+  let heartbeatTimer = null;
+  let lastPongAt = 0;
+  let clientGen = 0;
+  let reconnectAttempt = 0;
+  let clientJoinInfo = null;
 
   // Optional Firebase state
   let firebaseReady = false;
@@ -30,11 +36,28 @@ window.Feud = window.Feud || {};
   let onRemoteStateCallback = null;
   let onConnectionStatusCallback = null;
   let getLocalStateCallback = null;
+  let onForcedExitCallback = null;
+  let pendingRoleCheck = null;
 
-  function initSyncCallbacks({ onRemoteState, onStatusChange, getLocalState }) {
+  function getTabClientId() {
+    try {
+      let id = sessionStorage.getItem("party_feud_tab_client_id");
+      if (!id) {
+        id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+        sessionStorage.setItem("party_feud_tab_client_id", id);
+      }
+      return id;
+    } catch (e) {
+      return `mem-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    }
+  }
+  const tabClientId = getTabClientId();
+
+  function initSyncCallbacks({ onRemoteState, onStatusChange, getLocalState, onForcedExit }) {
     onRemoteStateCallback = onRemoteState;
     onConnectionStatusCallback = onStatusChange;
     getLocalStateCallback = getLocalState;
+    onForcedExitCallback = onForcedExit || null;
 
     window.addEventListener("storage", (e) => {
       if (!currentCode || currentRole === "lobby") return;
@@ -149,6 +172,25 @@ window.Feud = window.Feud || {};
           if (st && broadcastChan) {
             broadcastChan.postMessage({ type: "STATE_UPDATE", state: st });
           }
+        } else if (msg.type === "CLAIM_ROLE_CHECK" && msg.clientId !== tabClientId) {
+          const isSameActiveBuzzer =
+            (msg.role === "buzzer1" || msg.role === "buzzer2") &&
+            (currentRole === msg.role ||
+              (isPrimaryHostPeer && Boolean(findActiveTeamBuzzer(msg.role, msg.clientId))));
+          if (isSameActiveBuzzer && broadcastChan) {
+            broadcastChan.postMessage({
+              type: "ROLE_IN_USE",
+              role: msg.role,
+              targetClientId: msg.clientId
+            });
+          }
+        } else if (
+          msg.type === "ROLE_IN_USE" &&
+          msg.targetClientId === tabClientId &&
+          pendingRoleCheck &&
+          pendingRoleCheck.role === msg.role
+        ) {
+          pendingRoleCheck.resolve(true);
         }
       };
     } catch (e) {}
@@ -188,47 +230,139 @@ window.Feud = window.Feud || {};
       return;
     }
 
-    const peerId = PEER_PREFIX + currentCode;
-    try {
-      peerInstance = new PeerClass(peerId, { debug: 1 });
+    createHostPeer(PeerClass, currentCode, 0);
+  }
 
-      peerInstance.on("open", () => {
+  // Creates (or re-creates) the Host's listening peer. If the room ID is still held by a stale session
+  // (e.g. after a page reload) or the peer dies, it keeps retrying so phones can always reconnect.
+  function createHostPeer(PeerClass, code, attempt) {
+    if (!isPrimaryHostPeer || currentCode !== code) return;
+    if (peerInstance) {
+      try {
+        peerInstance.destroy();
+      } catch (e) {}
+      peerInstance = null;
+    }
+
+    const retry = (delayMs) => {
+      clearTimeout(hostRetryTimer);
+      hostRetryTimer = setTimeout(() => createHostPeer(PeerClass, code, attempt + 1), delayMs);
+    };
+
+    try {
+      const peer = new PeerClass(PEER_PREFIX + code, { debug: 1 });
+      peerInstance = peer;
+
+      peer.on("open", () => {
         updateHostPeerBadge();
       });
 
-      peerInstance.on("connection", (conn) => {
+      peer.on("connection", (conn) => {
         setupIncomingClientConnection(conn);
       });
 
-      peerInstance.on("disconnected", () => {
-        if (peerInstance && !peerInstance.destroyed) {
-          try {
-            peerInstance.reconnect();
-          } catch (e) {}
+      peer.on("disconnected", () => {
+        if (peerInstance !== peer || peer.destroyed) return;
+        notifyStatus(`Room: ${code} • Re-registering…`, false);
+        try {
+          peer.reconnect();
+        } catch (e) {
+          retry(3000);
         }
       });
 
-      peerInstance.on("error", () => {
-        notifyStatus(`Room: ${currentCode}`, true);
+      peer.on("close", () => {
+        if (peerInstance === peer) retry(3000);
+      });
+
+      peer.on("error", (err) => {
+        if (peerInstance !== peer) return;
+        const type = (err && err.type) || "";
+        if (type === "unavailable-id") {
+          // Previous session still owns the ID on the signaling server; it frees up within ~a minute
+          notifyStatus(`Room: ${code} • Reclaiming room…`, false);
+          retry(Math.min(10000, 2500 + attempt * 1000));
+        } else if (
+          type === "network" ||
+          type === "server-error" ||
+          type === "socket-error" ||
+          type === "socket-closed"
+        ) {
+          notifyStatus(`Room: ${code} • Network issue, retrying…`, false);
+          retry(4000);
+        } else {
+          updateHostPeerBadge();
+        }
       });
     } catch (e) {
-      notifyStatus(`Room: ${currentCode}`, true);
+      retry(4000);
     }
   }
 
+  // Checks if a team's podium buzzer is already actively held by another tab/device.
+  // Cleans up any stale or same-tab connections along the way.
+  function findActiveTeamBuzzer(role, incomingClientId) {
+    if (role !== "buzzer1" && role !== "buzzer2") return null;
+    const now = Date.now();
+    for (const [peerId, entry] of Array.from(hostConnections.entries())) {
+      if (entry.role !== role) continue;
+      if (incomingClientId && entry.clientId === incomingClientId) {
+        try {
+          entry.conn.close();
+        } catch (e) {}
+        hostConnections.delete(peerId);
+        continue;
+      }
+      const isAlive = entry.conn && entry.conn.open && now - (entry.lastSeenAt || 0) < 12000;
+      if (isAlive) {
+        return entry;
+      }
+      try {
+        entry.conn.close();
+      } catch (e) {}
+      hostConnections.delete(peerId);
+    }
+    return null;
+  }
+
   function setupIncomingClientConnection(conn) {
-    conn.on("open", () => {
-      hostConnections.set(conn.peer, { conn, role: "client" });
+    const onOpen = () => {
+      hostConnections.set(conn.peer, { conn, role: "client", clientId: "", lastSeenAt: Date.now() });
       updateHostPeerBadge();
       const st = getLocalStateCallback ? getLocalStateCallback() : null;
       if (st) {
-        conn.send({ type: "STATE_UPDATE", state: st });
+        try {
+          conn.send({ type: "STATE_UPDATE", state: st });
+        } catch (e) {}
       }
-    });
+    };
+    if (conn.open) {
+      onOpen();
+    } else {
+      conn.on("open", onOpen);
+    }
 
     conn.on("data", (msg) => {
       if (!msg || typeof msg !== "object") return;
       const st = getLocalStateCallback ? getLocalStateCallback() : null;
+      const existing = hostConnections.get(conn.peer);
+      if (existing) existing.lastSeenAt = Date.now();
+
+      if (msg.type === "PING") {
+        try {
+          conn.send({ type: "PONG", t: msg.t || 0 });
+        } catch (e) {}
+        return;
+      }
+
+      if (msg.type === "BYE") {
+        hostConnections.delete(conn.peer);
+        updateHostPeerBadge();
+        try {
+          conn.close();
+        } catch (e) {}
+        return;
+      }
 
       if (msg.type === "HELLO") {
         if (msg.role === "host") {
@@ -238,7 +372,30 @@ window.Feud = window.Feud || {};
             return;
           }
         }
-        hostConnections.set(conn.peer, { conn, role: msg.role || "client" });
+        if (msg.role === "buzzer1" || msg.role === "buzzer2") {
+          const active = findActiveTeamBuzzer(msg.role, msg.clientId || "");
+          if (active) {
+            const teamNum = msg.role === "buzzer1" ? 1 : 2;
+            conn.send({
+              type: "AUTH_DENIED",
+              reason: `🔒 Team ${teamNum}'s buzzer is already open on another device!`
+            });
+            hostConnections.delete(conn.peer);
+            updateHostPeerBadge();
+            setTimeout(() => {
+              try {
+                conn.close();
+              } catch (e) {}
+            }, 300);
+            return;
+          }
+        }
+        hostConnections.set(conn.peer, {
+          conn,
+          role: msg.role || "client",
+          clientId: msg.clientId || "",
+          lastSeenAt: Date.now()
+        });
         updateHostPeerBadge();
         if (st) conn.send({ type: "STATE_UPDATE", state: st });
       } else if (msg.type === "BUZZ") {
@@ -278,7 +435,8 @@ window.Feud = window.Feud || {};
     const dur = Number(st.turnTimerDuration) || 10;
     if (st.stage && st.stage !== "main") return null;
 
-    // A) Open Face-Off (question revealed): the first buzz wins; every later tap is locked out.
+    // The podium buzzers are ONLY used at the start of each Face-Off: once the question is shown,
+    // the first buzz wins and every later tap is locked out until the next round's Face-Off.
     if (phase === "faceoff-buzz" && st.questionRevealed && !st.buzzerWinner) {
       return {
         buzzerWinner: teamNum,
@@ -287,17 +445,6 @@ window.Feud = window.Feud || {};
         faceoffFirstTeam: teamNum,
         roundPhase: "faceoff-p1",
         questionRevealed: true,
-        turnTimerRemaining: dur,
-        turnTimerRunning: true
-      };
-    }
-
-    // B) Re-armed Face-Off buzzer: only the armed (opposing) team may confirm its turn.
-    if (st.buzzerArmedTeam && st.buzzerArmedTeam === teamNum && !st.buzzerWinner) {
-      return {
-        buzzerWinner: teamNum,
-        buzzerArmedTeam: 0,
-        controllingTeam: teamNum,
         turnTimerRemaining: dur,
         turnTimerRunning: true
       };
@@ -338,6 +485,39 @@ window.Feud = window.Feud || {};
     });
   }
 
+  function checkSameBrowserRoleInUse(role) {
+    if (!broadcastChan || (role !== "buzzer1" && role !== "buzzer2")) {
+      return Promise.resolve(false);
+    }
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        if (pendingRoleCheck && pendingRoleCheck.role === role) {
+          pendingRoleCheck = null;
+        }
+        resolve(false);
+      }, 220);
+      pendingRoleCheck = {
+        role,
+        resolve: (inUse) => {
+          clearTimeout(timer);
+          pendingRoleCheck = null;
+          resolve(Boolean(inUse));
+        }
+      };
+      try {
+        broadcastChan.postMessage({
+          type: "CLAIM_ROLE_CHECK",
+          role,
+          clientId: tabClientId
+        });
+      } catch (e) {
+        clearTimeout(timer);
+        pendingRoleCheck = null;
+        resolve(false);
+      }
+    });
+  }
+
   async function joinExistingRoomSync({ code, role, pin = "" }) {
     cleanupSync();
     currentCode = code.toUpperCase();
@@ -349,7 +529,19 @@ window.Feud = window.Feud || {};
     const localState = Feud.loadRoomStateFromStorage(currentCode);
     if (localState) {
       if (role === "host" && String(localState.pin) !== String(pin)) {
+        cleanupSync();
         return { ok: false, error: "❌ Incorrect Host PIN! Access denied." };
+      }
+      if (role === "buzzer1" || role === "buzzer2") {
+        const alreadyOpen = await checkSameBrowserRoleInUse(role);
+        if (alreadyOpen) {
+          const teamNum = role === "buzzer1" ? 1 : 2;
+          cleanupSync();
+          return {
+            ok: false,
+            error: `🔒 Team ${teamNum}'s buzzer is already open in another tab or device!`
+          };
+        }
       }
       if (broadcastChan) {
         try {
@@ -381,45 +573,91 @@ window.Feud = window.Feud || {};
   }
 
   function connectPeerClient({ code, role, pin }) {
+    clientJoinInfo = { code, role, pin };
+    const myGen = ++clientGen;
+    const isStale = () => myGen !== clientGen || currentCode !== code || currentRole === "lobby";
+
     return new Promise(async (resolve) => {
       const PeerClass = await loadPeerJs();
       if (!PeerClass) {
-        resolve({ ok: false, error: "Network sync unavailable. Try Single-Screen Mode." });
+        resolve({ ok: false, error: "Network sync unavailable." });
+        return;
+      }
+      if (isStale()) {
+        resolve({ ok: false, error: "Connection superseded." });
         return;
       }
 
       let settled = false;
+      let everConnected = false;
       const finish = (res) => {
         if (!settled) {
           settled = true;
           resolve(res);
         }
       };
+      // Any failure after the first successful join (or during a background retry) -> keep retrying
+      const fail = (res) => {
+        clearTimeout(timeoutId);
+        finish(res);
+        if (!isStale() && (everConnected || reconnectAttempt > 0)) {
+          scheduleClientReconnect(code, role, pin);
+        }
+      };
 
       const timeoutId = setTimeout(() => {
-        finish({
+        fail({
           ok: false,
           error: `Room "${code}" not found or Host phone is asleep. Check the code on Host phone.`
         });
       }, 8500);
 
-      try {
-        peerInstance = new PeerClass({ debug: 1 });
+      // Tear down any previous (dead) client peer before creating a new one
+      if (clientConn) {
+        try {
+          clientConn.close();
+        } catch (e) {}
+        clientConn = null;
+      }
+      if (peerInstance && !isPrimaryHostPeer) {
+        try {
+          peerInstance.destroy();
+        } catch (e) {}
+        peerInstance = null;
+      }
 
-        peerInstance.on("open", () => {
-          const conn = peerInstance.connect(PEER_PREFIX + code, { reliable: true });
+      try {
+        const peer = new PeerClass({ debug: 1 });
+        peerInstance = peer;
+
+        peer.on("open", () => {
+          if (isStale()) return;
+          const conn = peer.connect(PEER_PREFIX + code, { reliable: true });
           clientConn = conn;
 
           conn.on("open", () => {
-            conn.send({ type: "HELLO", role, pin });
+            if (isStale()) return;
+            everConnected = true;
+            reconnectAttempt = 0;
+            lastPongAt = Date.now();
+            conn.send({ type: "HELLO", role, pin, clientId: tabClientId });
             notifyStatus(`Room: ${code} • Live`, true);
+            startHeartbeat(myGen);
           });
 
           conn.on("data", (msg) => {
-            if (!msg || typeof msg !== "object") return;
+            if (isStale() || !msg || typeof msg !== "object") return;
+            lastPongAt = Date.now();
+            if (msg.type === "PONG") return;
             if (msg.type === "AUTH_DENIED") {
               clearTimeout(timeoutId);
-              finish({ ok: false, error: msg.reason || "❌ Incorrect Host PIN!" });
+              const reason = msg.reason || "❌ Access denied!";
+              const wasAlreadyJoined = settled;
+              cleanupSync();
+              finish({ ok: false, error: reason });
+              if (wasAlreadyJoined && onForcedExitCallback) {
+                onForcedExitCallback(reason);
+              }
               return;
             }
             if (msg.type === "STATE_UPDATE" && msg.state) {
@@ -431,43 +669,90 @@ window.Feud = window.Feud || {};
           });
 
           conn.on("close", () => {
-            notifyStatus(`Room: ${code} • Reconnecting…`, false);
-            scheduleClientReconnect(code, role, pin);
+            if (isStale()) return;
+            fail({ ok: false, error: `Connection to Room "${code}" closed.` });
           });
 
           conn.on("error", () => {
-            clearTimeout(timeoutId);
-            finish({ ok: false, error: `Could not connect to Room "${code}".` });
+            if (isStale()) return;
+            fail({ ok: false, error: `Could not connect to Room "${code}".` });
           });
         });
 
-        peerInstance.on("error", (err) => {
-          clearTimeout(timeoutId);
+        peer.on("disconnected", () => {
+          // Lost the signaling server only — the data channel may still be fine; re-register quietly
+          if (isStale() || peer.destroyed) return;
+          try {
+            peer.reconnect();
+          } catch (e) {}
+        });
+
+        peer.on("error", (err) => {
+          if (isStale()) return;
           if (err && err.type === "peer-unavailable") {
-            finish({
+            fail({
               ok: false,
               error: `Room "${code}" not found. Make sure the Host phone created Room ${code} and has its screen awake.`
             });
           } else {
-            finish({ ok: false, error: `Connection error (${(err && err.type) || "network"}).` });
+            fail({ ok: false, error: `Connection error (${(err && err.type) || "network"}).` });
           }
         });
       } catch (e) {
-        clearTimeout(timeoutId);
-        finish({ ok: false, error: "Could not initialize P2P connection." });
+        fail({ ok: false, error: "Could not initialize P2P connection." });
       }
     });
   }
 
-  function scheduleClientReconnect(code, role, pin) {
-    clearTimeout(reconnectTimer);
-    if (currentRole === "lobby" || currentCode !== code) return;
-    reconnectTimer = setTimeout(() => {
-      if (currentRole !== "lobby" && (!clientConn || !clientConn.open)) {
-        connectPeerClient({ code, role, pin }).catch(() => {});
+  // Sends a PING every 4s; if nothing has been heard from the Host for 12s, the link is presumed dead
+  // (common when a phone sleeps or switches Wi-Fi/cell) and a fresh connection is made.
+  function startHeartbeat(gen) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = setInterval(() => {
+      if (gen !== clientGen || currentRole === "lobby" || !clientJoinInfo) {
+        clearInterval(heartbeatTimer);
+        return;
       }
-    }, 2500);
+      if (clientConn && clientConn.open) {
+        try {
+          clientConn.send({ type: "PING", t: Date.now() });
+        } catch (e) {}
+      }
+      if (Date.now() - lastPongAt > 12000) {
+        clearInterval(heartbeatTimer);
+        const { code, role, pin } = clientJoinInfo;
+        scheduleClientReconnect(code, role, pin, 0);
+      }
+    }, 4000);
   }
+
+  function scheduleClientReconnect(code, role, pin, forcedDelay) {
+    clearTimeout(reconnectTimer);
+    if (currentRole === "lobby" || currentCode !== code || isPrimaryHostPeer) return;
+    clearInterval(heartbeatTimer);
+    reconnectAttempt += 1;
+    notifyStatus(`Room: ${code} • Reconnecting… (try ${reconnectAttempt})`, false);
+    const delay =
+      forcedDelay !== undefined ? forcedDelay : Math.min(10000, 1500 + reconnectAttempt * 1000);
+    reconnectTimer = setTimeout(() => {
+      if (currentRole === "lobby" || currentCode !== code) return;
+      connectPeerClient({ code, role, pin }).catch(() => {});
+    }, delay);
+  }
+
+  // Reconnect immediately when a phone wakes up or regains network
+  function reconnectNowIfDead() {
+    if (!clientJoinInfo || isPrimaryHostPeer || currentRole === "lobby") return;
+    if (clientConn && clientConn.open && Date.now() - lastPongAt < 12000) return;
+    const { code, role, pin } = clientJoinInfo;
+    if (code !== currentCode) return;
+    scheduleClientReconnect(code, role, pin, 0);
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") reconnectNowIfDead();
+  });
+  window.addEventListener("online", reconnectNowIfDead);
+  window.addEventListener("focus", reconnectNowIfDead);
 
   async function syncPushPatch(patch, fullUpdatedState) {
     if (!currentCode) return;
@@ -555,6 +840,12 @@ window.Feud = window.Feud || {};
 
   function cleanupSync() {
     clearTimeout(reconnectTimer);
+    clearTimeout(hostRetryTimer);
+    clearInterval(heartbeatTimer);
+    pendingRoleCheck = null;
+    clientGen += 1;
+    clientJoinInfo = null;
+    reconnectAttempt = 0;
     if (unsubscribeFirestore) {
       unsubscribeFirestore();
       unsubscribeFirestore = null;
@@ -573,6 +864,9 @@ window.Feud = window.Feud || {};
     hostConnections.clear();
     if (clientConn) {
       try {
+        if (clientConn.open) {
+          clientConn.send({ type: "BYE", role: currentRole, clientId: tabClientId });
+        }
         clientConn.close();
       } catch (e) {}
       clientConn = null;
@@ -587,6 +881,14 @@ window.Feud = window.Feud || {};
     currentCode = "";
     currentRole = "lobby";
   }
+
+  window.addEventListener("pagehide", () => {
+    if (clientConn && clientConn.open) {
+      try {
+        clientConn.send({ type: "BYE", role: currentRole, clientId: tabClientId });
+      } catch (e) {}
+    }
+  });
 
   Object.assign(Feud, {
     initSyncCallbacks,
