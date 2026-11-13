@@ -1,4 +1,4 @@
-// =====================================================================
+﻿// =====================================================================
 // DECK CATALOG & OFFLINE BUNDLE (decks/catalog.js)
 // Pre-registers decks in the /decks folder so they appear automatically
 // in the GUI selector and work 100% offline over file:// as well as
@@ -2668,5 +2668,3746 @@ window.Feud.DECK_CATALOG = [
   ]
 }
 
+  }
+  ,
+  {
+    id: "2026.json",
+    label: "🔥 Family Feud 2026 (60 Rounds • 8 Fast Money Sets)",
+    file: "./decks/2026.json",
+    data: {
+    "gameTitle":  "Family Feud 2026",
+    "gameIcon":  "🔥",
+    "deckName":  "Family Feud 2026 (60 Rounds • 8 Fast Money Sets)",
+    "teamPresets":  [
+                        [
+                            "Team Red",
+                            "Team Blue"
+                        ],
+                        [
+                            "The Champs",
+                            "The Challengers"
+                        ],
+                        [
+                            "Family A",
+                            "Family B"
+                        ],
+                        [
+                            "Parents",
+                            "Kids"
+                        ],
+                        [
+                            "Celebrity All-Stars",
+                            "Hometown Heroes"
+                        ]
+                    ],
+    "rounds":  [
+                   {
+                       "title":  "Round 1",
+                       "answers":  [
+                                       {
+                                           "text":  "Giant rattle or pacifier",
+                                           "points":  34
+                                       },
+                                       {
+                                           "text":  "Adult diaper over clothes",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "Gold baby bottle chain",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Oversized gold crib",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Diamond-encrusted bib",
+                                           "points":  8
+                                       }
+                                   ],
+                       "prompt":  "If a rapper called themselves \u0027Big Old Baby\u0027, name something they might have on stage or wear.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture \u0026 Celebrity Feuds"
+                   },
+                   {
+                       "title":  "Round 2",
+                       "answers":  [
+                                       {
+                                           "text":  "Edgy fashion / Cone bra",
+                                           "points":  41
+                                       },
+                                       {
+                                           "text":  "Provocative / Rebellious attitude",
+                                           "points":  23
+                                       },
+                                       {
+                                           "text":  "Her dance choreography",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Endless chart-topping hits",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Her signature blonde hair",
+                                           "points":  8
+                                       }
+                                   ],
+                       "prompt":  "Name a quality or physical feature about Madonna that made her an eternal pop icon.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture \u0026 Celebrity Feuds"
+                   },
+                   {
+                       "title":  "Round 3",
+                       "answers":  [
+                                       {
+                                           "text":  "Bennifer (JLo \u0026 Ben Affleck)",
+                                           "points":  45
+                                       },
+                                       {
+                                           "text":  "Cardi B \u0026 Offset",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Channing Tatum \u0026 Zoe Kravitz",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Machine Gun Kelly \u0026 Megan Fox",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Gypsy Rose Blanchard \u0026 Ryan",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name a public celebrity breakup in 2026 that had everyone talking on social media.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture \u0026 Celebrity Feuds"
+                   },
+                   {
+                       "title":  "Round 4",
+                       "answers":  [
+                                       {
+                                           "text":  "Snoop Dogg",
+                                           "points":  48
+                                       },
+                                       {
+                                           "text":  "Flavor Flav",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "Lil Jon",
+                                           "points":  13
+                                       },
+                                       {
+                                           "text":  "DJ Khaled",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "Post Malone",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a rapper who always looks like they are having the absolute best time.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture \u0026 Celebrity Feuds"
+                   },
+                   {
+                       "title":  "Round 5",
+                       "answers":  [
+                                       {
+                                           "text":  "Cinderella (Sparkling Blue)",
+                                           "points":  48
+                                       },
+                                       {
+                                           "text":  "Belle (Golden Ballgown)",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Elsa (Ice Dress)",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Ariel (Seafoam Gown)",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Jasmine (Teal Silk)",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a Disney princess whose gown you would love to wear to a red carpet gala.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture \u0026 Celebrity Feuds"
+                   },
+                   {
+                       "title":  "Round 6",
+                       "answers":  [
+                                       {
+                                           "text":  "Jennifer Aniston",
+                                           "points":  46
+                                       },
+                                       {
+                                           "text":  "Jennifer Lopez",
+                                           "points":  31
+                                       },
+                                       {
+                                           "text":  "Jennifer Lawrence",
+                                           "points":  13
+                                       },
+                                       {
+                                           "text":  "Jennifer Hudson",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Jennifer Garner",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name a famous woman named Jennifer.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture \u0026 Celebrity Feuds"
+                   },
+                   {
+                       "title":  "Round 7",
+                       "answers":  [
+                                       {
+                                           "text":  "Cell phone / Smartphone",
+                                           "points":  46
+                                       },
+                                       {
+                                           "text":  "Television \u0026 remote",
+                                           "points":  21
+                                       },
+                                       {
+                                           "text":  "Good book / Bible",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Deck of playing cards",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Video game console",
+                                           "points":  9
+                                       }
+                                   ],
+                       "prompt":  "Name something you would hope to be buried with so you do not get bored in the afterlife.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture \u0026 Celebrity Feuds"
+                   },
+                   {
+                       "title":  "Round 8",
+                       "answers":  [
+                                       {
+                                           "text":  "Big nose",
+                                           "points":  38
+                                       },
+                                       {
+                                           "text":  "Giant ears",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Plump lips / mouth",
+                                           "points":  19
+                                       },
+                                       {
+                                           "text":  "Big eyeballs",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Shiny teeth",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "If aliens visited Earth, name a facial feature on humans they might find huge or strange.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture \u0026 Celebrity Feuds"
+                   },
+                   {
+                       "title":  "Round 9",
+                       "answers":  [
+                                       {
+                                           "text":  "Music",
+                                           "points":  52
+                                       },
+                                       {
+                                           "text":  "Facts / Truth",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Mirror",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Crowd / Public",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "Front",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Complete this famous phrase: \u0027Face the _____\u0027",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture \u0026 Celebrity Feuds"
+                   },
+                   {
+                       "title":  "Round 10",
+                       "answers":  [
+                                       {
+                                           "text":  "Jack Sparrow (Johnny Depp)",
+                                           "points":  39
+                                       },
+                                       {
+                                           "text":  "The Terminator (Arnold Schwarzenegger)",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "The Joker (Heath Ledger)",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Forrest Gump (Tom Hanks)",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Iron Man (Robert Downey Jr.)",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a movie role so iconic that no other actor should ever try to remake it.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture \u0026 Celebrity Feuds"
+                   },
+                   {
+                       "title":  "Round 11",
+                       "answers":  [
+                                       {
+                                           "text":  "Onion / Garlic",
+                                           "points":  38
+                                       },
+                                       {
+                                           "text":  "Fish / Seafood",
+                                           "points":  27
+                                       },
+                                       {
+                                           "text":  "Broccoli / Brussels sprouts",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Blue cheese",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Cardboard / Plain flavorless",
+                                           "points":  8
+                                       }
+                                   ],
+                       "prompt":  "Name a flavor of edible underwear you would be deeply disappointed to receive as a romantic gift.",
+                       "multiplier":  1,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 12",
+                       "answers":  [
+                                       {
+                                           "text":  "Slice of pizza / fast food bag",
+                                           "points":  36
+                                       },
+                                       {
+                                           "text":  "Beer can / can of soda",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "His cell phone / texting",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Cigarette / vape",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "TV remote control",
+                                           "points":  8
+                                       }
+                                   ],
+                       "prompt":  "If a guy made a terrible romantic proposal, what might he be holding in his other hand instead of flowers?",
+                       "multiplier":  1,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 13",
+                       "answers":  [
+                                       {
+                                           "text":  "Wedding ring tan line / indent",
+                                           "points":  49
+                                       },
+                                       {
+                                           "text":  "Flipping phone screen face-down",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "Refusing photos / dodging crowds",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Strict curfew / rushing home",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "Insisting on paying cash only",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a dead giveaway sign that a man on a first date is actually secretly married.",
+                       "multiplier":  1,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 14",
+                       "answers":  [
+                                       {
+                                           "text":  "Earring / piece of jewelry",
+                                           "points":  39
+                                       },
+                                       {
+                                           "text":  "Hair clip / bobby pin / scrunchie",
+                                           "points":  27
+                                       },
+                                       {
+                                           "text":  "Lipstick / lip balm",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Strong perfume scent",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "High heel / stray shoe",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name something a woman might find in her boyfriend\u0027s car that makes her immediately suspicious.",
+                       "multiplier":  1,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 15",
+                       "answers":  [
+                                       {
+                                           "text":  "Bear",
+                                           "points":  42
+                                       },
+                                       {
+                                           "text":  "Walrus",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Hippopotamus",
+                                           "points":  17
+                                       },
+                                       {
+                                           "text":  "Pig",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Sloth",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "Name an animal a wife might jokingly compare her husband\u0027s body shape to after 20 years of marriage.",
+                       "multiplier":  1,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 16",
+                       "answers":  [
+                                       {
+                                           "text":  "Bought the wrong brand / size",
+                                           "points":  43
+                                       },
+                                       {
+                                           "text":  "Spending too much / impulse buying",
+                                           "points":  25
+                                       },
+                                       {
+                                           "text":  "Wandering off / cart abandoned",
+                                           "points":  15
+                                       },
+                                       {
+                                           "text":  "Sneaking junk food into cart",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Flirting or embarrassing her",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "Name a reason a woman might start yelling at her husband in the middle of a grocery store.",
+                       "multiplier":  2,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 17",
+                       "answers":  [
+                                       {
+                                           "text":  "\u0027Mom still does my laundry\u0027",
+                                           "points":  36
+                                       },
+                                       {
+                                           "text":  "\u0027Terrible texter \u0026 ghoster\u0027",
+                                           "points":  27
+                                       },
+                                       {
+                                           "text":  "\u0027Financially completely broke\u0027",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "\u0027Screams at video games\u0027",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "\u0027Emotionally unavailable\u0027",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "If dating apps required brutally honest warning labels on men\u0027s profiles, what would one say?",
+                       "multiplier":  2,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 18",
+                       "answers":  [
+                                       {
+                                           "text":  "Exotic sports car",
+                                           "points":  41
+                                       },
+                                       {
+                                           "text":  "Rolex / luxury designer watch",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Custom designer suits \u0026 clothes",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Luxury penthouse apartment",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "First-class European vacation",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name something an older wealthy woman might buy for her young \u0027Sugar Baby\u0027 boyfriend.",
+                       "multiplier":  2,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 19",
+                       "answers":  [
+                                       {
+                                           "text":  "\u0027My mouth tastes like garlic\u0027",
+                                           "points":  35
+                                       },
+                                       {
+                                           "text":  "\u0027I threw up earlier\u0027",
+                                           "points":  29
+                                       },
+                                       {
+                                           "text":  "\u0027I forgot to brush my teeth\u0027",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "\u0027I have a contagious cold\u0027",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "\u0027Please don\u0027t use tongue\u0027",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name something you would hate to hear your partner say right before you lean in to kiss them.",
+                       "multiplier":  2,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 20",
+                       "answers":  [
+                                       {
+                                           "text":  "Tube socks pulled all the way up",
+                                           "points":  44
+                                       },
+                                       {
+                                           "text":  "Tight tighty-whities",
+                                           "points":  25
+                                       },
+                                       {
+                                           "text":  "Faded stained high school t-shirt",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Flannel footie onesie",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Baggy grey sweatpants",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "Name something a man wears to bed that makes him look completely unsexy.",
+                       "multiplier":  2,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 21",
+                       "answers":  [
+                                       {
+                                           "text":  "Giant red pimple on nose/forehead",
+                                           "points":  39
+                                       },
+                                       {
+                                           "text":  "Horrible haircut / dye disaster",
+                                           "points":  27
+                                       },
+                                       {
+                                           "text":  "Outfit does not zip or fit",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Chipped front tooth",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Terrible sunburn or fake tan",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "Name an appearance flaw that would make someone panic and cancel a first date at the last minute.",
+                       "multiplier":  2,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 22",
+                       "answers":  [
+                                       {
+                                           "text":  "Wedding anniversary",
+                                           "points":  45
+                                       },
+                                       {
+                                           "text":  "Her birthday",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Taking out the trash / recycling",
+                                           "points":  15
+                                       },
+                                       {
+                                           "text":  "Dinner with the in-laws",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "Picking up groceries",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name something a husband will \u0027conveniently forget\u0027 to get out of trouble or chores.",
+                       "multiplier":  2,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 23",
+                       "answers":  [
+                                       {
+                                           "text":  "New haircut / hair color",
+                                           "points":  56
+                                       },
+                                       {
+                                           "text":  "New dress / outfit",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "That she is mad at him",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "House was thoroughly cleaned",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Weight loss",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name something a woman expects her partner to notice immediately without having to tell them.",
+                       "multiplier":  2,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 24",
+                       "answers":  [
+                                       {
+                                           "text":  "Snookums / Pookie",
+                                           "points":  42
+                                       },
+                                       {
+                                           "text":  "Sugar Dumpling / Honeybunch",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "Baby Cakes",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Daddy / Papa Bear",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Cuddle Bug",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a romantic nickname for a lover that sounds ridiculous when shouted across a crowded room.",
+                       "multiplier":  2,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 25",
+                       "answers":  [
+                                       {
+                                           "text":  "Car temperature / AC settings",
+                                           "points":  38
+                                       },
+                                       {
+                                           "text":  "Directions / refusing GPS",
+                                           "points":  29
+                                       },
+                                       {
+                                           "text":  "Music playlist / radio station",
+                                           "points":  17
+                                       },
+                                       {
+                                           "text":  "When and where to stop for food",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Aggressive driving / speeding",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name something couples fight over during a long 10-hour road trip.",
+                       "multiplier":  2,
+                       "theme":  "💘 Dating, Marriage \u0026 Steve Harvey Fails"
+                   },
+                   {
+                       "title":  "Round 26",
+                       "answers":  [
+                                       {
+                                           "text":  "\u0027...performing surgery on a human\u0027",
+                                           "points":  44
+                                       },
+                                       {
+                                           "text":  "\u0027...flying a passenger plane\u0027",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "\u0027...doing a permanent tattoo\u0027",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "\u0027...cutting someone\u0027s hair\u0027",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "\u0027...driving a school bus\u0027",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a phrase starting with \u0027I have never done this before\u0027 that would terrify you to hear from a professional.",
+                       "multiplier":  2,
+                       "theme":  "💼 Work, Money \u0026 Modern Life"
+                   },
+                   {
+                       "title":  "Round 27",
+                       "answers":  [
+                                       {
+                                           "text":  "Fashion Model",
+                                           "points":  47
+                                       },
+                                       {
+                                           "text":  "Hollywood Actor / Actress",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Television News Anchor",
+                                           "points":  13
+                                       },
+                                       {
+                                           "text":  "Flight Attendant",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Personal Fitness Trainer",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a profession where people are constantly scrutinized and judged purely on how they look.",
+                       "multiplier":  2,
+                       "theme":  "💼 Work, Money \u0026 Modern Life"
+                   },
+                   {
+                       "title":  "Round 28",
+                       "answers":  [
+                                       {
+                                           "text":  "Deep cleaning the bathroom \u0026 toilet",
+                                           "points":  48
+                                       },
+                                       {
+                                           "text":  "Scrubbing the inside of the oven",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Folding and putting away mountains of laundry",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Mowing and weeding the entire lawn",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Washing a huge sink full of crusted dishes",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a chore you would willingly hand someone  cash to do for you right now.",
+                       "multiplier":  2,
+                       "theme":  "💼 Work, Money \u0026 Modern Life"
+                   },
+                   {
+                       "title":  "Round 29",
+                       "answers":  [
+                                       {
+                                           "text":  "\u0027It\u0027s just water weight / bloating\u0027",
+                                           "points":  42
+                                       },
+                                       {
+                                           "text":  "\u0027My shoes and jeans weigh 8 pounds\u0027",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "\u0027The scale is clearly uncalibrated/broken\u0027",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "\u0027It\u0027s dense muscle mass\u0027",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "\u0027I just ate a huge salty burrito\u0027",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name an excuse people give when they step onto the bathroom scale and notice they gained 10 pounds.",
+                       "multiplier":  2,
+                       "theme":  "💼 Work, Money \u0026 Modern Life"
+                   },
+                   {
+                       "title":  "Round 30",
+                       "answers":  [
+                                       {
+                                           "text":  "Taking showers / baths",
+                                           "points":  58
+                                       },
+                                       {
+                                           "text":  "Brushing and flossing teeth",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Washing and conditioning hair",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Trimming toenails",
+                                           "points":  5
+                                       },
+                                       {
+                                           "text":  "Shaving body hair",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "If humans had self-cleaning bodies like cats, name a daily grooming task we could permanently eliminate.",
+                       "multiplier":  2,
+                       "theme":  "💼 Work, Money \u0026 Modern Life"
+                   },
+                   {
+                       "title":  "Round 31",
+                       "answers":  [
+                                       {
+                                           "text":  "Registration and insurance papers",
+                                           "points":  53
+                                       },
+                                       {
+                                           "text":  "Stash of napkins and moist towelettes",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Tire pressure gauge",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Emergency flashlight",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Roll of breath mints / gum",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name something you keep tucked inside your car\u0027s glove compartment that definitely is not gloves.",
+                       "multiplier":  3,
+                       "theme":  "💼 Work, Money \u0026 Modern Life"
+                   },
+                   {
+                       "title":  "Round 32",
+                       "answers":  [
+                                       {
+                                           "text":  "Hair straightener / curling iron",
+                                           "points":  46
+                                       },
+                                       {
+                                           "text":  "Clothes iron",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "Coffee maker / kettle",
+                                           "points":  13
+                                       },
+                                       {
+                                           "text":  "Stove / oven burner",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Space heater",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name something people constantly panic about leaving plugged in when they rush out the front door.",
+                       "multiplier":  3,
+                       "theme":  "💼 Work, Money \u0026 Modern Life"
+                   },
+                   {
+                       "title":  "Round 33",
+                       "answers":  [
+                                       {
+                                           "text":  "Target",
+                                           "points":  37
+                                       },
+                                       {
+                                           "text":  "Costco / Wholesale Club",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "Grocery supermarket",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Car dealership / mechanic",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Casino",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "Name a place you walk into where you can instantly feel your wallet getting substantially lighter.",
+                       "multiplier":  3,
+                       "theme":  "💼 Work, Money \u0026 Modern Life"
+                   },
+                   {
+                       "title":  "Round 34",
+                       "answers":  [
+                                       {
+                                           "text":  "Talking while muted / \u0027You are on mute\u0027",
+                                           "points":  42
+                                       },
+                                       {
+                                           "text":  "Chewing food / loud crunching",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Barking dogs / noisy background",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Obviously multitasking / looking at phone",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Heavy mouth breathing into microphone",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name an annoying habit coworkers have on Zoom video meetings.",
+                       "multiplier":  3,
+                       "theme":  "💼 Work, Money \u0026 Modern Life"
+                   },
+                   {
+                       "title":  "Round 35",
+                       "answers":  [
+                                       {
+                                           "text":  "\u0027URGENT\u0027 email from your boss",
+                                           "points":  48
+                                       },
+                                       {
+                                           "text":  "A calendar invite for 8:00 AM",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "Overdue bill notification",
+                                           "points":  15
+                                       },
+                                       {
+                                           "text":  "\u0027Reply-all\u0027 chain with 50 emails",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "System outage alert",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name something you dread seeing in your email inbox on a Monday morning.",
+                       "multiplier":  3,
+                       "theme":  "💼 Work, Money \u0026 Modern Life"
+                   },
+                   {
+                       "title":  "Round 36",
+                       "answers":  [
+                                       {
+                                           "text":  "\u0027I will turn this car around right now!\u0027",
+                                           "points":  46
+                                       },
+                                       {
+                                           "text":  "\u0027Wait until your father gets home!\u0027",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "\u0027I\u0027m taking your tablets and phones away!\u0027",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "\u0027Santa is watching and taking notes!\u0027",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "\u0027Don\u0027t make me pull over!\u0027",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a classic threat parents yell when children start acting crazy in the backseat of the car.",
+                       "multiplier":  3,
+                       "theme":  "👶 Family Meltdowns \u0026 Home Secrets"
+                   },
+                   {
+                       "title":  "Round 37",
+                       "answers":  [
+                                       {
+                                           "text":  "Their banana snapped in half",
+                                           "points":  38
+                                       },
+                                       {
+                                           "text":  "Told they cannot wear pants on their head",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Announcing it is bedtime or naptime",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Cutting their sandwich the wrong way",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Forcing them to put on socks or shoes",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "Name something completely ridiculous that will trigger a toddler\u0027s full five-alarm meltdown.",
+                       "multiplier":  3,
+                       "theme":  "👶 Family Meltdowns \u0026 Home Secrets"
+                   },
+                   {
+                       "title":  "Round 38",
+                       "answers":  [
+                                       {
+                                           "text":  "Smartphones, iPads \u0026 social apps",
+                                           "points":  54
+                                       },
+                                       {
+                                           "text":  "Video games (Roblox, Minecraft, Fortnite)",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Fixing the home Wi-Fi and smart TV",
+                                           "points":  13
+                                       },
+                                       {
+                                           "text":  "Modern slang and trending memes",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "Artificial Intelligence / ChatGPT",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name something modern kids understand way faster and better than their grandparents.",
+                       "multiplier":  3,
+                       "theme":  "👶 Family Meltdowns \u0026 Home Secrets"
+                   },
+                   {
+                       "title":  "Round 39",
+                       "answers":  [
+                                       {
+                                           "text":  "Leather bifold wallet",
+                                           "points":  41
+                                       },
+                                       {
+                                           "text":  "Pocket knife",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "Leather belt",
+                                           "points":  17
+                                       },
+                                       {
+                                           "text":  "Black pocket comb",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Fleece house slippers",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "Name something cheap and worn-out that grandpa has been carrying since his wedding day.",
+                       "multiplier":  3,
+                       "theme":  "👶 Family Meltdowns \u0026 Home Secrets"
+                   },
+                   {
+                       "title":  "Round 40",
+                       "answers":  [
+                                       {
+                                           "text":  "Practice clapping and yelling \u0027Good answer!\u0027",
+                                           "points":  45
+                                       },
+                                       {
+                                           "text":  "Binge-watch old episodes and Steve Harvey clips",
+                                           "points":  25
+                                       },
+                                       {
+                                           "text":  "Pick out the sharpest color-coordinated outfit",
+                                           "points":  15
+                                       },
+                                       {
+                                           "text":  "Practice buzzing in using a sofa cushion",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "Say a quick family prayer",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name something you do the night before taping Family Feud to make sure you do not freeze up.",
+                       "multiplier":  3,
+                       "theme":  "👶 Family Meltdowns \u0026 Home Secrets"
+                   },
+                   {
+                       "title":  "Round 41",
+                       "answers":  [
+                                       {
+                                           "text":  "Wedding ceremony \u0026 reception",
+                                           "points":  43
+                                       },
+                                       {
+                                           "text":  "Tropical beach vacation",
+                                           "points":  27
+                                       },
+                                       {
+                                           "text":  "Birthday milestone party",
+                                           "points":  15
+                                       },
+                                       {
+                                           "text":  "Family holiday photo shoot",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "New Year\u0027s Eve bash",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name an event where people snap 500 photos and end up liking exactly two of them.",
+                       "multiplier":  3,
+                       "theme":  "👶 Family Meltdowns \u0026 Home Secrets"
+                   },
+                   {
+                       "title":  "Round 42",
+                       "answers":  [
+                                       {
+                                           "text":  "Canned jellied cranberry sauce",
+                                           "points":  41
+                                       },
+                                       {
+                                           "text":  "Fruitcake",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Green bean casserole",
+                                           "points":  17
+                                       },
+                                       {
+                                           "text":  "Jell-O mold with shredded carrots",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Mashed turnips / rutabaga",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a dish at Thanksgiving dinner that sits on the table untouched every year.",
+                       "multiplier":  3,
+                       "theme":  "👶 Family Meltdowns \u0026 Home Secrets"
+                   },
+                   {
+                       "title":  "Round 43",
+                       "answers":  [
+                                       {
+                                           "text":  "Christmas presents \u0026 birthday gifts",
+                                           "points":  52
+                                       },
+                                       {
+                                           "text":  "Secret stash of candy and chocolate",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Video game controllers / tablets",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Sentimental fragile heirlooms",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Important tax \u0026 birth documents",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name something parents hide on the highest closet shelf where kids cannot reach.",
+                       "multiplier":  3,
+                       "theme":  "👶 Family Meltdowns \u0026 Home Secrets"
+                   },
+                   {
+                       "title":  "Round 44",
+                       "answers":  [
+                                       {
+                                           "text":  "Front door deadbolt",
+                                           "points":  64
+                                       },
+                                       {
+                                           "text":  "Back / patio sliding glass door",
+                                           "points":  21
+                                       },
+                                       {
+                                           "text":  "Car doors parked in driveway",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Windows",
+                                           "points":  4
+                                       },
+                                       {
+                                           "text":  "Garage door",
+                                           "points":  3
+                                       }
+                                   ],
+                       "prompt":  "Name something you always double-check is locked before you go to sleep at night.",
+                       "multiplier":  3,
+                       "theme":  "👶 Family Meltdowns \u0026 Home Secrets"
+                   },
+                   {
+                       "title":  "Round 45",
+                       "answers":  [
+                                       {
+                                           "text":  "Squeaky wooden floorboard / staircase",
+                                           "points":  58
+                                       },
+                                       {
+                                           "text":  "Creaky front door hinge",
+                                           "points":  23
+                                       },
+                                       {
+                                           "text":  "Barking family dog",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Refrigerator door seal suction",
+                                           "points":  5
+                                       },
+                                       {
+                                           "text":  "Microwave loud beep",
+                                           "points":  3
+                                       }
+                                   ],
+                       "prompt":  "Name something in your childhood home that made a loud, distinct noise whenever someone tried to sneak around.",
+                       "multiplier":  3,
+                       "theme":  "👶 Family Meltdowns \u0026 Home Secrets"
+                   },
+                   {
+                       "title":  "Round 46",
+                       "answers":  [
+                                       {
+                                           "text":  "Pounding headache / epic hangover",
+                                           "points":  37
+                                       },
+                                       {
+                                           "text":  "A stranger they married at 3:00 AM",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Maxed-out credit card statements",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Novelty yard-long slushy cup",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Regrettable matching tattoo",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "Name an unwelcome souvenir people bring back from Las Vegas that they immediately regret.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 47",
+                       "answers":  [
+                                       {
+                                           "text":  "Shorter skirt or side slit",
+                                           "points":  41
+                                       },
+                                       {
+                                           "text":  "Flashy designer high heels or Jordans",
+                                           "points":  27
+                                       },
+                                       {
+                                           "text":  "Bold fire-engine red lipstick",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Pushing veil back to show hair",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Cool leather motorcycle jacket",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "If a Catholic nun was feeling rebelliously stylish, how might she modify her habit?",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 48",
+                       "answers":  [
+                                       {
+                                           "text":  "Cool designer sunglasses",
+                                           "points":  38
+                                       },
+                                       {
+                                           "text":  "Baseball cap or ten-gallon cowboy hat",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Silk pajamas and fuzzy bunny slippers",
+                                           "points":  17
+                                       },
+                                       {
+                                           "text":  "Super Bowl champion jersey",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Heavy gold chains and royal crown",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "Name a strange item an eccentric billionaire might request to wear inside their open casket.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 49",
+                       "answers":  [
+                                       {
+                                           "text":  "Fluffy feather pillow",
+                                           "points":  45
+                                       },
+                                       {
+                                           "text":  "Fresh plush sherpa blanket / comforter",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "Big fluffy dog or golden retriever fur",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Tall warm stack of buttermilk pancakes",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Giant stuffed teddy bear",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name something super thick and plush that you just want to bury your face into.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 50",
+                       "answers":  [
+                                       {
+                                           "text":  "Sandy beach / ocean shore",
+                                           "points":  57
+                                       },
+                                       {
+                                           "text":  "Inside your own living room",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "Swimming pool patio deck",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Yoga studio / dojo mat",
+                                           "points":  5
+                                       },
+                                       {
+                                           "text":  "Locker room / sauna",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name a place where it is totally socially acceptable to be walking around completely barefoot.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 51",
+                       "answers":  [
+                                       {
+                                           "text":  "Professional Golf",
+                                           "points":  56
+                                       },
+                                       {
+                                           "text":  "Championship Tennis",
+                                           "points":  31
+                                       },
+                                       {
+                                           "text":  "Grandmaster Chess",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "Olympic Archery / Rifle Shooting",
+                                           "points":  4
+                                       },
+                                       {
+                                           "text":  "Billiards / Snooker",
+                                           "points":  2
+                                       }
+                                   ],
+                       "prompt":  "Name a competitive sport where the spectators are required to stay dead silent during action.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 52",
+                       "answers":  [
+                                       {
+                                           "text":  "Ostrich",
+                                           "points":  76
+                                       },
+                                       {
+                                           "text":  "Emu",
+                                           "points":  15
+                                       },
+                                       {
+                                           "text":  "Emperor Penguin",
+                                           "points":  5
+                                       },
+                                       {
+                                           "text":  "Canada Goose",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name an animal that is famous for laying enormous eggs.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 53",
+                       "answers":  [
+                                       {
+                                           "text":  "Television remote control",
+                                           "points":  48
+                                       },
+                                       {
+                                           "text":  "Car keys / house keys",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Cell phone",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Reading glasses / sunglasses",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "Phone charger cord",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name something people constantly misplace inside their own house and blame others for stealing.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 54",
+                       "answers":  [
+                                       {
+                                           "text":  "Picking their nose",
+                                           "points":  54
+                                       },
+                                       {
+                                           "text":  "Smelling their own armpits / breath",
+                                           "points":  21
+                                       },
+                                       {
+                                           "text":  "Adjusting wedgies / underwear",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Checking their teeth in phone reflection",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "Passing gas quietly",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name a bad habit people secretly do when they think nobody in the room is watching them.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 55",
+                       "answers":  [
+                                       {
+                                           "text":  "Aluminum foil / metal utensils",
+                                           "points":  58
+                                       },
+                                       {
+                                           "text":  "Raw whole egg in shell",
+                                           "points":  21
+                                       },
+                                       {
+                                           "text":  "Cell phone / electronics",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Styrofoam take-out cup",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Hot chili peppers",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name something you should never, under any circumstances, microwave.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 56",
+                       "answers":  [
+                                       {
+                                           "text":  "Toilet paper",
+                                           "points":  54
+                                       },
+                                       {
+                                           "text":  "Bottled water",
+                                           "points":  25
+                                       },
+                                       {
+                                           "text":  "Canned goods / spam / beans",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Batteries \u0026 flashlights",
+                                           "points":  5
+                                       },
+                                       {
+                                           "text":  "Hand sanitizer / disinfectant wipes",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name something people hoard in massive quantities in case of an apocalyptic emergency.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 57",
+                       "answers":  [
+                                       {
+                                           "text":  "Grocery store / supermarket",
+                                           "points":  51
+                                       },
+                                       {
+                                           "text":  "The gym",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "Local coffee shop / Starbucks",
+                                           "points":  13
+                                       },
+                                       {
+                                           "text":  "Airport terminal",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "Doctor\u0027s waiting room",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name a place you hate running into your ex when you look like an absolute mess.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 58",
+                       "answers":  [
+                                       {
+                                           "text":  "Unpopped popcorn kernel",
+                                           "points":  62
+                                       },
+                                       {
+                                           "text":  "Hard crusty artisan bread",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Olive pit / cherry pit",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Jawbreaker candy / lollipop",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Ice cube",
+                                           "points":  3
+                                       }
+                                   ],
+                       "prompt":  "Name an innocent food that causes major dental distress if you bite into it wrong.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 59",
+                       "answers":  [
+                                       {
+                                           "text":  "Singing passionately at the top of their lungs",
+                                           "points":  52
+                                       },
+                                       {
+                                           "text":  "Enthusiastic steering wheel drumming / dancing",
+                                           "points":  27
+                                       },
+                                       {
+                                           "text":  "Aggressive nose picking",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Applying full makeup in rearview mirror",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Talking animatedly to themselves",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name something people do when they are stuck in slow-moving traffic that makes other drivers laugh.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   },
+                   {
+                       "title":  "Round 60",
+                       "answers":  [
+                                       {
+                                           "text":  "\u0027Double down!\u0027",
+                                           "points":  39
+                                       },
+                                       {
+                                           "text":  "\u0027Hit me!\u0027",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "\u0027Winner winner, chicken dinner!\u0027",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "\u0027Let it ride!\u0027",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "\u0027House always wins!\u0027",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a phrase you hear constantly in Las Vegas casinos.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Wild Nights, Strange Habits \u0026 Party Laughs"
+                   }
+               ],
+    "fastMoney":  [
+                      {
+                          "hint":  "3 drinks (42), 2 drinks (28), 4 drinks (16), 5+ drinks (9), 1 drink (5)",
+                          "prompt":  "How many alcoholic drinks do you have before making questionable decisions?"
+                      },
+                      {
+                          "hint":  "Nurse / Doctor (54), Tattoo artist (24), Seamstress / Tailor (12), Acupuncturist (7), Phlebotomist (3)",
+                          "prompt":  "Name a profession where people use needles every single day."
+                      },
+                      {
+                          "hint":  "Mega yachts (38), Mansions / Estates (31), Private jets (19), Supercars / Ferraris (8), Private islands (4)",
+                          "prompt":  "Name something the world\u0027s richest man probably owns two of."
+                      },
+                      {
+                          "hint":  "Donut (56), Basketball (24), Cookie / Oreo (14), Chicken nugget (4), French fry (2)",
+                          "prompt":  "Name something you dunk."
+                      },
+                      {
+                          "hint":  "King (62), Queen (36), Knight (2)",
+                          "prompt":  "Name a royal piece on a chessboard."
+                      },
+                      {
+                          "hint":  "Biceps / Arms (55), Chest / Pecs (26), Shoulders / Traps (11), Thighs / Calves (5), Neck (3)",
+                          "prompt":  "Name a body part a cartoon bodybuilder would have exaggeratedly huge."
+                      },
+                      {
+                          "hint":  "10 nuggets (44), 6 nuggets (26), 20 nuggets (18), 12 nuggets (8), 8 nuggets (4)",
+                          "prompt":  "How many chicken nuggets make a satisfying dinner meal?"
+                      },
+                      {
+                          "hint":  "Mom / Mother (43), Spouse / Partner (26), Child / Grandchild (18), Best friend (9), Pet / Dog (4)",
+                          "prompt":  "Name someone in your life whose voice instantly puts a smile on your face."
+                      },
+                      {
+                          "hint":  "Concert / Music festival (52), NBA basketball game (28), Broadway theater show (11), Comedy club (6), Boxing / UFC fight (3)",
+                          "prompt":  "Name a live entertainment event where you definitely want front-row seats."
+                      },
+                      {
+                          "hint":  "Tokyo (68), New York City (22), San Francisco (5), Los Angeles (3), London (2)",
+                          "prompt":  "Name a world city Godzilla would probably stomp through first."
+                      },
+                      {
+                          "hint":  "King-size bedroom suite (38), Full chef\u0027s kitchen \u0026 fridge (26), Giant flat-screen TV (18), Luxury tile shower (12), Electric fireplace (6)",
+                          "prompt":  "Name an impressive luxury feature you\u0027d expect to find in a ,000 RV."
+                      },
+                      {
+                          "hint":  "Algebra / 8th or 9th grade (44), Calculus / 12th grade (26), 6th grade fractions (16), Geometry / 10th grade (9), College college algebra (5)",
+                          "prompt":  "At what grade in school did math become completely impossible for you?"
+                      },
+                      {
+                          "hint":  "October (48), November (28), December (14), January (7), September (3)",
+                          "prompt":  "Name the single best month of the year for wearing cozy sweaters."
+                      },
+                      {
+                          "hint":  "Money / Cash loan (62), Favorite book (14), Jacket / Designer clothes (11), Power tools / lawn mower (8), Car (5)",
+                          "prompt":  "Name something you shouldn\u0027t lend to a friend unless you\u0027re okay never seeing it again."
+                      },
+                      {
+                          "hint":  "5 minutes (46), 2 minutes (29), 1 minute (15), 10 minutes (7), 30 seconds (3)",
+                          "prompt":  "How many minutes can you listen to someone brag before you tune them out?"
+                      },
+                      {
+                          "hint":  "Free meals / 3 hot meals a day (42), Plenty of uninterrupted sleep (28), No phone / peace \u0026 quiet (16), Mandatory workout time (9), Free cable TV (5)",
+                          "prompt":  "Name an unexpected luxury or benefit you\u0027d enjoy if you spent a quiet weekend in jail."
+                      },
+                      {
+                          "hint":  "Acorns (58), Dry leaves (24), Fallen twigs / branches (10), Pinecones (5), Wild mushrooms (3)",
+                          "prompt":  "Name something you might find lying on the ground under a large oak tree."
+                      },
+                      {
+                          "hint":  "Mercedes-Benz (39), Porsche (27), Rolls-Royce (18), Ferrari / Lamborghini (11), Tesla (5)",
+                          "prompt":  "Name a luxury car brand you see parked in every driveway in Beverly Hills."
+                      },
+                      {
+                          "hint":  "Zelda (51), The Fall (22), Sleepy Hollow (14), The Hidden Temple (8), Korra (5)",
+                          "prompt":  "Complete this famous gaming or movie phrase: \u0027Legend of _____\u0027."
+                      },
+                      {
+                          "hint":  "Tuna salad sandwich (48), Egg salad sandwich (24), Pastrami with raw onions (16), Garlic roast beef (8), Liverwurst (4)",
+                          "prompt":  "Name a lunch sandwich that is delicious but gives you terrible dragon breath."
+                      },
+                      {
+                          "hint":  "Cleaning their messy bedroom (52), Mowing the lawn (24), Taking out the trash (12), Doing their laundry (8), Emptying dishwasher (4)",
+                          "prompt":  "Name a chore teenagers complain about having to do every single Saturday morning."
+                      },
+                      {
+                          "hint":  "Ostrich (78), Emu (14), Emperor Penguin (5), Canada Goose (3)",
+                          "prompt":  "Name a bird that is famous for having enormous eggs."
+                      },
+                      {
+                          "hint":  "3 pairs (41), 2 pairs (32), 4 pairs (15), 5 pairs (8), 1 pair (4)",
+                          "prompt":  "How many pairs of shoes do you actually wear on a regular weekly basis?"
+                      },
+                      {
+                          "hint":  "Pancakes / Waffles (42), Cheeseburger \u0026 french fries (31), Hot coffee (14), Chocolate milkshake (8), Bacon \u0026 eggs (5)",
+                          "prompt":  "Name something you might order at a 24-hour diner at midnight."
+                      },
+                      {
+                          "hint":  "Tuba / Sousaphone (59), Bass drum (24), Snare quad drums (11), Trombone (4), Baritone horn (2)",
+                          "prompt":  "Name an instrument in a high school marching band that looks painfully heavy to carry."
+                      },
+                      {
+                          "hint":  "Baseball / Outfield (54), Beach volleyball (24), Road cycling / Biking (12), Golf (7), Snowboarding / Skiing (3)",
+                          "prompt":  "Name a sport where an athlete might wear sunglasses during competition."
+                      },
+                      {
+                          "hint":  "TV remote control (48), Loose coins / Change (27), Cell phone (14), Car keys (7), Hair ties / pens (4)",
+                          "prompt":  "Name something people constantly lose behind their living room couch cushions."
+                      },
+                      {
+                          "hint":  "15 minutes (44), 10 minutes (33), 20 minutes (15), 5 minutes (5), 30 minutes (3)",
+                          "prompt":  "How many minutes is an ideal, refreshing hot shower?"
+                      },
+                      {
+                          "hint":  "Driver texting at green light (51), Car cutting you off abruptly (27), Warning a pedestrian or animal (11), Saying hi to a neighbor (7), Road rage (4)",
+                          "prompt":  "Name a reason you would aggressively honk the horn on your car."
+                      },
+                      {
+                          "hint":  "Stuck in bumper-to-bumper traffic (62), Alarm didn\u0027t go off / overslept (22), Flat tire / car trouble (10), Child was sick (4), Spilled coffee all over clothes (2)",
+                          "prompt":  "Name a classic excuse for arriving 30 minutes late to work."
+                      },
+                      {
+                          "hint":  "Chopped walnuts / nuts (42), Hot fudge (21), Rainbow sprinkles (16), Marshmallow fluff (12), Maraschino cherry (9)",
+                          "prompt":  "Name an ice cream topping that completely ruins the sundae if you dislike it."
+                      },
+                      {
+                          "hint":  "Aerosol spray can (58), Household batteries (21), Glass bottle (11), Fireworks (7), Cell phone (3)",
+                          "prompt":  "Name an item you should never, ever toss into a raging campfire."
+                      },
+                      {
+                          "hint":  "Fidget / tap fingers on table (46), Sweat profusely / wipe palms (24), Talk too fast with hands (16), Clench fists together (9), Bite fingernails (5)",
+                          "prompt":  "Name something people nervously do with their hands during a high-stakes job interview."
+                      },
+                      {
+                          "hint":  "Pineapple (72), Anchovies (16), Mushrooms (7), Jalapeño peppers (3), Black olives (2)",
+                          "prompt":  "Name a popular pizza topping that sparks heated arguments among friends."
+                      },
+                      {
+                          "hint":  "6 hours (45), 7 hours (31), 5 hours (14), 8 hours (8), 4 hours (2)",
+                          "prompt":  "How many hours of sleep do you realistically get on an average weeknight?"
+                      },
+                      {
+                          "hint":  "Refrigerator / freezer (48), Microwave oven (24), Coffee maker / Keurig (16), Air fryer (8), Dishwasher (4)",
+                          "prompt":  "Name a kitchen appliance you would be utterly devastated without for two days."
+                      },
+                      {
+                          "hint":  "Plastic bottle of water (64), Cold deli sandwich / snack box (18), Memory foam neck pillow (10), Charging cord / headphones (5), Magazine (3)",
+                          "prompt":  "Name something you purchase at an airport terminal that costs triple what it should."
+                      },
+                      {
+                          "hint":  "Sloth (65), Turtle / Tortoise (22), Garden snail (9), Koala (4)",
+                          "prompt":  "Name an animal that moves so painfully slow it is almost comical."
+                      },
+                      {
+                          "hint":  "Buttered popcorn (62), Chocolate candy / M\u0026Ms (18), Twizzlers / Red Vines (11), Nachos with melted cheese (6), Sour Patch Kids (3)",
+                          "prompt":  "Name a movie theater snack you cannot resist even if you just ate dinner."
+                      },
+                      {
+                          "hint":  "Shocking text message / juicy gossip (44), Low bank balance notification (28), Breaking news bulletin (16), Realized they are terribly late (8), Tagged in an awful photo (4)",
+                          "prompt":  "Name a reason a person might look down at their phone in public and visibly gasp."
+                      }
+                  ]
+}
+  },
+  {
+    id: "2026-family-friendly.json",
+    label: "🌟 Family Feud 2026 (Family-Friendly • 60 Rounds)",
+    file: "./decks/2026-family-friendly.json",
+    data: {
+    "gameTitle":  "Family Feud 2026",
+    "gameIcon":  "🌟",
+    "deckName":  "Family Feud 2026 (Family-Friendly Edition • 60 Rounds)",
+    "teamPresets":  [
+                        [
+                            "Team Parents",
+                            "Team Kids"
+                        ],
+                        [
+                            "The Champs",
+                            "The Challengers"
+                        ],
+                        [
+                            "Team Gold",
+                            "Team Blue"
+                        ],
+                        [
+                            "Cousins",
+                            "Siblings"
+                        ],
+                        [
+                            "Grandparents",
+                            "Grandkids"
+                        ]
+                    ],
+    "rounds":  [
+                   {
+                       "title":  "Round 1",
+                       "answers":  [
+                                       {
+                                           "text":  "Cinderella (Sparkling Blue Ballgown)",
+                                           "points":  48
+                                       },
+                                       {
+                                           "text":  "Belle (Golden Ballroom Dress)",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Elsa (Ice Crystal Gown)",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Ariel (Sparkling Seafoam Gown)",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Jasmine (Teal Silk Outfit)",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a Disney princess whose gown you would love to wear to a grand royal ball.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture, Movies \u0026 Famous Faces"
+                   },
+                   {
+                       "title":  "Round 2",
+                       "answers":  [
+                                       {
+                                           "text":  "Giant rattle or pacifier",
+                                           "points":  34
+                                       },
+                                       {
+                                           "text":  "Oversized cartoon diaper",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "Gold baby bottle chain",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Giant golden crib",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Diamond-encrusted bib",
+                                           "points":  8
+                                       }
+                                   ],
+                       "prompt":  "If a rapper called themselves \u0027Big Old Baby\u0027, name something funny they might wear or have on stage.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture, Movies \u0026 Famous Faces"
+                   },
+                   {
+                       "title":  "Round 3",
+                       "answers":  [
+                                       {
+                                           "text":  "Jennifer Aniston",
+                                           "points":  46
+                                       },
+                                       {
+                                           "text":  "Jennifer Lopez",
+                                           "points":  31
+                                       },
+                                       {
+                                           "text":  "Jennifer Lawrence",
+                                           "points":  13
+                                       },
+                                       {
+                                           "text":  "Jennifer Hudson",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Jennifer Garner",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name a famous woman named Jennifer.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture, Movies \u0026 Famous Faces"
+                   },
+                   {
+                       "title":  "Round 4",
+                       "answers":  [
+                                       {
+                                           "text":  "Captain Jack Sparrow (Johnny Depp)",
+                                           "points":  39
+                                       },
+                                       {
+                                           "text":  "The Terminator (Arnold Schwarzenegger)",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "The Joker (Heath Ledger)",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Forrest Gump (Tom Hanks)",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Iron Man (Robert Downey Jr.)",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a movie role so iconic that no other actor should ever try to remake it.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture, Movies \u0026 Famous Faces"
+                   },
+                   {
+                       "title":  "Round 5",
+                       "answers":  [
+                                       {
+                                           "text":  "Music",
+                                           "points":  52
+                                       },
+                                       {
+                                           "text":  "Facts / Truth",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Mirror",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Crowd",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "Front",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Complete this famous phrase: \u0027Face the _____\u0027",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture, Movies \u0026 Famous Faces"
+                   },
+                   {
+                       "title":  "Round 6",
+                       "answers":  [
+                                       {
+                                           "text":  "Dolly Parton",
+                                           "points":  38
+                                       },
+                                       {
+                                           "text":  "Snoop Dogg",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Jack Black",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Kelly Clarkson",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Dwayne \u0027The Rock\u0027 Johnson",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "Name a celebrity who always looks cheerful and full of positive energy.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture, Movies \u0026 Famous Faces"
+                   },
+                   {
+                       "title":  "Round 7",
+                       "answers":  [
+                                       {
+                                           "text":  "Big nose",
+                                           "points":  38
+                                       },
+                                       {
+                                           "text":  "Giant ears",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Plump lips / mouth",
+                                           "points":  19
+                                       },
+                                       {
+                                           "text":  "Round eyeballs",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Shiny teeth",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "If aliens visited Earth, name a facial feature on humans they might find huge or strange.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture, Movies \u0026 Famous Faces"
+                   },
+                   {
+                       "title":  "Round 8",
+                       "answers":  [
+                                       {
+                                           "text":  "Cell phone / smartphone",
+                                           "points":  46
+                                       },
+                                       {
+                                           "text":  "Television \u0026 remote",
+                                           "points":  21
+                                       },
+                                       {
+                                           "text":  "Good book / Bible",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Deck of playing cards",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Video game console",
+                                           "points":  9
+                                       }
+                                   ],
+                       "prompt":  "Name something you would hope to be buried with so you do not get bored in the afterlife.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture, Movies \u0026 Famous Faces"
+                   },
+                   {
+                       "title":  "Round 9",
+                       "answers":  [
+                                       {
+                                           "text":  "Batman",
+                                           "points":  56
+                                       },
+                                       {
+                                           "text":  "Iron Man",
+                                           "points":  32
+                                       },
+                                       {
+                                           "text":  "Hawkeye",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Black Widow",
+                                           "points":  4
+                                       },
+                                       {
+                                           "text":  "Ant-Man",
+                                           "points":  2
+                                       }
+                                   ],
+                       "prompt":  "Name a superhero who relies purely on high-tech gadgets rather than natural superpowers.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture, Movies \u0026 Famous Faces"
+                   },
+                   {
+                       "title":  "Round 10",
+                       "answers":  [
+                                       {
+                                           "text":  "Up",
+                                           "points":  48
+                                       },
+                                       {
+                                           "text":  "The Lion King",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "Coco",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Toy Story 3",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "Bambi",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name an animated movie that makes grown adults cry every time they watch it.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture, Movies \u0026 Famous Faces"
+                   },
+                   {
+                       "title":  "Round 11",
+                       "answers":  [
+                                       {
+                                           "text":  "Monopoly",
+                                           "points":  68
+                                       },
+                                       {
+                                           "text":  "Uno",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Scrabble",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "Sorry!",
+                                           "points":  5
+                                       },
+                                       {
+                                           "text":  "Risk",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name a classic board game that has caused bitter arguments during family game night.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture, Movies \u0026 Famous Faces"
+                   },
+                   {
+                       "title":  "Round 12",
+                       "answers":  [
+                                       {
+                                           "text":  "Godzilla",
+                                           "points":  44
+                                       },
+                                       {
+                                           "text":  "Frankenstein\u0027s Monster",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "King Kong",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Count Dracula",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "The Mummy",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name a classic movie monster that would look ridiculous wearing sneakers.",
+                       "multiplier":  1,
+                       "theme":  "📺 Pop Culture, Movies \u0026 Famous Faces"
+                   },
+                   {
+                       "title":  "Round 13",
+                       "answers":  [
+                                       {
+                                           "text":  "\u0027I will turn this car around right now!\u0027",
+                                           "points":  46
+                                       },
+                                       {
+                                           "text":  "\u0027Wait until your father gets home!\u0027",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "\u0027I am taking away your tablets and phones!\u0027",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "\u0027Santa is watching!\u0027",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "\u0027Don\u0027t make me pull over!\u0027",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a classic threat parents yell when children start acting up in the car.",
+                       "multiplier":  1,
+                       "theme":  "🏡 Home, Daily Quirks \u0026 Family Life"
+                   },
+                   {
+                       "title":  "Round 14",
+                       "answers":  [
+                                       {
+                                           "text":  "Their banana broke in half",
+                                           "points":  38
+                                       },
+                                       {
+                                           "text":  "Told they cannot wear pants on their head",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Hearing it is bedtime or naptime",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Cutting their sandwich into triangles instead of squares",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Being asked to put on shoes",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "Name something totally silly that will trigger a toddler\u0027s full dramatic tantrum.",
+                       "multiplier":  1,
+                       "theme":  "🏡 Home, Daily Quirks \u0026 Family Life"
+                   },
+                   {
+                       "title":  "Round 15",
+                       "answers":  [
+                                       {
+                                           "text":  "Leather bifold wallet",
+                                           "points":  41
+                                       },
+                                       {
+                                           "text":  "Pocket knife",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "Leather belt",
+                                           "points":  17
+                                       },
+                                       {
+                                           "text":  "Black pocket comb",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Fleece house slippers",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "Name something cheap and worn-out that grandpa has been using since his wedding day.",
+                       "multiplier":  1,
+                       "theme":  "🏡 Home, Daily Quirks \u0026 Family Life"
+                   },
+                   {
+                       "title":  "Round 16",
+                       "answers":  [
+                                       {
+                                           "text":  "Fluffy down pillow",
+                                           "points":  45
+                                       },
+                                       {
+                                           "text":  "Fresh plush fleece blanket",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "Big fluffy dog or golden retriever fur",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Warm stack of buttermilk pancakes",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Giant teddy bear",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name something super thick and soft you just want to bury your face into.",
+                       "multiplier":  2,
+                       "theme":  "🏡 Home, Daily Quirks \u0026 Family Life"
+                   },
+                   {
+                       "title":  "Round 17",
+                       "answers":  [
+                                       {
+                                           "text":  "Sandy beach / ocean shore",
+                                           "points":  57
+                                       },
+                                       {
+                                           "text":  "Inside your own living room",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "Swimming pool patio deck",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Yoga studio / dojo mat",
+                                           "points":  5
+                                       },
+                                       {
+                                           "text":  "Locker room / sauna",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name a place where it is totally acceptable to be walking around completely barefoot.",
+                       "multiplier":  2,
+                       "theme":  "🏡 Home, Daily Quirks \u0026 Family Life"
+                   },
+                   {
+                       "title":  "Round 18",
+                       "answers":  [
+                                       {
+                                           "text":  "Deep cleaning the bathrooms \u0026 toilets",
+                                           "points":  48
+                                       },
+                                       {
+                                           "text":  "Scrubbing the inside of the oven",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Folding and putting away piles of laundry",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Mowing and weeding the entire lawn",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Washing a mountain of crusted dishes",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a chore you would gladly pay someone  cash to do for you right now.",
+                       "multiplier":  2,
+                       "theme":  "🏡 Home, Daily Quirks \u0026 Family Life"
+                   },
+                   {
+                       "title":  "Round 19",
+                       "answers":  [
+                                       {
+                                           "text":  "Registration and insurance documents",
+                                           "points":  53
+                                       },
+                                       {
+                                           "text":  "Fast-food napkins and wet wipes",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Tire pressure gauge",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Emergency flashlight",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Roll of breath mints / gum",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name something you keep tucked inside your car\u0027s glove compartment that definitely is not gloves.",
+                       "multiplier":  2,
+                       "theme":  "🏡 Home, Daily Quirks \u0026 Family Life"
+                   },
+                   {
+                       "title":  "Round 20",
+                       "answers":  [
+                                       {
+                                           "text":  "Front door deadbolt",
+                                           "points":  64
+                                       },
+                                       {
+                                           "text":  "Back patio sliding glass door",
+                                           "points":  21
+                                       },
+                                       {
+                                           "text":  "Car doors parked outside",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Windows",
+                                           "points":  4
+                                       },
+                                       {
+                                           "text":  "Garage door",
+                                           "points":  3
+                                       }
+                                   ],
+                       "prompt":  "Name something you always double-check is locked before turning off the lights to go to sleep.",
+                       "multiplier":  2,
+                       "theme":  "🏡 Home, Daily Quirks \u0026 Family Life"
+                   },
+                   {
+                       "title":  "Round 21",
+                       "answers":  [
+                                       {
+                                           "text":  "Christmas presents \u0026 birthday gifts",
+                                           "points":  52
+                                       },
+                                       {
+                                           "text":  "Secret stash of chocolate and candy",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Video game controllers and tablets",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Sentimental fragile heirlooms",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Important family documents",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name something parents hide on the top closet shelf so kids cannot get to it.",
+                       "multiplier":  2,
+                       "theme":  "🏡 Home, Daily Quirks \u0026 Family Life"
+                   },
+                   {
+                       "title":  "Round 22",
+                       "answers":  [
+                                       {
+                                           "text":  "Squeaky wooden floorboard or stair",
+                                           "points":  58
+                                       },
+                                       {
+                                           "text":  "Suction seal on the refrigerator door",
+                                           "points":  23
+                                       },
+                                       {
+                                           "text":  "Barking family pet",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Microwave timer beep",
+                                           "points":  5
+                                       },
+                                       {
+                                           "text":  "Crinkly chip bag",
+                                           "points":  3
+                                       }
+                                   ],
+                       "prompt":  "Name something in your house that makes a distinct noise whenever someone tries to sneak a midnight snack.",
+                       "multiplier":  2,
+                       "theme":  "🏡 Home, Daily Quirks \u0026 Family Life"
+                   },
+                   {
+                       "title":  "Round 23",
+                       "answers":  [
+                                       {
+                                           "text":  "Bear",
+                                           "points":  44
+                                       },
+                                       {
+                                           "text":  "Walrus",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Sloth",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Koala",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Hippopotamus",
+                                           "points":  7
+                                       }
+                                   ],
+                       "prompt":  "Name an animal a wife might jokingly compare her husband to when he falls asleep watching football on the couch.",
+                       "multiplier":  2,
+                       "theme":  "🏡 Home, Daily Quirks \u0026 Family Life"
+                   },
+                   {
+                       "title":  "Round 24",
+                       "answers":  [
+                                       {
+                                           "text":  "Hair straightener or curling iron",
+                                           "points":  46
+                                       },
+                                       {
+                                           "text":  "Clothes iron",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "Coffee maker or electric kettle",
+                                           "points":  13
+                                       },
+                                       {
+                                           "text":  "Stove or oven burner",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Space heater",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name something people constantly panic about leaving turned on or plugged in when leaving home.",
+                       "multiplier":  2,
+                       "theme":  "🏡 Home, Daily Quirks \u0026 Family Life"
+                   },
+                   {
+                       "title":  "Round 25",
+                       "answers":  [
+                                       {
+                                           "text":  "Smartphones, iPads \u0026 apps",
+                                           "points":  54
+                                       },
+                                       {
+                                           "text":  "Video games (Roblox, Minecraft, Fortnite)",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Fixing home Wi-Fi and streaming devices",
+                                           "points":  13
+                                       },
+                                       {
+                                           "text":  "Modern slang and memes",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "Artificial Intelligence / ChatGPT",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name something modern kids understand way faster and better than their grandparents.",
+                       "multiplier":  2,
+                       "theme":  "🏫 School, Sports \u0026 Modern Tech"
+                   },
+                   {
+                       "title":  "Round 26",
+                       "answers":  [
+                                       {
+                                           "text":  "Golf",
+                                           "points":  56
+                                       },
+                                       {
+                                           "text":  "Tennis",
+                                           "points":  31
+                                       },
+                                       {
+                                           "text":  "Chess",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "Archery / Shooting",
+                                           "points":  4
+                                       },
+                                       {
+                                           "text":  "Billiards / Snooker",
+                                           "points":  2
+                                       }
+                                   ],
+                       "prompt":  "Name a sport where the spectators are required to stay completely silent during play.",
+                       "multiplier":  2,
+                       "theme":  "🏫 School, Sports \u0026 Modern Tech"
+                   },
+                   {
+                       "title":  "Round 27",
+                       "answers":  [
+                                       {
+                                           "text":  "Talking while muted / \u0027You are on mute!\u0027",
+                                           "points":  42
+                                       },
+                                       {
+                                           "text":  "Loudly crunching snacks on mic",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Loud barking dog or siren in background",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Clearly multitasking on their phone",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Heavy breathing directly into the microphone",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name an annoying thing people do during a remote video conference call.",
+                       "multiplier":  2,
+                       "theme":  "🏫 School, Sports \u0026 Modern Tech"
+                   },
+                   {
+                       "title":  "Round 28",
+                       "answers":  [
+                                       {
+                                           "text":  "\u0027...performing surgery on a human\u0027",
+                                           "points":  44
+                                       },
+                                       {
+                                           "text":  "\u0027...flying a passenger plane\u0027",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "\u0027...doing a permanent tattoo\u0027",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "\u0027...cutting someone\u0027s hair\u0027",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "\u0027...driving a school bus\u0027",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a phrase starting with \u0027I have never done this before\u0027 that would terrify you to hear from a professional.",
+                       "multiplier":  2,
+                       "theme":  "🏫 School, Sports \u0026 Modern Tech"
+                   },
+                   {
+                       "title":  "Round 29",
+                       "answers":  [
+                                       {
+                                           "text":  "Ostrich",
+                                           "points":  76
+                                       },
+                                       {
+                                           "text":  "Emu",
+                                           "points":  15
+                                       },
+                                       {
+                                           "text":  "Emperor Penguin",
+                                           "points":  5
+                                       },
+                                       {
+                                           "text":  "Canada Goose",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name an animal that is famous for laying enormous eggs.",
+                       "multiplier":  2,
+                       "theme":  "🏫 School, Sports \u0026 Modern Tech"
+                   },
+                   {
+                       "title":  "Round 30",
+                       "answers":  [
+                                       {
+                                           "text":  "Taking showers / baths",
+                                           "points":  58
+                                       },
+                                       {
+                                           "text":  "Brushing and flossing teeth",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Washing and styling hair",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Clipping toenails",
+                                           "points":  5
+                                       },
+                                       {
+                                           "text":  "Shaving body hair",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "If humans had self-cleaning bodies like cats, name a daily task we could permanently eliminate.",
+                       "multiplier":  2,
+                       "theme":  "🏫 School, Sports \u0026 Modern Tech"
+                   },
+                   {
+                       "title":  "Round 31",
+                       "answers":  [
+                                       {
+                                           "text":  "An \u0027URGENT\u0027 email from your boss or teacher",
+                                           "points":  48
+                                       },
+                                       {
+                                           "text":  "A calendar invitation for an 8:00 AM meeting",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "A sudden bill or tuition reminder",
+                                           "points":  15
+                                       },
+                                       {
+                                           "text":  "A massive 50-person reply-all thread",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "A computer system outage notice",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name something you dread seeing in your email inbox on a Monday morning.",
+                       "multiplier":  3,
+                       "theme":  "🏫 School, Sports \u0026 Modern Tech"
+                   },
+                   {
+                       "title":  "Round 32",
+                       "answers":  [
+                                       {
+                                           "text":  "Tuba / Sousaphone",
+                                           "points":  59
+                                       },
+                                       {
+                                           "text":  "Bass Drum",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "Marching Snare / Quad Drums",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Trombone",
+                                           "points":  4
+                                       },
+                                       {
+                                           "text":  "Baritone Horn",
+                                           "points":  2
+                                       }
+                                   ],
+                       "prompt":  "Name an instrument in a high school marching band that looks exhausting to carry in a parade.",
+                       "multiplier":  3,
+                       "theme":  "🏫 School, Sports \u0026 Modern Tech"
+                   },
+                   {
+                       "title":  "Round 33",
+                       "answers":  [
+                                       {
+                                           "text":  "Baseball / Softball",
+                                           "points":  54
+                                       },
+                                       {
+                                           "text":  "Beach Volleyball",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "Road Cycling / Biking",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Golf",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "Snowboarding / Skiing",
+                                           "points":  3
+                                       }
+                                   ],
+                       "prompt":  "Name a sport where an athlete frequently wears sunglasses during competition.",
+                       "multiplier":  3,
+                       "theme":  "🏫 School, Sports \u0026 Modern Tech"
+                   },
+                   {
+                       "title":  "Round 34",
+                       "answers":  [
+                                       {
+                                           "text":  "Whisper / talk to their friends",
+                                           "points":  46
+                                       },
+                                       {
+                                           "text":  "Throw spitballs or paper airplanes",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Check their hidden cell phone",
+                                           "points":  15
+                                       },
+                                       {
+                                           "text":  "Make silly faces / gestures",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Sneak a bite of a snack",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name something kids do the instant the teacher turns their back to write on the chalkboard.",
+                       "multiplier":  3,
+                       "theme":  "🏫 School, Sports \u0026 Modern Tech"
+                   },
+                   {
+                       "title":  "Round 35",
+                       "answers":  [
+                                       {
+                                           "text":  "Math / Algebra",
+                                           "points":  58
+                                       },
+                                       {
+                                           "text":  "Physical Education / Gym",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Science / Chemistry",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "History / Social Studies",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "English / Spelling",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name a subject in elementary or middle school where students either love it or dread it with no in-between.",
+                       "multiplier":  3,
+                       "theme":  "🏫 School, Sports \u0026 Modern Tech"
+                   },
+                   {
+                       "title":  "Round 36",
+                       "answers":  [
+                                       {
+                                           "text":  "Forgot to plug it in overnight",
+                                           "points":  48
+                                       },
+                                       {
+                                           "text":  "Screen brightness turned all the way up",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "Endlessly scrolling TikTok / Instagram",
+                                           "points":  15
+                                       },
+                                       {
+                                           "text":  "Playing graphics-heavy mobile games",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "GPS navigation running in background",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name a reason your phone battery mysteriously drained down to 5% before lunchtime.",
+                       "multiplier":  3,
+                       "theme":  "🏫 School, Sports \u0026 Modern Tech"
+                   },
+                   {
+                       "title":  "Round 37",
+                       "answers":  [
+                                       {
+                                           "text":  "Canned jellied cranberry sauce",
+                                           "points":  41
+                                       },
+                                       {
+                                           "text":  "Fruitcake",
+                                           "points":  26
+                                       },
+                                       {
+                                           "text":  "Green bean casserole",
+                                           "points":  17
+                                       },
+                                       {
+                                           "text":  "Jell-O salad with shredded carrots",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Mashed turnips / rutabaga",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a traditional Thanksgiving dinner side dish that sits on the table largely untouched.",
+                       "multiplier":  3,
+                       "theme":  "🍔 Food, Snacks \u0026 Diner Favorites"
+                   },
+                   {
+                       "title":  "Round 38",
+                       "answers":  [
+                                       {
+                                           "text":  "Stack of pancakes or Belgian waffles",
+                                           "points":  42
+                                       },
+                                       {
+                                           "text":  "Bacon cheeseburger and fries",
+                                           "points":  31
+                                       },
+                                       {
+                                           "text":  "Hot coffee with cream",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Thick chocolate milkshake",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Eggs, bacon and hashbrowns platter",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name something you might order at a classic 24-hour diner when you are starving.",
+                       "multiplier":  3,
+                       "theme":  "🍔 Food, Snacks \u0026 Diner Favorites"
+                   },
+                   {
+                       "title":  "Round 39",
+                       "answers":  [
+                                       {
+                                           "text":  "Unpopped popcorn kernel",
+                                           "points":  62
+                                       },
+                                       {
+                                           "text":  "Hard crusty artisan sourdough bread",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Hidden olive pit or cherry pit",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Jawbreaker candy or solid lollipop",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Ice cube",
+                                           "points":  3
+                                       }
+                                   ],
+                       "prompt":  "Name an innocent food that causes major tooth panic if you crunch down on it unexpectedly.",
+                       "multiplier":  3,
+                       "theme":  "🍔 Food, Snacks \u0026 Diner Favorites"
+                   },
+                   {
+                       "title":  "Round 40",
+                       "answers":  [
+                                       {
+                                           "text":  "Pineapple",
+                                           "points":  72
+                                       },
+                                       {
+                                           "text":  "Anchovies",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Mushrooms",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "Jalapeño peppers",
+                                           "points":  3
+                                       },
+                                       {
+                                           "text":  "Black olives",
+                                           "points":  2
+                                       }
+                                   ],
+                       "prompt":  "Name a popular pizza topping that sparks fiery debates among family members.",
+                       "multiplier":  3,
+                       "theme":  "🍔 Food, Snacks \u0026 Diner Favorites"
+                   },
+                   {
+                       "title":  "Round 41",
+                       "answers":  [
+                                       {
+                                           "text":  "Chopped walnuts or peanuts",
+                                           "points":  42
+                                       },
+                                       {
+                                           "text":  "Hot fudge syrup",
+                                           "points":  21
+                                       },
+                                       {
+                                           "text":  "Rainbow sprinkles",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Marshmallow cream",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Maraschino cherry",
+                                           "points":  9
+                                       }
+                                   ],
+                       "prompt":  "Name an ice cream sundae topping that totally ruins the treat if you do not like it.",
+                       "multiplier":  3,
+                       "theme":  "🍔 Food, Snacks \u0026 Diner Favorites"
+                   },
+                   {
+                       "title":  "Round 42",
+                       "answers":  [
+                                       {
+                                           "text":  "Aluminum foil or metal fork/spoon",
+                                           "points":  58
+                                       },
+                                       {
+                                           "text":  "Whole raw egg in its shell",
+                                           "points":  21
+                                       },
+                                       {
+                                           "text":  "Cell phone / electronic gadget",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Styrofoam take-out container",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Hot chili peppers",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name something you should never, under any circumstances, place inside a microwave.",
+                       "multiplier":  3,
+                       "theme":  "🍔 Food, Snacks \u0026 Diner Favorites"
+                   },
+                   {
+                       "title":  "Round 43",
+                       "answers":  [
+                                       {
+                                           "text":  "Tuna salad sandwich",
+                                           "points":  48
+                                       },
+                                       {
+                                           "text":  "Egg salad sandwich",
+                                           "points":  24
+                                       },
+                                       {
+                                           "text":  "Pastrami with raw sliced onions",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Garlic roast beef sub",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Liverwurst sandwich",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name a lunch sandwich that is delicious but leaves you with pungent breath for hours.",
+                       "multiplier":  3,
+                       "theme":  "🍔 Food, Snacks \u0026 Diner Favorites"
+                   },
+                   {
+                       "title":  "Round 44",
+                       "answers":  [
+                                       {
+                                           "text":  "Warm buttered popcorn",
+                                           "points":  62
+                                       },
+                                       {
+                                           "text":  "Box of chocolate candy / M\u0026Ms",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Twizzlers or Red Vines licorice",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Nachos with warm melted cheese",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Sour Patch Kids",
+                                           "points":  3
+                                       }
+                                   ],
+                       "prompt":  "Name a movie theater snack you simply cannot resist even after eating a big meal.",
+                       "multiplier":  3,
+                       "theme":  "🍔 Food, Snacks \u0026 Diner Favorites"
+                   },
+                   {
+                       "title":  "Round 45",
+                       "answers":  [
+                                       {
+                                           "text":  "Hot chicken noodle soup",
+                                           "points":  68
+                                       },
+                                       {
+                                           "text":  "Warm cup of herbal tea with honey",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Buttered toast or saltine crackers",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Lemon-lime ginger ale",
+                                           "points":  5
+                                       },
+                                       {
+                                           "text":  "Mashed potatoes",
+                                           "points":  3
+                                       }
+                                   ],
+                       "prompt":  "Name a food you eat when you are feeling under the weather that makes you feel instantly better.",
+                       "multiplier":  3,
+                       "theme":  "🍔 Food, Snacks \u0026 Diner Favorites"
+                   },
+                   {
+                       "title":  "Round 46",
+                       "answers":  [
+                                       {
+                                           "text":  "Sizzling bacon",
+                                           "points":  61
+                                       },
+                                       {
+                                           "text":  "Freshly brewed coffee",
+                                           "points":  23
+                                       },
+                                       {
+                                           "text":  "Pancakes or waffles with maple syrup",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Warm cinnamon rolls",
+                                           "points":  5
+                                       },
+                                       {
+                                           "text":  "Golden buttered toast",
+                                           "points":  3
+                                       }
+                                   ],
+                       "prompt":  "Name a breakfast food that smells so delicious it wakes you right up.",
+                       "multiplier":  3,
+                       "theme":  "🍔 Food, Snacks \u0026 Diner Favorites"
+                   },
+                   {
+                       "title":  "Round 47",
+                       "answers":  [
+                                       {
+                                           "text":  "Potato chips or Doritos",
+                                           "points":  54
+                                       },
+                                       {
+                                           "text":  "Crisp raw carrots or celery",
+                                           "points":  23
+                                       },
+                                       {
+                                           "text":  "Crispy apple",
+                                           "points":  12
+                                       },
+                                       {
+                                           "text":  "Popcorn",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "Hard pretzels",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name a food that makes an embarrassing loud crunching noise when eating in a quiet room.",
+                       "multiplier":  3,
+                       "theme":  "🍔 Food, Snacks \u0026 Diner Favorites"
+                   },
+                   {
+                       "title":  "Round 48",
+                       "answers":  [
+                                       {
+                                           "text":  "Warm chocolate brownies",
+                                           "points":  44
+                                       },
+                                       {
+                                           "text":  "Fresh chocolate chip cookies",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "Homemade apple pie",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Banana pudding",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Strawberry shortcake",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name a dessert that disappeared in 10 minutes at the family reunion.",
+                       "multiplier":  3,
+                       "theme":  "🍔 Food, Snacks \u0026 Diner Favorites"
+                   },
+                   {
+                       "title":  "Round 49",
+                       "answers":  [
+                                       {
+                                           "text":  "Family wedding celebration",
+                                           "points":  43
+                                       },
+                                       {
+                                           "text":  "Beach vacation or theme park trip",
+                                           "points":  27
+                                       },
+                                       {
+                                           "text":  "Milestone birthday party",
+                                           "points":  15
+                                       },
+                                       {
+                                           "text":  "Annual holiday family portrait",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "New Year\u0027s Eve gathering",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name an occasion where you take 200 photos on your phone and only end up keeping three.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Holidays, Travel \u0026 Hilarious Antics"
+                   },
+                   {
+                       "title":  "Round 50",
+                       "answers":  [
+                                       {
+                                           "text":  "Practice clapping fast and shouting \u0027Good answer!\u0027",
+                                           "points":  45
+                                       },
+                                       {
+                                           "text":  "Binge-watch old episodes and Steve Harvey clips",
+                                           "points":  25
+                                       },
+                                       {
+                                           "text":  "Coordinate stylish matching outfits",
+                                           "points":  15
+                                       },
+                                       {
+                                           "text":  "Practice hitting the buzzer on a sofa cushion",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "Say an enthusiastic family prayer",
+                                           "points":  6
+                                       }
+                                   ],
+                       "prompt":  "Name something you do the night before taping Family Feud to ensure your family wins.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Holidays, Travel \u0026 Hilarious Antics"
+                   },
+                   {
+                       "title":  "Round 51",
+                       "answers":  [
+                                       {
+                                           "text":  "\u0027It is just water weight or bloating\u0027",
+                                           "points":  42
+                                       },
+                                       {
+                                           "text":  "\u0027My boots and jeans weigh at least 8 pounds\u0027",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "\u0027The bathroom scale is clearly miscalibrated\u0027",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "\u0027It is all dense muscle mass\u0027",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "\u0027I just ate a huge heavy dinner\u0027",
+                                           "points":  5
+                                       }
+                                   ],
+                       "prompt":  "Name an excuse people give when stepping on the scale and noticing they gained a few pounds.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Holidays, Travel \u0026 Hilarious Antics"
+                   },
+                   {
+                       "title":  "Round 52",
+                       "answers":  [
+                                       {
+                                           "text":  "Toilet paper and paper towels",
+                                           "points":  54
+                                       },
+                                       {
+                                           "text":  "Bottled water",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Bread and milk",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Batteries and flashlights",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Canned soups and chili",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name something people hoard in huge quantities when they hear a big winter blizzard is coming.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Holidays, Travel \u0026 Hilarious Antics"
+                   },
+                   {
+                       "title":  "Round 53",
+                       "answers":  [
+                                       {
+                                           "text":  "Singing passionately at the top of their lungs",
+                                           "points":  52
+                                       },
+                                       {
+                                           "text":  "Enthusiastic steering-wheel drumming and dancing",
+                                           "points":  27
+                                       },
+                                       {
+                                           "text":  "Unabashedly picking their nose",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Applying complete makeup in the rearview mirror",
+                                           "points":  6
+                                       },
+                                       {
+                                           "text":  "Animatedly talking and gesturing to themselves",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name something drivers do when stuck in highway traffic that makes other motorists laugh.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Holidays, Travel \u0026 Hilarious Antics"
+                   },
+                   {
+                       "title":  "Round 54",
+                       "answers":  [
+                                       {
+                                           "text":  "Aerosol spray can",
+                                           "points":  58
+                                       },
+                                       {
+                                           "text":  "Household batteries",
+                                           "points":  21
+                                       },
+                                       {
+                                           "text":  "Glass bottle",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Fireworks or firecrackers",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "Cell phone",
+                                           "points":  3
+                                       }
+                                   ],
+                       "prompt":  "Name an item you should never, ever throw into an outdoor campfire.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Holidays, Travel \u0026 Hilarious Antics"
+                   },
+                   {
+                       "title":  "Round 55",
+                       "answers":  [
+                                       {
+                                           "text":  "Bottle of plain drinking water",
+                                           "points":  64
+                                       },
+                                       {
+                                           "text":  "Cold deli sandwich or snack box",
+                                           "points":  18
+                                       },
+                                       {
+                                           "text":  "Memory foam neck pillow",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Phone charging cable or headphones",
+                                           "points":  5
+                                       },
+                                       {
+                                           "text":  "Glossy magazine",
+                                           "points":  3
+                                       }
+                                   ],
+                       "prompt":  "Name something you purchase at an airport terminal that costs triple what it should.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Holidays, Travel \u0026 Hilarious Antics"
+                   },
+                   {
+                       "title":  "Round 56",
+                       "answers":  [
+                                       {
+                                           "text":  "Three-toed sloth",
+                                           "points":  65
+                                       },
+                                       {
+                                           "text":  "Giant tortoise or turtle",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Garden snail",
+                                           "points":  9
+                                       },
+                                       {
+                                           "text":  "Koala",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name an animal that moves so comically slow you can easily outwalk it.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Holidays, Travel \u0026 Hilarious Antics"
+                   },
+                   {
+                       "title":  "Round 57",
+                       "answers":  [
+                                       {
+                                           "text":  "Stuck in unexpected bumper-to-bumper traffic",
+                                           "points":  62
+                                       },
+                                       {
+                                           "text":  "Alarm did not go off or overslept",
+                                           "points":  22
+                                       },
+                                       {
+                                           "text":  "Flat tire or car would not start",
+                                           "points":  10
+                                       },
+                                       {
+                                           "text":  "Child was feeling sick",
+                                           "points":  4
+                                       },
+                                       {
+                                           "text":  "Spilled coffee all over clothes",
+                                           "points":  2
+                                       }
+                                   ],
+                       "prompt":  "Name a classic excuse for arriving 30 minutes late to work or school.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Holidays, Travel \u0026 Hilarious Antics"
+                   },
+                   {
+                       "title":  "Round 58",
+                       "answers":  [
+                                       {
+                                           "text":  "Driver texting and sitting at a green light",
+                                           "points":  51
+                                       },
+                                       {
+                                           "text":  "Car recklessly cutting you off",
+                                           "points":  27
+                                       },
+                                       {
+                                           "text":  "Warning a pedestrian or animal",
+                                           "points":  11
+                                       },
+                                       {
+                                           "text":  "Friendly honk to greet a neighbor",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "Car backing out without looking",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name a reason you would aggressively honk your car horn at another vehicle.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Holidays, Travel \u0026 Hilarious Antics"
+                   },
+                   {
+                       "title":  "Round 59",
+                       "answers":  [
+                                       {
+                                           "text":  "Television remote control",
+                                           "points":  48
+                                       },
+                                       {
+                                           "text":  "Loose coins and spare change",
+                                           "points":  27
+                                       },
+                                       {
+                                           "text":  "Cell phone",
+                                           "points":  14
+                                       },
+                                       {
+                                           "text":  "Set of house or car keys",
+                                           "points":  7
+                                       },
+                                       {
+                                           "text":  "Hair ties, bobby pins or pens",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name something people constantly lose beneath the cushions of their living room couch.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Holidays, Travel \u0026 Hilarious Antics"
+                   },
+                   {
+                       "title":  "Round 60",
+                       "answers":  [
+                                       {
+                                           "text":  "Shocking text message with unbelievable gossip",
+                                           "points":  44
+                                       },
+                                       {
+                                           "text":  "Bank alert indicating a low checking balance",
+                                           "points":  28
+                                       },
+                                       {
+                                           "text":  "Breaking news alert pop-up",
+                                           "points":  16
+                                       },
+                                       {
+                                           "text":  "Realized what time it is and they are very late",
+                                           "points":  8
+                                       },
+                                       {
+                                           "text":  "Saw an unflattering photo they were tagged in",
+                                           "points":  4
+                                       }
+                                   ],
+                       "prompt":  "Name a reason a person might look down at their phone in public and visibly gasp in shock.",
+                       "multiplier":  3,
+                       "theme":  "🎉 Holidays, Travel \u0026 Hilarious Antics"
+                   }
+               ],
+    "fastMoney":  [
+                      {
+                          "hint":  "3 slices (42), 2 slices (28), 4 slices (16), 5+ slices (9), 1 slice (5)",
+                          "prompt":  "How many slices of pizza can you eat in one sitting before you feel guilty?"
+                      },
+                      {
+                          "hint":  "Nurse / Doctor (54), Seamstress / Tailor (24), Acupuncturist (12), Tattoo artist (7), Phlebotomist (3)",
+                          "prompt":  "Name a profession where people use needles every single day."
+                      },
+                      {
+                          "hint":  "Mega yachts (38), Mansions / Estates (31), Private jets (19), Exotic sports cars (8), Private islands (4)",
+                          "prompt":  "Name something the world\u0027s richest person probably owns two of."
+                      },
+                      {
+                          "hint":  "Donut (56), Basketball (24), Cookie / Oreo (14), Chicken nugget (4), French fry (2)",
+                          "prompt":  "Name something you dunk."
+                      },
+                      {
+                          "hint":  "King (62), Queen (36), Knight (2)",
+                          "prompt":  "Name a royal piece on a chessboard."
+                      },
+                      {
+                          "hint":  "Biceps / Arms (55), Chest / Pecs (26), Shoulders / Traps (11), Thighs / Calves (5), Neck (3)",
+                          "prompt":  "Name a body part a cartoon bodybuilder would have exaggeratedly huge."
+                      },
+                      {
+                          "hint":  "10 nuggets (44), 6 nuggets (26), 20 nuggets (18), 12 nuggets (8), 8 nuggets (4)",
+                          "prompt":  "How many chicken nuggets make a satisfying dinner meal?"
+                      },
+                      {
+                          "hint":  "Mom / Mother (43), Spouse / Partner (26), Child / Grandchild (18), Best friend (9), Pet / Dog (4)",
+                          "prompt":  "Name someone in your life whose voice instantly puts a smile on your face."
+                      },
+                      {
+                          "hint":  "Concert / Music festival (52), NBA basketball game (28), Broadway theater show (11), Magic show (6), Circus / Acrobatics (3)",
+                          "prompt":  "Name a live entertainment event where you definitely want front-row seats."
+                      },
+                      {
+                          "hint":  "Tokyo (68), New York City (22), San Francisco (5), Los Angeles (3), London (2)",
+                          "prompt":  "Name a world city Godzilla would probably stomp through first."
+                      },
+                      {
+                          "hint":  "King-size bedroom suite (38), Full chef\u0027s kitchen \u0026 fridge (26), Giant flat-screen TV (18), Luxury tile shower (12), Electric fireplace (6)",
+                          "prompt":  "Name an impressive luxury feature you\u0027d expect to find in a ,000 RV."
+                      },
+                      {
+                          "hint":  "Algebra / 8th or 9th grade (44), Calculus / 12th grade (26), 6th grade fractions (16), Geometry / 10th grade (9), College college algebra (5)",
+                          "prompt":  "At what grade in school did math become completely impossible for you?"
+                      },
+                      {
+                          "hint":  "October (48), November (28), December (14), January (7), September (3)",
+                          "prompt":  "Name the single best month of the year for wearing cozy sweaters."
+                      },
+                      {
+                          "hint":  "Money / Cash loan (62), Favorite book (14), Jacket / Designer clothes (11), Power tools / lawn mower (8), Car (5)",
+                          "prompt":  "Name something you shouldn\u0027t lend to a friend unless you\u0027re okay never seeing it again."
+                      },
+                      {
+                          "hint":  "5 minutes (46), 2 minutes (29), 1 minute (15), 10 minutes (7), 30 seconds (3)",
+                          "prompt":  "How many minutes can you listen to someone brag before you tune them out?"
+                      },
+                      {
+                          "hint":  "Monopoly (58), Risk (22), Scrabble (11), The Game of Life (6), Clue (3)",
+                          "prompt":  "Name a classic board game that takes all afternoon to play."
+                      },
+                      {
+                          "hint":  "Acorns (58), Dry leaves (24), Fallen twigs / branches (10), Pinecones (5), Wild mushrooms (3)",
+                          "prompt":  "Name something you might find lying on the ground under a large oak tree."
+                      },
+                      {
+                          "hint":  "Mercedes-Benz (39), Porsche (27), Rolls-Royce (18), Ferrari / Lamborghini (11), Tesla (5)",
+                          "prompt":  "Name a luxury car brand you see parked in every driveway in Beverly Hills."
+                      },
+                      {
+                          "hint":  "Zelda (51), The Fall (22), Sleepy Hollow (14), The Hidden Temple (8), Korra (5)",
+                          "prompt":  "Complete this famous gaming or movie phrase: \u0027Legend of _____\u0027."
+                      },
+                      {
+                          "hint":  "Tuna salad sandwich (48), Egg salad sandwich (24), Pastrami with raw onions (16), Garlic roast beef (8), Liverwurst (4)",
+                          "prompt":  "Name a lunch sandwich that is delicious but gives you terrible dragon breath."
+                      },
+                      {
+                          "hint":  "Cleaning their messy bedroom (52), Mowing the lawn (24), Taking out the trash (12), Doing their laundry (8), Emptying dishwasher (4)",
+                          "prompt":  "Name a chore teenagers complain about having to do every single Saturday morning."
+                      },
+                      {
+                          "hint":  "Ostrich (78), Emu (14), Emperor Penguin (5), Canada Goose (3)",
+                          "prompt":  "Name a bird that is famous for having enormous eggs."
+                      },
+                      {
+                          "hint":  "3 pairs (41), 2 pairs (32), 4 pairs (15), 5 pairs (8), 1 pair (4)",
+                          "prompt":  "How many pairs of shoes do you actually wear on a regular weekly basis?"
+                      },
+                      {
+                          "hint":  "Pancakes / Waffles (42), Cheeseburger \u0026 french fries (31), Hot coffee (14), Chocolate milkshake (8), Bacon \u0026 eggs (5)",
+                          "prompt":  "Name something you might order at a 24-hour diner at midnight."
+                      },
+                      {
+                          "hint":  "Tuba / Sousaphone (59), Bass drum (24), Snare quad drums (11), Trombone (4), Baritone horn (2)",
+                          "prompt":  "Name an instrument in a high school marching band that looks painfully heavy to carry."
+                      },
+                      {
+                          "hint":  "Baseball / Outfield (54), Beach volleyball (24), Road cycling / Biking (12), Golf (7), Snowboarding / Skiing (3)",
+                          "prompt":  "Name a sport where an athlete might wear sunglasses during competition."
+                      },
+                      {
+                          "hint":  "TV remote control (48), Loose coins / Change (27), Cell phone (14), Car keys (7), Hair ties / pens (4)",
+                          "prompt":  "Name something people constantly lose behind their living room couch cushions."
+                      },
+                      {
+                          "hint":  "15 minutes (44), 10 minutes (33), 20 minutes (15), 5 minutes (5), 30 minutes (3)",
+                          "prompt":  "How many minutes is an ideal, refreshing hot shower?"
+                      },
+                      {
+                          "hint":  "Driver texting at green light (51), Car cutting you off abruptly (27), Warning a pedestrian or animal (11), Saying hi to a neighbor (7), Road rage (4)",
+                          "prompt":  "Name a reason you would aggressively honk the horn on your car."
+                      },
+                      {
+                          "hint":  "Stuck in bumper-to-bumper traffic (62), Alarm didn\u0027t go off / overslept (22), Flat tire / car trouble (10), Child was sick (4), Spilled coffee all over clothes (2)",
+                          "prompt":  "Name a classic excuse for arriving 30 minutes late to work or school."
+                      },
+                      {
+                          "hint":  "Chopped walnuts / nuts (42), Hot fudge (21), Rainbow sprinkles (16), Marshmallow fluff (12), Maraschino cherry (9)",
+                          "prompt":  "Name an ice cream topping that completely ruins the sundae if you dislike it."
+                      },
+                      {
+                          "hint":  "Aerosol spray can (58), Household batteries (21), Glass bottle (11), Fireworks (7), Cell phone (3)",
+                          "prompt":  "Name an item you should never, ever toss into a raging campfire."
+                      },
+                      {
+                          "hint":  "Fidget / tap fingers on table (46), Sweat profusely / wipe palms (24), Talk too fast with hands (16), Clench fists together (9), Bite fingernails (5)",
+                          "prompt":  "Name something people nervously do with their hands during a high-stakes job interview."
+                      },
+                      {
+                          "hint":  "Pineapple (72), Anchovies (16), Mushrooms (7), Jalapeño peppers (3), Black olives (2)",
+                          "prompt":  "Name a popular pizza topping that sparks heated arguments among friends."
+                      },
+                      {
+                          "hint":  "6 hours (45), 7 hours (31), 5 hours (14), 8 hours (8), 4 hours (2)",
+                          "prompt":  "How many hours of sleep do you realistically get on an average weeknight?"
+                      },
+                      {
+                          "hint":  "Refrigerator / freezer (48), Microwave oven (24), Coffee maker / Keurig (16), Air fryer (8), Dishwasher (4)",
+                          "prompt":  "Name a kitchen appliance you would be utterly devastated without for two days."
+                      },
+                      {
+                          "hint":  "Plastic bottle of water (64), Cold deli sandwich / snack box (18), Memory foam neck pillow (10), Charging cord / headphones (5), Magazine (3)",
+                          "prompt":  "Name something you purchase at an airport terminal that costs triple what it should."
+                      },
+                      {
+                          "hint":  "Sloth (65), Turtle / Tortoise (22), Garden snail (9), Koala (4)",
+                          "prompt":  "Name an animal that moves so painfully slow it is almost comical."
+                      },
+                      {
+                          "hint":  "Buttered popcorn (62), Chocolate candy / M\u0026Ms (18), Twizzlers / Red Vines (11), Nachos with melted cheese (6), Sour Patch Kids (3)",
+                          "prompt":  "Name a movie theater snack you cannot resist even if you just ate dinner."
+                      },
+                      {
+                          "hint":  "Shocking text message / juicy news (44), Low bank balance notification (28), Breaking news bulletin (16), Realized they are terribly late (8), Tagged in an awful photo (4)",
+                          "prompt":  "Name a reason a person might look down at their phone in public and visibly gasp."
+                      }
+                  ]
+}
   }
 ];
