@@ -137,6 +137,19 @@ window.Feud = window.Feud || {};
       }
       lastRevealedCount = newRevLen;
 
+      const customChanged =
+        JSON.stringify(incoming.customRounds || {}) !==
+          JSON.stringify(roomState.customRounds || {}) ||
+        JSON.stringify(incoming.customDeck || null) !==
+          JSON.stringify(roomState.customDeck || null) ||
+        JSON.stringify(incoming.matchRounds || null) !==
+          JSON.stringify(roomState.matchRounds || null) ||
+        incoming.roundPhase !== roomState.roundPhase ||
+        incoming.roundIdx !== roomState.roundIdx;
+
+      const prevStage = roomState.stage;
+      roomState = { ...roomState, ...incoming };
+
       if (incoming.buzzerWinner && incoming.buzzerWinner !== lastBuzzerWinner) {
         if (activeRole === "tv" || activeRole === "host" || activeRole === "solo") {
           Feud.playFaceOffTone(incoming.buzzerWinner);
@@ -147,20 +160,14 @@ window.Feud = window.Feud || {};
       }
       lastBuzzerWinner = incoming.buzzerWinner || 0;
 
-      const customChanged =
-        JSON.stringify(incoming.customRounds || {}) !==
-          JSON.stringify(roomState.customRounds || {}) ||
-        JSON.stringify(incoming.customDeck || null) !==
-          JSON.stringify(roomState.customDeck || null) ||
-        JSON.stringify(incoming.matchRounds || null) !==
-          JSON.stringify(roomState.matchRounds || null);
-
-      roomState = { ...roomState, ...incoming };
       Feud.renderBranding(roomState);
       if (customChanged) {
         Feud.populateRoundDropdowns(roomState);
       }
       renderActiveView();
+      if (activeRole === "host" && roomState.stage === "winner" && prevStage !== "winner") {
+        populateAndShowNextMatchModal();
+      }
     }
   });
 
@@ -797,13 +804,7 @@ window.Feud = window.Feud || {};
     return "Team Challengers";
   }
 
-  async function openNextMatchModal() {
-    Feud.unlockAudio();
-    stopLocalTurnTimerInterval();
-    const nextFanfare = (roomState.fanfareSeq || 0) + 1;
-    Feud.playFanfare();
-    await pushRoomPatch({ stage: "winner", turnTimerRunning: false, fanfareSeq: nextFanfare });
-
+  function populateAndShowNextMatchModal() {
     const info = getWinningTeamInfo();
     const stats = Feud.getDeckPlayStats(roomState);
 
@@ -827,8 +828,22 @@ window.Feud = window.Feud || {};
     document.getElementById("nextMatchModal")?.classList.remove("hidden");
   }
 
+  async function openNextMatchModal() {
+    Feud.unlockAudio();
+    stopLocalTurnTimerInterval();
+    const nextFanfare = (roomState.fanfareSeq || 0) + 1;
+    Feud.playFanfare();
+    await pushRoomPatch({ stage: "winner", turnTimerRunning: false, fanfareSeq: nextFanfare });
+    populateAndShowNextMatchModal();
+  }
+
   function closeNextMatchModal() {
     document.getElementById("nextMatchModal")?.classList.add("hidden");
+  }
+
+  async function returnToBoardFromWinnerModal() {
+    closeNextMatchModal();
+    await pushRoomPatch({ stage: "main", turnTimerRunning: false });
   }
 
   function setNextMatchContenderMode(mode) {
@@ -1046,14 +1061,33 @@ window.Feud = window.Feud || {};
 
     if (phase === "faceoff-ready" || !roomState.questionRevealed) {
       Feud.playTick(false);
-      await pushRoomPatch({
-        questionRevealed: true,
-        roundPhase: roomState.buzzerWinner ? "faceoff-p1" : "faceoff-buzz",
-        turnTimerRemaining: dur,
-        turnTimerRunning: true
-      });
-      startLocalTurnTimerLoop();
-      Feud.showToast("📺 Question Revealed & Face-Off Timer Started!");
+      if (roomState.buzzerWinner) {
+        await pushRoomPatch({
+          questionRevealed: true,
+          roundPhase: "faceoff-p1",
+          turnTimerRemaining: dur,
+          turnTimerRunning: true
+        });
+        startLocalTurnTimerLoop();
+        Feud.showToast("📺 Question Revealed & Face-Off Timer Started!");
+      } else {
+        await pushRoomPatch({
+          questionRevealed: true,
+          roundPhase: "faceoff-buzz",
+          turnTimerRemaining: dur,
+          turnTimerRunning: false
+        });
+        Feud.showToast(
+          "📺 Question Revealed on TV! Players have unlimited time until the first person buzzes."
+        );
+      }
+      return;
+    }
+
+    if (phase === "faceoff-buzz" && !roomState.buzzerWinner) {
+      Feud.showToast(
+        "🔔 Unlimited time until the first player buzzes in (or click a team's Buzz button)!"
+      );
       return;
     }
 
@@ -1108,7 +1142,7 @@ window.Feud = window.Feud || {};
     await pushRoomPatch({
       questionRevealed: true,
       roundPhase: "steal",
-      turnTimerRemaining: 15,
+      turnTimerRemaining: 30,
       turnTimerRunning: true
     });
     startLocalTurnTimerLoop();
@@ -1143,7 +1177,7 @@ window.Feud = window.Feud || {};
   async function hostToggleTurnTimer() {
     Feud.unlockAudio();
     const dur =
-      roomState.roundPhase === "steal" ? 15 : Number(roomState.turnTimerDuration) || 10;
+      roomState.roundPhase === "steal" ? 30 : Number(roomState.turnTimerDuration) || 10;
     if (roomState.turnTimerRunning) {
       stopLocalTurnTimerInterval();
       await pushRoomPatch({ turnTimerRunning: false });
@@ -1163,7 +1197,7 @@ window.Feud = window.Feud || {};
   async function hostStopResetTurnTimer() {
     stopLocalTurnTimerInterval();
     const dur =
-      roomState.roundPhase === "steal" ? 15 : Number(roomState.turnTimerDuration) || 10;
+      roomState.roundPhase === "steal" ? 30 : Number(roomState.turnTimerDuration) || 10;
     await pushRoomPatch({
       turnTimerRemaining: dur,
       turnTimerRunning: false
@@ -1316,6 +1350,49 @@ window.Feud = window.Feud || {};
 
     newPot += pts;
     const allBoardRevealed = revSet.size >= round.answers.length;
+    const isTieBreaker = Feud.isTieBreakerRound && Feud.isTieBreakerRound(round);
+    const regCount = Feud.getRegularRoundCount
+      ? Feud.getRegularRoundCount(roomState)
+      : Feud.getRoundCount(roomState);
+    const isFinalRegularRound = !isTieBreaker && roomState.roundIdx === regCount - 1;
+
+    // 0. SUDDEN-DEATH TIE-BREAKER ROUND: Whoever answers first immediately wins the round & match!
+    if (isTieBreaker) {
+      const winTeam =
+        roomState.controllingTeam ||
+        roomState.buzzerWinner ||
+        roomState.faceoffFirstTeam ||
+        roomState.faceoffWinnerTeam ||
+        1;
+      const winName = getTeamNameByNum(winTeam);
+      const awardPts = Math.max(pts, 10);
+      const nextT1 =
+        winTeam === 1 ? (roomState.team1Score || 0) + awardPts : roomState.team1Score || 0;
+      const nextT2 =
+        winTeam === 2 ? (roomState.team2Score || 0) + awardPts : roomState.team2Score || 0;
+      const nextFanfare = (roomState.fanfareSeq || 0) + 1;
+      setTimeout(() => Feud.playFanfare(), 400);
+
+      await pushRoomPatch({
+        stage: "winner",
+        questionRevealed: true,
+        revealed: Array.from(revSet),
+        pot: 0,
+        team1Score: nextT1,
+        team2Score: nextT2,
+        roundPhase: "round-over",
+        roundWinnerTeam: winTeam,
+        controllingTeam: winTeam,
+        buzzerWinner: 0,
+        buzzerArmedTeam: 0,
+        turnTimerRemaining: dur,
+        turnTimerRunning: false,
+        fanfareSeq: nextFanfare
+      });
+      Feud.showToast(`🏆 Tie-Breaker Answered! ${winName} Wins the Match!`);
+      populateAndShowNextMatchModal();
+      return;
+    }
 
     // 1. FACE-OFF TURN 1 (or if host clicked an answer right from faceoff-ready/buzz)
     // Immediately enters "pass-or-play" so the Host can decide Play or Pass right away!
@@ -1385,16 +1462,21 @@ window.Feud = window.Feud || {};
         roomState.controllingTeam || (roomState.originalPlayingTeam === 1 ? 2 : 1);
       const stealName = getTeamNameByNum(stealTeam);
       const nextFanfare = (roomState.fanfareSeq || 0) + 1;
+      const nextT1 =
+        stealTeam === 1 ? (roomState.team1Score || 0) + newPot : roomState.team1Score || 0;
+      const nextT2 =
+        stealTeam === 2 ? (roomState.team2Score || 0) + newPot : roomState.team2Score || 0;
+      const matchWon = isFinalRegularRound && nextT1 !== nextT2;
+      const matchTied = isFinalRegularRound && nextT1 === nextT2;
       setTimeout(() => Feud.playFanfare(), 400);
 
       await pushRoomPatch({
+        stage: matchWon ? "winner" : roomState.stage || "main",
         questionRevealed: true,
         revealed: Array.from(revSet),
         pot: 0,
-        team1Score:
-          stealTeam === 1 ? (roomState.team1Score || 0) + newPot : roomState.team1Score || 0,
-        team2Score:
-          stealTeam === 2 ? (roomState.team2Score || 0) + newPot : roomState.team2Score || 0,
+        team1Score: nextT1,
+        team2Score: nextT2,
         roundPhase: "round-over",
         roundWinnerTeam: stealTeam,
         controllingTeam: stealTeam,
@@ -1404,7 +1486,19 @@ window.Feud = window.Feud || {};
         turnTimerRunning: false,
         fanfareSeq: nextFanfare
       });
-      Feud.showToast(`🚨 STEAL SUCCESSFUL! 🏆 ${stealName} Steals ${newPot} pts!`);
+      if (matchWon) {
+        Feud.showToast(
+          `🚨 STEAL SUCCESSFUL! 🏆 ${getTeamNameByNum(nextT1 > nextT2 ? 1 : 2)} Wins the Match!`
+        );
+        populateAndShowNextMatchModal();
+      } else if (matchTied) {
+        Feud.populateRoundDropdowns(roomState);
+        Feud.showToast(
+          `⚡ TIE SCORE (${nextT1} – ${nextT2})! Sudden-Death Tie-Breaker Round Unlocked!`
+        );
+      } else {
+        Feud.showToast(`🚨 STEAL SUCCESSFUL! 🏆 ${stealName} Steals ${newPot} pts!`);
+      }
       return;
     }
 
@@ -1419,13 +1513,20 @@ window.Feud = window.Feud || {};
     if (allBoardRevealed) {
       // Board swept! Auto-award pot to playing team!
       const nextFanfare = (roomState.fanfareSeq || 0) + 1;
+      const nextT1 =
+        playTeam === 1 ? (roomState.team1Score || 0) + newPot : roomState.team1Score || 0;
+      const nextT2 =
+        playTeam === 2 ? (roomState.team2Score || 0) + newPot : roomState.team2Score || 0;
+      const matchWon = isFinalRegularRound && nextT1 !== nextT2;
+      const matchTied = isFinalRegularRound && nextT1 === nextT2;
       setTimeout(() => Feud.playFanfare(), 400);
       await pushRoomPatch({
+        stage: matchWon ? "winner" : roomState.stage || "main",
         questionRevealed: true,
         revealed: Array.from(revSet),
         pot: 0,
-        team1Score: playTeam === 1 ? (roomState.team1Score || 0) + newPot : roomState.team1Score || 0,
-        team2Score: playTeam === 2 ? (roomState.team2Score || 0) + newPot : roomState.team2Score || 0,
+        team1Score: nextT1,
+        team2Score: nextT2,
         roundPhase: "round-over",
         roundWinnerTeam: playTeam,
         controllingTeam: playTeam,
@@ -1436,7 +1537,19 @@ window.Feud = window.Feud || {};
         turnTimerRunning: false,
         fanfareSeq: nextFanfare
       });
-      Feud.showToast(`🧹 Board Swept! 🏆 ${playName} Wins ${newPot} pts!`);
+      if (matchWon) {
+        Feud.showToast(
+          `🧹 Board Swept! 🏆 ${getTeamNameByNum(nextT1 > nextT2 ? 1 : 2)} Wins the Match!`
+        );
+        populateAndShowNextMatchModal();
+      } else if (matchTied) {
+        Feud.populateRoundDropdowns(roomState);
+        Feud.showToast(
+          `⚡ TIE SCORE (${nextT1} – ${nextT2})! Sudden-Death Tie-Breaker Round Unlocked!`
+        );
+      } else {
+        Feud.showToast(`🧹 Board Swept! 🏆 ${playName} Wins ${newPot} pts!`);
+      }
     } else {
       // Correct answer during regular play -> reset timer to full duration (do NOT auto-start outside Face-Off)
       await pushRoomPatch({
@@ -1566,14 +1679,27 @@ window.Feud = window.Feud || {};
       const origName = getTeamNameByNum(origTeam);
       const pot = roomState.pot || 0;
       const nextFanfare = (roomState.fanfareSeq || 0) + 1;
+      const curRound = Feud.getRoundData(roomState, roomState.roundIdx);
+      const isTieBreaker = Feud.isTieBreakerRound && Feud.isTieBreakerRound(curRound);
+      const regCount = Feud.getRegularRoundCount
+        ? Feud.getRegularRoundCount(roomState)
+        : Feud.getRoundCount(roomState);
+      const isFinalRegularRound = !isTieBreaker && roomState.roundIdx === regCount - 1;
+      const nextT1 =
+        origTeam === 1 ? (roomState.team1Score || 0) + pot : roomState.team1Score || 0;
+      const nextT2 =
+        origTeam === 2 ? (roomState.team2Score || 0) + pot : roomState.team2Score || 0;
+      const matchWon = (isFinalRegularRound || isTieBreaker) && nextT1 !== nextT2;
+      const matchTied = isFinalRegularRound && nextT1 === nextT2;
 
       Feud.showBigRedXOverlay(1);
       setTimeout(() => Feud.playFanfare(), 750);
 
       await pushRoomPatch({
+        stage: matchWon ? "winner" : roomState.stage || "main",
         pot: 0,
-        team1Score: origTeam === 1 ? (roomState.team1Score || 0) + pot : roomState.team1Score || 0,
-        team2Score: origTeam === 2 ? (roomState.team2Score || 0) + pot : roomState.team2Score || 0,
+        team1Score: nextT1,
+        team2Score: nextT2,
         roundPhase: "round-over",
         roundWinnerTeam: origTeam,
         controllingTeam: origTeam,
@@ -1584,7 +1710,19 @@ window.Feud = window.Feud || {};
         turnTimerRunning: false,
         turnTimerRemaining: dur
       });
-      Feud.showToast(`${prefix}❌ Steal Missed! 🏆 ${origName} keeps the ${pot} pts!`);
+      if (matchWon) {
+        Feud.showToast(
+          `${prefix}❌ Steal Missed! 🏆 ${getTeamNameByNum(nextT1 > nextT2 ? 1 : 2)} Wins the Match!`
+        );
+        populateAndShowNextMatchModal();
+      } else if (matchTied) {
+        Feud.populateRoundDropdowns(roomState);
+        Feud.showToast(
+          `⚡ TIE SCORE (${nextT1} – ${nextT2})! Sudden-Death Tie-Breaker Round Unlocked!`
+        );
+      } else {
+        Feud.showToast(`${prefix}❌ Steal Missed! 🏆 ${origName} keeps the ${pot} pts!`);
+      }
       return;
     }
 
@@ -1601,7 +1739,7 @@ window.Feud = window.Feud || {};
     Feud.showBigRedXOverlay(nextStrikes);
 
     if (nextStrikes >= 3) {
-      // 3rd Strike (XXX)! Automatically switch teams to Steal Mode and pre-load 15s timer!
+      // 3rd Strike (XXX)! Automatically switch teams to Steal Mode and pre-load 30s timer!
       await pushRoomPatch({
         roundPhase: "steal",
         strikes: 3,
@@ -1611,10 +1749,10 @@ window.Feud = window.Feud || {};
         lastOverlayXCount: 3,
         strikeSeq: nextSeq,
         turnTimerRunning: false,
-        turnTimerRemaining: 15
+        turnTimerRemaining: 30
       });
       Feud.showToast(
-        `${prefix}🚨 3 Strikes (XXX)! Automatic switch to ${oppName} for the Steal! Press R to start 15s Steal Timer.`
+        `${prefix}🚨 3 Strikes (XXX)! Automatic switch to ${oppName} for the Steal! Press R to start 30s Steal Timer.`
       );
     } else {
       // Strike 1 or 2 -> reset clock for the next player; do NOT auto-start timer outside of Face-Off mode
@@ -1734,15 +1872,37 @@ window.Feud = window.Feud || {};
   }
 
   async function hostPrevRound() {
-    const total = Feud.getRoundCount(roomState);
-    const prev = (roomState.roundIdx - 1 + total) % total;
+    const unlockedTotal = Feud.isTieBreakerUnlocked(roomState)
+      ? Feud.getRoundCount(roomState)
+      : Feud.getRegularRoundCount(roomState);
+    const prev = (roomState.roundIdx - 1 + unlockedTotal) % Math.max(1, unlockedTotal);
     await hostSelectRound(prev);
   }
 
   async function hostNextRound() {
+    const regCount = Feud.getRegularRoundCount(roomState);
     const total = Feud.getRoundCount(roomState);
-    const next = (roomState.roundIdx + 1) % total;
-    await hostSelectRound(next);
+    const next = roomState.roundIdx + 1;
+
+    if (next < regCount) {
+      await hostSelectRound(next);
+      return;
+    }
+
+    // If next round is the Sudden-Death Tie-Breaker round:
+    if (next < total && Feud.isTieBreakerUnlocked(roomState)) {
+      await hostSelectRound(next);
+      Feud.showToast("⚡ Sudden-Death Tie-Breaker Round Started! First team to answer wins!");
+      return;
+    }
+
+    // Regular rounds finished and scores are not tied -> crown winner & open Next Match Setup!
+    if ((roomState.team1Score || 0) !== (roomState.team2Score || 0)) {
+      await openNextMatchModal();
+      return;
+    }
+
+    await hostSelectRound(0);
   }
 
   async function hostRandomizeCurrentRound() {
@@ -1872,7 +2032,7 @@ window.Feud = window.Feud || {};
       1;
     const oppTeam = playTeam === 1 ? 2 : 1;
     const oppName = getTeamNameByNum(oppTeam);
-    const nextDur = num >= 3 ? 15 : Number(roomState.turnTimerDuration) || 10;
+    const nextDur = num >= 3 ? 30 : Number(roomState.turnTimerDuration) || 10;
 
     if (num >= 3) {
       await pushRoomPatch({
@@ -1884,10 +2044,10 @@ window.Feud = window.Feud || {};
         lastOverlayXCount: 3,
         strikeSeq: nextSeq,
         turnTimerRunning: false,
-        turnTimerRemaining: 15
+        turnTimerRemaining: 30
       });
       Feud.showToast(
-        `🚨 3 Strikes! Automatic switch to ${oppName} for the Steal! Press R to start 15s Steal Timer.`
+        `🚨 3 Strikes! Automatic switch to ${oppName} for the Steal! Press R to start 30s Steal Timer.`
       );
     } else {
       await pushRoomPatch({
@@ -1940,36 +2100,45 @@ window.Feud = window.Feud || {};
       return;
     }
     const dur = Number(roomState.turnTimerDuration) || 10;
+    const curRound = Feud.getRoundData(roomState, roomState.roundIdx);
+    const isTieBreaker = Feud.isTieBreakerRound && Feud.isTieBreakerRound(curRound);
+    const regCount = Feud.getRegularRoundCount
+      ? Feud.getRegularRoundCount(roomState)
+      : Feud.getRoundCount(roomState);
+    const isFinalRegularRound = !isTieBreaker && roomState.roundIdx === regCount - 1;
+    const nextT1 = team === 1 ? (roomState.team1Score || 0) + pot : roomState.team1Score || 0;
+    const nextT2 = team === 2 ? (roomState.team2Score || 0) + pot : roomState.team2Score || 0;
+    const matchWon = (isFinalRegularRound || isTieBreaker) && nextT1 !== nextT2;
+    const matchTied = isFinalRegularRound && nextT1 === nextT2;
+
     Feud.playFanfare();
     const nextFanfare = (roomState.fanfareSeq || 0) + 1;
-    if (team === 1) {
-      await pushRoomPatch({
-        team1Score: (roomState.team1Score || 0) + pot,
-        pot: 0,
-        roundPhase: "round-over",
-        roundWinnerTeam: 1,
-        controllingTeam: 1,
-        buzzerWinner: 0,
-        buzzerArmedTeam: 0,
-        turnTimerRemaining: dur,
-        turnTimerRunning: false,
-        fanfareSeq: nextFanfare
-      });
-      Feud.showToast(`🏆 Awarded ${pot} pts to ${roomState.team1Name}!`);
+    await pushRoomPatch({
+      stage: matchWon ? "winner" : roomState.stage || "main",
+      team1Score: nextT1,
+      team2Score: nextT2,
+      pot: 0,
+      roundPhase: "round-over",
+      roundWinnerTeam: team === 1 ? 1 : 2,
+      controllingTeam: team === 1 ? 1 : 2,
+      buzzerWinner: 0,
+      buzzerArmedTeam: 0,
+      turnTimerRemaining: dur,
+      turnTimerRunning: false,
+      fanfareSeq: nextFanfare
+    });
+    if (matchWon) {
+      Feud.showToast(`🏆 ${getTeamNameByNum(nextT1 > nextT2 ? 1 : 2)} Wins the Match!`);
+      populateAndShowNextMatchModal();
+    } else if (matchTied) {
+      Feud.populateRoundDropdowns(roomState);
+      Feud.showToast(
+        `⚡ TIE SCORE (${nextT1} – ${nextT2})! Sudden-Death Tie-Breaker Round Unlocked!`
+      );
     } else {
-      await pushRoomPatch({
-        team2Score: (roomState.team2Score || 0) + pot,
-        pot: 0,
-        roundPhase: "round-over",
-        roundWinnerTeam: 2,
-        controllingTeam: 2,
-        buzzerWinner: 0,
-        buzzerArmedTeam: 0,
-        turnTimerRemaining: dur,
-        turnTimerRunning: false,
-        fanfareSeq: nextFanfare
-      });
-      Feud.showToast(`🏆 Awarded ${pot} pts to ${roomState.team2Name}!`);
+      Feud.showToast(
+        `🏆 Awarded ${pot} pts to ${team === 1 ? roomState.team1Name : roomState.team2Name}!`
+      );
     }
   }
 
@@ -2508,6 +2677,7 @@ window.Feud = window.Feud || {};
     confirmStartNewGame,
     openNextMatchModal,
     closeNextMatchModal,
+    returnToBoardFromWinnerModal,
     setNextMatchContenderMode,
     cycleNextMatchChallengerPreset,
     confirmStartNextMatch,

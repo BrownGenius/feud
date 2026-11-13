@@ -324,29 +324,33 @@ window.Feud = window.Feud || {};
       };
     });
 
-    // If slicing a match (e.g. 4 rounds) and the deck has tie-breakers, append 1 unplayed Tie-Breaker as a bonus round!
-    if (
-      roundsPerMatch > 0 &&
-      roundsPerMatch < sourceRounds.length &&
-      tieBreakerIndices.length > 0
-    ) {
-      let unplayedTieCandidates = tieBreakerIndices.filter((i) => !playedSet.has(i));
-      if (unplayedTieCandidates.length === 0) {
-        unplayedTieCandidates = tieBreakerIndices.slice();
+    // If slicing a match (e.g. 4 rounds), append 1 unplayed Tie-Breaker as a reserve round (only used if tied after regular rounds)!
+    if (roundsPerMatch > 0 && roundsPerMatch < sourceRounds.length) {
+      let tieCandidatePool = tieBreakerIndices;
+      if (tieCandidatePool.length === 0) {
+        const chosenSet = new Set(chosenIndices);
+        tieCandidatePool = poolIndices.filter((i) => !chosenSet.has(i));
       }
-      if (roundOrder !== "sequential" && unplayedTieCandidates.length > 1) {
-        unplayedTieCandidates = shuffleArray(unplayedTieCandidates);
-      }
-      const unplayedTie = unplayedTieCandidates[0];
-      const tieRound = sourceRounds[unplayedTie];
-      if (tieRound) {
-        playedSet.add(unplayedTie);
-        matchRounds.push({
-          ...tieRound,
-          sourceIdx: unplayedTie,
-          title: `Tie-Breaker (Bonus)`,
-          multiplier: tieRound.multiplier || 3
-        });
+      if (tieCandidatePool.length > 0) {
+        let unplayedTieCandidates = tieCandidatePool.filter((i) => !playedSet.has(i));
+        if (unplayedTieCandidates.length === 0) {
+          unplayedTieCandidates = tieCandidatePool.slice();
+        }
+        if (roundOrder !== "sequential" && unplayedTieCandidates.length > 1) {
+          unplayedTieCandidates = shuffleArray(unplayedTieCandidates);
+        }
+        const unplayedTie = unplayedTieCandidates[0];
+        const tieRound = sourceRounds[unplayedTie];
+        if (tieRound) {
+          playedSet.add(unplayedTie);
+          matchRounds.push({
+            ...tieRound,
+            sourceIdx: unplayedTie,
+            isTieBreaker: true,
+            title: `Sudden-Death Tie-Breaker`,
+            multiplier: tieRound.multiplier || 3
+          });
+        }
       }
     }
 
@@ -574,6 +578,33 @@ window.Feud = window.Feud || {};
     return getSourceRoundsList(roomState);
   }
 
+  function isTieBreakerRound(round) {
+    if (!round) return false;
+    if (round.isTieBreaker === true) return true;
+    return (
+      /tie-?breaker|sudden\s*death/i.test(round.title || "") ||
+      /tie-?breaker|sudden\s*death/i.test(round.theme || "")
+    );
+  }
+
+  function getRegularRoundCount(roomState) {
+    const list = getBaseRoundsList(roomState);
+    const regCount = list.filter((r) => !isTieBreakerRound(r)).length;
+    return regCount > 0 ? regCount : list.length;
+  }
+
+  function isTieBreakerUnlocked(roomState) {
+    if (!roomState) return false;
+    const list = getBaseRoundsList(roomState);
+    const regCount = getRegularRoundCount(roomState);
+    if (regCount >= list.length) return false;
+    const curIdx = Number(roomState.roundIdx) || 0;
+    if (curIdx >= regCount) return true;
+    const s1 = Number(roomState.team1Score) || 0;
+    const s2 = Number(roomState.team2Score) || 0;
+    return curIdx === regCount - 1 && roomState.roundPhase === "round-over" && s1 === s2;
+  }
+
   function getRoundCount(roomState) {
     return getBaseRoundsList(roomState).length;
   }
@@ -706,6 +737,9 @@ window.Feud = window.Feud || {};
     getActiveTeamPresets,
     createDefaultRoomState,
     getBaseRoundsList,
+    isTieBreakerRound,
+    getRegularRoundCount,
+    isTieBreakerUnlocked,
     getRoundCount,
     getRoundData,
     getAllEffectiveRounds,

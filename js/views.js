@@ -94,11 +94,14 @@ window.Feud = window.Feud || {};
   }
 
   function renderTurnTimerUI(roomState) {
-    const dur = Number(roomState.turnTimerDuration) || 10;
     const phase =
       roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
+    const dur = phase === "steal" ? 30 : Number(roomState.turnTimerDuration) || 10;
+    const isUnlimitedBuzzWait =
+      phase === "faceoff-ready" ||
+      (phase === "faceoff-buzz" && !roomState.turnTimerRunning && !roomState.buzzerWinner);
     const isInactiveTimerPhase =
-      phase === "faceoff-ready" || phase === "pass-or-play" || phase === "round-over";
+      isUnlimitedBuzzWait || phase === "pass-or-play" || phase === "round-over";
     const rawRem =
       roomState.turnTimerRemaining !== undefined && roomState.turnTimerRemaining !== null
         ? Number(roomState.turnTimerRemaining)
@@ -108,7 +111,7 @@ window.Feud = window.Feud || {};
     const isExpired = !isInactiveTimerPhase && rem <= 0;
     const isUrgent = running && rem > 0 && rem <= 3;
 
-    const labelText = isExpired ? "TIME!" : `${rem}s`;
+    const labelText = isUnlimitedBuzzWait ? "READY" : isExpired ? "TIME!" : `${rem}s`;
 
     const tvBadge = document.getElementById("tvTurnTimerBadge");
     const tvVal = document.getElementById("tvTurnTimerValue");
@@ -156,6 +159,9 @@ window.Feud = window.Feud || {};
     ];
 
     const totalRounds = Feud.getRoundCount(roomState);
+    const tieBreakerUnlocked = Feud.isTieBreakerUnlocked
+      ? Feud.isTieBreakerUnlocked(roomState)
+      : false;
 
     selectors.forEach((sel) => {
       if (!sel) return;
@@ -163,6 +169,14 @@ window.Feud = window.Feud || {};
       const groups = new Map();
       for (let idx = 0; idx < totalRounds; idx++) {
         const r = Feud.getRoundData(roomState, idx);
+        if (
+          Feud.isTieBreakerRound &&
+          Feud.isTieBreakerRound(r) &&
+          !tieBreakerUnlocked &&
+          idx !== roomState.roundIdx
+        ) {
+          continue;
+        }
         const theme = r.theme || "🎉 Rounds";
         if (!groups.has(theme)) groups.set(theme, []);
         groups.get(theme).push({ r, idx });
@@ -237,26 +251,50 @@ window.Feud = window.Feud || {};
     }
     const remainingUnrevealedCount = Math.max(0, round.answers.length - revSet.size);
     const allRevealed = remainingUnrevealedCount === 0;
-    const isLastRound = roomState.roundIdx + 1 >= Feud.getRoundCount(roomState);
+    const isTieBreaker = Feud.isTieBreakerRound ? Feud.isTieBreakerRound(round) : false;
+    const regCount = Feud.getRegularRoundCount
+      ? Feud.getRegularRoundCount(roomState)
+      : Feud.getRoundCount(roomState);
+    const tieBreakerUnlocked = Feud.isTieBreakerUnlocked
+      ? Feud.isTieBreakerUnlocked(roomState)
+      : false;
+    const isLastRegularRound = !isTieBreaker && roomState.roundIdx + 1 >= regCount;
+    const isLastRound = isTieBreaker || (isLastRegularRound && !tieBreakerUnlocked);
 
-    const steps = [
-      { id: "faceoff", label: "1. Face-Off" },
-      { id: "pass-or-play", label: "2. Play or Pass" },
-      { id: "playing", label: `3. Team Play (${roomState.strikes || 0}/3 X)` },
-      { id: "steal", label: "4. Steal" },
-      { id: "round-over", label: "5. Round Complete" }
-    ];
+    const steps = isTieBreaker
+      ? [
+          { id: "faceoff", label: "⚡ Sudden-Death Tie-Breaker (First Answer Wins!)" },
+          { id: "round-over", label: "🏆 Match Complete" }
+        ]
+      : [
+          { id: "faceoff", label: "1. Face-Off" },
+          { id: "pass-or-play", label: "2. Play or Pass" },
+          { id: "playing", label: `3. Team Play (${roomState.strikes || 0}/3 X)` },
+          { id: "steal", label: "4. Steal (30s)" },
+          { id: "round-over", label: "5. Round Complete" }
+        ];
 
-    const phaseOrder = {
-      "faceoff-ready": 0,
-      "faceoff-buzz": 0,
-      "faceoff-p1": 0,
-      "faceoff-p2": 0,
-      "pass-or-play": 1,
-      playing: 2,
-      steal: 3,
-      "round-over": 4
-    };
+    const phaseOrder = isTieBreaker
+      ? {
+          "faceoff-ready": 0,
+          "faceoff-buzz": 0,
+          "faceoff-p1": 0,
+          "faceoff-p2": 0,
+          "pass-or-play": 0,
+          playing: 0,
+          steal: 0,
+          "round-over": 1
+        }
+      : {
+          "faceoff-ready": 0,
+          "faceoff-buzz": 0,
+          "faceoff-p1": 0,
+          "faceoff-p2": 0,
+          "pass-or-play": 1,
+          playing: 2,
+          steal: 3,
+          "round-over": 4
+        };
     const activeStepIdx = phaseOrder[phase] ?? 0;
 
     const stepperEl = document.getElementById("hostFlowStepper");
@@ -284,23 +322,31 @@ window.Feud = window.Feud || {};
       round.multiplier === 1 ? "Single" : round.multiplier === 2 ? "Double" : "Triple";
 
     if (phase === "faceoff-ready") {
-      headline = "🔔 Step 1: Ready for the Face-Off";
-      sayScript = `“Welcome to ${round.title} (${multWord} Points)! Give me one player from ${t1} and one player from ${t2} at the buzzer podiums—hands ready!”`;
-      doGuide = `Click “👁️ Show Question & Start Face-Off” below (or press Space), then read the survey question out loud.`;
-      subtext = `Survey Question Ready (${round.answers.length} answers on the board).`;
+      headline = isTieBreaker
+        ? "⚡ Sudden-Death Tie-Breaker: First Correct Answer Wins the Match!"
+        : "🔔 Step 1: Ready for the Face-Off";
+      sayScript = isTieBreaker
+        ? `“We are TIED! Welcome to the Sudden-Death Tie-Breaker! Give me one player from ${t1} and one player from ${t2} at the buzzers—whoever answers this question on the board wins the entire match!”`
+        : `“Welcome to ${round.title} (${multWord} Points)! Give me one player from ${t1} and one player from ${t2} at the buzzer podiums—hands ready!”`;
+      doGuide = `Click “👁️ Show Question on TV” below (or press Space), then read the survey question out loud. There is NO timer until the first player buzzes in!`;
+      subtext = `Unlimited time until the first player buzzes (${round.answers.length} answers on the board).`;
       actionsHtml = `
         <button type="button" class="action-btn btn-gold display-font" onclick="hostRevealQuestionAndStartTimer()">
-          👁️ Show Question &amp; Start Face-Off (Space)
+          👁️ Show Question on TV (Space)
         </button>
         <button type="button" class="top-btn" onclick="hostManualBuzz(1)">🔔 ${escapeHtml(t1)} Buzzed</button>
         <button type="button" class="top-btn" onclick="hostManualBuzz(2)">🔔 ${escapeHtml(t2)} Buzzed</button>
       `;
     } else if (phase === "faceoff-buzz") {
-      headline = "🔔 Face-Off: Which Team Buzzed In First?";
-      sayScript = `“Top ${round.answers.length} answers are on the board! Survey says: ‘${round.prompt}’ — Buzz in!”`;
-      doGuide = `Wait for a player to buzz in on their phone, OR click the button below for whichever team buzzed first.`;
+      headline = isTieBreaker
+        ? "⚡ Tie-Breaker Live: Waiting for First Buzzer!"
+        : "🔔 Face-Off: Waiting for First Buzzer (Unlimited Time)";
+      sayScript = isTieBreaker
+        ? `“Sudden-Death Tie-Breaker! First team to give a survey answer on the board wins the game! Survey says: ‘${round.prompt}’ — Buzz in!”`
+        : `“Top ${round.answers.length} answers are on the board! Survey says: ‘${round.prompt}’ — Buzz in!”`;
+      doGuide = `Players have unlimited time until the first person buzzes in on their phone, OR click the button below for whichever team buzzed first (starts their ${dur}s answer timer).`;
       subtext =
-        "Once a team buzzes in, ask for their answer and click it on the board below (or click Wrong Guess if they miss).";
+        "No timer is running yet — timer starts automatically as soon as the first player buzzes in.";
       actionsHtml = `
         <button type="button" class="action-btn btn-red display-font" onclick="hostManualBuzz(1)">
           🔔 ${escapeHtml(t1)} Buzzed First
@@ -314,10 +360,16 @@ window.Feud = window.Feud || {};
       const secondTeam = firstTeam === 1 ? 2 : 1;
       const firstName = getTeamLabel(roomState, firstTeam);
       const secondName = getTeamLabel(roomState, secondTeam);
-      headline = `🎤 Face-Off (1st Turn): ${firstName} Answering!`;
+      headline = isTieBreaker
+        ? `⚡ Tie-Breaker: ${firstName} Answering for the Win!`
+        : `🎤 Face-Off (1st Turn): ${firstName} Answering!`;
       sayScript = `“${firstName}, you buzzed in first! What is your answer for: ‘${round.prompt}’?”`;
-      doGuide = `If their answer is on the list below, click it to reveal it and go to Play or Pass. If it's NOT on the list, click “⚡ Face-Off Wrong Guess (1 Temp X)” to pass the Face-Off turn to ${secondName}.`;
-      subtext = `1st Face-Off guess does NOT add a round strike if wrong.`;
+      doGuide = isTieBreaker
+        ? `If ${firstName}'s answer is on the list below, click it—they immediately WIN the match! If NOT on the list, click “⚡ Wrong Guess (1 Temp X)” to pass the chance to ${secondName}.`
+        : `If their answer is on the list below, click it to reveal it and go to Play or Pass. If it's NOT on the list, click “⚡ Face-Off Wrong Guess (1 Temp X)” to pass the Face-Off turn to ${secondName}.`;
+      subtext = isTieBreaker
+        ? `Sudden-Death Tie-Breaker: any answer on the board immediately wins the match!`
+        : `1st Face-Off guess does NOT add a round strike if wrong.`;
       actionsHtml = `
         <button type="button" class="action-btn btn-red display-font" onclick="hostFaceOffWrongGuess()">
           ⚡ Face-Off Wrong Guess (1 Temp X) → ${escapeHtml(secondName)}'s Turn (X)
@@ -333,16 +385,22 @@ window.Feud = window.Feud || {};
       const secondName = getTeamLabel(roomState, secondTeam);
       const bestRank = roomState.faceoffBestRank ?? 999;
 
-      if (bestRank < 999) {
+      if (bestRank < 999 && !isTieBreaker) {
         headline = `🎤 Face-Off (2nd Turn): ${secondName} Must Beat Answer #${bestRank + 1}!`;
         sayScript = `“${firstName} is on the board with the #${bestRank + 1} answer! ${secondName}, can you beat #${bestRank + 1} to take control? What's your answer?”`;
         doGuide = `Click ${secondName}'s answer below if it's on the board, or click “⚡ Face-Off Wrong Guess (1 Temp X)” if it's not.`;
         subtext = `${firstName} hit #${bestRank + 1}. Higher rank wins the Face-Off.`;
       } else {
-        headline = `🎤 Face-Off (2nd Turn): ${secondName} Can Win the Face-Off!`;
-        sayScript = `“Show me that answer… ❌ Survey says NO! ${secondName}, you can win the Face-Off right here if your answer is anywhere on the board: ‘${round.prompt}’!”`;
+        headline = isTieBreaker
+          ? `⚡ Tie-Breaker: ${secondName} Can Win the Match Right Here!`
+          : `🎤 Face-Off (2nd Turn): ${secondName} Can Win the Face-Off!`;
+        sayScript = isTieBreaker
+          ? `“Show me that answer… ❌ Survey says NO! ${secondName}, you can win the ENTIRE MATCH right here if your answer is anywhere on the board: ‘${round.prompt}’!”`
+          : `“Show me that answer… ❌ Survey says NO! ${secondName}, you can win the Face-Off right here if your answer is anywhere on the board: ‘${round.prompt}’!”`;
         doGuide = `Click ${secondName}'s answer below if it's on the board, or click “⚡ Face-Off Wrong Guess (1 Temp X)” if they also miss.`;
-        subtext = `${firstName} missed! Any answer on the board wins the Face-Off for ${secondName}.`;
+        subtext = isTieBreaker
+          ? `${firstName} missed! Any answer on the board wins the match for ${secondName}.`
+          : `${firstName} missed! Any answer on the board wins the Face-Off for ${secondName}.`;
       }
       actionsHtml = `
         <button type="button" class="action-btn btn-red display-font" onclick="hostFaceOffWrongGuess()">
@@ -392,7 +450,7 @@ window.Feud = window.Feud || {};
       doGuide = `1) Click “🔄 Start ${dur}s Timer (R)” if you want the countdown running. 2) Click their answer below if right, OR click “❌ Wrong Answer → Strike ${
         curStrikes + 1
       }/3 (X)” if wrong!`;
-      subtext = `If ${playName} gets 3 Strikes (XXX), control automatically switches to ${oppName} for the Steal.`;
+      subtext = `If ${playName} gets 3 Strikes (XXX), control automatically switches to ${oppName} for the 30s Steal.`;
       actionsHtml = `
         <button type="button" class="action-btn btn-gold display-font" onclick="hostRestartTurnTimer()">
           🔄 Start ${dur}s Timer for Next Player (R)
@@ -408,14 +466,14 @@ window.Feud = window.Feud || {};
       const origName = getTeamLabel(roomState, origTeam);
       const stealName = getTeamLabel(roomState, stealTeam);
       headline = `🚨 STEAL MODE: ${stealName} Can Steal ${roomState.pot || 0} Points!`;
-      sayScript = `“That's 3 Strikes (XXX)! 🚨 ${stealName}, huddle up! You have one chance to steal all ${
+      sayScript = `“That's 3 Strikes (XXX)! 🚨 ${stealName}, huddle up! You have 30 seconds and one chance to steal all ${
         roomState.pot || 0
       } points! Team captain, give me your ONE final answer for: ‘${round.prompt}’!”`;
-      doGuide = `1) Click “⏱️ Start 15s Steal Timer” while ${stealName} huddles. 2) If their captain's answer is on the board, click that tile below (auto-awards pot to ${stealName})! If not on the board, click “❌ Steal Missed” (auto-awards pot to ${origName})!`;
-      subtext = `One guess only for ${stealName} to steal ${roomState.pot || 0} points!`;
+      doGuide = `1) Click “⏱️ Start 30s Steal Timer” while ${stealName} huddles. 2) If their captain's answer is on the board, click that tile below (auto-awards pot to ${stealName})! If not on the board, click “❌ Steal Missed” (auto-awards pot to ${origName})!`;
+      subtext = `One guess only (30s timer) for ${stealName} to steal ${roomState.pot || 0} points!`;
       actionsHtml = `
         <button type="button" class="action-btn btn-gold display-font" onclick="hostStartStealTimer()">
-          ⏱️ Start 15s Steal Timer (R)
+          ⏱️ Start 30s Steal Timer (R)
         </button>
         <button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">
           ❌ Steal Missed → Award Pot to ${escapeHtml(origName)} (X)
@@ -424,26 +482,34 @@ window.Feud = window.Feud || {};
     } else if (phase === "round-over") {
       const winTeam = roomState.roundWinnerTeam || roomState.controllingTeam || 1;
       const winName = getTeamLabel(roomState, winTeam);
-      headline = `🎉 Round Complete — ${winName} Won the Round!`;
+      headline =
+        isLastRegularRound && tieBreakerUnlocked
+          ? `⚡ TIE SCORE (${roomState.team1Score || 0} – ${
+              roomState.team2Score || 0
+            })! Sudden-Death Tie-Breaker Unlocked!`
+          : `🎉 Round Complete — ${winName} Won the Round!`;
       if (!allRevealed) {
         sayScript = `“🎉 ${winName} takes the round! Before we move on, let's see the remaining answers on the board — Audience, what was #${
           nextUnrevealedIdx + 1
         }?”`;
         doGuide = `Click “👁️ Reveal Answer #${
           nextUnrevealedIdx + 1
-        }” below to flip each unrevealed answer one at a time (${remainingUnrevealedCount} left, 0 pts), then click “⏭️ Next Round ▶”.`;
+        }” below to flip each unrevealed answer one at a time (${remainingUnrevealedCount} left, 0 pts), then advance to the next round.`;
+      } else if (isLastRegularRound && tieBreakerUnlocked) {
+        sayScript = `“We have a TIE GAME at ${
+          roomState.team1Score || 0
+        } points apiece! It's time for the Sudden-Death Tie-Breaker round—whoever answers first wins the match!”`;
+        doGuide = `Click “⚡ Start Sudden-Death Tie-Breaker ▶” below!`;
       } else {
         sayScript = `“That clears the board! The score is now ${t1}: ${
           roomState.team1Score || 0
         } points, ${t2}: ${roomState.team2Score || 0} points! Let's move on!”`;
         doGuide = !isLastRound
           ? `Click “⏭️ Next Round ▶” to start Round ${roomState.roundIdx + 2}.`
-          : roomState.enableFastMoney !== false
-          ? `Click “⚡ Start Fast Money Bonus Round” to launch the 200-point finale, or “🏁 End Match” to crown a winner!`
-          : `Click “🏁 End Match / Next Game” to crown the match winner!`;
+          : `Click “🏆 Show Winner & Next Match Setup” to crown the match winner!`;
       }
       subtext = allRevealed
-        ? "All answers on the board have been revealed! Advance to the next round when ready."
+        ? "All answers on the board have been revealed!"
         : `${remainingUnrevealedCount} unrevealed answer${
             remainingUnrevealedCount === 1 ? "" : "s"
           } remaining (revealing adds 0 pts).`;
@@ -456,13 +522,15 @@ window.Feud = window.Feud || {};
             : ""
         }
         ${
-          !isLastRound
+          isLastRegularRound && tieBreakerUnlocked
+            ? `<button type="button" class="action-btn btn-red display-font" onclick="hostNextRound()">⚡ Start Sudden-Death Tie-Breaker ▶</button>`
+            : !isLastRound
             ? `<button type="button" class="action-btn btn-blue display-font" onclick="hostNextRound()">⏭️ Next Round ▶</button>`
             : roomState.enableFastMoney !== false
             ? `<button type="button" class="action-btn btn-gold display-font" onclick="hostSwitchStage('fast')">⚡ Start Fast Money Bonus Round</button>`
             : ""
         }
-        <button type="button" class="top-btn gold" onclick="openNextMatchModal()">🏁 End Match / Next Game</button>
+        <button type="button" class="top-btn gold" onclick="openNextMatchModal()">🏆 Winner &amp; Next Match Setup</button>
       `;
     }
 
@@ -572,7 +640,7 @@ window.Feud = window.Feud || {};
           </div>
           <div class="fodb-actions">
             <button type="button" class="action-btn btn-gold display-font" style="flex:1; min-width:180px; min-height:42px; font-size:13px;" onclick="hostStartStealTimer()">
-              ⏱️ Start 15s Steal Timer (R)
+              ⏱️ Start 30s Steal Timer (R)
             </button>
             <button type="button" class="action-btn btn-red display-font" style="flex:1; min-width:210px; min-height:42px; font-size:13px;" onclick="hostHandleWrongAnswer()">
               ❌ Steal Missed → ${escapeHtml(origName)} Keeps ${roomState.pot || 0} Pts
@@ -722,9 +790,13 @@ window.Feud = window.Feud || {};
       if (winWrap) winWrap.classList.add("hidden");
     }
 
-    document.getElementById("tvRoundCounter").textContent = `${round.title} (${
-      roomState.roundIdx + 1
-    } of ${totalRounds})`;
+    const regRounds = Feud.getRegularRoundCount
+      ? Feud.getRegularRoundCount(roomState)
+      : totalRounds;
+    const isTieBreaker = Feud.isTieBreakerRound ? Feud.isTieBreakerRound(round) : false;
+    document.getElementById("tvRoundCounter").textContent = isTieBreaker
+      ? `⚡ ${round.title} (Sudden Death)`
+      : `${round.title} (${roomState.roundIdx + 1} of ${regRounds})`;
 
     const promptBanner = document.getElementById("tvPromptBanner");
     const promptText = document.getElementById("tvPromptText");
@@ -961,9 +1033,13 @@ window.Feud = window.Feud || {};
 
     const revealBtn = document.getElementById("hostBtnRevealQuestion");
     if (revealBtn) {
-      revealBtn.textContent = roomState.questionRevealed
-        ? "🔄 Question Live — Restart Timer (Space / R)"
-        : "👁️ Show Question & Start Timer (Space)";
+      if (!roomState.questionRevealed) {
+        revealBtn.textContent = "👁️ Show Question on TV (Space)";
+      } else if (phase === "faceoff-buzz" && !roomState.buzzerWinner) {
+        revealBtn.textContent = "🔔 Question Live (Unlimited Time Until First Buzz)";
+      } else {
+        revealBtn.textContent = "🔄 Question Live — Restart Timer (Space / R)";
+      }
     }
 
     const toggleOnlyBtn = document.getElementById("hostBtnToggleQuestionOnly");

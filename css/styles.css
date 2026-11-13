@@ -836,9 +836,9 @@ button:disabled {
 }
 
 .strike-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 999;
+  z-index: 90;
   background: rgba(0, 0, 0, 0.68);
   display: flex;
   align-items: center;
@@ -846,6 +846,12 @@ button:disabled {
   gap: 18px;
   padding: 16px;
   pointer-events: none;
+}
+
+#tvView.embedded-in-host .big-red-x {
+  width: 190px;
+  height: 190px;
+  font-size: 136px;
 }
 
 .big-red-x {
@@ -1067,6 +1073,7 @@ body.is-fullscreen .top-bar {
 }
 
 #tvView {
+  position: relative;
   flex: 1 1 0;
   min-height: 0;
   width: 100%;
