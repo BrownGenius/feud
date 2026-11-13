@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>Party Feud — 4-Phone Multiplayer</title>
-  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261113e" />
 </head>
 <body>
 
@@ -51,6 +51,7 @@
           <div>
             <label class="field-label" for="setupRoundsPerMatchSelect" style="font-size:10px;">Rounds Per Game</label>
             <select id="setupRoundsPerMatchSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;">
+              <option value="3">3 Rounds (1x, 2x, 3x)</option>
               <option value="4" selected>4 Rounds (Standard: 1x, 1x, 2x, 3x)</option>
               <option value="5">5 Rounds (1x, 1x, 2x, 2x, 3x)</option>
               <option value="6">6 Rounds (1x, 1x, 2x, 2x, 3x, 3x)</option>
@@ -60,8 +61,9 @@
           <div>
             <label class="field-label" for="setupRoundOrderSelect" style="font-size:10px;">Unplayed Round Selection</label>
             <select id="setupRoundOrderSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;">
-              <option value="sequential" selected>Next Unplayed in Order</option>
-              <option value="shuffle">Random Shuffle (Unplayed)</option>
+              <option value="shuffle-by-level" selected>🎲 Randomize by Level (Keep 1x → 2x → 3x, No Repeats)</option>
+              <option value="sequential">📋 In Order by Level (Keep 1x → 2x → 3x, No Repeats)</option>
+              <option value="shuffle">🔀 Random Shuffle (Any Level, Unplayed)</option>
             </select>
           </div>
         </div>
@@ -436,6 +438,7 @@
   <!-- =====================================================================
        VIEW 2: TV DISPLAY BOARD (CAST TO LIVING ROOM TV OR PLAY SOLO)
        ===================================================================== -->
+  <div id="tvViewRootAnchor" class="hidden" aria-hidden="true"></div>
   <section id="tvView" class="stage-wrap hidden">
     <!-- TOP SCOREBOARD & CENTRAL TIMER HUD -->
     <div class="tv-top-hud">
@@ -576,188 +579,216 @@
        VIEW 3: HOST REMOTE CONTROL MODE (SEES ALL ANSWERS + CONTROLS TV)
        ===================================================================== -->
   <section id="hostView" class="stage-wrap hidden">
-    <!-- Top Round Navigator & Mode Switch -->
-    <div class="marquee-panel" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;">
-      <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; flex:1; min-width:260px;">
+    <!-- 1. COMPACT TOP BAR: ROUND SELECTOR & STAGE ACTIONS -->
+    <div class="marquee-panel host-top-nav">
+      <div class="host-round-nav">
         <button class="top-btn" onclick="hostPrevRound()">◀ Prev</button>
-        <select id="hostRoundSelect" class="lobby-input" style="flex:1; font-size:13px; letter-spacing:normal; text-align:left;" onchange="hostSelectRound(Number(this.value))"></select>
+        <select id="hostRoundSelect" class="lobby-input host-round-select" onchange="hostSelectRound(Number(this.value))"></select>
         <button class="top-btn gold" onclick="hostNextRound()">Next ▶</button>
+        <button class="top-btn gold" onclick="hostRandomizeCurrentRound()" title="Pick a random unplayed question of the same multiplier level (1x / 2x / 3x) from the deck">🎲 Randomize (Same Level)</button>
+        <button class="top-btn" onclick="hostResetRound()" title="Reset current round">↺ Reset Round</button>
       </div>
 
-      <div style="display:flex; flex-wrap:wrap; gap:8px;">
-        <button class="top-btn gold" onclick="openEditRoundModal()">✏️ Edit Round</button>
-        <button class="top-btn" onclick="openDeckManagerModal()">📦 CSV / JSON Decks</button>
-        <button id="hostTabMain" class="top-btn gold" onclick="hostSwitchStage('main')">Main Board</button>
+      <div class="host-stage-nav">
+        <button id="hostTabMain" class="top-btn gold" onclick="hostSwitchStage('main')">🎯 Main Board</button>
         <button id="hostTabFm" class="top-btn" onclick="hostSwitchStage('fast')">⚡ Fast Money</button>
-        <button id="hostTabWinner" class="top-btn gold" onclick="openNextMatchModal()">🏁 End Match / Next Game</button>
-        <button class="top-btn gold" onclick="reopenTvWindow()" title="Open or focus the separate TV Display window">📺 Open TV Window</button>
-        <button class="top-btn" onclick="switchSoloAndHostView()" title="Switch to TV Board view inside this window">🔄 View Board Here</button>
+        <button id="hostTabWinner" class="top-btn gold" onclick="openNextMatchModal()">🏁 End Match</button>
+        <button class="top-btn gold" onclick="reopenTvWindow()" title="Open or focus the separate TV Display window">📺 Pop Out TV</button>
       </div>
     </div>
 
-    <!-- HOST MAIN ROUND CONTROLS -->
-    <div id="hostMainControls" class="host-grid">
-      <!-- GUIDED GAME FLOW COACH / AUTOMATIC PHASE BAR -->
-      <div id="hostFlowCoachCard" class="marquee-panel flow-coach-card" style="grid-column: 1 / -1;">
-        <div class="flow-stepper" id="hostFlowStepper"></div>
-        <div class="flow-coach-body">
-          <div class="flow-coach-info">
-            <div id="hostFlowHeadline" class="flow-coach-headline display-font">Step 1: Face-Off Ready</div>
-            <div id="hostFlowSubtext" class="flow-coach-sub">Reveal the question to start the Face-Off!</div>
-          </div>
-          <div id="hostFlowActions" class="flow-coach-actions"></div>
+    <!-- 2. GUIDED WIZARD & TELEPROMPTER SCRIPT (ALWAYS AT TOP) -->
+    <div id="hostFlowCoachCard" class="marquee-panel flow-coach-card">
+      <div class="flow-stepper" id="hostFlowStepper"></div>
+      <div class="flow-coach-body">
+        <div class="flow-coach-info">
+          <div id="hostFlowHeadline" class="flow-coach-headline display-font">Step 1: Face-Off Ready</div>
+          <div id="hostFlowScriptBox" class="host-script-box"></div>
+          <div id="hostFlowSubtext" class="flow-coach-sub">Reveal the question to start the Face-Off!</div>
         </div>
+        <div id="hostFlowActions" class="flow-coach-actions"></div>
       </div>
+    </div>
 
-      <!-- Left: Secret Answer Key (Tap to Flip Live on TV) -->
-      <div class="marquee-panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-            <span class="pill-badge room-live" id="hostRoundBadge">Round 1 • 1x</span>
-            <span class="pill-badge" id="hostQuestionStatusBadge">🙈 Question Hidden on TV</span>
-          </div>
-          <span class="pot-label" style="font-size:12px;">Pot: <strong id="hostPotDisplay" style="color:#fff; font-size:18px;">0</strong></span>
-        </div>
+    <!-- 3. TWO-COLUMN HOST WORKSPACE: ANSWERS ON LEFT + LIVE EMBEDDED TV ON RIGHT -->
+    <div class="host-workspace-grid">
+      <!-- LEFT COLUMN: MOST-USED CONTROLS & CLICKABLE ANSWER BOARD -->
+      <div class="host-primary-col">
+        <div id="hostMainControls" class="marquee-panel host-main-card">
+          <!-- MOST-USED QUICK ACTION BAR (SHOW Q + TIMER + WRONG/X IN ONE ROW) -->
+          <div class="host-quick-bar">
+            <button id="hostBtnRevealQuestion" class="action-btn btn-gold display-font host-quick-reveal-btn" onclick="hostRevealQuestionAndStartTimer()">
+              👁️ Show Question &amp; Start Timer (Space)
+            </button>
 
-        <p id="hostPromptText" style="font-size:16px; font-weight:800; color:#fef08a; margin-bottom:10px; line-height:1.35;"></p>
-
-        <!-- Question Reveal & Turn Timer Action Strip -->
-        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; padding:10px; background:rgba(0,0,0,0.45); border-radius:12px; border:1.5px solid rgba(251,191,36,0.4);">
-          <button id="hostBtnRevealQuestion" class="action-btn btn-gold display-font" style="flex:1; min-width:210px; min-height:44px; font-size:13px;" onclick="hostRevealQuestionAndStartTimer()">
-            👁️ Show Question &amp; Start Timer (Space)
-          </button>
-          <button id="hostBtnToggleQuestionOnly" class="top-btn" onclick="hostToggleQuestionVisibility()">
-            🙈 Hide/Show Question Only
-          </button>
-        </div>
-
-        <!-- Inline Face-Off & Pass/Play Decision Bar right above the answers -->
-        <div id="hostFaceOffDecisionBar" class="faceoff-decision-bar"></div>
-
-        <div id="hostAnswersList"></div>
-
-        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
-          <button id="hostBtnRevealRemaining" class="top-btn gold" onclick="hostRevealAll()">👁️ Reveal Next Answer (0 pts)</button>
-          <button class="top-btn" onclick="hostResetRound()">Reset Round</button>
-          <button class="top-btn" onclick="openEditRoundModal()">✏️ Customize Answers</button>
-        </div>
-      </div>
-
-      <!-- Right: Turn Timer, Buzzers, Strikes & Scoreboard -->
-      <div style="display:flex; flex-direction:column; gap:14px;">
-        <!-- Player Turn / Answer Shot-Clock Timer -->
-        <div class="marquee-panel">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-            <span class="field-label">⏱️ Player Answer Timer (Shot Clock)</span>
-            <div style="display:flex; gap:4px; align-items:center;">
-              <button class="top-btn" style="min-height:28px; padding:3px 8px; font-size:11px;" onclick="hostSetTurnTimerDuration(5)">5s</button>
-              <button class="top-btn" style="min-height:28px; padding:3px 8px; font-size:11px;" onclick="hostSetTurnTimerDuration(7)">7s</button>
-              <button class="top-btn" style="min-height:28px; padding:3px 8px; font-size:11px;" onclick="hostSetTurnTimerDuration(10)">10s</button>
-              <button class="top-btn" style="min-height:28px; padding:3px 8px; font-size:11px;" onclick="hostSetTurnTimerDuration(15)" title="15s for Steal huddle">15s</button>
+            <div class="host-quick-timer-group">
+              <div id="hostTurnTimerPill" class="turn-timer-pill display-font">
+                ⏱️ <span id="hostTurnTimerDisplay">10s</span>
+              </div>
+              <button class="action-btn btn-gold display-font host-quick-btn" onclick="hostRestartTurnTimer()" title="Start or restart the player turn timer (R)">
+                🔄 Start Timer (R)
+              </button>
+              <button id="hostBtnTurnTimerToggle" class="top-btn host-quick-pause-btn" onclick="hostToggleTurnTimer()" title="Pause or resume timer (T)">
+                ⏯️
+              </button>
             </div>
-          </div>
 
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
-            <div id="hostTurnTimerPill" class="turn-timer-pill display-font" style="font-size:22px; min-height:48px; padding:8px 18px;">
-              ⏱️ <span id="hostTurnTimerDisplay">10s</span>
-            </div>
-            <button class="action-btn btn-gold display-font" style="flex:1; min-height:48px; font-size:13px;" onclick="hostRestartTurnTimer()">
-              🔄 Next Player / Restart Timer (R)
+            <button type="button" class="action-btn btn-red display-font host-quick-strike-btn" onclick="hostHandleWrongAnswer()" title="Trigger Wrong Answer / X (Shortcut: X)">
+              ❌ Wrong / X (X)
             </button>
           </div>
 
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-            <button id="hostBtnTurnTimerToggle" class="top-btn gold" onclick="hostToggleTurnTimer()">▶️ Start / Pause (T)</button>
-            <button class="top-btn" onclick="hostStopResetTurnTimer()">⏹️ Stop &amp; Reset</button>
+          <!-- Inline Face-Off & Pass/Play Decision Bar right above the answers -->
+          <div id="hostFaceOffDecisionBar" class="faceoff-decision-bar hidden"></div>
+
+          <!-- Question Header & Prompt -->
+          <div class="host-question-box">
+            <div class="host-question-meta">
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <span class="pill-badge room-live" id="hostRoundBadge">Round 1 • 1x</span>
+                <span class="pill-badge" id="hostQuestionStatusBadge">🙈 Question Hidden on TV</span>
+              </div>
+              <span class="pot-label" style="font-size:12px;">Round Pot: <strong id="hostPotDisplay" style="color:#fff; font-size:18px;">0</strong></span>
+            </div>
+            <p id="hostPromptText" class="host-prompt-text"></p>
+          </div>
+
+          <!-- Clickable Survey Answers (1–8) -->
+          <div id="hostAnswersList"></div>
+
+          <!-- Bottom Quick Utilities -->
+          <div class="host-board-footer">
+            <button id="hostBtnRevealRemaining" class="top-btn gold" onclick="hostRevealNextAnswer()">👁️ Reveal Next Answer (0 pts)</button>
+            <button class="top-btn" onclick="openEditRoundModal()">✏️ Edit Round</button>
+            <button class="top-btn" onclick="openDeckManagerModal()">📦 Load Deck</button>
           </div>
         </div>
 
-        <!-- Buzzer Status & Reset -->
-        <div class="marquee-panel">
-          <div class="field-label" style="margin-bottom:8px;">🔔 Podium Buzzers (Face-Off)</div>
-          <div id="hostBuzzerReadout" class="buzzer-banner-tv" style="font-size:15px; margin-bottom:10px;">
-            Ready for Face-Off
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-            <button class="top-btn" onclick="hostManualBuzz(1)">Sim T1</button>
-            <button class="top-btn" onclick="hostManualBuzz(2)">Sim T2</button>
-            <button class="top-btn gold" onclick="hostResetBuzzers()">🔓 Reset Buzzers</button>
-          </div>
-        </div>
-
-        <!-- Strikes -->
-        <div class="marquee-panel">
-          <div class="field-label" style="margin-bottom:8px;">❌ Wrong Answer Strikes</div>
-          <button id="hostBtnFaceOffWrong" type="button" class="action-btn btn-red display-font" style="min-height:44px; font-size:13px; margin-bottom:8px;" onclick="hostFaceOffWrongGuess()">
-            ⚡ Face-Off Wrong Guess (1 Temp X — No Round Strike)
-          </button>
-          <div id="hostRoundStrikeRow" style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px;">
-            <button class="action-btn btn-red display-font" style="min-height:46px;" onclick="hostTriggerStrike(1)">X</button>
-            <button class="action-btn btn-red display-font" style="min-height:46px;" onclick="hostTriggerStrike(2)">XX</button>
-            <button class="action-btn btn-red display-font" style="min-height:46px;" onclick="hostTriggerStrike(3)">XXX</button>
-            <button class="top-btn" onclick="hostClearStrikes()">Clear</button>
-          </div>
-          <div id="hostStrikeHint" style="font-size:11px; color:#94a3b8; margin-top:6px;"></div>
-        </div>
-
-        <!-- Teams, Board Control & Scores -->
-        <div class="marquee-panel" style="display:flex; flex-direction:column; gap:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-            <span class="field-label">🏆 Board Control &amp; Team Scores</span>
-            <button class="top-btn" onclick="hostCyclePresets()">👥 Swap Presets</button>
-          </div>
-
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
-            <button id="hostCtrlBtn0" class="top-btn gold" onclick="hostSetControllingTeam(0)">⚡ Face-Off</button>
-            <button id="hostCtrlBtn1" class="top-btn" onclick="hostSetControllingTeam(1)">🎯 T1 Playing</button>
-            <button id="hostCtrlBtn2" class="top-btn" onclick="hostSetControllingTeam(2)">🎯 T2 Playing</button>
-          </div>
-
-          <div class="host-team-box">
-            <div style="display:flex; gap:8px; align-items:center;">
-              <input id="hostT1Name" class="host-team-input" type="text" value="Team A" onchange="hostRenameTeam(1, this.value)" />
-              <span id="hostT1Score" class="display-font" style="font-size:28px; min-width:56px; text-align:right;">0</span>
+        <!-- HOST FAST MONEY CONTROLS (REPLACES MAIN BOARD WHEN IN FAST MONEY) -->
+        <div id="hostFmControls" class="marquee-panel hidden">
+          <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px;">
+            <div>
+              <h2 class="brand-title display-font">⚡ Fast Money Host Panel</h2>
+              <p class="brand-sub">Combined Total: <strong id="hostFmTotal" style="color:#fff;">0</strong> / 200</p>
             </div>
-            <div style="display:flex; gap:8px;">
-              <button class="top-btn" onclick="hostAdjustScore(1, -10)">-10</button>
-              <button class="top-btn" onclick="hostAdjustScore(1, 10)">+10</button>
-              <button id="hostAwardPotBtn1" class="action-btn btn-gold" style="min-height:40px; font-size:12px;" onclick="hostAwardPot(1)">Award Pot</button>
+            <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+              <span id="hostFmClock" class="display-font" style="font-size:32px; color:var(--gold); margin-right:6px;">20s</span>
+              <button class="top-btn" onclick="hostSetFmClock(20)">20s</button>
+              <button class="top-btn" onclick="hostSetFmClock(25)">25s</button>
+              <button id="hostBtnFmTimer" class="top-btn gold" onclick="hostToggleFmClock()">Start</button>
+              <button class="top-btn" style="background:#991b1b;" onclick="hostFmDuplicateBuzz()">Dup ❌</button>
+              <button class="top-btn" onclick="hostToggleFmHideP1()">🙈 Hide/Show P1</button>
+              <button class="top-btn" onclick="hostResetFm()">Reset</button>
             </div>
           </div>
-
-          <div class="host-team-box">
-            <div style="display:flex; gap:8px; align-items:center;">
-              <input id="hostT2Name" class="host-team-input" type="text" value="Team B" onchange="hostRenameTeam(2, this.value)" />
-              <span id="hostT2Score" class="display-font" style="font-size:28px; min-width:56px; text-align:right;">0</span>
-            </div>
-            <div style="display:flex; gap:8px;">
-              <button class="top-btn" onclick="hostAdjustScore(2, -10)">-10</button>
-              <button class="top-btn" onclick="hostAdjustScore(2, 10)">+10</button>
-              <button id="hostAwardPotBtn2" class="action-btn btn-gold" style="min-height:40px; font-size:12px;" onclick="hostAwardPot(2)">Award Pot</button>
-            </div>
-          </div>
+          <div id="hostFmScriptBox" class="host-script-box" style="margin-bottom:14px;"></div>
+          <div id="hostFmRows"></div>
         </div>
       </div>
-    </div>
 
-    <!-- HOST FAST MONEY CONTROLS -->
-    <div id="hostFmControls" class="marquee-panel hidden">
-      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px;">
-        <div>
-          <h2 class="brand-title display-font">⚡ Fast Money Host Panel</h2>
-          <p class="brand-sub">Combined Total: <strong id="hostFmTotal" style="color:#fff;">0</strong> / 200</p>
+      <!-- RIGHT COLUMN: LIVE EMBEDDED TV VIEW + TEAM SCORES + COLLAPSIBLE OVERRIDES -->
+      <div class="host-tv-col">
+        <!-- LIVE EMBEDDED TV MONITOR -->
+        <div class="marquee-panel host-tv-monitor-card">
+          <div class="host-tv-monitor-header">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span class="field-label" style="color:var(--gold);">📺 Live TV Screen View</span>
+              <span id="hostBuzzerReadout" class="pill-badge" style="font-size:11px;">Ready</span>
+            </div>
+            <button class="top-btn" style="min-height:28px; padding:3px 10px; font-size:11px;" onclick="reopenTvWindow()" title="Open or focus the separate TV window">
+              ↗ Pop Out TV Window
+            </button>
+          </div>
+          <div id="hostTvMonitorDock" class="host-tv-monitor-dock"></div>
         </div>
-        <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
-          <span id="hostFmClock" class="display-font" style="font-size:32px; color:var(--gold); margin-right:6px;">20s</span>
-          <button class="top-btn" onclick="hostSetFmClock(20)">20s</button>
-          <button class="top-btn" onclick="hostSetFmClock(25)">25s</button>
-          <button id="hostBtnFmTimer" class="top-btn gold" onclick="hostToggleFmClock()">Start</button>
-          <button class="top-btn" style="background:#991b1b;" onclick="hostFmDuplicateBuzz()">Dup ❌</button>
-          <button class="top-btn" onclick="hostToggleFmHideP1()">🙈 Hide/Show P1</button>
-          <button class="top-btn" onclick="hostResetFm()">Reset</button>
+
+        <!-- COMPACT TEAM SCORES & AWARD POT -->
+        <div class="marquee-panel host-scores-card">
+          <div class="host-scores-grid">
+            <div class="host-team-box">
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input id="hostT1Name" class="host-team-input" type="text" value="Team A" onchange="hostRenameTeam(1, this.value)" />
+                <span id="hostT1Score" class="display-font" style="font-size:26px; min-width:48px; text-align:right;">0</span>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="top-btn" onclick="hostAdjustScore(1, -10)">-10</button>
+                <button class="top-btn" onclick="hostAdjustScore(1, 10)">+10</button>
+                <button id="hostAwardPotBtn1" class="action-btn btn-gold" style="min-height:38px; font-size:12px;" onclick="hostAwardPot(1)">Award Pot</button>
+              </div>
+            </div>
+
+            <div class="host-team-box">
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input id="hostT2Name" class="host-team-input" type="text" value="Team B" onchange="hostRenameTeam(2, this.value)" />
+                <span id="hostT2Score" class="display-font" style="font-size:26px; min-width:48px; text-align:right;">0</span>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="top-btn" onclick="hostAdjustScore(2, -10)">-10</button>
+                <button class="top-btn" onclick="hostAdjustScore(2, 10)">+10</button>
+                <button id="hostAwardPotBtn2" class="action-btn btn-gold" style="min-height:38px; font-size:12px;" onclick="hostAwardPot(2)">Award Pot</button>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <!-- COLLAPSIBLE MANUAL OVERRIDES (HIDDEN UNTIL NEEDED) -->
+        <details class="marquee-panel host-overrides-drawer">
+          <summary class="host-overrides-summary">⚙️ Manual Overrides &amp; Extra Controls</summary>
+          <div class="host-overrides-body">
+            <!-- Timer & Question Overrides -->
+            <div class="host-override-group">
+              <span class="field-label">⏱️ Timer Duration &amp; Question Visibility</span>
+              <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                <button class="top-btn" onclick="hostSetTurnTimerDuration(5)">5s</button>
+                <button class="top-btn" onclick="hostSetTurnTimerDuration(7)">7s</button>
+                <button class="top-btn" onclick="hostSetTurnTimerDuration(10)">10s</button>
+                <button class="top-btn" onclick="hostSetTurnTimerDuration(15)">15s (Steal)</button>
+                <button class="top-btn" onclick="hostStopResetTurnTimer()">⏹️ Stop &amp; Reset Timer</button>
+                <button id="hostBtnToggleQuestionOnly" class="top-btn" onclick="hostToggleQuestionVisibility()">🙈 Hide/Show Question Only</button>
+              </div>
+            </div>
+
+            <!-- Board Control & Team Presets -->
+            <div class="host-override-group">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                <span class="field-label">🎯 Manual Board Control</span>
+                <button class="top-btn" style="min-height:28px; padding:2px 8px; font-size:11px;" onclick="hostCyclePresets()">👥 Swap Team Presets</button>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+                <button id="hostCtrlBtn0" class="top-btn gold" onclick="hostSetControllingTeam(0)">⚡ Face-Off</button>
+                <button id="hostCtrlBtn1" class="top-btn" onclick="hostSetControllingTeam(1)">🎯 T1 Playing</button>
+                <button id="hostCtrlBtn2" class="top-btn" onclick="hostSetControllingTeam(2)">🎯 T2 Playing</button>
+              </div>
+            </div>
+
+            <!-- Manual Strikes -->
+            <div class="host-override-group">
+              <span class="field-label">❌ Manual Strike Overrides</span>
+              <button id="hostBtnFaceOffWrong" type="button" class="action-btn btn-red display-font" style="min-height:38px; font-size:12px;" onclick="hostFaceOffWrongGuess()">
+                ⚡ Face-Off Temp X (No Round Strike)
+              </button>
+              <div id="hostRoundStrikeRow" style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px;">
+                <button class="action-btn btn-red display-font" style="min-height:38px;" onclick="hostTriggerStrike(1)">X</button>
+                <button class="action-btn btn-red display-font" style="min-height:38px;" onclick="hostTriggerStrike(2)">XX</button>
+                <button class="action-btn btn-red display-font" style="min-height:38px;" onclick="hostTriggerStrike(3)">XXX</button>
+                <button class="top-btn" onclick="hostClearStrikes()">Clear</button>
+              </div>
+              <div id="hostStrikeHint" style="font-size:11px; color:#94a3b8;"></div>
+            </div>
+
+            <!-- Buzzer Simulation & View Switch -->
+            <div class="host-override-group">
+              <span class="field-label">🔔 Simulate Podium Buzzers</span>
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+                <button class="top-btn" onclick="hostManualBuzz(1)">Sim T1 Buzz</button>
+                <button class="top-btn" onclick="hostManualBuzz(2)">Sim T2 Buzz</button>
+                <button class="top-btn gold" onclick="hostResetBuzzers()">🔓 Reset Buzzers</button>
+              </div>
+              <button class="top-btn" style="margin-top:4px;" onclick="switchSoloAndHostView()">🔄 Switch This Window to Full-Screen TV Board</button>
+            </div>
+          </div>
+        </details>
       </div>
-      <div id="hostFmRows"></div>
     </div>
   </section>
 
@@ -802,13 +833,13 @@
   </section>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
-  <script src="./data/questions.js"></script>
-  <script src="./decks/catalog.js"></script>
-  <script src="./js/audio.js"></script>
-  <script src="./js/state.js"></script>
-  <script src="./js/formats.js"></script>
-  <script src="./js/sync.js"></script>
-  <script src="./js/views.js"></script>
-  <script src="./js/app.js"></script>
+  <script src="./data/questions.js?v=20261113e"></script>
+  <script src="./decks/catalog.js?v=20261113e"></script>
+  <script src="./js/audio.js?v=20261113e"></script>
+  <script src="./js/state.js?v=20261113e"></script>
+  <script src="./js/formats.js?v=20261113e"></script>
+  <script src="./js/sync.js?v=20261113e"></script>
+  <script src="./js/views.js?v=20261113e"></script>
+  <script src="./js/app.js?v=20261113e"></script>
 </body>
 </html>

@@ -195,12 +195,15 @@ window.Feud = window.Feud || {};
       options.roundsPerMatch !== undefined
         ? Number(options.roundsPerMatch)
         : Number(roomState.roundsPerMatch) || 0;
-    const roundOrder = options.roundOrder || roomState.roundOrder || "sequential";
+    const roundOrder = options.roundOrder || roomState.roundOrder || "shuffle-by-level";
     const deckKey = getDeckKey(roomState);
     const sourceRounds = getSourceRoundsList(roomState);
     const sourceFm = getSourceFastMoneyList(roomState);
     const stats = getDeckPlayStats(roomState);
-    const playedSet = new Set(stats.playedRounds);
+    const playedSet = new Set([
+      ...(stats.playedRounds || []),
+      ...(Array.isArray(roomState && roomState.usedRoundIndices) ? roomState.usedRoundIndices : [])
+    ]);
 
     // Separate regular rounds from Sudden-Death Tie-Breakers
     const regularIndices = [];
@@ -217,18 +220,88 @@ window.Feud = window.Feud || {};
 
     let chosenIndices = [];
     if (!roundsPerMatch || roundsPerMatch <= 0 || roundsPerMatch >= sourceRounds.length) {
-      // Use all rounds
+      // Use all rounds in the deck
       const allIdxs = sourceRounds.map((_, i) => i);
-      chosenIndices = roundOrder === "shuffle" ? shuffleArray(allIdxs) : allIdxs;
+      if (roundOrder === "shuffle-by-level") {
+        // Group regular rounds by multiplier (1x, 2x, 3x), shuffle within each level, keep level progression
+        const levelsMap = new Map();
+        poolIndices.forEach((idx) => {
+          const lvl = Number(sourceRounds[idx] && sourceRounds[idx].multiplier) || 1;
+          if (!levelsMap.has(lvl)) levelsMap.set(lvl, []);
+          levelsMap.get(lvl).push(idx);
+        });
+        const sortedLevels = Array.from(levelsMap.keys()).sort((a, b) => a - b);
+        sortedLevels.forEach((lvl) => {
+          chosenIndices.push(...shuffleArray(levelsMap.get(lvl)));
+        });
+        if (tieBreakerIndices.length > 0 && regularIndices.length > 0) {
+          chosenIndices.push(...shuffleArray(tieBreakerIndices));
+        }
+      } else if (roundOrder === "shuffle") {
+        chosenIndices = shuffleArray(allIdxs);
+      } else {
+        chosenIndices = allIdxs;
+      }
+    } else if (roundOrder === "shuffle-by-level" || roundOrder === "sequential") {
+      // Select rounds matching the match's multiplier schedule (e.g., 1x, 1x, 2x, 3x or 1x, 2x, 3x)
+      // while avoiding any previously used rounds in this deck.
+      const multSchedule =
+        getEscalatingMultipliers(roundsPerMatch) ||
+        Array.from({ length: roundsPerMatch }, (_, i) =>
+          i === 0 ? 1 : i === roundsPerMatch - 1 ? 3 : 2
+        );
+      const pickedInThisMatch = new Set();
+
+      for (let slot = 0; slot < roundsPerMatch; slot++) {
+        const targetMult = multSchedule[slot];
+        const levelPool = poolIndices.filter(
+          (idx) =>
+            !pickedInThisMatch.has(idx) &&
+            (Number(sourceRounds[idx] && sourceRounds[idx].multiplier) || 1) === targetMult
+        );
+
+        let available = levelPool.filter((idx) => !playedSet.has(idx));
+        // If all rounds of this multiplier level have been played, reset played history for this level
+        // (while still excluding rounds already picked for the current match)
+        if (available.length === 0 && levelPool.length > 0) {
+          levelPool.forEach((idx) => playedSet.delete(idx));
+          available = levelPool.slice();
+        }
+
+        if (roundOrder === "shuffle-by-level" && available.length > 1) {
+          available = shuffleArray(available);
+        }
+
+        let pickedIdx = available.length > 0 ? available[0] : undefined;
+
+        // Fallback if a custom deck doesn't have enough rounds tagged with this specific multiplier
+        if (pickedIdx === undefined) {
+          let fallbackPool = poolIndices.filter(
+            (idx) => !pickedInThisMatch.has(idx) && !playedSet.has(idx)
+          );
+          if (fallbackPool.length === 0) {
+            fallbackPool = poolIndices.filter((idx) => !pickedInThisMatch.has(idx));
+          }
+          if (roundOrder !== "sequential" && fallbackPool.length > 1) {
+            fallbackPool = shuffleArray(fallbackPool);
+          }
+          pickedIdx = fallbackPool[0];
+        }
+
+        if (pickedIdx !== undefined) {
+          pickedInThisMatch.add(pickedIdx);
+          chosenIndices.push(pickedIdx);
+        }
+      }
     } else {
+      // "shuffle" across any level
       let unplayedPool = poolIndices.filter((i) => !playedSet.has(i));
-      // If not enough unplayed rounds remain for a full match, take what's left and wrap around!
       if (unplayedPool.length < roundsPerMatch) {
         const freshPool = poolIndices.filter((i) => !unplayedPool.includes(i));
-        const orderedFresh = roundOrder === "shuffle" ? shuffleArray(freshPool) : freshPool;
+        const orderedFresh = shuffleArray(freshPool);
         unplayedPool = unplayedPool.concat(orderedFresh);
         playedSet.clear();
-      } else if (roundOrder === "shuffle") {
+      } else {
         unplayedPool = shuffleArray(unplayedPool);
       }
 
@@ -245,7 +318,7 @@ window.Feud = window.Feud || {};
         sourceIdx: srcIdx,
         title:
           roundsPerMatch > 0 && roundsPerMatch < sourceRounds.length
-            ? `Round ${matchPos + 1} (Deck #${srcIdx + 1})`
+            ? `Round ${matchPos + 1} (${mult}x • Deck #${srcIdx + 1})`
             : orig.title || `Round ${matchPos + 1}`,
         multiplier: mult
       };
@@ -257,10 +330,17 @@ window.Feud = window.Feud || {};
       roundsPerMatch < sourceRounds.length &&
       tieBreakerIndices.length > 0
     ) {
-      const unplayedTie =
-        tieBreakerIndices.find((i) => !playedSet.has(i)) ?? tieBreakerIndices[0];
+      let unplayedTieCandidates = tieBreakerIndices.filter((i) => !playedSet.has(i));
+      if (unplayedTieCandidates.length === 0) {
+        unplayedTieCandidates = tieBreakerIndices.slice();
+      }
+      if (roundOrder !== "sequential" && unplayedTieCandidates.length > 1) {
+        unplayedTieCandidates = shuffleArray(unplayedTieCandidates);
+      }
+      const unplayedTie = unplayedTieCandidates[0];
       const tieRound = sourceRounds[unplayedTie];
       if (tieRound) {
+        playedSet.add(unplayedTie);
         matchRounds.push({
           ...tieRound,
           sourceIdx: unplayedTie,
@@ -305,9 +385,109 @@ window.Feud = window.Feud || {};
     return {
       matchRounds,
       matchSourceIndices: chosenIndices,
+      usedRoundIndices: Array.from(playedSet),
       matchFastMoney,
       activeFmSetIdx: fmSetIdx,
       matchNumber: allHist[deckKey].matchNumber
+    };
+  }
+
+  function pickRandomUnplayedRoundForLevel(roomState, roundIdx) {
+    const deckKey = getDeckKey(roomState);
+    const sourceRounds = getSourceRoundsList(roomState);
+    const baseRounds = getBaseRoundsList(roomState);
+    const safeIdx = Math.max(0, Math.min(baseRounds.length - 1, Number(roundIdx) || 0));
+    const currentRound = baseRounds[safeIdx] || sourceRounds[0];
+    if (!currentRound || sourceRounds.length === 0) return null;
+
+    const targetMult = Number(currentRound.multiplier) || 1;
+    const isCurrentTieBreaker =
+      /tie-?breaker|sudden\s*death/i.test(currentRound.title || "") ||
+      /tie-?breaker|sudden\s*death/i.test(currentRound.theme || "");
+
+    const stats = getDeckPlayStats(roomState);
+    const playedSet = new Set([
+      ...(stats.playedRounds || []),
+      ...(Array.isArray(roomState && roomState.usedRoundIndices) ? roomState.usedRoundIndices : [])
+    ]);
+
+    // Never pick a round that is already in the current match's active round slots
+    const activeMatchSourceSet = new Set(
+      baseRounds
+        .map((r, i) => (r && r.sourceIdx !== undefined ? r.sourceIdx : i))
+        .filter((idx) => Number.isInteger(idx))
+    );
+    const currentSourceIdx =
+      currentRound.sourceIdx !== undefined ? currentRound.sourceIdx : safeIdx;
+    playedSet.add(currentSourceIdx);
+
+    const matchingLevelIndices = [];
+    sourceRounds.forEach((r, idx) => {
+      if (idx === currentSourceIdx) return;
+      const isTie =
+        /tie-?breaker|sudden\s*death/i.test(r.title || "") ||
+        /tie-?breaker|sudden\s*death/i.test(r.theme || "");
+      if (isCurrentTieBreaker) {
+        if (isTie) matchingLevelIndices.push(idx);
+      } else if (!isTie && (Number(r.multiplier) || 1) === targetMult) {
+        matchingLevelIndices.push(idx);
+      }
+    });
+
+    // Prefer candidates not in the current match and not yet played in this game/session
+    let candidates = matchingLevelIndices.filter(
+      (idx) => !activeMatchSourceSet.has(idx) && !playedSet.has(idx)
+    );
+
+    // If all questions at this level have been played across prior matches, wrap around this level's pool
+    // while still avoiding questions currently in the active match
+    if (candidates.length === 0) {
+      const nonActiveSameLevel = matchingLevelIndices.filter(
+        (idx) => !activeMatchSourceSet.has(idx)
+      );
+      if (nonActiveSameLevel.length > 0) {
+        nonActiveSameLevel.forEach((idx) => playedSet.delete(idx));
+        candidates = nonActiveSameLevel;
+      } else if (matchingLevelIndices.length > 0) {
+        candidates = matchingLevelIndices;
+      }
+    }
+
+    if (candidates.length === 0) return null;
+
+    const chosenSourceIdx = shuffleArray(candidates)[0];
+    playedSet.add(chosenSourceIdx);
+
+    const allHist = loadAllPlayedHistory();
+    const prevEntry = allHist[deckKey] || { playedRounds: [], playedFmSets: [], matchNumber: 1 };
+    allHist[deckKey] = {
+      ...prevEntry,
+      playedRounds: Array.from(playedSet)
+    };
+    saveAllPlayedHistory(allHist);
+
+    const orig = sourceRounds[chosenSourceIdx];
+    const newRoundObj = {
+      ...orig,
+      sourceIdx: chosenSourceIdx,
+      title: isCurrentTieBreaker
+        ? `Tie-Breaker (Bonus • Deck #${chosenSourceIdx + 1})`
+        : `Round ${safeIdx + 1} (${targetMult}x • Deck #${chosenSourceIdx + 1})`,
+      multiplier: targetMult
+    };
+
+    const nextMatchRounds = baseRounds.map((r, i) => (i === safeIdx ? newRoundObj : { ...r }));
+    const nextMatchSourceIndices = nextMatchRounds.map((r, i) =>
+      r.sourceIdx !== undefined ? r.sourceIdx : i
+    );
+
+    return {
+      newRound: newRoundObj,
+      chosenSourceIdx,
+      targetMult,
+      matchRounds: nextMatchRounds,
+      matchSourceIndices: nextMatchSourceIndices,
+      usedRoundIndices: Array.from(playedSet)
     };
   }
 
@@ -340,10 +520,11 @@ window.Feud = window.Feud || {};
       stage: "main", // 'main' | 'fast' | 'winner'
       enableFastMoney: true,
       roundsPerMatch: 4,
-      roundOrder: "sequential",
+      roundOrder: "shuffle-by-level",
       matchNumber: 1,
       matchRounds: null,
       matchSourceIndices: null,
+      usedRoundIndices: [],
       matchFastMoney: fmList,
       activeFmSetIdx: 0,
       roundIdx: 0,
@@ -521,6 +702,7 @@ window.Feud = window.Feud || {};
     getDeckPlayStats,
     resetDeckPlayedHistory,
     buildMatchSlice,
+    pickRandomUnplayedRoundForLevel,
     getActiveTeamPresets,
     createDefaultRoomState,
     getBaseRoundsList,

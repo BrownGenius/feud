@@ -325,7 +325,7 @@ window.Feud = window.Feud || {};
     if (t2In) t2In.value = roomState.team2Name || "Team Omega";
     if (timerSel) timerSel.value = String(roomState.turnTimerDuration || 10);
     if (rdsSel) rdsSel.value = String(roomState.roundsPerMatch ?? 4);
-    if (orderSel) orderSel.value = roomState.roundOrder || "sequential";
+    if (orderSel) orderSel.value = roomState.roundOrder || "shuffle-by-level";
     if (fmCheck) fmCheck.checked = roomState.enableFastMoney !== false;
     if (autoXCheck) autoXCheck.checked = Boolean(roomState.autoStartTimerOnStrike);
     if (pinIn && lobbyPin && lobbyPin.value.trim()) {
@@ -381,7 +381,8 @@ window.Feud = window.Feud || {};
       document.getElementById("setupRoundsPerMatchSelect")?.value ?? "4",
       10
     );
-    const roundOrder = document.getElementById("setupRoundOrderSelect")?.value || "sequential";
+    const roundOrder =
+      document.getElementById("setupRoundOrderSelect")?.value || "shuffle-by-level";
     const enableFastMoney = Boolean(
       document.getElementById("setupEnableFastMoneyCheckbox")?.checked
     );
@@ -424,6 +425,7 @@ window.Feud = window.Feud || {};
       matchNumber: slice.matchNumber,
       matchRounds: slice.matchRounds,
       matchSourceIndices: slice.matchSourceIndices,
+      usedRoundIndices: slice.usedRoundIndices || slice.matchSourceIndices || [],
       matchFastMoney: slice.matchFastMoney,
       activeFmSetIdx: slice.activeFmSetIdx,
       roundIdx: 0,
@@ -583,6 +585,47 @@ window.Feud = window.Feud || {};
     openNewGameModal("solo");
   }
 
+  let embeddedTvResizeObserver = null;
+
+  function updateEmbeddedTvScale() {
+    const tvEl = document.getElementById("tvView");
+    const dockEl = document.getElementById("hostTvMonitorDock");
+    if (!tvEl || !dockEl || !tvEl.classList.contains("embedded-in-host")) return;
+    const dockWidth = dockEl.clientWidth || 480;
+    const scale = Math.max(0.18, Math.min(1, dockWidth / 1280));
+    tvEl.style.setProperty("--tv-scale", scale.toFixed(4));
+  }
+
+  function syncTvViewPlacement(role) {
+    const tvEl = document.getElementById("tvView");
+    const dockEl = document.getElementById("hostTvMonitorDock");
+    const anchorEl = document.getElementById("tvViewRootAnchor");
+    if (!tvEl) return;
+
+    if (role === "host" && dockEl) {
+      if (tvEl.parentElement !== dockEl) {
+        dockEl.appendChild(tvEl);
+      }
+      tvEl.classList.add("embedded-in-host");
+      tvEl.classList.remove("hidden");
+      if (!embeddedTvResizeObserver && typeof ResizeObserver !== "undefined") {
+        embeddedTvResizeObserver = new ResizeObserver(() => updateEmbeddedTvScale());
+        embeddedTvResizeObserver.observe(dockEl);
+      }
+      requestAnimationFrame(() => updateEmbeddedTvScale());
+    } else {
+      tvEl.classList.remove("embedded-in-host");
+      tvEl.style.removeProperty("--tv-scale");
+      if (anchorEl && anchorEl.parentNode && tvEl.previousElementSibling !== anchorEl) {
+        anchorEl.parentNode.insertBefore(tvEl, anchorEl.nextSibling);
+      }
+    }
+  }
+
+  window.addEventListener("resize", () => {
+    if (activeRole === "host") updateEmbeddedTvScale();
+  });
+
   function enterRole(role, code) {
     activeRole = role;
     document.body.classList.toggle("tv-viewport-lock", role === "tv" || role === "solo");
@@ -606,10 +649,14 @@ window.Feud = window.Feud || {};
     if (qrBtn) qrBtn.classList.toggle("hidden", code === "SOLO");
     leaveBtn.classList.remove("hidden");
 
+    syncTvViewPlacement(role);
+
     if (role === "host") {
       document.getElementById("hostView").classList.remove("hidden");
+      document.getElementById("tvView").classList.remove("hidden");
       sub.textContent = `Host Remote • PIN: ${roomState.pin}`;
       Feud.populateRoundDropdowns(roomState);
+      requestAnimationFrame(() => updateEmbeddedTvScale());
     } else if (role === "tv") {
       document.getElementById("tvView").classList.remove("hidden");
       sub.textContent = "TV Display Screen (Cast Mode)";
@@ -688,6 +735,7 @@ window.Feud = window.Feud || {};
     clearInterval(hostFmTimerInterval);
     hostFmTimerInterval = null;
     activeRole = "lobby";
+    syncTvViewPlacement("lobby");
     document.body.classList.remove("tv-viewport-lock");
     document.getElementById("lobbyView").classList.remove("hidden");
     document.getElementById("tvView").classList.add("hidden");
@@ -858,6 +906,7 @@ window.Feud = window.Feud || {};
       matchNumber: slice.matchNumber,
       matchRounds: slice.matchRounds,
       matchSourceIndices: slice.matchSourceIndices,
+      usedRoundIndices: slice.usedRoundIndices || slice.matchSourceIndices || [],
       matchFastMoney: slice.matchFastMoney,
       activeFmSetIdx: slice.activeFmSetIdx,
       roundIdx: 0,
@@ -930,7 +979,9 @@ window.Feud = window.Feud || {};
     if (activeRole === "tv" || activeRole === "solo") {
       Feud.renderTvView(roomState, activeRole, viewHandlers);
     } else if (activeRole === "host") {
+      Feud.renderTvView(roomState, "tv", viewHandlers);
       Feud.renderHostView(roomState, viewHandlers);
+      updateEmbeddedTvScale();
     } else if (activeRole === "buzzer1" || activeRole === "buzzer2") {
       Feud.renderBuzzerView(roomState, activeRole);
     }
@@ -1336,6 +1387,8 @@ window.Feud = window.Feud || {};
         roundWinnerTeam: stealTeam,
         controllingTeam: stealTeam,
         buzzerWinner: 0,
+        buzzerArmedTeam: 0,
+        turnTimerRemaining: dur,
         turnTimerRunning: false,
         fanfareSeq: nextFanfare
       });
@@ -1366,6 +1419,8 @@ window.Feud = window.Feud || {};
         controllingTeam: playTeam,
         originalPlayingTeam: playTeam,
         buzzerWinner: 0,
+        buzzerArmedTeam: 0,
+        turnTimerRemaining: dur,
         turnTimerRunning: false,
         fanfareSeq: nextFanfare
       });
@@ -1567,7 +1622,7 @@ window.Feud = window.Feud || {};
     }
   }
 
-  async function hostRevealAll() {
+  async function hostRevealNextAnswer() {
     Feud.unlockAudio();
     const phase = roomState.roundPhase || "faceoff-ready";
     if (
@@ -1581,7 +1636,12 @@ window.Feud = window.Feud || {};
     }
     stopLocalTurnTimerInterval();
     const round = Feud.getRoundData(roomState, roomState.roundIdx);
-    const revSet = new Set(roomState.revealed || []);
+    const cleanExisting = Array.isArray(roomState.revealed)
+      ? roomState.revealed
+          .map((n) => Number(n))
+          .filter((n) => Number.isInteger(n) && n >= 0 && n < round.answers.length)
+      : [];
+    const revSet = new Set(cleanExisting);
     let nextIdx = -1;
     for (let i = 0; i < round.answers.length; i++) {
       if (!revSet.has(i)) {
@@ -1606,6 +1666,10 @@ window.Feud = window.Feud || {};
         ? `👁️ Revealed #${nextIdx + 1}: "${round.answers[nextIdx].text}" (${remaining} remaining)`
         : "✅ All answers on the board revealed!"
     );
+  }
+
+  async function hostRevealAll() {
+    await hostRevealNextAnswer();
   }
 
   async function hostResetRound() {
@@ -1667,6 +1731,45 @@ window.Feud = window.Feud || {};
     const total = Feud.getRoundCount(roomState);
     const next = (roomState.roundIdx + 1) % total;
     await hostSelectRound(next);
+  }
+
+  async function hostRandomizeCurrentRound() {
+    Feud.unlockAudio();
+    stopLocalTurnTimerInterval();
+    const res = Feud.pickRandomUnplayedRoundForLevel(roomState, roomState.roundIdx);
+    if (!res) {
+      Feud.showToast("No other questions at this multiplier level were found in the current deck.");
+      return;
+    }
+    const dur = Number(roomState.turnTimerDuration) || 10;
+    await pushRoomPatch({
+      stage: "main",
+      matchRounds: res.matchRounds,
+      matchSourceIndices: res.matchSourceIndices,
+      usedRoundIndices: res.usedRoundIndices,
+      roundPhase: "faceoff-ready",
+      questionRevealed: false,
+      controllingTeam: 0,
+      faceoffFirstTeam: 0,
+      faceoffBestRank: 999,
+      faceoffWinnerTeam: 0,
+      originalPlayingTeam: 0,
+      roundWinnerTeam: 0,
+      lastOverlayXCount: 1,
+      turnTimerRemaining: dur,
+      turnTimerRunning: false,
+      revealed: [],
+      pot: 0,
+      strikes: 0,
+      buzzerWinner: 0,
+      buzzerArmedTeam: 0
+    });
+    Feud.populateRoundDropdowns(roomState);
+    Feud.showToast(
+      `🎲 Randomized Round ${roomState.roundIdx + 1} (${res.targetMult}x) → Deck #${
+        res.chosenSourceIdx + 1
+      }!`
+    );
   }
 
   async function hostManualBuzz(team) {
@@ -1824,6 +1927,7 @@ window.Feud = window.Feud || {};
       Feud.showToast("Round Pot is 0 — reveal an answer first!");
       return;
     }
+    const dur = Number(roomState.turnTimerDuration) || 10;
     Feud.playFanfare();
     const nextFanfare = (roomState.fanfareSeq || 0) + 1;
     if (team === 1) {
@@ -1833,6 +1937,9 @@ window.Feud = window.Feud || {};
         roundPhase: "round-over",
         roundWinnerTeam: 1,
         controllingTeam: 1,
+        buzzerWinner: 0,
+        buzzerArmedTeam: 0,
+        turnTimerRemaining: dur,
         turnTimerRunning: false,
         fanfareSeq: nextFanfare
       });
@@ -1844,6 +1951,9 @@ window.Feud = window.Feud || {};
         roundPhase: "round-over",
         roundWinnerTeam: 2,
         controllingTeam: 2,
+        buzzerWinner: 0,
+        buzzerArmedTeam: 0,
+        turnTimerRemaining: dur,
         turnTimerRunning: false,
         fanfareSeq: nextFanfare
       });
@@ -2169,7 +2279,18 @@ window.Feud = window.Feud || {};
     const presets = Feud.getActiveTeamPresets({ customDeck });
     const [t1, t2] = presets[0] || [roomState.team1Name, roomState.team2Name];
 
-    const fmList = (customDeck.fastMoney || Feud.getFastMoneyList({ customDeck })).slice(0, 5);
+    const slice = Feud.buildMatchSlice(
+      { ...roomState, customDeck, usedRoundIndices: [] },
+      {
+        roundsPerMatch: roomState.roundsPerMatch ?? 4,
+        roundOrder: roomState.roundOrder || "shuffle-by-level",
+        enableFastMoney: roomState.enableFastMoney !== false
+      }
+    );
+    const fmList =
+      slice.matchFastMoney && slice.matchFastMoney.length > 0
+        ? slice.matchFastMoney
+        : (customDeck.fastMoney || Feud.getFastMoneyList({ customDeck })).slice(0, 5);
     stopLocalTurnTimerInterval();
     const dur = Number(roomState.turnTimerDuration) || 10;
     await pushRoomPatch({
@@ -2179,8 +2300,9 @@ window.Feud = window.Feud || {};
       team2Name: t2,
       customDeck,
       customRounds: {},
-      matchRounds: null,
-      matchSourceIndices: null,
+      matchRounds: slice.matchRounds,
+      matchSourceIndices: slice.matchSourceIndices,
+      usedRoundIndices: slice.usedRoundIndices || [],
       matchFastMoney: fmList,
       roundIdx: 0,
       roundPhase: "faceoff-ready",
@@ -2416,11 +2538,13 @@ window.Feud = window.Feud || {};
     hostSetFaceOffWinner,
     hostSetControllingTeam,
     hostToggleAnswer,
+    hostRevealNextAnswer,
     hostRevealAll,
     hostResetRound,
     hostSelectRound,
     hostPrevRound,
     hostNextRound,
+    hostRandomizeCurrentRound,
     hostManualBuzz,
     hostResetBuzzers,
     hostTriggerStrike,
