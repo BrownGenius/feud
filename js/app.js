@@ -873,8 +873,16 @@ window.Feud = window.Feud || {};
         await pushRoomPatch({ turnTimerRemaining: next, turnTimerRunning: true });
       } else {
         stopLocalTurnTimerInterval();
-        // Automatically issue the next "X" and advance the game flow when the timer hits 0!
-        await hostHandleWrongAnswer({ fromTimer: true });
+        const nextTimeUp = (roomState.timeUpSeq || 0) + 1;
+        Feud.playBuzzerHonk();
+        Feud.showToast(
+          "⏰ Time's Up! You can still tap a board answer, tap ❌ Wrong (X), or Restart Timer (R)."
+        );
+        await pushRoomPatch({
+          turnTimerRemaining: 0,
+          turnTimerRunning: false,
+          timeUpSeq: nextTimeUp
+        });
       }
     }, 1000);
   }
@@ -2083,6 +2091,20 @@ window.Feud = window.Feud || {};
     document.getElementById("btnMute").textContent = muted ? "🔇 Muted" : "🔊 Sound";
     Feud.showToast(muted ? "Sound Muted" : "Sound Enabled");
   }
+
+  function syncFullscreenBodyClass() {
+    const isFs = Boolean(
+      document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        (window.innerHeight >= window.screen.height - 2 &&
+          window.innerWidth >= window.screen.width - 2)
+    );
+    document.body.classList.toggle("is-fullscreen", isFs);
+  }
+
+  document.addEventListener("fullscreenchange", syncFullscreenBodyClass);
+  document.addEventListener("webkitfullscreenchange", syncFullscreenBodyClass);
+  window.addEventListener("resize", syncFullscreenBodyClass);
 
   function toggleFullScreen() {
     const el = document.documentElement;

@@ -440,35 +440,56 @@
        VIEW 2: TV DISPLAY BOARD (CAST TO LIVING ROOM TV OR PLAY SOLO)
        ===================================================================== -->
   <section id="tvView" class="stage-wrap hidden">
-    <div class="tv-top-strip">
-      <div class="pill-badge" id="tvThemeBadge">Live Party Poll</div>
-
-      <div class="pot-box">
-        <div class="pot-label">Round Pot</div>
-        <div id="tvPotValue" class="pot-value display-font">0</div>
-        <div id="tvMultBadge" class="mult-pill">1x Single Points</div>
+    <!-- TOP SCOREBOARD & CENTRAL TIMER HUD -->
+    <div class="tv-top-hud">
+      <!-- Left: Team 1 Score Pod -->
+      <div id="tvTeam1Card" class="marquee-panel team-display-card tv-team-pod">
+        <div class="tv-team-meta">
+          <span id="tvTeam1ControlBadge" class="control-badge hidden">🎯 Playing Board</span>
+          <div id="tvTeam1Name" class="team-display-name display-font">Team A</div>
+        </div>
+        <div id="tvTeam1Score" class="team-display-score display-font">0</div>
       </div>
 
-      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
-        <div id="tvTurnTimerBadge" class="turn-timer-pill display-font">
-          ⏱️ <span id="tvTurnTimerValue">10s</span>
+      <!-- Center: Round Pot + Giant Shot-Clock Timer + Strikes -->
+      <div class="tv-center-hud">
+        <div class="tv-center-hud-main">
+          <div class="pot-box">
+            <div class="pot-label">Round Pot</div>
+            <div id="tvPotValue" class="pot-value display-font">0</div>
+            <div id="tvMultBadge" class="mult-pill">1x Single Points</div>
+          </div>
+
+          <div id="tvTurnTimerBadge" class="turn-timer-pill tv-hero-timer display-font">
+            <span class="tv-timer-label">TIMER</span>
+            <span id="tvTurnTimerValue" class="tv-timer-digits">10s</span>
+          </div>
         </div>
-        <div class="pill-badge" id="tvStrikesBadge" style="border-color:#ef4444; color:#fca5a5;">
-          Strikes: 0 / 3
+
+        <div class="tv-center-hud-meta">
+          <span class="pill-badge" id="tvThemeBadge">Live Party Poll</span>
+          <span class="pill-badge tv-strikes-pill" id="tvStrikesBadge">
+            Strikes: 0 / 3
+          </span>
+        </div>
+      </div>
+
+      <!-- Right: Team 2 Score Pod -->
+      <div id="tvTeam2Card" class="marquee-panel team-display-card tv-team-pod tv-team-pod-right">
+        <div id="tvTeam2Score" class="team-display-score display-font">0</div>
+        <div class="tv-team-meta">
+          <span id="tvTeam2ControlBadge" class="control-badge hidden">🎯 Playing Board</span>
+          <div id="tvTeam2Name" class="team-display-name display-font">Team B</div>
         </div>
       </div>
     </div>
 
-    <!-- MAIN ROUND BOARD ON TV -->
-    <div id="tvMainBoardWrap" class="arena-grid">
-      <div id="tvTeam1Card" class="marquee-panel team-display-card">
-        <span id="tvTeam1ControlBadge" class="control-badge hidden">🎯 Playing Board</span>
-        <div id="tvTeam1Name" class="team-display-name display-font">Team A</div>
-        <div id="tvTeam1Score" class="team-display-score display-font">0</div>
-      </div>
-
+    <!-- MAIN ROUND BOARD ON TV (FULL WIDTH AT BOTTOM) -->
+    <div id="tvMainBoardWrap" class="tv-board-fullwrap">
       <div class="marquee-panel tv-center-board">
         <div class="bulb-strip" aria-hidden="true">
+          <span class="bulb-dot"></span><span class="bulb-dot"></span><span class="bulb-dot"></span>
+          <span class="bulb-dot"></span><span class="bulb-dot"></span><span class="bulb-dot"></span>
           <span class="bulb-dot"></span><span class="bulb-dot"></span><span class="bulb-dot"></span>
           <span class="bulb-dot"></span><span class="bulb-dot"></span><span class="bulb-dot"></span>
           <span class="bulb-dot"></span><span class="bulb-dot"></span><span class="bulb-dot"></span>
@@ -491,13 +512,9 @@
           <span class="bulb-dot"></span><span class="bulb-dot"></span><span class="bulb-dot"></span>
           <span class="bulb-dot"></span><span class="bulb-dot"></span><span class="bulb-dot"></span>
           <span class="bulb-dot"></span><span class="bulb-dot"></span><span class="bulb-dot"></span>
+          <span class="bulb-dot"></span><span class="bulb-dot"></span><span class="bulb-dot"></span>
+          <span class="bulb-dot"></span><span class="bulb-dot"></span><span class="bulb-dot"></span>
         </div>
-      </div>
-
-      <div id="tvTeam2Card" class="marquee-panel team-display-card">
-        <span id="tvTeam2ControlBadge" class="control-badge hidden">🎯 Playing Board</span>
-        <div id="tvTeam2Name" class="team-display-name display-font">Team B</div>
-        <div id="tvTeam2Score" class="team-display-score display-font">0</div>
       </div>
     </div>
 

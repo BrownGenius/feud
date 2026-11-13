@@ -1041,7 +1041,7 @@ button:disabled {
 }
 
 /* =====================================================================
-   10. ADAPTIVE FULL-VIEWPORT TV DISPLAY (NO SCROLLBARS, FILLS ANY SCREEN)
+   10. ADAPTIVE FULL-VIEWPORT TV DISPLAY (CLASSIC GAME SHOW LAYOUT)
    ===================================================================== */
 body.tv-viewport-lock,
 body:has(#tvView:not(.hidden)) {
@@ -1056,7 +1056,14 @@ body:has(#tvView:not(.hidden)) {
 body.tv-viewport-lock .top-bar,
 body:has(#tvView:not(.hidden)) .top-bar {
   flex: 0 0 auto;
-  padding: clamp(4px, 0.8vh, 10px) clamp(10px, 1.5vw, 24px);
+  padding: clamp(4px, 0.7vh, 8px) clamp(10px, 1.5vw, 24px);
+}
+
+/* Hide the top navigation buttons completely when in Fullscreen Mode */
+:fullscreen .top-bar,
+:-webkit-full-screen .top-bar,
+body.is-fullscreen .top-bar {
+  display: none !important;
 }
 
 #tvView {
@@ -1065,78 +1072,187 @@ body:has(#tvView:not(.hidden)) .top-bar {
   width: 100%;
   max-width: 100%;
   margin: 0;
-  padding: clamp(6px, 1.2vh, 18px) clamp(10px, 1.6vw, 28px);
+  padding: clamp(6px, 1.1vh, 16px) clamp(10px, 1.6vw, 28px);
   gap: clamp(6px, 1.1vh, 14px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-#tvView .tv-top-strip {
+/* Top Scoreboard & Central Shot-Clock HUD */
+.tv-top-hud {
   flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: clamp(8px, 1.4vw, 22px);
+}
+
+@media (max-width: 820px) {
+  .tv-top-hud {
+    grid-template-columns: 1fr 1fr;
+  }
+  .tv-center-hud {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+}
+
+.tv-team-pod {
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: clamp(6px, 1.1vh, 14px) clamp(12px, 1.6vw, 22px) !important;
+  gap: clamp(10px, 1.4vw, 20px) !important;
+  border-radius: 18px;
+}
+
+.tv-team-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.tv-team-pod-right .tv-team-meta {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.tv-team-pod .team-display-name {
+  font-size: clamp(16px, min(2.2vw, 3.2vh), 32px);
+  line-height: 1.1;
+  word-break: break-word;
+  text-align: left;
+}
+
+.tv-team-pod-right .team-display-name {
+  text-align: right;
+}
+
+.tv-team-pod .team-display-score {
+  width: auto;
+  min-width: clamp(78px, 9.5vw, 150px);
+  padding: clamp(6px, 1.1vh, 14px) clamp(12px, 1.6vw, 22px);
+  font-size: clamp(28px, min(4.2vw, 6vh), 64px);
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+/* Center HUD: Pot + Giant Central Timer + Round Info */
+.tv-center-hud {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(4px, 0.7vh, 8px);
+}
+
+.tv-center-hud-main {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
   gap: clamp(8px, 1.2vw, 16px);
 }
 
 #tvView .pot-box {
-  padding: clamp(4px, 0.7vh, 10px) clamp(16px, 2.2vw, 36px);
-  min-width: clamp(160px, 16vw, 260px);
-  border-radius: 14px;
+  padding: clamp(4px, 0.8vh, 10px) clamp(16px, 2.2vw, 32px);
+  min-width: clamp(145px, 14vw, 230px);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 #tvView .pot-value {
-  font-size: clamp(24px, min(4vw, 5vh), 56px);
+  font-size: clamp(26px, min(3.8vw, 5.2vh), 54px);
 }
 
-#tvMainBoardWrap {
+/* Giant Central Shot-Clock Timer in the Middle Top */
+.tv-hero-timer {
+  min-width: clamp(110px, 11vw, 175px);
+  padding: clamp(4px, 0.8vh, 10px) clamp(14px, 1.8vw, 26px);
+  border-radius: 16px;
+  border-width: 3.5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  box-shadow: 0 0 24px rgba(251, 191, 36, 0.35);
+}
+
+.tv-timer-label {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: var(--gold-pale);
+  line-height: 1;
+}
+
+.tv-timer-digits {
+  font-size: clamp(28px, min(4vw, 5.5vh), 58px);
+  line-height: 1.05;
+  font-weight: 900;
+}
+
+.tv-center-hud-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.tv-center-hud-meta .pill-badge {
+  min-height: 26px;
+  padding: 3px 10px;
+  font-size: clamp(10px, min(1.1vw, 1.7vh), 13px);
+}
+
+.tv-strikes-pill {
+  border-color: #ef4444;
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.55);
+}
+
+/* Full-Width Bottom Question & Answer Board */
+#tvMainBoardWrap.tv-board-fullwrap {
   flex: 1 1 0;
   min-height: 0;
   height: 100%;
-}
-
-@media (min-width: 760px) {
-  #tvMainBoardWrap.arena-grid {
-    grid-template-columns: clamp(165px, 17.5vw, 340px) 1fr clamp(165px, 17.5vw, 340px);
-    gap: clamp(8px, 1.2vw, 20px);
-  }
-}
-
-#tvMainBoardWrap .team-display-card {
-  min-height: 0;
-  height: 100%;
-  padding: clamp(10px, 1.8vh, 24px) clamp(8px, 1.2vw, 18px);
-  gap: clamp(8px, 1.5vh, 18px);
-}
-
-#tvMainBoardWrap .team-display-name {
-  font-size: clamp(16px, min(2.1vw, 3.2vh), 34px);
-  word-break: break-word;
-}
-
-#tvMainBoardWrap .team-display-score {
-  padding: clamp(10px, 2vh, 28px) 8px;
-  font-size: clamp(32px, min(5.2vw, 7.6vh), 88px);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .tv-center-board {
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: clamp(6px, 1.1vh, 14px);
+  gap: clamp(8px, 1.3vh, 16px);
   min-height: 0;
   height: 100%;
-  padding: clamp(8px, 1.3vh, 18px) clamp(10px, 1.5vw, 22px);
+  width: 100%;
+  padding: clamp(10px, 1.5vh, 22px) clamp(14px, 2vw, 32px);
   overflow: hidden;
 }
 
 #tvView .prompt-banner {
   flex: 0 0 auto;
-  padding: clamp(6px, 1.1vh, 16px) clamp(10px, 1.6vw, 22px);
+  padding: clamp(8px, 1.4vh, 20px) clamp(14px, 2vw, 32px);
+  border-width: 3px;
 }
 
 #tvView .prompt-question {
-  font-size: clamp(14px, min(2vw, 3vh), 30px);
+  font-size: clamp(18px, min(2.6vw, 3.8vh), 40px);
   line-height: 1.22;
-  margin-top: clamp(2px, 0.4vh, 6px);
+  margin-top: clamp(2px, 0.5vh, 6px);
 }
 
 #tvAnswerGrid.answers-columns {
@@ -1145,14 +1261,14 @@ body:has(#tvView:not(.hidden)) .top-bar {
   height: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: clamp(6px, 1.1vh, 14px);
+  gap: clamp(8px, 1.4vw, 20px);
   align-items: stretch;
 }
 
 #tvAnswerGrid .answer-col {
   display: grid;
   grid-template-rows: repeat(var(--rows-per-col, 4), 1fr);
-  gap: clamp(6px, 1.1vh, 14px);
+  gap: clamp(8px, 1.3vh, 16px);
   min-height: 0;
   height: 100%;
 }
@@ -1161,27 +1277,40 @@ body:has(#tvView:not(.hidden)) .top-bar {
 #tvAnswerGrid .feud-tile-empty {
   min-height: 0;
   height: 100%;
+  border-radius: 16px;
+}
+
+#tvAnswerGrid .feud-tile.revealed-state {
+  padding-left: clamp(14px, 1.8vw, 26px);
+  border-width: 3px;
+}
+
+#tvAnswerGrid .feud-tile.hidden-state {
+  border-width: 3px;
 }
 
 #tvAnswerGrid .tile-num-badge {
-  width: clamp(36px, min(4.2vw, 5.6vh), 64px);
-  height: clamp(28px, min(3.4vw, 4.6vh), 52px);
-  font-size: clamp(16px, min(2.2vw, 3.2vh), 32px);
+  width: clamp(46px, min(5.2vw, 7vh), 82px);
+  height: clamp(36px, min(4.2vw, 5.8vh), 66px);
+  font-size: clamp(20px, min(2.8vw, 4.2vh), 42px);
+  border-width: 2.5px;
 }
 
 #tvAnswerGrid .tile-ans-text {
-  font-size: clamp(12px, min(1.55vw, 2.4vh), 24px);
+  font-size: clamp(15px, min(2.1vw, 3.3vh), 34px);
+  line-height: 1.18;
 }
 
 #tvAnswerGrid .tile-pts-box {
-  min-width: clamp(48px, 5vw, 84px);
-  font-size: clamp(16px, min(2.2vw, 3.4vh), 34px);
+  min-width: clamp(64px, 6.8vw, 116px);
+  font-size: clamp(20px, min(2.9vw, 4.4vh), 46px);
+  border-left-width: 3px;
 }
 
 #tvView .buzzer-banner-tv {
   flex: 0 0 auto;
-  padding: clamp(6px, 1vh, 14px) 14px;
-  font-size: clamp(13px, min(1.7vw, 2.4vh), 24px);
+  padding: clamp(6px, 1vh, 12px) 16px;
+  font-size: clamp(14px, min(1.8vw, 2.6vh), 26px);
 }
 
 #tvFastMoneyWrap {

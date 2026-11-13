@@ -283,7 +283,7 @@ window.Feud = window.Feud || {};
       const firstName = getTeamLabel(roomState, firstTeam);
       const secondName = getTeamLabel(roomState, secondTeam);
       headline = `🎤 Face-Off (1st Turn): ${firstName} Answering!`;
-      subtext = `Tap their answer on the board below! (#1 answer wins Face-Off immediately; #2–#8 or Wrong/Time-Up automatically switches to ${secondName}!)`;
+      subtext = `Tap their answer on the board below! (#1 answer wins Face-Off immediately; #2–#8 or tapping '❌ Wrong Answer' automatically switches to ${secondName}!)`;
       actionsHtml = `
         <button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">
           ❌ Wrong Answer → Switch to ${escapeHtml(secondName)} (X)
@@ -336,9 +336,9 @@ window.Feud = window.Feud || {};
       const oppName = getTeamLabel(roomState, oppTeam);
       const curStrikes = Number(roomState.strikes) || 0;
       headline = `🎯 ${playName} Playing the Board (${curStrikes} of 3 Strikes)`;
-      subtext = `Ask the next team member! Tap their answer below if right, or tap '❌ Wrong Answer' for Strike ${
+      subtext = `Ask the next team member! Tap their answer below if right (even after timer expires), or tap '❌ Wrong Answer' for Strike ${
         curStrikes + 1
-      }/3. (Timer hitting 0 gives an automatic X; 3rd X automatically switches to ${oppName} for the Steal!)`;
+      }/3. (On 3rd X, control automatically switches to ${oppName} for the Steal!)`;
       actionsHtml = `
         <button type="button" class="action-btn btn-gold display-font" onclick="hostRestartTurnTimer()">
           🔄 Ask Next Player / Start ${dur}s Timer (R)
@@ -457,23 +457,27 @@ window.Feud = window.Feud || {};
       if (soloSel) soloSel.value = String(roomState.roundIdx);
     }
 
+    const topHud = document.querySelector(".tv-top-hud");
     const mainWrap = document.getElementById("tvMainBoardWrap");
     const fmWrap = document.getElementById("tvFastMoneyWrap");
     const winWrap = document.getElementById("tvWinnerWrap");
 
     if (roomState.stage === "winner") {
+      if (topHud) topHud.classList.add("hidden");
       mainWrap.classList.add("hidden");
       fmWrap.classList.add("hidden");
       if (winWrap) winWrap.classList.remove("hidden");
       renderTvWinnerScreen(roomState);
       return;
     } else if (roomState.stage === "fast") {
+      if (topHud) topHud.classList.add("hidden");
       mainWrap.classList.add("hidden");
       fmWrap.classList.remove("hidden");
       if (winWrap) winWrap.classList.add("hidden");
       renderTvFastMoney(roomState);
       return;
     } else {
+      if (topHud) topHud.classList.remove("hidden");
       mainWrap.classList.remove("hidden");
       fmWrap.classList.add("hidden");
       if (winWrap) winWrap.classList.add("hidden");
