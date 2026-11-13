@@ -451,7 +451,7 @@ window.Feud = window.Feud || {};
           🔄 Start ${dur}s Timer for Next Player (R)
         </button>
         <button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">
-          ❌ Wrong Answer → Strike ${curStrikes + 1}/3 (X)
+          ❌ Wrong Answer (+1 Strike → ${curStrikes + 1}/3) (X)
         </button>
       `;
     } else if (phase === "steal") {
@@ -600,9 +600,7 @@ window.Feud = window.Feud || {};
       } else if (String(phase).startsWith("faceoff")) {
         const activeTeam =
           roomState.controllingTeam || roomState.buzzerWinner || roomState.faceoffFirstTeam || 0;
-        const otherTeam = activeTeam === 1 ? 2 : activeTeam === 2 ? 1 : 2;
         const activeName = activeTeam ? getTeamLabel(roomState, activeTeam) : "";
-        const otherName = getTeamLabel(roomState, otherTeam);
         const bestRank = roomState.faceoffBestRank ?? 999;
         const isBeatRankTurn = phase === "faceoff-p2" && bestRank < 999;
         inlineBarEl.className = "faceoff-decision-bar";
@@ -621,20 +619,11 @@ window.Feud = window.Feud || {};
             <button type="button" class="top-btn ${activeTeam === 2 ? "gold" : ""}" style="flex:1; min-width:130px;" onclick="hostSetFaceOffWinner(2)">
               🔔 ${escapeHtml(t2)} ${activeTeam === 2 ? "✓ (Answering)" : "Buzzed"}
             </button>
-            <button type="button" class="action-btn btn-red display-font" style="flex:1; min-width:170px; min-height:38px; font-size:12px;" onclick="hostFaceOffWrongGuess()">
-              ${
-                isBeatRankTurn
-                  ? `⚡ Wrong Guess (1 Temp X → ${escapeHtml(otherName)} Wins)`
-                  : `⚡ Wrong Guess (1 Temp X → ${escapeHtml(otherName)})`
-              }
-            </button>
           </div>
         `;
       } else if (phase === "steal") {
-        const origTeam =
-          roomState.originalPlayingTeam || (roomState.controllingTeam === 1 ? 2 : 1);
-        const stealTeam = roomState.controllingTeam || (origTeam === 1 ? 2 : 1);
-        const origName = getTeamLabel(roomState, origTeam);
+        const stealTeam =
+          roomState.controllingTeam || (roomState.originalPlayingTeam === 1 ? 2 : 1);
         const stealName = getTeamLabel(roomState, stealTeam);
         inlineBarEl.className = "faceoff-decision-bar steal-highlight";
         inlineBarEl.innerHTML = `
@@ -646,9 +635,6 @@ window.Feud = window.Feud || {};
           <div class="fodb-actions">
             <button type="button" class="action-btn btn-gold display-font" style="flex:1; min-width:180px; min-height:42px; font-size:13px;" onclick="hostStartStealTimer()">
               ⏱️ Start 30s Steal Timer (R)
-            </button>
-            <button type="button" class="action-btn btn-red display-font" style="flex:1; min-width:210px; min-height:42px; font-size:13px;" onclick="hostHandleWrongAnswer()">
-              ❌ Steal Missed → ${escapeHtml(origName)} Keeps ${roomState.pot || 0} Pts
             </button>
           </div>
         `;
@@ -666,12 +652,66 @@ window.Feud = window.Feud || {};
           </div>
           <div class="fodb-actions">${actionsHtml}</div>
         `;
-      } else if (phase === "play") {
+      } else if (phase === "playing") {
         inlineBarEl.className = "faceoff-decision-bar";
-        inlineBarEl.innerHTML = `<div class="fodb-actions">${actionsHtml}</div>`;
+        inlineBarEl.innerHTML = `
+          <div class="fodb-actions">
+            <button type="button" class="action-btn btn-gold display-font" onclick="hostRestartTurnTimer()">
+              🔄 Start ${dur}s Timer for Next Player (R)
+            </button>
+          </div>
+        `;
       } else {
         inlineBarEl.className = "faceoff-decision-bar hidden";
         inlineBarEl.innerHTML = "";
+      }
+    }
+
+    const wrongBarEl = document.getElementById("hostAnswersWrongBar");
+    if (wrongBarEl) {
+      if (phase === "playing") {
+        const curStrikes = Number(roomState.strikes) || 0;
+        wrongBarEl.className = "host-answers-wrong-bar";
+        wrongBarEl.innerHTML = `
+          <button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">
+            ❌ Wrong Answer (+1 Strike → ${curStrikes + 1}/3) (X)
+          </button>
+        `;
+      } else if (phase === "steal") {
+        const origTeam =
+          roomState.originalPlayingTeam || (roomState.controllingTeam === 1 ? 2 : 1);
+        const origName = getTeamLabel(roomState, origTeam);
+        wrongBarEl.className = "host-answers-wrong-bar";
+        wrongBarEl.innerHTML = `
+          <button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">
+            ❌ Steal Missed → ${escapeHtml(origName)} Keeps ${roomState.pot || 0} Pts (X)
+          </button>
+        `;
+      } else if (String(phase).startsWith("faceoff") && phase !== "faceoff-ready") {
+        const activeTeam =
+          roomState.controllingTeam || roomState.buzzerWinner || roomState.faceoffFirstTeam || 0;
+        if (activeTeam > 0) {
+          const otherTeam = activeTeam === 1 ? 2 : 1;
+          const otherName = getTeamLabel(roomState, otherTeam);
+          const bestRank = roomState.faceoffBestRank ?? 999;
+          const isBeatRankTurn = phase === "faceoff-p2" && bestRank < 999;
+          wrongBarEl.className = "host-answers-wrong-bar";
+          wrongBarEl.innerHTML = `
+            <button type="button" class="action-btn btn-red display-font" onclick="hostFaceOffWrongGuess()">
+              ${
+                isBeatRankTurn
+                  ? `⚡ Wrong Guess (1 Temp X → ${escapeHtml(otherName)} Wins)`
+                  : `⚡ Wrong Guess (1 Temp X → ${escapeHtml(otherName)})`
+              }
+            </button>
+          `;
+        } else {
+          wrongBarEl.className = "host-answers-wrong-bar hidden";
+          wrongBarEl.innerHTML = "";
+        }
+      } else {
+        wrongBarEl.className = "host-answers-wrong-bar hidden";
+        wrongBarEl.innerHTML = "";
       }
     }
   }
@@ -994,15 +1034,6 @@ window.Feud = window.Feud || {};
     }
     document.getElementById("hostTabMain").classList.toggle("gold", roomState.stage === "main");
 
-    const t1In = document.getElementById("hostT1Name");
-    const t2In = document.getElementById("hostT2Name");
-    if (t1In && document.activeElement !== t1In) t1In.value = roomState.team1Name;
-    if (t2In && document.activeElement !== t2In) t2In.value = roomState.team2Name;
-    const t1ScoreEl = document.getElementById("hostT1Score");
-    const t2ScoreEl = document.getElementById("hostT2Score");
-    if (t1ScoreEl) t1ScoreEl.textContent = String(roomState.team1Score || 0);
-    if (t2ScoreEl) t2ScoreEl.textContent = String(roomState.team2Score || 0);
-
     const coachCard = document.getElementById("hostFlowCoachCard");
     if (coachCard) {
       coachCard.classList.toggle("hidden", roomState.stage === "fast");
@@ -1030,17 +1061,6 @@ window.Feud = window.Feud || {};
       } else {
         qStatusBadge.textContent = "🙈 Question Hidden on TV";
         qStatusBadge.className = "pill-badge awake-warn";
-      }
-    }
-
-    const revealBtn = document.getElementById("hostBtnRevealQuestion");
-    if (revealBtn) {
-      if (!roomState.questionRevealed) {
-        revealBtn.textContent = "👁️ Show Question on TV (Space)";
-      } else if (phase === "faceoff-buzz" && !roomState.buzzerWinner) {
-        revealBtn.textContent = "🔔 Question Live (Unlimited Time Until First Buzz)";
-      } else {
-        revealBtn.textContent = "🔄 Question Live — Restart Timer (Space / R)";
       }
     }
 

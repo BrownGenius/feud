@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>Party Feud — 4-Phone Multiplayer</title>
-  <link rel="stylesheet" href="./css/styles.css?v=20261113q" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261113w" />
 </head>
 <body>
 
@@ -570,7 +570,17 @@
 
     <!-- 2. GUIDED WIZARD & TELEPROMPTER SCRIPT (ALWAYS AT TOP) -->
     <div id="hostFlowCoachCard" class="marquee-panel flow-coach-card">
-      <div class="flow-stepper" id="hostFlowStepper"></div>
+      <div class="flow-coach-top">
+        <div class="flow-stepper" id="hostFlowStepper"></div>
+        <div class="host-quick-timer-group">
+          <div id="hostTurnTimerPill" class="turn-timer-pill display-font">
+            ⏱️ <span id="hostTurnTimerDisplay">10s</span>
+          </div>
+          <button id="hostBtnTurnTimerToggle" class="top-btn host-quick-pause-btn" onclick="hostToggleTurnTimer()" title="Pause or resume timer (T)">
+            ⏯️
+          </button>
+        </div>
+      </div>
       <div class="flow-coach-body">
         <div class="flow-coach-info">
           <div id="hostFlowHeadline" class="flow-coach-headline display-font">Step 1: Face-Off Ready</div>
@@ -587,29 +597,6 @@
       <!-- LEFT COLUMN: MOST-USED CONTROLS & CLICKABLE ANSWER BOARD -->
       <div class="host-primary-col">
         <div id="hostMainControls" class="marquee-panel host-main-card">
-          <!-- MOST-USED QUICK ACTION BAR (SHOW Q + TIMER + WRONG/X IN ONE ROW) -->
-          <div class="host-quick-bar">
-            <button id="hostBtnRevealQuestion" class="action-btn btn-gold display-font host-quick-reveal-btn" onclick="hostRevealQuestionAndStartTimer()">
-              👁️ Show Question on TV (Space)
-            </button>
-
-            <div class="host-quick-timer-group">
-              <div id="hostTurnTimerPill" class="turn-timer-pill display-font">
-                ⏱️ <span id="hostTurnTimerDisplay">10s</span>
-              </div>
-              <button class="action-btn btn-gold display-font host-quick-btn" onclick="hostRestartTurnTimer()" title="Start or restart the player turn timer (R)">
-                🔄 Start Timer (R)
-              </button>
-              <button id="hostBtnTurnTimerToggle" class="top-btn host-quick-pause-btn" onclick="hostToggleTurnTimer()" title="Pause or resume timer (T)">
-                ⏯️
-              </button>
-            </div>
-
-            <button type="button" class="action-btn btn-red display-font host-quick-strike-btn" onclick="hostHandleWrongAnswer()" title="Trigger Wrong Answer / X (Shortcut: X)">
-              ❌ Wrong / X (X)
-            </button>
-          </div>
-
           <!-- Question Header & Prompt -->
           <div class="host-question-box">
             <div class="host-question-meta">
@@ -624,6 +611,9 @@
 
           <!-- Clickable Survey Answers (1–8) -->
           <div id="hostAnswersList"></div>
+
+          <!-- Phase-aware Wrong / X Button right below the answers -->
+          <div id="hostAnswersWrongBar" class="host-answers-wrong-bar hidden"></div>
 
           <!-- Bottom Quick Utilities -->
           <div class="host-board-footer">
@@ -669,25 +659,6 @@
             </button>
           </div>
           <div id="hostTvMonitorDock" class="host-tv-monitor-dock"></div>
-        </div>
-
-        <!-- COMPACT TEAM SCORES -->
-        <div class="marquee-panel host-scores-card">
-          <div class="host-scores-grid">
-            <div class="host-team-box">
-              <div style="display:flex; gap:8px; align-items:center;">
-                <input id="hostT1Name" class="host-team-input" type="text" value="Team A" onchange="hostRenameTeam(1, this.value)" />
-                <span id="hostT1Score" class="display-font" style="font-size:26px; min-width:48px; text-align:right;">0</span>
-              </div>
-            </div>
-
-            <div class="host-team-box">
-              <div style="display:flex; gap:8px; align-items:center;">
-                <input id="hostT2Name" class="host-team-input" type="text" value="Team B" onchange="hostRenameTeam(2, this.value)" />
-                <span id="hostT2Score" class="display-font" style="font-size:26px; min-width:48px; text-align:right;">0</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- COLLAPSIBLE MANUAL OVERRIDES (HIDDEN UNTIL NEEDED) -->
@@ -808,13 +779,13 @@
   </section>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
-  <script src="./data/questions.js?v=20261113q"></script>
-  <script src="./decks/catalog.js?v=20261113q"></script>
-  <script src="./js/audio.js?v=20261113q"></script>
-  <script src="./js/state.js?v=20261113q"></script>
-  <script src="./js/formats.js?v=20261113q"></script>
-  <script src="./js/sync.js?v=20261113q"></script>
-  <script src="./js/views.js?v=20261113q"></script>
-  <script src="./js/app.js?v=20261113q"></script>
+  <script src="./data/questions.js?v=20261113w"></script>
+  <script src="./decks/catalog.js?v=20261113w"></script>
+  <script src="./js/audio.js?v=20261113w"></script>
+  <script src="./js/state.js?v=20261113w"></script>
+  <script src="./js/formats.js?v=20261113w"></script>
+  <script src="./js/sync.js?v=20261113w"></script>
+  <script src="./js/views.js?v=20261113w"></script>
+  <script src="./js/app.js?v=20261113w"></script>
 </body>
 </html>

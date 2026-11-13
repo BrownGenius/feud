@@ -1437,6 +1437,14 @@ body.is-fullscreen .top-bar {
   border-color: #fef08a;
 }
 
+.flow-coach-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
 .flow-stepper {
   display: flex;
   flex-wrap: wrap;
@@ -1612,6 +1620,16 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
 }
 
 /* Inline Face-Off & Play/Pass Decision Bar directly above the Host Answer List */
+.host-answers-wrong-bar {
+  margin-top: 10px;
+}
+
+.host-answers-wrong-bar .action-btn {
+  width: 100%;
+  min-height: 44px;
+  font-size: 14px;
+}
+
 .faceoff-decision-bar {
   display: flex;
   flex-direction: column;

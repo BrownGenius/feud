@@ -1249,6 +1249,7 @@ window.Feud = window.Feud || {};
     }
 
     if (phase === "faceoff-p2") {
+      const dur = Number(roomState.turnTimerDuration) || 10;
       await pushRoomPatch({
         controllingTeam: cleanTeam,
         buzzerWinner: cleanTeam,
@@ -1428,6 +1429,7 @@ window.Feud = window.Feud || {};
           revealed: Array.from(revSet),
           pot: newPot,
           roundPhase: "pass-or-play",
+          strikes: 0,
           faceoffFirstTeam: firstTeam,
           faceoffBestRank: 0,
           faceoffWinnerTeam: firstTeam,
@@ -1487,6 +1489,7 @@ window.Feud = window.Feud || {};
         revealed: Array.from(revSet),
         pot: newPot,
         roundPhase: "pass-or-play",
+        strikes: 0,
         faceoffBestRank: 0,
         faceoffWinnerTeam: winTeam,
         controllingTeam: winTeam,
@@ -1769,7 +1772,12 @@ window.Feud = window.Feud || {};
       return;
     }
 
-    // 4. PLAYING THE BOARD (or implicit play from pass-or-play) -> Increment Strikes (1 -> 2 -> 3)!
+    if (phase === "pass-or-play" && !opts.forceFaceOff) {
+      Feud.showToast("Choose PLAY or PASS first before giving a strike!");
+      return;
+    }
+
+    // 4. PLAYING THE BOARD -> Increment Strikes (1 -> 2 -> 3)!
     const playTeam =
       roomState.controllingTeam ||
       roomState.originalPlayingTeam ||
@@ -2086,9 +2094,14 @@ window.Feud = window.Feud || {};
   }
 
   async function hostClearStrikes() {
+    const wasSteal = roomState.roundPhase === "steal";
     await pushRoomPatch({
       strikes: 0,
-      roundPhase: roomState.roundPhase === "steal" ? "playing" : roomState.roundPhase
+      roundPhase: wasSteal ? "playing" : roomState.roundPhase,
+      controllingTeam:
+        wasSteal && roomState.originalPlayingTeam
+          ? roomState.originalPlayingTeam
+          : roomState.controllingTeam
     });
   }
 
