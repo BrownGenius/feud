@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>Party Feud — 4-Phone Multiplayer</title>
-  <link rel="stylesheet" href="./css/styles.css?v=20261113e" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261113f" />
 </head>
 <body>
 
@@ -401,7 +401,7 @@
       <!-- ROLE 3 & 4: TEAM PODIUM BUZZERS -->
       <article class="role-card">
         <div>
-          <h2>🔔 3 &amp; 4. Team Podium Buzzers</h2>
+          <h2>🔔 3. Face-Off Buzzers (Optional)</h2>
           <p style="margin-top:6px;">
             Put two phones on a front table as podium buzzers. Whoever slaps their phone first triggers the TV buzzer and locks out the other team!
           </p>
@@ -416,27 +416,11 @@
           </div>
         </div>
       </article>
-
-      <!-- OFFLINE / SOLO FALLBACK MODE -->
-      <article class="role-card">
-        <div>
-          <h2>⚡ Single-Device / Offline Mode</h2>
-          <p style="margin-top:6px;">
-            Playing on one laptop/TV without separate phones? Set up your deck &amp; teams, then launch the interactive TV board where clicking numbered tiles (or pressing keys 1–8) flips answers without spoiling the rest!
-          </p>
-        </div>
-
-        <div class="field-row">
-          <button class="action-btn btn-slate display-font" onclick="openNewGameModal('solo')">
-            🎮 Play Single-Screen TV Mode
-          </button>
-        </div>
-      </article>
     </div>
   </main>
 
   <!-- =====================================================================
-       VIEW 2: TV DISPLAY BOARD (CAST TO LIVING ROOM TV OR PLAY SOLO)
+       VIEW 2: TV DISPLAY BOARD (CAST TO LIVING ROOM TV)
        ===================================================================== -->
   <div id="tvViewRootAnchor" class="hidden" aria-hidden="true"></div>
   <section id="tvView" class="stage-wrap hidden">
@@ -552,25 +536,6 @@
           <div id="tvWinT2Name" class="team-display-name display-font" style="font-size:20px;">Team 2</div>
           <div id="tvWinT2Score" class="display-font" style="font-size:44px; color:#fff; margin-top:6px;">0</div>
         </div>
-      </div>
-    </div>
-
-    <!-- SINGLE-SCREEN ("SOLO") INTERACTIVE CONTROL BAR -->
-    <div id="soloControlsBar" class="marquee-panel solo-controls-bar hidden">
-      <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; min-width:210px;">
-        <button class="top-btn" onclick="hostPrevRound()">◀ Prev</button>
-        <select id="soloRoundSelect" class="lobby-input" style="flex:1; min-height:36px; font-size:12px; letter-spacing:normal; text-align:left;" onchange="hostSelectRound(Number(this.value))"></select>
-        <button class="top-btn gold" onclick="hostNextRound()">Next ▶</button>
-      </div>
-
-      <div id="soloGuidedActions" style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; flex:1; justify-content:center;"></div>
-
-      <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
-        <button id="soloBtnTimerToggle" class="top-btn" onclick="hostToggleTurnTimer()">⏯️ Pause/Start (T)</button>
-        <button class="top-btn" style="background:#991b1b; border-color:#fca5a5;" onclick="hostHandleWrongAnswer()">❌ Wrong / X (X)</button>
-        <button class="top-btn" onclick="hostResetRound()">Reset Round</button>
-        <button class="top-btn gold" onclick="openNextMatchModal()">🏁 End Match</button>
-        <button class="top-btn" onclick="switchSoloAndHostView()">🎛️ Host Key</button>
       </div>
     </div>
   </section>
@@ -776,7 +741,7 @@
               <div id="hostStrikeHint" style="font-size:11px; color:#94a3b8;"></div>
             </div>
 
-            <!-- Buzzer Simulation & View Switch -->
+            <!-- Buzzer Simulation -->
             <div class="host-override-group">
               <span class="field-label">🔔 Simulate Podium Buzzers</span>
               <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
@@ -784,7 +749,6 @@
                 <button class="top-btn" onclick="hostManualBuzz(2)">Sim T2 Buzz</button>
                 <button class="top-btn gold" onclick="hostResetBuzzers()">🔓 Reset Buzzers</button>
               </div>
-              <button class="top-btn" style="margin-top:4px;" onclick="switchSoloAndHostView()">🔄 Switch This Window to Full-Screen TV Board</button>
             </div>
           </div>
         </details>
@@ -833,13 +797,13 @@
   </section>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
-  <script src="./data/questions.js?v=20261113e"></script>
-  <script src="./decks/catalog.js?v=20261113e"></script>
-  <script src="./js/audio.js?v=20261113e"></script>
-  <script src="./js/state.js?v=20261113e"></script>
-  <script src="./js/formats.js?v=20261113e"></script>
-  <script src="./js/sync.js?v=20261113e"></script>
-  <script src="./js/views.js?v=20261113e"></script>
-  <script src="./js/app.js?v=20261113e"></script>
+  <script src="./data/questions.js?v=20261113f"></script>
+  <script src="./decks/catalog.js?v=20261113f"></script>
+  <script src="./js/audio.js?v=20261113f"></script>
+  <script src="./js/state.js?v=20261113f"></script>
+  <script src="./js/formats.js?v=20261113f"></script>
+  <script src="./js/sync.js?v=20261113f"></script>
+  <script src="./js/views.js?v=20261113f"></script>
+  <script src="./js/app.js?v=20261113f"></script>
 </body>
 </html>
