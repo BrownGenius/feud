@@ -538,6 +538,7 @@ window.Feud = window.Feud || {};
 
   function enterRole(role, code) {
     activeRole = role;
+    document.body.classList.toggle("tv-viewport-lock", role === "tv" || role === "solo");
     requestWakeLock();
     Feud.renderBranding(roomState);
 
@@ -592,6 +593,7 @@ window.Feud = window.Feud || {};
     clearInterval(hostFmTimerInterval);
     hostFmTimerInterval = null;
     activeRole = "lobby";
+    document.body.classList.remove("tv-viewport-lock");
     document.getElementById("lobbyView").classList.remove("hidden");
     document.getElementById("tvView").classList.add("hidden");
     document.getElementById("hostView").classList.add("hidden");

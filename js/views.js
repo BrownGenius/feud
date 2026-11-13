@@ -297,8 +297,10 @@ window.Feud = window.Feud || {};
     const revSet = new Set(roomState.revealed || []);
     const isSameRound = lastRenderedRoundIdx === roomState.roundIdx;
 
-    const slotCount = Math.max(6, round.answers.length);
-    const halfCount = Math.ceil(slotCount / 2);
+    const halfCount = Math.ceil(Math.max(6, round.answers.length) / 2);
+    const slotCount = halfCount * 2;
+    colL.style.setProperty("--rows-per-col", String(halfCount));
+    colR.style.setProperty("--rows-per-col", String(halfCount));
 
     for (let i = 0; i < slotCount; i++) {
       const ans = round.answers[i];
@@ -384,17 +386,15 @@ window.Feud = window.Feud || {};
         const p1Shown = roomState.fmHideP1 ? "HIDDEN" : e.p1Ans || "—";
         const p1PtsShown = roomState.fmHideP1 ? "-" : e.p1Pts || 0;
         return `
-        <div class="fm-row">
-          <div style="font-weight:800; color:#fde68a; font-size:14px;">${i + 1}. ${escapeHtml(
-            q.prompt
-          )}</div>
-          <div style="display:flex; justify-content:space-between; background:#020617; padding:8px 12px; border-radius:8px; border:1px solid #334155;">
-            <span style="font-weight:900;">${escapeHtml(p1Shown)}</span>
-            <span style="color:var(--gold); font-weight:900;">${p1PtsShown}</span>
+        <div class="fm-row tv-fm-row">
+          <div class="tv-fm-prompt">${i + 1}. ${escapeHtml(q.prompt)}</div>
+          <div class="tv-fm-ans-box">
+            <span class="tv-fm-ans-text">${escapeHtml(p1Shown)}</span>
+            <span class="tv-fm-pts-text display-font">${p1PtsShown}</span>
           </div>
-          <div style="display:flex; justify-content:space-between; background:#020617; padding:8px 12px; border-radius:8px; border:1px solid #334155;">
-            <span style="font-weight:900;">${escapeHtml(e.p2Ans || "—")}</span>
-            <span style="color:var(--gold); font-weight:900;">${e.p2Pts || 0}</span>
+          <div class="tv-fm-ans-box">
+            <span class="tv-fm-ans-text">${escapeHtml(e.p2Ans || "—")}</span>
+            <span class="tv-fm-pts-text display-font">${e.p2Pts || 0}</span>
           </div>
         </div>
       `;

@@ -1040,4 +1040,223 @@ button:disabled {
   color: #0f172a;
 }
 
+/* =====================================================================
+   10. ADAPTIVE FULL-VIEWPORT TV DISPLAY (NO SCROLLBARS, FILLS ANY SCREEN)
+   ===================================================================== */
+body.tv-viewport-lock,
+body:has(#tvView:not(.hidden)) {
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+body.tv-viewport-lock .top-bar,
+body:has(#tvView:not(.hidden)) .top-bar {
+  flex: 0 0 auto;
+  padding: clamp(4px, 0.8vh, 10px) clamp(10px, 1.5vw, 24px);
+}
+
+#tvView {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: clamp(6px, 1.2vh, 18px) clamp(10px, 1.6vw, 28px);
+  gap: clamp(6px, 1.1vh, 14px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#tvView .tv-top-strip {
+  flex: 0 0 auto;
+  gap: clamp(8px, 1.2vw, 16px);
+}
+
+#tvView .pot-box {
+  padding: clamp(4px, 0.7vh, 10px) clamp(16px, 2.2vw, 36px);
+  min-width: clamp(160px, 16vw, 260px);
+  border-radius: 14px;
+}
+
+#tvView .pot-value {
+  font-size: clamp(24px, min(4vw, 5vh), 56px);
+}
+
+#tvMainBoardWrap {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+}
+
+@media (min-width: 760px) {
+  #tvMainBoardWrap.arena-grid {
+    grid-template-columns: clamp(165px, 17.5vw, 340px) 1fr clamp(165px, 17.5vw, 340px);
+    gap: clamp(8px, 1.2vw, 20px);
+  }
+}
+
+#tvMainBoardWrap .team-display-card {
+  min-height: 0;
+  height: 100%;
+  padding: clamp(10px, 1.8vh, 24px) clamp(8px, 1.2vw, 18px);
+  gap: clamp(8px, 1.5vh, 18px);
+}
+
+#tvMainBoardWrap .team-display-name {
+  font-size: clamp(16px, min(2.1vw, 3.2vh), 34px);
+  word-break: break-word;
+}
+
+#tvMainBoardWrap .team-display-score {
+  padding: clamp(10px, 2vh, 28px) 8px;
+  font-size: clamp(32px, min(5.2vw, 7.6vh), 88px);
+}
+
+.tv-center-board {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: clamp(6px, 1.1vh, 14px);
+  min-height: 0;
+  height: 100%;
+  padding: clamp(8px, 1.3vh, 18px) clamp(10px, 1.5vw, 22px);
+  overflow: hidden;
+}
+
+#tvView .prompt-banner {
+  flex: 0 0 auto;
+  padding: clamp(6px, 1.1vh, 16px) clamp(10px, 1.6vw, 22px);
+}
+
+#tvView .prompt-question {
+  font-size: clamp(14px, min(2vw, 3vh), 30px);
+  line-height: 1.22;
+  margin-top: clamp(2px, 0.4vh, 6px);
+}
+
+#tvAnswerGrid.answers-columns {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(6px, 1.1vh, 14px);
+  align-items: stretch;
+}
+
+#tvAnswerGrid .answer-col {
+  display: grid;
+  grid-template-rows: repeat(var(--rows-per-col, 4), 1fr);
+  gap: clamp(6px, 1.1vh, 14px);
+  min-height: 0;
+  height: 100%;
+}
+
+#tvAnswerGrid .feud-tile,
+#tvAnswerGrid .feud-tile-empty {
+  min-height: 0;
+  height: 100%;
+}
+
+#tvAnswerGrid .tile-num-badge {
+  width: clamp(36px, min(4.2vw, 5.6vh), 64px);
+  height: clamp(28px, min(3.4vw, 4.6vh), 52px);
+  font-size: clamp(16px, min(2.2vw, 3.2vh), 32px);
+}
+
+#tvAnswerGrid .tile-ans-text {
+  font-size: clamp(12px, min(1.55vw, 2.4vh), 24px);
+}
+
+#tvAnswerGrid .tile-pts-box {
+  min-width: clamp(48px, 5vw, 84px);
+  font-size: clamp(16px, min(2.2vw, 3.4vh), 34px);
+}
+
+#tvView .buzzer-banner-tv {
+  flex: 0 0 auto;
+  padding: clamp(6px, 1vh, 14px) 14px;
+  font-size: clamp(13px, min(1.7vw, 2.4vh), 24px);
+}
+
+#tvFastMoneyWrap {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.3vh, 16px);
+  padding: clamp(10px, 1.6vh, 22px);
+  overflow: hidden;
+}
+
+#tvFmRows {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-rows: repeat(5, 1fr);
+  gap: clamp(6px, 1.1vh, 14px);
+}
+
+.tv-fm-row {
+  margin-bottom: 0;
+  min-height: 0;
+  height: 100%;
+  padding: clamp(6px, 1vh, 14px) clamp(10px, 1.5vw, 20px);
+  align-items: center;
+}
+
+.tv-fm-prompt {
+  font-weight: 800;
+  color: #fde68a;
+  font-size: clamp(13px, min(1.5vw, 2.3vh), 22px);
+  line-height: 1.22;
+}
+
+.tv-fm-ans-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #020617;
+  padding: clamp(6px, 1.1vh, 14px) clamp(10px, 1.4vw, 18px);
+  border-radius: 10px;
+  border: 1.5px solid #334155;
+  height: 100%;
+  min-height: 0;
+}
+
+.tv-fm-ans-text {
+  font-weight: 900;
+  font-size: clamp(13px, min(1.6vw, 2.5vh), 24px);
+  text-transform: uppercase;
+}
+
+.tv-fm-pts-text {
+  color: var(--gold);
+  font-weight: 900;
+  font-size: clamp(16px, min(2vw, 3vh), 30px);
+}
+
+#tvWinnerWrap {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  justify-content: center;
+  overflow: hidden;
+  padding: clamp(14px, 2.5vh, 40px);
+}
+
+#tvView .solo-controls-bar {
+  flex: 0 0 auto;
+  padding: clamp(6px, 0.8vh, 12px) clamp(10px, 1.4vw, 18px);
+  gap: 6px;
+}
+
+
 
