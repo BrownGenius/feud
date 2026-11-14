@@ -148,10 +148,10 @@ window.Feud = window.Feud || {};
     const canResume = !running && rem > 0 && rem < dur;
     if (hostToggleBtn) {
       hostToggleBtn.textContent = running
-        ? "⏸️ Pause (T)"
+        ? "⏸️ Pause"
         : canResume
-        ? `▶️ Resume ${rem}s (T)`
-        : "▶️ Start (T)";
+        ? "▶️ Resume"
+        : "▶️ Start";
     }
 
     const autoStartOnXCheck = document.getElementById("hostAutoStartOnStrikeCheckbox");
@@ -675,18 +675,10 @@ window.Feud = window.Feud || {};
         const activeTeam =
           roomState.controllingTeam || roomState.buzzerWinner || roomState.faceoffFirstTeam || 0;
         if (activeTeam > 0) {
-          const otherTeam = activeTeam === 1 ? 2 : 1;
-          const otherName = getTeamLabel(roomState, otherTeam);
-          const bestRank = roomState.faceoffBestRank ?? 999;
-          const isBeatRankTurn = phase === "faceoff-p2" && bestRank < 999;
           wrongBarEl.className = "host-answers-wrong-bar";
           wrongBarEl.innerHTML = `
             <button type="button" class="action-btn btn-red display-font" onclick="hostFaceOffWrongGuess()">
-              ${
-                isBeatRankTurn
-                  ? `⚡ Wrong Guess (1 Temp X → ${escapeHtml(otherName)} Wins)`
-                  : `⚡ Wrong Guess (1 Temp X → ${escapeHtml(otherName)})`
-              }
+              ❌ Wrong Guess
             </button>
             ${specificBtnHtml}
           `;

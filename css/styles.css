@@ -2258,16 +2258,36 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
 
 /* Desktop / laptop (>= 960px): scale Host Mode to fit the window with no page scrolling */
 @media (min-width: 960px) {
-  #hostView {
-    height: calc(100dvh - 54px);
-    overflow: hidden;
-    padding: 8px 14px 10px;
-    gap: 8px;
+  body:has(#hostView:not(.hidden)) .top-bar {
+    padding: 5px 14px;
+    flex-wrap: nowrap;
   }
 
-  #hostView > .host-top-nav,
+  body:has(#hostView:not(.hidden)) #roleSubtitle {
+    display: none;
+  }
+
+  #hostView {
+    height: calc(100dvh - 48px);
+    overflow: hidden;
+    padding: 6px 14px 8px;
+    gap: 6px;
+  }
+
+  #hostView > .host-top-nav {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+  }
+
   #hostView > .flow-coach-card {
     flex: 0 0 auto;
+    padding: 8px 12px;
+    gap: 6px;
+  }
+
+  #hostView .flow-coach-top {
+    flex-wrap: nowrap;
+    gap: 8px;
   }
 
   #hostView .host-workspace-grid {
@@ -2319,6 +2339,9 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
   #hostView .host-ans-left {
     font-size: 14px;
     gap: 8px;
+    white-space: normal;
+    line-height: 1.2;
+    text-align: left;
   }
 
   #hostView .host-rank-circle {
@@ -2386,15 +2409,48 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
 }
 
 @media (max-width: 640px) {
+  body:has(#hostView:not(.hidden)) .top-bar {
+    padding: 4px 10px;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  body:has(#hostView:not(.hidden)) #topBrandIcon {
+    font-size: 18px !important;
+  }
+
+  body:has(#hostView:not(.hidden)) #topBrandTitle {
+    font-size: 13px;
+  }
+
+  body:has(#hostView:not(.hidden)) #roleSubtitle,
+  body:has(#hostView:not(.hidden)) #btnQrCode,
+  body:has(#hostView:not(.hidden)) #wakeLockBadge,
+  body:has(#hostView:not(.hidden)) #btnMute,
+  body:has(#hostView:not(.hidden)) #btnFullscreen,
+  body:has(#hostView:not(.hidden)) #btnLeaveRoom {
+    display: none !important;
+  }
+
+  body:has(#hostView:not(.hidden)) #roomCodeBadge {
+    min-height: 24px;
+    padding: 2px 8px;
+    font-size: 10px;
+  }
+
   #hostView {
     padding: 6px 8px 14px;
     gap: 6px;
   }
 
   .host-top-nav {
-    padding: 6px 8px;
+    padding: 5px 8px;
     gap: 6px;
     flex-wrap: nowrap;
+  }
+
+  .host-mobile-tabs {
+    display: none !important;
   }
 
   .host-round-nav {
@@ -2406,14 +2462,14 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
 
   .host-round-nav .top-btn {
     padding: 4px 8px;
-    min-height: 34px;
+    min-height: 32px;
     font-size: 12px;
   }
 
   .host-round-select {
     min-width: 0;
     width: 100%;
-    min-height: 34px;
+    min-height: 32px;
     padding: 4px 6px;
     font-size: 12px;
   }
@@ -2435,7 +2491,7 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
   }
 
   .host-more-summary {
-    min-height: 34px;
+    min-height: 32px;
     padding: 4px 10px;
   }
 
@@ -2447,7 +2503,22 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
   }
 
   .flow-coach-top {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
     gap: 4px;
+  }
+
+  .flow-stepper {
+    flex: 0 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
+  }
+
+  .flow-step-pill.active {
+    padding: 3px 7px;
+    font-size: 10px;
+    white-space: nowrap;
   }
 
   .flow-step-pill:not(.active) {
@@ -2455,20 +2526,24 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
   }
 
   .host-quick-timer-group {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
     gap: 4px;
   }
 
   .host-quick-timer-group .turn-timer-pill {
-    min-height: 30px;
-    padding: 2px 8px;
-    font-size: 13px;
+    min-height: 28px;
+    padding: 2px 7px;
+    font-size: 12px;
+    white-space: nowrap;
   }
 
   .host-quick-pause-btn,
   .host-script-toggle-btn {
-    min-height: 30px;
-    padding: 3px 7px;
+    min-height: 28px;
+    padding: 2px 7px;
     font-size: 11px;
+    white-space: nowrap;
   }
 
   .flow-coach-headline {
@@ -2528,22 +2603,21 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
   }
 
   .host-answer-btn {
-    min-height: 38px;
-    padding: 5px 7px;
+    height: auto;
+    min-height: 40px;
+    padding: 6px 7px;
     border-radius: 10px;
     gap: 5px;
+    align-items: center;
   }
 
   .host-ans-left {
     font-size: 12px;
     gap: 5px;
     min-width: 0;
-  }
-
-  .host-ans-left span:last-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    line-height: 1.2;
+    text-align: left;
   }
 
   .host-rank-circle {
@@ -2556,6 +2630,7 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
   .host-pts-pill {
     font-size: 11px;
     padding: 2px 6px;
+    flex-shrink: 0;
   }
 }
 

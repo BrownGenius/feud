@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>Party Feud — 4-Phone Multiplayer</title>
-  <link rel="stylesheet" href="./css/styles.css?v=20261114o" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261114q" />
 </head>
 <body>
 
@@ -572,6 +572,9 @@
         <details id="hostMoreMenu" class="host-more-menu">
           <summary class="top-btn host-more-summary">⋯</summary>
           <div class="host-more-dropdown">
+            <button type="button" class="top-btn gold host-more-mobile-only" onclick="setHostMobileTab('board'); closeHostMoreMenu()">🎮 Game Board</button>
+            <button type="button" class="top-btn host-more-mobile-only" onclick="setHostMobileTab('tv'); closeHostMoreMenu()">📺 Live TV View</button>
+            <button type="button" class="top-btn host-more-mobile-only" onclick="setHostMobileTab('overrides'); closeHostMoreMenu()">⚙️ Overrides</button>
             <button type="button" class="top-btn gold host-more-mobile-only" onclick="hostSwitchStage('main'); closeHostMoreMenu()">🎯 Main Board</button>
             <button type="button" class="top-btn host-more-mobile-only" onclick="hostSwitchStage('fast'); closeHostMoreMenu()">⚡ Fast Money</button>
             <button type="button" class="top-btn gold host-more-mobile-only" onclick="openNextMatchModal(); closeHostMoreMenu()">🏁 End Match</button>
@@ -581,6 +584,10 @@
             <button type="button" class="top-btn" onclick="openEditRoundModal(); closeHostMoreMenu()">✏️ Edit Round</button>
             <button type="button" class="top-btn" onclick="openDeckManagerModal(); closeHostMoreMenu()">📦 Load Deck</button>
             <button type="button" class="top-btn gold host-more-popout" onclick="reopenTvWindow(); closeHostMoreMenu()">📺 Pop Out TV</button>
+            <button type="button" class="top-btn host-more-mobile-only" onclick="openQrModal(); closeHostMoreMenu()">📱 Join QR</button>
+            <button type="button" class="top-btn host-more-mobile-only" onclick="toggleMute(); closeHostMoreMenu()">🔊 Sound</button>
+            <button type="button" class="top-btn gold host-more-mobile-only" onclick="toggleFullScreen(); closeHostMoreMenu()">⛶ Fullscreen</button>
+            <button type="button" class="top-btn host-more-mobile-only" onclick="leaveToLobby(); closeHostMoreMenu()">🏠 Lobby</button>
           </div>
         </details>
       </div>
@@ -772,13 +779,13 @@
   </section>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
-  <script src="./data/questions.js?v=20261114o"></script>
-  <script src="./decks/catalog.js?v=20261114o"></script>
-  <script src="./js/audio.js?v=20261114o"></script>
-  <script src="./js/state.js?v=20261114o"></script>
-  <script src="./js/formats.js?v=20261114o"></script>
-  <script src="./js/sync.js?v=20261114o"></script>
-  <script src="./js/views.js?v=20261114o"></script>
-  <script src="./js/app.js?v=20261114o"></script>
+  <script src="./data/questions.js?v=20261114q"></script>
+  <script src="./decks/catalog.js?v=20261114q"></script>
+  <script src="./js/audio.js?v=20261114q"></script>
+  <script src="./js/state.js?v=20261114q"></script>
+  <script src="./js/formats.js?v=20261114q"></script>
+  <script src="./js/sync.js?v=20261114q"></script>
+  <script src="./js/views.js?v=20261114q"></script>
+  <script src="./js/app.js?v=20261114q"></script>
 </body>
 </html>

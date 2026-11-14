@@ -2728,7 +2728,7 @@ window.Feud = window.Feud || {};
     const wrap = document.getElementById("hostScriptCollapseWrap");
     const btn = document.getElementById("hostScriptToggleBtn");
     if (wrap) wrap.classList.toggle("hidden", collapsed);
-    if (btn) btn.textContent = collapsed ? "🎙️ Show Script" : "🎙️ Hide Script";
+    if (btn) btn.textContent = collapsed ? "🎙️ Script" : "🎙️ Hide";
   }
 
   function toggleHostScript(forceCollapsed) {
