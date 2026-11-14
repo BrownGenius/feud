@@ -1892,19 +1892,20 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
   text-align: left;
 }
 
-.host-more-popout {
+.host-more-popout,
+.host-more-mobile-only {
   display: none;
 }
 
 .host-mobile-tabs {
   display: none;
-  gap: 6px;
+  gap: 4px;
 }
 
 .host-mobile-tab {
-  flex: 1;
-  min-height: 38px;
-  font-size: 12px;
+  min-height: 34px;
+  padding: 4px 10px;
+  font-size: 13px;
 }
 
 .host-script-collapse-wrap {
@@ -2385,52 +2386,176 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
 }
 
 @media (max-width: 640px) {
+  #hostView {
+    padding: 6px 8px 14px;
+    gap: 6px;
+  }
+
+  .host-top-nav {
+    padding: 6px 8px;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .host-round-nav {
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .host-round-nav .top-btn {
+    padding: 4px 8px;
+    min-height: 34px;
+    font-size: 12px;
+  }
+
+  .host-round-select {
+    min-width: 0;
+    width: 100%;
+    min-height: 34px;
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+
+  .host-desktop-stage-btn,
   .host-popout-btn {
     display: none;
   }
 
-  .host-more-popout {
+  .host-more-popout,
+  .host-more-mobile-only {
     display: flex;
   }
 
-  .host-round-nav {
-    flex: 1 1 100%;
-  }
-
-  .host-round-select {
-    min-width: 120px;
-  }
-
   .host-stage-nav {
-    width: 100%;
-    justify-content: space-between;
+    flex: 0 0 auto;
+    width: auto;
+    gap: 4px;
   }
 
-  .host-stage-nav > .top-btn {
-    flex: 1;
-    padding: 5px 6px;
-    font-size: 11px;
+  .host-more-summary {
+    min-height: 34px;
+    padding: 4px 10px;
   }
 
   .flow-coach-card {
-    padding: 8px 10px;
-    gap: 6px;
+    padding: 6px 8px;
+    gap: 5px;
+    border-width: 2px;
+    border-radius: 14px;
+  }
+
+  .flow-coach-top {
+    gap: 4px;
   }
 
   .flow-step-pill:not(.active) {
     display: none;
   }
 
+  .host-quick-timer-group {
+    gap: 4px;
+  }
+
+  .host-quick-timer-group .turn-timer-pill {
+    min-height: 30px;
+    padding: 2px 8px;
+    font-size: 13px;
+  }
+
+  .host-quick-pause-btn,
+  .host-script-toggle-btn {
+    min-height: 30px;
+    padding: 3px 7px;
+    font-size: 11px;
+  }
+
   .flow-coach-headline {
-    font-size: 15px;
+    font-size: 13px;
+  }
+
+  .faceoff-decision-bar {
+    margin-top: 4px;
+    padding: 6px 8px;
+    gap: 5px;
+  }
+
+  .faceoff-decision-bar .action-btn {
+    min-height: 36px !important;
+    font-size: 12px !important;
+    padding: 5px 8px !important;
+  }
+
+  .host-main-card {
+    padding: 8px;
+    gap: 6px;
+    border-width: 2px;
+    border-radius: 14px;
+  }
+
+  .host-answers-wrong-bar {
+    gap: 6px;
+  }
+
+  .host-answers-wrong-bar .action-btn {
+    min-height: 38px;
+    font-size: 12px;
+    padding: 5px 8px;
   }
 
   .host-question-box {
-    padding: 8px 10px;
+    padding: 6px 8px;
+  }
+
+  .host-question-meta {
+    margin-bottom: 3px;
   }
 
   .host-prompt-text {
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  #hostAnswersList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .host-answer-col {
+    gap: 5px;
+  }
+
+  .host-answer-btn {
+    min-height: 38px;
+    padding: 5px 7px;
+    border-radius: 10px;
+    gap: 5px;
+  }
+
+  .host-ans-left {
+    font-size: 12px;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .host-ans-left span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .host-rank-circle {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .host-pts-pill {
+    font-size: 11px;
+    padding: 2px 6px;
   }
 }
 

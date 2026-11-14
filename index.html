@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>Party Feud — 4-Phone Multiplayer</title>
-  <link rel="stylesheet" href="./css/styles.css?v=20261114l" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261114o" />
 </head>
 <body>
 
@@ -550,22 +550,31 @@
        VIEW 3: HOST REMOTE CONTROL MODE (SEES ALL ANSWERS + CONTROLS TV)
        ===================================================================== -->
   <section id="hostView" class="stage-wrap hidden" data-mobile-tab="board">
-    <!-- 1. COMPACT TOP BAR: ROUND SELECTOR, STAGE ACTIONS & MORE MENU -->
+    <!-- 1. SLIM TOP BAR: ROUND NAV + MOBILE VIEW TABS + STAGE ACTIONS & MORE MENU -->
     <div class="marquee-panel host-top-nav">
       <div class="host-round-nav">
-        <button class="top-btn" onclick="hostPrevRound()" title="Previous round">◀ Prev</button>
+        <button class="top-btn" onclick="hostPrevRound()" title="Previous round">◀</button>
         <select id="hostRoundSelect" class="lobby-input host-round-select" onchange="hostSelectRound(Number(this.value))"></select>
-        <button class="top-btn gold" onclick="hostNextRound()" title="Next round">Next ▶</button>
+        <button class="top-btn gold" onclick="hostNextRound()" title="Next round">▶</button>
+      </div>
+
+      <div class="host-mobile-tabs" role="tablist" aria-label="Host Mobile Sections">
+        <button type="button" class="top-btn gold host-mobile-tab active" data-tab="board" onclick="setHostMobileTab('board')" title="Game Controls & Board">🎮</button>
+        <button type="button" class="top-btn host-mobile-tab" data-tab="tv" onclick="setHostMobileTab('tv')" title="Live TV Screen">📺</button>
+        <button type="button" class="top-btn host-mobile-tab" data-tab="overrides" onclick="setHostMobileTab('overrides')" title="Manual Overrides">⚙️</button>
       </div>
 
       <div class="host-stage-nav">
-        <button id="hostTabMain" class="top-btn gold" onclick="hostSwitchStage('main')">🎯 Main</button>
-        <button id="hostTabFm" class="top-btn" onclick="hostSwitchStage('fast')">⚡ Fast Money</button>
-        <button id="hostTabWinner" class="top-btn gold" onclick="openNextMatchModal()">🏁 End Match</button>
+        <button id="hostTabMain" class="top-btn gold host-desktop-stage-btn" onclick="hostSwitchStage('main')">🎯 Main</button>
+        <button id="hostTabFm" class="top-btn host-desktop-stage-btn" onclick="hostSwitchStage('fast')">⚡ Fast Money</button>
+        <button id="hostTabWinner" class="top-btn gold host-desktop-stage-btn" onclick="openNextMatchModal()">🏁 End Match</button>
         <button class="top-btn gold host-popout-btn" onclick="reopenTvWindow()" title="Open or focus the separate TV Display window">📺 Pop Out TV</button>
         <details id="hostMoreMenu" class="host-more-menu">
-          <summary class="top-btn host-more-summary">⋯ More</summary>
+          <summary class="top-btn host-more-summary">⋯</summary>
           <div class="host-more-dropdown">
+            <button type="button" class="top-btn gold host-more-mobile-only" onclick="hostSwitchStage('main'); closeHostMoreMenu()">🎯 Main Board</button>
+            <button type="button" class="top-btn host-more-mobile-only" onclick="hostSwitchStage('fast'); closeHostMoreMenu()">⚡ Fast Money</button>
+            <button type="button" class="top-btn gold host-more-mobile-only" onclick="openNextMatchModal(); closeHostMoreMenu()">🏁 End Match</button>
             <button type="button" class="top-btn gold" onclick="hostRandomizeCurrentRound(); closeHostMoreMenu()" title="Pick a random unplayed question of the same multiplier level (1x / 2x / 3x) from the deck">🎲 Randomize (Same Level)</button>
             <button type="button" class="top-btn" onclick="hostResetRound(); closeHostMoreMenu()">↺ Reset Round</button>
             <button type="button" id="hostBtnRevealRemaining" class="top-btn gold" onclick="hostRevealNextAnswer(); closeHostMoreMenu()">👁️ Reveal Next Answer (0 pts)</button>
@@ -577,7 +586,7 @@
       </div>
     </div>
 
-    <!-- 2. GUIDED WIZARD & TELEPROMPTER SCRIPT (ALWAYS AT TOP) -->
+    <!-- 2. SLIM STATUS BAR + GUIDED CONTROLS & TELEPROMPTER SCRIPT -->
     <div id="hostFlowCoachCard" class="marquee-panel flow-coach-card">
       <div class="flow-coach-top">
         <div class="flow-stepper" id="hostFlowStepper"></div>
@@ -606,13 +615,6 @@
       <div id="hostFaceOffDecisionBar" class="faceoff-decision-bar hidden"></div>
     </div>
 
-    <!-- MOBILE-ONLY VIEW SWITCHER (< 960px) -->
-    <div class="host-mobile-tabs" role="tablist" aria-label="Host Mobile Sections">
-      <button type="button" class="top-btn gold host-mobile-tab active" data-tab="board" onclick="setHostMobileTab('board')">🎮 Board</button>
-      <button type="button" class="top-btn host-mobile-tab" data-tab="tv" onclick="setHostMobileTab('tv')">📺 Live TV</button>
-      <button type="button" class="top-btn host-mobile-tab" data-tab="overrides" onclick="setHostMobileTab('overrides')">⚙️ Overrides</button>
-    </div>
-
     <!-- 3. TWO-COLUMN HOST WORKSPACE: ANSWERS ON LEFT + LIVE EMBEDDED TV ON RIGHT -->
     <div class="host-workspace-grid">
       <!-- LEFT COLUMN: MOST-USED CONTROLS & CLICKABLE ANSWER BOARD -->
@@ -621,15 +623,8 @@
           <!-- Phase-aware Wrong / X Button at the top of the board -->
           <div id="hostAnswersWrongBar" class="host-answers-wrong-bar hidden"></div>
 
-          <!-- Question Header & Prompt -->
+          <!-- Question Prompt -->
           <div class="host-question-box">
-            <div class="host-question-meta">
-              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                <span class="pill-badge room-live" id="hostRoundBadge">Round 1 • 1x</span>
-                <span class="pill-badge" id="hostQuestionStatusBadge">🙈 Question Hidden on TV</span>
-              </div>
-              <span class="pot-label" style="font-size:12px;">Round Pot: <strong id="hostPotDisplay" style="color:#fff; font-size:18px;">0</strong></span>
-            </div>
             <p id="hostPromptText" class="host-prompt-text"></p>
           </div>
 
@@ -663,15 +658,6 @@
       <div class="host-tv-col">
         <!-- LIVE EMBEDDED TV MONITOR -->
         <div class="marquee-panel host-tv-monitor-card">
-          <div class="host-tv-monitor-header">
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <span class="field-label" style="color:var(--gold);">📺 Live TV Screen View</span>
-              <span id="hostBuzzerReadout" class="pill-badge" style="font-size:11px;">Ready</span>
-            </div>
-            <button class="top-btn" style="min-height:28px; padding:3px 10px; font-size:11px;" onclick="reopenTvWindow()" title="Open or focus the separate TV window">
-              ↗ Pop Out TV Window
-            </button>
-          </div>
           <div id="hostTvMonitorDock" class="host-tv-monitor-dock"></div>
         </div>
 
@@ -717,7 +703,10 @@
             <div class="host-override-group">
               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
                 <span class="field-label">🎯 Manual Board Control</span>
-                <button class="top-btn" style="min-height:28px; padding:2px 8px; font-size:11px;" onclick="hostCyclePresets()">👥 Swap Team Presets</button>
+                <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                  <button class="top-btn gold" style="min-height:28px; padding:2px 8px; font-size:11px;" onclick="hostResetBuzzers()">🔓 Reset Buzzers</button>
+                  <button class="top-btn" style="min-height:28px; padding:2px 8px; font-size:11px;" onclick="hostCyclePresets()">👥 Swap Presets</button>
+                </div>
               </div>
               <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
                 <button id="hostCtrlBtn0" class="top-btn gold" onclick="hostSetControllingTeam(0)">⚡ Face-Off</button>
@@ -729,25 +718,11 @@
             <!-- Manual Strikes -->
             <div class="host-override-group">
               <span class="field-label">❌ Manual Strike Overrides</span>
-              <button id="hostBtnFaceOffWrong" type="button" class="action-btn btn-red display-font" style="min-height:38px; font-size:12px;" onclick="hostFaceOffWrongGuess()">
-                ⚡ Face-Off Temp X (No Round Strike)
-              </button>
               <div id="hostRoundStrikeRow" style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px;">
                 <button class="action-btn btn-red display-font" style="min-height:38px;" onclick="hostTriggerStrike(1)">X</button>
                 <button class="action-btn btn-red display-font" style="min-height:38px;" onclick="hostTriggerStrike(2)">XX</button>
                 <button class="action-btn btn-red display-font" style="min-height:38px;" onclick="hostTriggerStrike(3)">XXX</button>
                 <button class="top-btn" onclick="hostClearStrikes()">Clear</button>
-              </div>
-              <div id="hostStrikeHint" style="font-size:11px; color:#94a3b8;"></div>
-            </div>
-
-            <!-- Buzzer Simulation -->
-            <div class="host-override-group">
-              <span class="field-label">🔔 Simulate Podium Buzzers</span>
-              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
-                <button class="top-btn" onclick="hostManualBuzz(1)">Sim T1 Buzz</button>
-                <button class="top-btn" onclick="hostManualBuzz(2)">Sim T2 Buzz</button>
-                <button class="top-btn gold" onclick="hostResetBuzzers()">🔓 Reset Buzzers</button>
               </div>
             </div>
           </div>
@@ -797,13 +772,13 @@
   </section>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
-  <script src="./data/questions.js?v=20261114l"></script>
-  <script src="./decks/catalog.js?v=20261114l"></script>
-  <script src="./js/audio.js?v=20261114l"></script>
-  <script src="./js/state.js?v=20261114l"></script>
-  <script src="./js/formats.js?v=20261114l"></script>
-  <script src="./js/sync.js?v=20261114l"></script>
-  <script src="./js/views.js?v=20261114l"></script>
-  <script src="./js/app.js?v=20261114l"></script>
+  <script src="./data/questions.js?v=20261114o"></script>
+  <script src="./decks/catalog.js?v=20261114o"></script>
+  <script src="./js/audio.js?v=20261114o"></script>
+  <script src="./js/state.js?v=20261114o"></script>
+  <script src="./js/formats.js?v=20261114o"></script>
+  <script src="./js/sync.js?v=20261114o"></script>
+  <script src="./js/views.js?v=20261114o"></script>
+  <script src="./js/app.js?v=20261114o"></script>
 </body>
 </html>
