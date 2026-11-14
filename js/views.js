@@ -50,6 +50,19 @@ window.Feud = window.Feud || {};
     }, 1400);
   }
 
+  function showBeSpecificOverlay() {
+    Feud.playBeSpecificBuzz();
+    const overlay = document.getElementById("strikeOverlay");
+    if (!overlay) return;
+    overlay.innerHTML =
+      '<div class="be-specific-banner display-font">🔍 BE MORE SPECIFIC!</div>';
+    overlay.classList.remove("hidden");
+    clearTimeout(window._xTimer);
+    window._xTimer = setTimeout(() => {
+      overlay.classList.add("hidden");
+    }, 1500);
+  }
+
   function renderBranding(roomState) {
     const title = (roomState && roomState.gameTitle) || "Party Feud";
     const icon = (roomState && roomState.gameIcon) || "🎉";
@@ -669,6 +682,7 @@ window.Feud = window.Feud || {};
 
     const wrongBarEl = document.getElementById("hostAnswersWrongBar");
     if (wrongBarEl) {
+      const specificBtnHtml = `<button type="button" class="action-btn btn-blue display-font host-specific-btn" onclick="hostBeSpecificBuzz()" title="Gentle double-buzz asking the player to be more specific">🔍 Be More Specific</button>`;
       if (phase === "playing") {
         const curStrikes = Number(roomState.strikes) || 0;
         wrongBarEl.className = "host-answers-wrong-bar";
@@ -676,6 +690,7 @@ window.Feud = window.Feud || {};
           <button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">
             ❌ Wrong Answer (+1 Strike → ${curStrikes + 1}/3) (X)
           </button>
+          ${specificBtnHtml}
         `;
       } else if (phase === "steal") {
         const origTeam =
@@ -686,6 +701,7 @@ window.Feud = window.Feud || {};
           <button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">
             ❌ Steal Missed → ${escapeHtml(origName)} Keeps ${roomState.pot || 0} Pts (X)
           </button>
+          ${specificBtnHtml}
         `;
       } else if (String(phase).startsWith("faceoff") && phase !== "faceoff-ready") {
         const activeTeam =
@@ -704,6 +720,7 @@ window.Feud = window.Feud || {};
                   : `⚡ Wrong Guess (1 Temp X → ${escapeHtml(otherName)})`
               }
             </button>
+            ${specificBtnHtml}
           `;
         } else {
           wrongBarEl.className = "host-answers-wrong-bar hidden";
@@ -769,6 +786,16 @@ window.Feud = window.Feud || {};
 
     const t1Card = document.getElementById("tvTeam1Card");
     const t2Card = document.getElementById("tvTeam2Card");
+    const turnTeam = activeControllingTeam || activeWinnerTeam || 0;
+    const tvViewEl = document.getElementById("tvView");
+    if (tvViewEl) {
+      tvViewEl.classList.toggle("tv-turn-team1", turnTeam === 1);
+      tvViewEl.classList.toggle("tv-turn-team2", turnTeam === 2);
+    }
+    t1Card.classList.toggle("tv-team1-pod", true);
+    t2Card.classList.toggle("tv-team2-pod", true);
+    t1Card.classList.toggle("is-inactive-turn", turnTeam === 2);
+    t2Card.classList.toggle("is-inactive-turn", turnTeam === 1);
     t1Card.classList.toggle("winner-glow", activeWinnerTeam === 1);
     t2Card.classList.toggle("winner-glow", activeWinnerTeam === 2);
     t1Card.classList.toggle("playing-glow", isPlayingPhase && activeControllingTeam === 1);
@@ -1089,6 +1116,15 @@ window.Feud = window.Feud || {};
     const isRoundOver = phase === "round-over";
     list.innerHTML = "";
 
+    // Match the TV screen's column-major layout (1..half in left col, half+1..N in right col)
+    const halfCount = Math.ceil(Math.max(6, round.answers.length) / 2);
+    const colL = document.createElement("div");
+    colL.className = "host-answer-col";
+    colL.style.setProperty("--rows-per-col", String(halfCount));
+    const colR = document.createElement("div");
+    colR.className = "host-answer-col";
+    colR.style.setProperty("--rows-per-col", String(halfCount));
+
     round.answers.forEach((ans, idx) => {
       const isRev = revSet.has(idx);
       const pts = ans.points * round.multiplier;
@@ -1108,8 +1144,11 @@ window.Feud = window.Feud || {};
           isRev ? `✅ ${pts}` : isRoundOver ? `👁️ Reveal (0 pts)` : pts
         }</span>
       `;
-      list.appendChild(btn);
+      (idx < halfCount ? colL : colR).appendChild(btn);
     });
+
+    list.appendChild(colL);
+    if (colR.children.length > 0) list.appendChild(colR);
 
     const revRemBtn = document.getElementById("hostBtnRevealRemaining");
     if (revRemBtn) {
@@ -1416,6 +1455,7 @@ window.Feud = window.Feud || {};
     escapeHtml,
     showToast,
     showBigRedXOverlay,
+    showBeSpecificOverlay,
     renderBranding,
     renderTurnTimerUI,
     populateRoundDropdowns,

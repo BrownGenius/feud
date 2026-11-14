@@ -17,6 +17,7 @@ window.Feud = window.Feud || {};
   let lastStrikeSeq = 0;
   let lastFanfareSeq = 0;
   let lastDupBuzzSeq = 0;
+  let lastBeSpecificSeq = 0;
   let lastTimeUpSeq = 0;
   let lastZeroPtsSeq = 0;
   let lastRevealedCount = 0;
@@ -76,6 +77,7 @@ window.Feud = window.Feud || {};
     lastStrikeSeq = state.strikeSeq || 0;
     lastFanfareSeq = state.fanfareSeq || 0;
     lastDupBuzzSeq = state.dupBuzzSeq || 0;
+    lastBeSpecificSeq = state.beSpecificSeq || 0;
     lastTimeUpSeq = state.timeUpSeq || 0;
     lastZeroPtsSeq = state.zeroPtsSeq || 0;
     lastRevealedCount = Array.isArray(state.revealed) ? state.revealed.length : 0;
@@ -120,10 +122,18 @@ window.Feud = window.Feud || {};
         }
       }
 
+      if (incoming.beSpecificSeq && incoming.beSpecificSeq !== lastBeSpecificSeq) {
+        lastBeSpecificSeq = incoming.beSpecificSeq;
+        if (activeRole === "tv" || activeRole === "solo") {
+          Feud.showBeSpecificOverlay();
+          Feud.showToast("🔍 Please Be More Specific!");
+        }
+      }
+
       if (incoming.timeUpSeq && incoming.timeUpSeq !== lastTimeUpSeq) {
         lastTimeUpSeq = incoming.timeUpSeq;
         if (activeRole === "tv") {
-          Feud.playBuzzerHonk();
+          Feud.playTimeUpBell();
           Feud.showToast("⏰ Time's Up!");
         }
       }
@@ -1046,7 +1056,7 @@ window.Feud = window.Feud || {};
       } else {
         stopLocalTurnTimerInterval();
         const nextTimeUp = (roomState.timeUpSeq || 0) + 1;
-        Feud.playBuzzerHonk();
+        Feud.playTimeUpBell();
         Feud.showToast(
           "⏰ Time's Up! You can still tap a board answer, tap ❌ Wrong (X), or Restart Timer (R)."
         );
@@ -1628,6 +1638,22 @@ window.Feud = window.Feud || {};
       return;
     }
     await hostHandleWrongAnswer({ fromTimer: false, forceFaceOff: true });
+  }
+
+  async function hostBeSpecificBuzz() {
+    Feud.unlockAudio();
+    Feud.showBeSpecificOverlay();
+    const nextSeq = (roomState.beSpecificSeq || 0) + 1;
+    const patch = { beSpecificSeq: nextSeq };
+    if (roomState.turnTimerRunning) {
+      patch.turnTimerRemaining = (Number(roomState.turnTimerRemaining) || 0) + 5;
+    }
+    await pushRoomPatch(patch);
+    Feud.showToast(
+      roomState.turnTimerRunning
+        ? "🔍 Be More Specific! (+5s added to timer)"
+        : "🔍 Be More Specific!"
+    );
   }
 
   async function hostHandleWrongAnswer(opts = {}) {
@@ -2261,7 +2287,7 @@ window.Feud = window.Feud || {};
           clearInterval(hostFmTimerInterval);
           hostFmTimerInterval = null;
           if (btn) btn.textContent = "Time!";
-          Feud.playBuzzerHonk();
+          Feud.playTimeUpBell();
         }
       }, 1000);
     }
@@ -2698,6 +2724,43 @@ window.Feud = window.Feud || {};
     }
   });
 
+  function applyHostScriptCollapsed(collapsed) {
+    const wrap = document.getElementById("hostScriptCollapseWrap");
+    const btn = document.getElementById("hostScriptToggleBtn");
+    if (wrap) wrap.classList.toggle("hidden", collapsed);
+    if (btn) btn.textContent = collapsed ? "🎙️ Show Script" : "🎙️ Hide Script";
+  }
+
+  function toggleHostScript(forceCollapsed) {
+    const wrap = document.getElementById("hostScriptCollapseWrap");
+    const currentlyCollapsed = wrap ? wrap.classList.contains("hidden") : false;
+    const next = typeof forceCollapsed === "boolean" ? forceCollapsed : !currentlyCollapsed;
+    try {
+      localStorage.setItem("feud_host_script_collapsed", next ? "1" : "0");
+    } catch (e) {}
+    applyHostScriptCollapsed(next);
+  }
+
+  function setHostMobileTab(tab) {
+    const cleanTab = tab === "tv" || tab === "overrides" ? tab : "board";
+    const hostView = document.getElementById("hostView");
+    if (hostView) hostView.dataset.mobileTab = cleanTab;
+    document.querySelectorAll(".host-mobile-tab").forEach((btn) => {
+      const isActive = btn.dataset.tab === cleanTab;
+      btn.classList.toggle("active", isActive);
+      btn.classList.toggle("gold", isActive);
+    });
+    if (cleanTab === "overrides") {
+      const drawer = document.querySelector(".host-overrides-drawer");
+      if (drawer) drawer.open = true;
+    }
+  }
+
+  function closeHostMoreMenu() {
+    const menu = document.getElementById("hostMoreMenu");
+    if (menu) menu.open = false;
+  }
+
   Object.assign(window, {
     requestWakeLock,
     toggleMute,
@@ -2745,6 +2808,7 @@ window.Feud = window.Feud || {};
     hostStartStealTimer,
     hostChoosePlayOrPass,
     hostHandleWrongAnswer,
+    hostBeSpecificBuzz,
     hostFaceOffWrongGuess,
     buzzerExitHoldStart,
     buzzerExitHoldCancel,
@@ -2777,13 +2841,28 @@ window.Feud = window.Feud || {};
     hostToggleFmClock,
     hostFmDuplicateBuzz,
     hostToggleFmHideP1,
-    hostResetFm
+    hostResetFm,
+    toggleHostScript,
+    setHostMobileTab,
+    closeHostMoreMenu
   });
 
   function initOnLoad() {
     requestWakeLock();
     populateDeckCatalogSelect();
     discoverGitHubDecksFolder();
+    try {
+      const savedScriptPref = localStorage.getItem("feud_host_script_collapsed");
+      const defaultCollapsed =
+        savedScriptPref !== null ? savedScriptPref === "1" : window.innerWidth < 960;
+      applyHostScriptCollapsed(defaultCollapsed);
+    } catch (e) {}
+    document.addEventListener("click", (e) => {
+      const menu = document.getElementById("hostMoreMenu");
+      if (menu && menu.open && !menu.contains(e.target)) {
+        menu.open = false;
+      }
+    });
     Feud.renderBranding(roomState);
     document.getElementById("roleSubtitle").textContent = `4-Phone Multiplayer • ${Feud.getRoundCount(
       roomState

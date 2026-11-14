@@ -75,32 +75,63 @@ window.Feud = window.Feud || {};
       const ctx = unlockAudio();
       if (!ctx) return;
       const now = ctx.currentTime;
-      // Warm, punchy low-pass filtered game-show "EH-EHHH" double-pulse buzzer
+
+      // Harsh, loud, annoying electrical game-show "BZZZT-BZZZZT!" buzzer
+      const shaper = ctx.createWaveShaper();
+      const curve = new Float32Array(256);
+      for (let i = 0; i < 256; i++) {
+        const x = (i * 2) / 255 - 1;
+        curve[i] = Math.tanh(x * 4.8);
+      }
+      shaper.curve = curve;
+
+      const presence = ctx.createBiquadFilter();
+      presence.type = "peaking";
+      presence.frequency.setValueAtTime(1250, now);
+      presence.Q.setValueAtTime(1.4, now);
+      presence.gain.setValueAtTime(8, now);
+
       const filter = ctx.createBiquadFilter();
       filter.type = "lowpass";
-      filter.frequency.setValueAtTime(820, now);
-      filter.Q.setValueAtTime(2.5, now);
-      filter.connect(ctx.destination);
+      filter.frequency.setValueAtTime(4200, now);
+      filter.Q.setValueAtTime(2.0, now);
+
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.88, now);
+
+      presence.connect(filter);
+      filter.connect(shaper);
+      shaper.connect(master);
+      master.connect(ctx.destination);
+
+      const voices = [
+        { freq: 110.0, type: "sawtooth", weight: 0.45 },
+        { freq: 116.54, type: "square", weight: 0.48 },   // harsh minor-2nd rasp
+        { freq: 164.81, type: "square", weight: 0.36 },
+        { freq: 220.0, type: "sawtooth", weight: 0.32 },
+        { freq: 233.08, type: "square", weight: 0.34 },   // upper dissonant buzz
+        { freq: 329.63, type: "square", weight: 0.2 }     // biting high-mid edge
+      ];
 
       const pulses = [
-        { start: 0, dur: 0.16, peak: 0.28 },
-        { start: 0.2, dur: 0.44, peak: 0.32 }
+        { start: 0, dur: 0.14, peak: 0.42 },
+        { start: 0.17, dur: 0.58, peak: 0.48 }
       ];
       pulses.forEach((pulse) => {
-        [92.5, 98.0, 138.6].forEach((freq, idx) => {
+        voices.forEach((v) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           const t0 = now + pulse.start;
-          osc.type = idx === 2 ? "square" : "sawtooth";
-          osc.frequency.setValueAtTime(freq, t0);
-          osc.frequency.linearRampToValueAtTime(freq * 0.94, t0 + pulse.dur);
-          const lvl = idx === 2 ? pulse.peak * 0.45 : pulse.peak;
+          osc.type = v.type;
+          osc.frequency.setValueAtTime(v.freq, t0);
+          osc.frequency.linearRampToValueAtTime(v.freq * 0.96, t0 + pulse.dur);
+          const lvl = pulse.peak * v.weight;
           gain.gain.setValueAtTime(0.0001, t0);
-          gain.gain.linearRampToValueAtTime(lvl, t0 + 0.015);
-          gain.gain.setValueAtTime(lvl * 0.85, t0 + pulse.dur * 0.72);
+          gain.gain.linearRampToValueAtTime(lvl, t0 + 0.003);
+          gain.gain.setValueAtTime(lvl * 0.94, t0 + pulse.dur * 0.85);
           gain.gain.exponentialRampToValueAtTime(0.0008, t0 + pulse.dur);
           osc.connect(gain);
-          gain.connect(filter);
+          gain.connect(presence);
           osc.start(t0);
           osc.stop(t0 + pulse.dur + 0.02);
         });
@@ -202,6 +233,68 @@ window.Feud = window.Feud || {};
     } catch (e) {}
   }
 
+  function playBeSpecificBuzz() {
+    if (isMuted) return;
+    try {
+      const ctx = unlockAudio();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      // Quick, gentler double "buzz-buzz" to ask for a more specific answer
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(950, now);
+      filter.connect(ctx.destination);
+
+      [0, 0.13].forEach((offset) => {
+        [240, 320].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const t0 = now + offset;
+          osc.type = idx === 0 ? "sawtooth" : "triangle";
+          osc.frequency.setValueAtTime(freq, t0);
+          gain.gain.setValueAtTime(0.0001, t0);
+          gain.gain.linearRampToValueAtTime(0.14, t0 + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.0008, t0 + 0.085);
+          osc.connect(gain);
+          gain.connect(filter);
+          osc.start(t0);
+          osc.stop(t0 + 0.095);
+        });
+      });
+    } catch (e) {}
+  }
+
+  function playTimeUpBell() {
+    if (isMuted) return;
+    try {
+      const ctx = unlockAudio();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      // Classic "ding ding ding!" 3-strike game-show timer bell
+      [0, 0.16, 0.32].forEach((offset, idx) => {
+        const dur = idx === 2 ? 0.55 : 0.24;
+        [
+          { freq: 1567.98, type: "triangle", gain: 0.28 },
+          { freq: 3135.96, type: "sine", gain: 0.12 },
+          { freq: 4698.64, type: "sine", gain: 0.05 }
+        ].forEach((p) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const t0 = now + offset;
+          osc.type = p.type;
+          osc.frequency.setValueAtTime(p.freq, t0);
+          gain.gain.setValueAtTime(0.0001, t0);
+          gain.gain.linearRampToValueAtTime(p.gain, t0 + 0.008);
+          gain.gain.exponentialRampToValueAtTime(0.0008, t0 + dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(t0);
+          osc.stop(t0 + dur + 0.02);
+        });
+      });
+    } catch (e) {}
+  }
+
   Object.assign(Feud, {
     unlockAudio,
     isAudioMuted,
@@ -210,6 +303,8 @@ window.Feud = window.Feud || {};
     playBuzzerHonk,
     playFaceOffTone,
     playFanfare,
-    playTick
+    playTick,
+    playBeSpecificBuzz,
+    playTimeUpBell
   });
 })(window.Feud);

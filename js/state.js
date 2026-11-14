@@ -557,6 +557,7 @@ window.Feud = window.Feud || {};
       strikeSeq: 0,
       fanfareSeq: 0,
       dupBuzzSeq: 0,
+      beSpecificSeq: 0,
       buzzerWinner: 0,
       customDeck: customDeck,
       customRounds: loadSavedCustomRounds(),
