@@ -7767,7 +7767,7 @@ window.Feud.DECK_CATALOG = [
                   ]
 }
   }
-  ,
+    ,
   {
     id: "gandhi-samaj-2026-meha-edition.json",
     label: "🪔 Gandhi Samaj 2026 (Meha Edition • 21 Rounds)",
@@ -7882,7 +7882,7 @@ window.Feud.DECK_CATALOG = [
                                            "points":  6
                                        },
                                        {
-                                           "text":  "\u0027Pranam / Touching feet\u0027",
+                                           "text":  "\u0027Nutan Varshabhinandan / Pranam!\u0027",
                                            "points":  3
                                        }
                                    ]
@@ -7962,11 +7962,11 @@ window.Feud.DECK_CATALOG = [
                                            "points":  10
                                        },
                                        {
-                                           "text":  "Cinnamon \u0026 Cloves",
+                                           "text":  "Cinnamon \u0026 Cloves (Sweet spices)",
                                            "points":  6
                                        },
                                        {
-                                           "text":  "Curry leaves (Kadi patta)",
+                                           "text":  "Raisins (Kishmish)",
                                            "points":  4
                                        }
                                    ]
@@ -8022,7 +8022,7 @@ window.Feud.DECK_CATALOG = [
                                            "points":  4
                                        },
                                        {
-                                           "text":  "Salt",
+                                           "text":  "Sugar (Khand / Bura roll-up)",
                                            "points":  2
                                        }
                                    ]
@@ -8090,23 +8090,23 @@ window.Feud.DECK_CATALOG = [
                        "prompt":  "Name something you will hear someone shout right before the tempo goes into overdrive.",
                        "answers":  [
                                        {
-                                           "text":  "\u0027A halo!\u0027",
-                                           "points":  52
+                                           "text":  "\u0027A halo! / Chalo chalo!\u0027",
+                                           "points":  58
                                        },
                                        {
-                                           "text":  "\u0027Chalo chalo!\u0027",
-                                           "points":  24
+                                           "text":  "Loud whistling \u0026 cheering",
+                                           "points":  18
                                        },
                                        {
                                            "text":  "\u0027Sanedo sanedo!\u0027",
                                            "points":  14
                                        },
                                        {
-                                           "text":  "\u0027Speed up!\u0027",
+                                           "text":  "\u0027Jay Mataji!\u0027",
                                            "points":  6
                                        },
                                        {
-                                           "text":  "\u0027Jay Mataji!\u0027",
+                                           "text":  "\u0027Speed up / Faster!\u0027",
                                            "points":  4
                                        }
                                    ]
@@ -8119,22 +8119,22 @@ window.Feud.DECK_CATALOG = [
                        "answers":  [
                                        {
                                            "text":  "Arms spread wide open",
-                                           "points":  78
+                                           "points":  76
                                        },
                                        {
                                            "text":  "Dimpled smile with head tilt",
-                                           "points":  11
+                                           "points":  12
                                        },
                                        {
-                                           "text":  "Stuttering: \u0027K-k-k-Kiran\u0027",
+                                           "text":  "Sliding on his knees",
                                            "points":  6
                                        },
                                        {
                                            "text":  "Running fingers through hair",
-                                           "points":  3
+                                           "points":  4
                                        },
                                        {
-                                           "text":  "Salute in military uniform",
+                                           "text":  "Hand on his heart / chest",
                                            "points":  2
                                        }
                                    ]
