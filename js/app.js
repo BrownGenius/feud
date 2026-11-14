@@ -2849,6 +2849,14 @@ window.Feud = window.Feud || {};
 
   function initOnLoad() {
     requestWakeLock();
+    const buildBadge = document.getElementById("appBuildBadge");
+    if (buildBadge) {
+      const appScript = document.querySelector('script[src*="js/app.js"]');
+      const match = appScript && appScript.src ? appScript.src.match(/[?&]v=([^&]+)/) : null;
+      if (match && match[1]) {
+        buildBadge.textContent = `Build v${match[1]}`;
+      }
+    }
     populateDeckCatalogSelect();
     discoverGitHubDecksFolder();
     try {
