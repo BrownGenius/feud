@@ -202,6 +202,25 @@ window.Feud = window.Feud || {};
         });
         sel.appendChild(og);
       });
+
+      if (sel.id === "hostRoundSelect" && Feud.getSourceRoundsList) {
+        const sourceRounds = Feud.getSourceRoundsList(roomState);
+        const playedSet = Feud.getAllPlayedSourceIndices
+          ? Feud.getAllPlayedSourceIndices(roomState)
+          : new Set();
+        const deckOg = document.createElement("optgroup");
+        deckOg.label = "📚 All Deck Rounds (Used Marked • Click Any)";
+        sourceRounds.forEach((sr, sIdx) => {
+          const isUsed = playedSet.has(sIdx);
+          const opt = document.createElement("option");
+          opt.value = `deck:${sIdx}`;
+          opt.textContent = `${isUsed ? "✓ [Used] " : "• "}#${sIdx + 1} (${sr.multiplier || 1}x): ${(
+            sr.prompt || ""
+          ).slice(0, 40)}…`;
+          deckOg.appendChild(opt);
+        });
+        sel.appendChild(deckOg);
+      }
     });
   }
 
@@ -533,12 +552,32 @@ window.Feud = window.Feud || {};
           isLastRegularRound && tieBreakerUnlocked
             ? `<button type="button" class="action-btn btn-red display-font" onclick="hostNextRound()">⚡ Start Sudden-Death Tie-Breaker ▶</button>`
             : !isLastRound
-            ? `<button type="button" class="action-btn btn-blue display-font" onclick="hostNextRound()">⏭️ Next Round ▶</button>`
-            : Boolean(roomState.enableFastMoney)
-            ? `<button type="button" class="action-btn btn-gold display-font" onclick="hostSwitchStage('fast')">⚡ Start Fast Money Bonus Round</button>`
-            : ""
+            ? `<button type="button" class="action-btn btn-blue display-font" onclick="hostNextRound()">⏭️ Next Round ▶</button>
+               <select class="lobby-input" style="min-height:40px; font-size:12px; flex:1; min-width:200px;" onchange="if(this.value!==''){hostPickDeckRoundForSlot(Number(this.value), ${
+                 roomState.roundIdx + 1
+               }); this.value='';}">
+                 <option value="">📋 Or Pick Any Round from Deck…</option>
+                 ${(() => {
+                   const src = Feud.getSourceRoundsList ? Feud.getSourceRoundsList(roomState) : [];
+                   const used = Feud.getAllPlayedSourceIndices
+                     ? Feud.getAllPlayedSourceIndices(roomState)
+                     : new Set();
+                   return src
+                     .map((sr, sIdx) => {
+                       const mark = used.has(sIdx) ? "✓ [Used] " : "• ";
+                       return `<option value="${sIdx}">${mark}#${sIdx + 1} (${
+                         sr.multiplier || 1
+                       }x): ${escapeHtml((sr.prompt || "").slice(0, 44))}…</option>`;
+                     })
+                     .join("");
+                 })()}
+               </select>`
+            : `${
+                Boolean(roomState.enableFastMoney)
+                  ? `<button type="button" class="action-btn btn-gold display-font" onclick="hostSwitchStage('fast')">⚡ Start Fast Money Bonus Round</button>`
+                  : ""
+              }<button type="button" class="action-btn btn-gold display-font" onclick="hostShowWinnerScreen()">🏆 Show Winner Screen</button>`
         }
-        <button type="button" class="top-btn gold" onclick="openNextMatchModal()">🏆 Winner &amp; Next Match Setup</button>
       `;
     }
 
@@ -607,7 +646,7 @@ window.Feud = window.Feud || {};
       } else if (phase === "faceoff-ready") {
         inlineBarEl.className = "faceoff-decision-bar";
         inlineBarEl.innerHTML = `<div class="fodb-actions">${actionsHtml}</div>`;
-      } else if (String(phase).startsWith("faceoff")) {
+      } else if (phase === "faceoff-buzz" || phase === "faceoff-p1") {
         const activeTeam =
           roomState.controllingTeam || roomState.buzzerWinner || roomState.faceoffFirstTeam || 0;
         inlineBarEl.className = "faceoff-decision-bar";
@@ -621,6 +660,9 @@ window.Feud = window.Feud || {};
             </button>
           </div>
         `;
+      } else if (phase === "faceoff-p2") {
+        inlineBarEl.className = "faceoff-decision-bar hidden";
+        inlineBarEl.innerHTML = "";
       } else if (phase === "steal") {
         inlineBarEl.className = "faceoff-decision-bar steal-highlight";
         inlineBarEl.innerHTML = `
@@ -1008,6 +1050,18 @@ window.Feud = window.Feud || {};
     renderBranding(roomState);
     renderTurnTimerUI(roomState);
     renderGuidedFlowUI(roomState);
+    const undoBtn = document.getElementById("hostUndoBtn");
+    if (undoBtn) {
+      undoBtn.disabled = !(handlers && typeof handlers.canUndo === "function" && handlers.canUndo());
+    }
+    const t1Input = document.getElementById("hostOverrideT1Name");
+    if (t1Input && document.activeElement !== t1Input) {
+      t1Input.value = roomState.team1Name || "Team 1";
+    }
+    const t2Input = document.getElementById("hostOverrideT2Name");
+    if (t2Input && document.activeElement !== t2Input) {
+      t2Input.value = roomState.team2Name || "Team 2";
+    }
     const round = Feud.getRoundData(roomState, roomState.roundIdx);
     const phase =
       roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
@@ -1072,11 +1126,15 @@ window.Feud = window.Feud || {};
     colR.className = "host-answer-col";
     colR.style.setProperty("--rows-per-col", String(halfCount));
 
+    const answersLocked =
+      phase === "faceoff-ready" || phase === "faceoff-buzz" || phase === "pass-or-play";
+
     round.answers.forEach((ans, idx) => {
       const isRev = revSet.has(idx);
       const pts = ans.points * round.multiplier;
       const btn = document.createElement("button");
       btn.type = "button";
+      btn.disabled = answersLocked || isRev;
       btn.className = `host-answer-btn ${isRev ? "is-revealed" : ""}${
         isRoundOver && !isRev ? " is-missed-reveal" : ""
       }`;

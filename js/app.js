@@ -26,6 +26,59 @@ window.Feud = window.Feud || {};
   let hostTurnTimerInterval = null;
   let presetIdx = 0;
   let nextMatchContenderMode = "winner-stays"; // 'winner-stays' | 'new-teams'
+  let undoStack = [];
+  const MAX_UNDO_STACK = 25;
+
+  function buildUndoSnapshot() {
+    return {
+      stage: roomState.stage || "main",
+      roundIdx: roomState.roundIdx || 0,
+      roundPhase: roomState.roundPhase || "faceoff-ready",
+      questionRevealed: Boolean(roomState.questionRevealed),
+      controllingTeam: roomState.controllingTeam || 0,
+      faceoffFirstTeam: roomState.faceoffFirstTeam || 0,
+      faceoffBestRank: roomState.faceoffBestRank ?? 999,
+      faceoffWinnerTeam: roomState.faceoffWinnerTeam || 0,
+      originalPlayingTeam: roomState.originalPlayingTeam || 0,
+      roundWinnerTeam: roomState.roundWinnerTeam || 0,
+      lastOverlayXCount: roomState.lastOverlayXCount || 1,
+      revealed: Array.isArray(roomState.revealed) ? [...roomState.revealed] : [],
+      pot: roomState.pot || 0,
+      strikes: roomState.strikes || 0,
+      team1Score: roomState.team1Score || 0,
+      team2Score: roomState.team2Score || 0,
+      buzzerWinner: roomState.buzzerWinner || 0,
+      buzzerArmedTeam: roomState.buzzerArmedTeam || 0,
+      turnTimerRemaining:
+        typeof roomState.turnTimerRemaining === "number"
+          ? roomState.turnTimerRemaining
+          : Number(roomState.turnTimerDuration) || 10,
+      turnTimerRunning: false
+    };
+  }
+
+  function pushUndoSnapshot() {
+    undoStack.push(buildUndoSnapshot());
+    if (undoStack.length > MAX_UNDO_STACK) {
+      undoStack.shift();
+    }
+  }
+
+  function clearUndoStack() {
+    undoStack = [];
+  }
+
+  async function hostUndo() {
+    Feud.unlockAudio();
+    if (!undoStack.length) {
+      Feud.showToast("Nothing to undo.");
+      return;
+    }
+    stopLocalTurnTimerInterval();
+    const snap = undoStack.pop();
+    await pushRoomPatch(snap);
+    Feud.showToast("↩️ Undid last action!");
+  }
 
   // =====================================================================
   // 1. SCREEN WAKE LOCK API (KEEPS ALL 4 PHONES AWAKE)
@@ -405,6 +458,7 @@ window.Feud = window.Feud || {};
 
   async function confirmStartNewGame(mode) {
     Feud.unlockAudio();
+    clearUndoStack();
     const iconVal = (document.getElementById("setupGameIconInput")?.value || "").trim() || "🎉";
     const titleVal =
       (document.getElementById("setupGameTitleInput")?.value || "").trim() || "Party Feud";
@@ -593,27 +647,9 @@ window.Feud = window.Feud || {};
   }
 
   async function joinTeamBuzzer(teamNum) {
-    Feud.unlockAudio();
-    const code = document.getElementById("buzzerRoomInput").value.trim().toUpperCase();
-    if (code.length < 4) {
-      Feud.showToast("Enter the 4-character Room Code first!");
-      return;
-    }
-
-    const role = teamNum === 1 ? "buzzer1" : "buzzer2";
-    Feud.showToast(`Connecting Team ${teamNum} Buzzer to ${code}…`);
-    const res = await Feud.joinExistingRoomSync({ code, role });
-    if (!res.ok) {
-      Feud.showToast(res.error || `Room "${code}" not found.`);
-      return;
-    }
-
-    roomState = { ...roomState, ...res.state };
-    currentRoomCode = code;
-    syncSequenceCounters(roomState);
-    Feud.saveLastSession(role, code);
-    enterRole(role, code);
-    Feud.showToast(`🔔 Team ${teamNum} Buzzer Ready!`);
+    Feud.showToast(
+      `🔔 Remote Team ${teamNum} Buzzer is temporarily disabled. The Host manages buzzers on the Host screen.`
+    );
   }
 
   async function startLocalSoloMode() {
@@ -764,6 +800,7 @@ window.Feud = window.Feud || {};
       if (!window.confirm("Leave Buzzer Mode and return to the Lobby?")) return;
     }
     document.body.classList.remove("buzzer-nav-locked");
+    clearUndoStack();
     Feud.cleanupSync();
     Feud.clearLastSession();
     stopLocalTurnTimerInterval();
@@ -926,6 +963,7 @@ window.Feud = window.Feud || {};
 
   async function confirmStartNextMatch() {
     Feud.unlockAudio();
+    clearUndoStack();
     const t1 =
       (document.getElementById("nextMatchTeam1Input")?.value || "").trim() || "Defending Champs";
     const t2 =
@@ -1015,7 +1053,8 @@ window.Feud = window.Feud || {};
     onToggleAnswer: (idx) => hostToggleAnswer(idx),
     onUpdateFm: (idx, field, val) => hostUpdateFm(idx, field, val),
     onSelectFmChip: (idx, playerNum, ansText, pts) =>
-      hostSelectFmChip(idx, playerNum, ansText, pts)
+      hostSelectFmChip(idx, playerNum, ansText, pts),
+    canUndo: () => undoStack.length > 0
   };
 
   function renderActiveView() {
@@ -1076,6 +1115,7 @@ window.Feud = window.Feud || {};
       roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
 
     if (phase === "faceoff-ready" || !roomState.questionRevealed) {
+      pushUndoSnapshot();
       Feud.playTick(false);
       if (roomState.buzzerWinner) {
         await pushRoomPatch({
@@ -1166,6 +1206,7 @@ window.Feud = window.Feud || {};
 
   async function hostChoosePlayOrPass(decision) {
     Feud.unlockAudio();
+    pushUndoSnapshot();
     stopLocalTurnTimerInterval();
     const winTeam = roomState.faceoffWinnerTeam || roomState.controllingTeam || 1;
     const passTeam = winTeam === 1 ? 2 : 1;
@@ -1243,6 +1284,7 @@ window.Feud = window.Feud || {};
 
   async function hostSetFaceOffWinner(teamNum) {
     Feud.unlockAudio();
+    pushUndoSnapshot();
     const cleanTeam = Number(teamNum) === 2 ? 2 : 1;
     const teamName = getTeamNameByNum(cleanTeam);
     const phase =
@@ -1288,6 +1330,7 @@ window.Feud = window.Feud || {};
   }
 
   async function hostSetControllingTeam(teamNum) {
+    pushUndoSnapshot();
     stopLocalTurnTimerInterval();
     const cleanTeam = [0, 1, 2].includes(Number(teamNum)) ? Number(teamNum) : 0;
     const dur = Number(roomState.turnTimerDuration) || 10;
@@ -1339,29 +1382,29 @@ window.Feud = window.Feud || {};
     const ans = round.answers[slotIdx];
     if (!ans) return;
 
-    stopLocalTurnTimerInterval();
     const dur = Number(roomState.turnTimerDuration) || 10;
     const phase =
       roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
 
-    const revSet = new Set(roomState.revealed || []);
-    const pts = ans.points * round.multiplier;
-    let newPot = roomState.pot || 0;
-
-    // If un-revealing an already revealed tile (manual host correction)
-    if (revSet.has(slotIdx)) {
-      revSet.delete(slotIdx);
-      if (phase !== "round-over") {
-        newPot = Math.max(0, newPot - pts);
-      }
-      await pushRoomPatch({
-        revealed: Array.from(revSet),
-        pot: newPot,
-        turnTimerRunning: false,
-        turnTimerRemaining: dur
-      });
+    if (phase === "faceoff-ready" || phase === "faceoff-buzz") {
+      Feud.showToast("Tap which team buzzed first before revealing answers!");
       return;
     }
+    if (phase === "pass-or-play") {
+      Feud.showToast("Choose Play or Pass before revealing answers!");
+      return;
+    }
+
+    const revSet = new Set(roomState.revealed || []);
+    if (revSet.has(slotIdx)) {
+      Feud.showToast("Already revealed — use ↩️ Undo if you tapped by mistake.");
+      return;
+    }
+
+    pushUndoSnapshot();
+    stopLocalTurnTimerInterval();
+    const pts = ans.points * round.multiplier;
+    let newPot = roomState.pot || 0;
 
     // Revealing a tile!
     revSet.add(slotIdx);
@@ -1403,7 +1446,7 @@ window.Feud = window.Feud || {};
       setTimeout(() => Feud.playFanfare(), 400);
 
       await pushRoomPatch({
-        stage: "winner",
+        stage: roomState.stage || "main",
         questionRevealed: true,
         revealed: Array.from(revSet),
         pot: 0,
@@ -1418,8 +1461,9 @@ window.Feud = window.Feud || {};
         turnTimerRunning: false,
         fanfareSeq: nextFanfare
       });
-      Feud.showToast(`🏆 Tie-Breaker Answered! ${winName} Wins the Match!`);
-      populateAndShowNextMatchModal();
+      Feud.showToast(
+        `🏆 Tie-Breaker Answered! ${winName} Wins the Match! Reveal any remaining answers, then click "🏆 Show Winner Screen"!`
+      );
       return;
     }
 
@@ -1527,7 +1571,7 @@ window.Feud = window.Feud || {};
       setTimeout(() => Feud.playFanfare(), 400);
 
       await pushRoomPatch({
-        stage: matchWon ? "winner" : roomState.stage || "main",
+        stage: roomState.stage || "main",
         questionRevealed: true,
         revealed: Array.from(revSet),
         pot: 0,
@@ -1544,9 +1588,10 @@ window.Feud = window.Feud || {};
       });
       if (matchWon) {
         Feud.showToast(
-          `🚨 STEAL SUCCESSFUL! 🏆 ${getTeamNameByNum(nextT1 > nextT2 ? 1 : 2)} Wins the Match!`
+          `🚨 STEAL SUCCESSFUL! 🏆 ${getTeamNameByNum(
+            nextT1 > nextT2 ? 1 : 2
+          )} Wins the Match! Reveal any remaining answers, then click "🏆 Show Winner Screen"!`
         );
-        populateAndShowNextMatchModal();
       } else if (matchTied) {
         Feud.populateRoundDropdowns(roomState);
         Feud.showToast(
@@ -1577,7 +1622,7 @@ window.Feud = window.Feud || {};
       const matchTied = isFinalRegularRound && nextT1 === nextT2;
       setTimeout(() => Feud.playFanfare(), 400);
       await pushRoomPatch({
-        stage: matchWon ? "winner" : roomState.stage || "main",
+        stage: roomState.stage || "main",
         questionRevealed: true,
         revealed: Array.from(revSet),
         pot: 0,
@@ -1595,9 +1640,10 @@ window.Feud = window.Feud || {};
       });
       if (matchWon) {
         Feud.showToast(
-          `🧹 Board Swept! 🏆 ${getTeamNameByNum(nextT1 > nextT2 ? 1 : 2)} Wins the Match!`
+          `🧹 Board Swept! 🏆 ${getTeamNameByNum(
+            nextT1 > nextT2 ? 1 : 2
+          )} Wins the Match! Click "🏆 Show Winner Screen" when ready!`
         );
-        populateAndShowNextMatchModal();
       } else if (matchTied) {
         Feud.populateRoundDropdowns(roomState);
         Feud.showToast(
@@ -1670,6 +1716,17 @@ window.Feud = window.Feud || {};
       Feud.showToast("Round already complete — tap a tile to reveal it (0 pts) or go to the next round.");
       return;
     }
+    if (phase === "faceoff-ready" || phase === "faceoff-buzz") {
+      Feud.showToast("Tap which team buzzed first before marking a wrong guess!");
+      return;
+    }
+    if (phase === "pass-or-play") {
+      Feud.showToast("Choose Play or Pass first!");
+      return;
+    }
+
+    pushUndoSnapshot();
+    stopLocalTurnTimerInterval();
 
     // 1. FACE-OFF TURN 1 MISS -> 1 temp X (round strikes untouched), turn passes to the other team (buzzers stay locked; do NOT auto-start timer on X)
     if (phase === "faceoff-ready" || phase === "faceoff-buzz" || phase === "faceoff-p1") {
@@ -1768,7 +1825,7 @@ window.Feud = window.Feud || {};
       setTimeout(() => Feud.playFanfare(), 750);
 
       await pushRoomPatch({
-        stage: matchWon ? "winner" : roomState.stage || "main",
+        stage: roomState.stage || "main",
         pot: 0,
         team1Score: nextT1,
         team2Score: nextT2,
@@ -1784,9 +1841,10 @@ window.Feud = window.Feud || {};
       });
       if (matchWon) {
         Feud.showToast(
-          `${prefix}❌ Steal Missed! 🏆 ${getTeamNameByNum(nextT1 > nextT2 ? 1 : 2)} Wins the Match!`
+          `${prefix}❌ Steal Missed! 🏆 ${getTeamNameByNum(
+            nextT1 > nextT2 ? 1 : 2
+          )} Wins the Match! Reveal any remaining answers, then click "🏆 Show Winner Screen"!`
         );
-        populateAndShowNextMatchModal();
       } else if (matchTied) {
         Feud.populateRoundDropdowns(roomState);
         Feud.showToast(
@@ -1880,6 +1938,7 @@ window.Feud = window.Feud || {};
       Feud.showToast("✅ All answers on the board are already revealed!");
       return;
     }
+    pushUndoSnapshot();
     revSet.add(nextIdx);
     Feud.playDing();
     await pushRoomPatch({
@@ -1900,6 +1959,7 @@ window.Feud = window.Feud || {};
   }
 
   async function hostResetRound() {
+    pushUndoSnapshot();
     stopLocalTurnTimerInterval();
     const dur = Number(roomState.turnTimerDuration) || 10;
     await pushRoomPatch({
@@ -1923,6 +1983,7 @@ window.Feud = window.Feud || {};
   }
 
   async function hostSelectRound(idx) {
+    pushUndoSnapshot();
     stopLocalTurnTimerInterval();
     const total = Feud.getRoundCount(roomState);
     const cleanIdx = Math.max(0, Math.min(total - 1, Number(idx) || 0));
@@ -2019,6 +2080,59 @@ window.Feud = window.Feud || {};
         res.chosenSourceIdx + 1
       }!`
     );
+  }
+
+  async function hostPickDeckRoundForSlot(sourceIdx, targetSlotIdx) {
+    Feud.unlockAudio();
+    const slot =
+      targetSlotIdx !== undefined && !Number.isNaN(Number(targetSlotIdx))
+        ? Number(targetSlotIdx)
+        : roomState.roundIdx || 0;
+    const res = Feud.selectDeckRoundForSlot(roomState, slot, sourceIdx);
+    if (!res) {
+      Feud.showToast("Could not load that deck round.");
+      return;
+    }
+    pushUndoSnapshot();
+    stopLocalTurnTimerInterval();
+    const dur = Number(roomState.turnTimerDuration) || 10;
+    await pushRoomPatch({
+      stage: "main",
+      roundIdx: res.slotIdx,
+      matchRounds: res.matchRounds,
+      matchSourceIndices: res.matchSourceIndices,
+      usedRoundIndices: res.usedRoundIndices,
+      roundPhase: "faceoff-ready",
+      questionRevealed: false,
+      controllingTeam: 0,
+      faceoffFirstTeam: 0,
+      faceoffBestRank: 999,
+      faceoffWinnerTeam: 0,
+      originalPlayingTeam: 0,
+      roundWinnerTeam: 0,
+      lastOverlayXCount: 1,
+      turnTimerRemaining: dur,
+      turnTimerRunning: false,
+      revealed: [],
+      pot: 0,
+      strikes: 0,
+      buzzerWinner: 0,
+      buzzerArmedTeam: 0
+    });
+    Feud.populateRoundDropdowns(roomState);
+    Feud.showToast(
+      `📋 Loaded Deck #${res.chosenSourceIdx + 1} into Round ${res.slotIdx + 1} (${res.targetMult}x)!`
+    );
+  }
+
+  async function hostOnRoundSelectChange(val) {
+    const str = String(val || "");
+    if (str.startsWith("deck:")) {
+      const sourceIdx = Number(str.slice(5));
+      await hostPickDeckRoundForSlot(sourceIdx, roomState.roundIdx || 0);
+      return;
+    }
+    await hostSelectRound(Number(str));
   }
 
   async function hostManualBuzz(team) {
@@ -2140,11 +2254,14 @@ window.Feud = window.Feud || {};
   }
 
   async function hostRenameTeam(team, val) {
+    pushUndoSnapshot();
     const clean = val.trim() || `Team ${team}`;
     await pushRoomPatch(team === 1 ? { team1Name: clean } : { team2Name: clean });
+    Feud.showToast(`✏️ Renamed Team ${team} to "${clean}"`);
   }
 
   async function hostAdjustScore(team, delta) {
+    pushUndoSnapshot();
     if (team === 1) {
       await pushRoomPatch({ team1Score: Math.max(0, (roomState.team1Score || 0) + delta) });
     } else {
@@ -2160,6 +2277,7 @@ window.Feud = window.Feud || {};
       Feud.showToast("Round Pot is 0 — reveal an answer first!");
       return;
     }
+    pushUndoSnapshot();
     const dur = Number(roomState.turnTimerDuration) || 10;
     const curRound = Feud.getRoundData(roomState, roomState.roundIdx);
     const isTieBreaker = Feud.isTieBreakerRound && Feud.isTieBreakerRound(curRound);
@@ -2175,7 +2293,7 @@ window.Feud = window.Feud || {};
     Feud.playFanfare();
     const nextFanfare = (roomState.fanfareSeq || 0) + 1;
     await pushRoomPatch({
-      stage: matchWon ? "winner" : roomState.stage || "main",
+      stage: roomState.stage || "main",
       team1Score: nextT1,
       team2Score: nextT2,
       pot: 0,
@@ -2189,8 +2307,11 @@ window.Feud = window.Feud || {};
       fanfareSeq: nextFanfare
     });
     if (matchWon) {
-      Feud.showToast(`🏆 ${getTeamNameByNum(nextT1 > nextT2 ? 1 : 2)} Wins the Match!`);
-      populateAndShowNextMatchModal();
+      Feud.showToast(
+        `🏆 ${getTeamNameByNum(
+          nextT1 > nextT2 ? 1 : 2
+        )} Wins the Match! Reveal any remaining answers, then click "🏆 Show Winner Screen"!`
+      );
     } else if (matchTied) {
       Feud.populateRoundDropdowns(roomState);
       Feud.showToast(
@@ -2203,10 +2324,22 @@ window.Feud = window.Feud || {};
     }
   }
 
+  async function hostShowWinnerScreen() {
+    Feud.unlockAudio();
+    pushUndoSnapshot();
+    stopLocalTurnTimerInterval();
+    await pushRoomPatch({
+      stage: "winner",
+      turnTimerRunning: false
+    });
+    populateAndShowNextMatchModal();
+  }
+
   // =====================================================================
   // 8. FAST MONEY CONTROLS & 1-TAP SCORING CHIPS
   // =====================================================================
   async function hostSwitchStage(stage) {
+    pushUndoSnapshot();
     if (stage === "fast" && !roomState.enableFastMoney) {
       Feud.showToast("Fast Money is disabled for this match.");
       return;
@@ -2823,6 +2956,8 @@ window.Feud = window.Feud || {};
     hostRevealAll,
     hostResetRound,
     hostSelectRound,
+    hostOnRoundSelectChange,
+    hostPickDeckRoundForSlot,
     hostPrevRound,
     hostNextRound,
     hostRandomizeCurrentRound,
@@ -2834,6 +2969,8 @@ window.Feud = window.Feud || {};
     hostRenameTeam,
     hostAdjustScore,
     hostAwardPot,
+    hostShowWinnerScreen,
+    hostUndo,
     hostSwitchStage,
     hostUpdateFm,
     hostSelectFmChip,

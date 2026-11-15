@@ -495,6 +495,75 @@ window.Feud = window.Feud || {};
     };
   }
 
+  function getAllPlayedSourceIndices(roomState) {
+    const stats = getDeckPlayStats(roomState);
+    return new Set([
+      ...(stats.playedRounds || []),
+      ...(Array.isArray(roomState && roomState.usedRoundIndices) ? roomState.usedRoundIndices : [])
+    ]);
+  }
+
+  function selectDeckRoundForSlot(roomState, slotIdx, chosenSourceIdx) {
+    const deckKey = getDeckKey(roomState);
+    const sourceRounds = getSourceRoundsList(roomState);
+    const cleanSourceIdx = Number(chosenSourceIdx);
+    if (
+      !Number.isInteger(cleanSourceIdx) ||
+      cleanSourceIdx < 0 ||
+      cleanSourceIdx >= sourceRounds.length
+    ) {
+      return null;
+    }
+
+    const baseRounds = getBaseRoundsList(roomState);
+    const safeSlotIdx = Math.max(0, Math.min(baseRounds.length - 1, Number(slotIdx) || 0));
+    const currentSlotRound = baseRounds[safeSlotIdx];
+    const orig = sourceRounds[cleanSourceIdx];
+
+    const isSlotTieBreaker =
+      currentSlotRound &&
+      (/tie-?breaker|sudden\s*death/i.test(currentSlotRound.title || "") ||
+        /tie-?breaker|sudden\s*death/i.test(currentSlotRound.theme || ""));
+    const targetMult = currentSlotRound
+      ? Number(currentSlotRound.multiplier) || Number(orig.multiplier) || 1
+      : Number(orig.multiplier) || 1;
+
+    const playedSet = getAllPlayedSourceIndices(roomState);
+    playedSet.add(cleanSourceIdx);
+
+    const allHist = loadAllPlayedHistory();
+    const prevEntry = allHist[deckKey] || { playedRounds: [], playedFmSets: [], matchNumber: 1 };
+    allHist[deckKey] = {
+      ...prevEntry,
+      playedRounds: Array.from(playedSet)
+    };
+    saveAllPlayedHistory(allHist);
+
+    const newRoundObj = {
+      ...orig,
+      sourceIdx: cleanSourceIdx,
+      title: isSlotTieBreaker
+        ? `Tie-Breaker (Bonus • Deck #${cleanSourceIdx + 1})`
+        : `Round ${safeSlotIdx + 1} (${targetMult}x • Deck #${cleanSourceIdx + 1})`,
+      multiplier: targetMult
+    };
+
+    const nextMatchRounds = baseRounds.map((r, i) => (i === safeSlotIdx ? newRoundObj : { ...r }));
+    const nextMatchSourceIndices = nextMatchRounds.map((r, i) =>
+      r.sourceIdx !== undefined ? r.sourceIdx : i
+    );
+
+    return {
+      newRound: newRoundObj,
+      chosenSourceIdx: cleanSourceIdx,
+      slotIdx: safeSlotIdx,
+      targetMult,
+      matchRounds: nextMatchRounds,
+      matchSourceIndices: nextMatchSourceIndices,
+      usedRoundIndices: Array.from(playedSet)
+    };
+  }
+
   function getActiveTeamPresets(roomState) {
     if (
       roomState &&
@@ -732,9 +801,11 @@ window.Feud = window.Feud || {};
     getSourceRoundsList,
     getSourceFastMoneyList,
     getDeckPlayStats,
+    getAllPlayedSourceIndices,
     resetDeckPlayedHistory,
     buildMatchSlice,
     pickRandomUnplayedRoundForLevel,
+    selectDeckRoundForSlot,
     getActiveTeamPresets,
     createDefaultRoomState,
     getBaseRoundsList,

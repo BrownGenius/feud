@@ -206,7 +206,7 @@ button:disabled {
 
 @media (min-width: 860px) {
   .role-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -631,6 +631,22 @@ button:disabled {
 .host-answer-btn.is-revealed {
   background: linear-gradient(90deg, #065f46 0%, #047857 100%);
   border-color: #6ee7b7;
+}
+
+.host-answer-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.host-answer-btn.is-revealed:disabled {
+  opacity: 0.92;
+  cursor: default;
+}
+
+.top-btn:disabled,
+.action-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
 }
 
 .host-ans-left {

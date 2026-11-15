@@ -6,14 +6,14 @@ A zero-backend, 4-device multiplayer **Party Feud** game show web app built to r
 
 ## ✨ Features
 
-* **📱 Live Multiplayer on Static GitHub Pages (Host + TV + Optional Buzzers)**:
-  * **Host Remote (PIN-Locked)**: Streamlined workspace with a **Guided Wizard & Teleprompter (`🎙️ SAY` / `👉 DO` script)** at the top, an **embedded 16:9 Live TV Screen monitor**, clickable answer key, single-answer reveal (`👁️ Reveal Answer #N`), level-preserving round randomizer (`🎲 Randomize (Same Level)`), strike triggers (`X`, `XX`, `XXX`), player shot-clock timer, 1-tap Fast Money scoring chips, and live question editor.
-  * **TV Display (Auto-Launched Window or Separate Device)**: Widescreen 16:9 game board with 3D flipping tiles, Web Audio game show sound effects, live buzzer & steal alert banners, giant red `X` strike overlays (also mirrored inside the Host's mini Live TV monitor), and an automatic **Match Winner Celebration** stage.
-  * **Team Podium Buzzers (Optional Phones 3 & 4)**: Full-screen red/blue buzzer pads with haptic vibration, **one active buzzer enforced per team**, 3-second hold-to-exit protection, and 1-scan QR Code room joining. Buzzers unlock when the Host reveals the Face-Off question, lock out after the first buzz, and re-open at the next round's Face-Off.
+* **📱 Live Multiplayer on Static GitHub Pages (Host + TV)**:
+  * **Host Remote (PIN-Locked)**: Streamlined mobile-first & desktop workspace with a **Guided Phase Coach & collapsible Teleprompter (`🎙️ SAY` / `👉 DO` script)**, an **embedded 16:9 Live TV Screen monitor**, strict **phase-gated controls** (only actions valid in the current phase are active), a **`↩️ Undo`** button (25-step snapshot stack), clickable answer key, single-answer reveal (`👁️ Reveal Answer #N`), full-deck round picker with `✓ [Used]` markers, in-game team name editing, strike triggers (`X`, `XX`, `XXX`), player shot-clock timer, 1-tap Fast Money scoring chips, and live question editor.
+  * **TV Display (Auto-Launched Window or Separate Device)**: Widescreen 16:9 game board with 3D flipping tiles, Web Audio game show sound effects, live buzzer & steal alert banners, giant red `X` strike overlays (also mirrored inside the Host's mini Live TV monitor), and an explicit **Match Winner Celebration** stage triggered when the Host clicks **🏆 Show Winner Screen**.
+  * *(Note: Remote Podium Buzzers are currently disabled in the Lobby; the Host selects which team buzzed first directly on the Host Remote.)*
 * **🔄 Multi-Game Party Engine, Conditional Tie-Breaker & "Winner Stays On"**:
   * **Level-Preserving Unplayed Round Slicer**: Run 4–8+ consecutive games from a large question deck at the same party without repeating a question. Tracks played rounds & Fast Money sets in `localStorage`, deals `4`, `5`, `6`, or `All` unused rounds per match (`🎲 Random by Level (1x→2x→3x)` by default, `🎲 Random (Any Level)`, or `📋 Sequential`), and swaps individual questions on the fly with **🎲 Randomize (Same Level)**.
   * **⚡ Conditional Sudden-Death Tie-Breaker**: A reserve Tie-Breaker round stays hidden unless both teams are tied at the end of regular rounds. Whoever answers the Tie-Breaker immediately wins the match!
-  * **🏁 Automatic Winner Screen & Next Match Setup**: As soon as a team wins (after regular rounds or the Tie-Breaker), the TV switches to the **🏆 Match Winner Celebration** and the **Next Match Setup** modal automatically opens on the Host screen (**👑 Winner Stays On**, **🔥 Rematch**, **👥 Two New Teams**, or **👁️ Return to Board** to flip remaining answers).
+  * **🏁 Explicit Winner Screen & Next Match Setup**: When the final regular round (or Sudden-Death Tie-Breaker) ends, the board stays in `round-over` so the Host can reveal any remaining hidden answers (`0 pts`) to the crowd first. Clicking **🏆 Show Winner Screen** transitions the TV to the **🏆 Match Winner Celebration** and opens **Next Match Setup** (**👑 Winner Stays On**, **🔥 Rematch**, or **👥 Two New Teams**).
   * **⚡ Optional Fast Money**: Enable or disable the Fast Money bonus round per game when configuring the room.
 * **🖨️ Printable Question Review & URL-Coded Deck Sharing (`review.html`)**:
   * Open [`review.html`](./review.html) (or click **🖨️ Printable Question Review Sheet** in the Lobby / Deck Manager) to inspect all rounds and Fast Money questions in a clean 2-column print layout, switch decks, and copy shareable URLs like `review.html?deck=desi-thanksgiving`.
@@ -44,22 +44,74 @@ A zero-backend, 4-device multiplayer **Party Feud** game show web app built to r
 
 ---
 
-## 🎙️ Step-by-Step Host Game Flow & Timer Guide
+## 🎙️ Host Workflow State Machine & Timer Guide
+
+The Host Remote enforces a **strict phase-only workflow** so only actions valid for the current game phase are enabled, backed by a **`↩️ Undo`** button in the top round bar.
+
+```mermaid
+stateDiagram-v2
+    [*] --> faceoff_ready : "New Round Selected"
+
+    state "faceoff-ready (Question Hidden)" as faceoff_ready
+    state "faceoff-buzz (Waiting for First Buzz)" as faceoff_buzz
+    state "faceoff-p1 (Face-Off Turn 1)" as faceoff_p1
+    state "faceoff-p2 (Face-Off Turn 2)" as faceoff_p2
+    state "pass-or-play (Play or Pass?)" as pass_or_play
+    state "playing (Team Play, 0-2 Strikes)" as playing
+    state "steal (30s Steal Attempt)" as steal
+    state "round-over (Pot Awarded)" as round_over
+    state "winner (TV Celebration + Next Match)" as winner
+
+    faceoff_ready --> faceoff_buzz : "Show Question on TV (Space)"
+    faceoff_buzz --> faceoff_p1 : "Tap Team A or Team B Buzzed"
+
+    faceoff_p1 --> pass_or_play : "Tap #1 Answer"
+    faceoff_p1 --> faceoff_p2 : "Tap #2-#8 Answer OR Wrong Guess (1 Temp X)"
+
+    faceoff_p2 --> pass_or_play : "Tap Higher-Rank Answer / Lower-Rank / Wrong Guess"
+
+    pass_or_play --> playing : "Choose PLAY or PASS"
+
+    playing --> playing : "Tap Answer (Board Not Swept) OR Wrong Guess (Strike 1 or 2)"
+    playing --> steal : "3rd Strike (XXX)"
+    playing --> round_over : "Board Swept (All Answers Revealed)"
+
+    steal --> round_over : "Tap Answer (Steal Succeeds) OR Wrong Guess (Steal Missed)"
+
+    round_over --> round_over : "Reveal Remaining Hidden Answers (0 pts)"
+    round_over --> faceoff_ready : "Next Round / Pick Any Deck Round"
+    round_over --> winner : "Final Round Complete -> Show Winner Screen"
+```
+
+### Allowed Actions by Phase
+
+| Phase (`roundPhase`) | Answer Tiles | Primary Host Actions Allowed |
+| :--- | :--- | :--- |
+| **`faceoff-ready`** | 🔒 Locked | **👁️ Show Question on TV (`Space`)** |
+| **`faceoff-buzz`** | 🔒 Locked | **🔔 Team A Buzzed** or **🔔 Team B Buzzed** |
+| **`faceoff-p1`** | 🔓 Unrevealed clickable | Tap revealed answer (`1`–`8`), **❌ Wrong Guess** (1 Temp X), or **🔍 Be More Specific** (`+5s`) |
+| **`faceoff-p2`** | 🔓 Unrevealed clickable | Tap 2nd player's answer (`1`–`8`), **❌ Wrong Guess**, or **🔍 Be More Specific** (`+5s`) |
+| **`pass-or-play`** | 🔒 Locked | **▶️ PLAY Board** or **🔀 PASS Board** |
+| **`playing`** | 🔓 Unrevealed clickable | Tap board answer (`1`–`8`), **❌ Wrong Answer (`X`)**, **🔍 Be More Specific** (`+5s`), or **🔄 Start Timer (`R`)** |
+| **`steal`** | 🔓 Unrevealed clickable | **⏱️ Start 30s Steal Timer (`R`)**, tap stolen answer (`1`–`8`), **❌ Steal Missed (`X`)**, or **🔍 Be More Specific** (`+5s`) |
+| **`round-over`** | 🔓 Unrevealed clickable (`0 pts`) | **👁️ Reveal Answer #N (0 pts)**, **⏭️ Next Round ▶**, **📋 Pick Any Round from Deck** (with `✓ [Used]` markers), or **🏆 Show Winner Screen** (final round) |
+
+> **Tip:** Already-revealed answer tiles stay locked to prevent accidental taps—use **`↩️ Undo`** in the top bar to step back at any time, or open **`⚙️ Manual Overrides & Extra Controls`** to edit team names mid-game, adjust scores, or force board control.
 
 ### Quick-Reference Cheat Sheet
 
 | Phase | Host Action (Button or Shortcut) | Automatic Game Flow & TV Behavior |
 | :--- | :--- | :--- |
 | **1. New Game Setup** | Click **✨ Create New Game Room** (or **🆕 New Game**) | Select your question deck, choose **Rounds per Game** (`4`/`5`/`6`/`All`), pick **Round Order** (`Random by Level`, `Random`, or `Sequential`), toggle **Include Fast Money**, enter Team 1 & Team 2 names, and pick the shot-clock (`5s`/`7s`/`10s`/`15s`). |
-| **2. Start of Round** | Click **👁️ Show Question on TV** (`Space`) | Reveals the question on the TV & Buzzer phones and unlocks the Face-Off buzzers. **No timer runs yet** (`READY`)—players have unlimited time until the first person buzzes in. |
-| **3. Face-Off Buzz-In** | First player taps their Podium Buzzer phone (or Host taps **🔔 Team Buzzed First**) | Plays the Face-Off tone, locks out **all** buzzers until the next round's Face-Off, selects that team (`🎤 Face-Off Turn`), and **automatically starts their answer timer**. |
-| **4. Face-Off Turn 1** | Tap their answer (`1`–`8`) or tap **⚡ Face-Off Wrong Guess (1 Temp X)** (`X`) | • **If `#1` Answer**: That team immediately wins the Face-Off (`Play or Pass?`).<br>• **If `#2`–`#8` Answer or Wrong Guess**: Flashes 1 temporary X on the TV (the round's 3-strike counter is **not** touched) and passes the Face-Off turn to the opposing team (buzzers stay locked). |
-| **5. Face-Off Turn 2** | Tap 2nd player's answer (`1`–`8`) or tap **❌ Wrong Answer** (`X`) | Automatically compares ranks and advances to **Step 2: Play or Pass** for the higher-ranking team! |
-| **6. Play or Pass** | Click **▶️ [Winner] PLAYS Board** or **🔀 PASS Board to [Other Team]** | Assigns board control (`🎯 Playing Board`) and resets the timer for the playing team (press `R` to start the countdown for each player). |
-| **7. Team Play (`0–3 X`)** | Tap answer (`1`–`8`) or **❌ Wrong (`X`)** | • **Correct answer or Strike 1/2**: Resets the Player Answer Timer to full duration (`R` to start, `T` to pause/resume).<br>• **Timer hits `0s` (`TIME!`)**: Sounds the time-up alert without forcing a transition—the Host can still tap a board answer, tap **❌ Wrong (`X`)**, or restart the timer!<br>• **Board Swept**: If all answers are revealed, automatically awards the pot to the playing team!<br>• **3rd Strike (`XXX`)**: **Automatically switches teams to Steal Mode**, shows **"CHANCE TO STEAL [POT] PTS!"** on the TV, and pre-loads the **30s Steal Timer**! |
-| **8. Steal Mode (`30s`)** | Click **⏱️ Start 30s Steal Timer (`R`)**, then tap board answer or **❌ Steal Missed (`X`)** | • **If Answer on Board**: Reveals tile and **automatically awards the pot to the stealing team**!<br>• **If Wrong (`X`)**: Triggers `X` and **automatically awards the pot to the original playing team**! |
-| **9. Round Complete** | Click **👁️ Reveal Answer #N (0 pts)** one at a time, then **⏭️ Next Round ▶** | Reveals remaining unflipped tiles one by one on the TV without affecting scores, then advances to the next round. |
-| **10. Tie-Breaker / Match Winner** | Plays automatically after the final regular round | • **If Tied (`T1 == T2`)**: Automatically unlocks the hidden **⚡ Sudden-Death Tie-Breaker** round—first team to answer wins the match!<br>• **When a Team Wins**: TV automatically shows **🏆 [Winner] Wins!** and **Next Match Setup** pops up on the Host screen. |
+| **2. Start of Round** | Click **👁️ Show Question on TV** (`Space`) | Reveals the question on the TV. **No timer runs yet** (`faceoff-buzz`)—players have unlimited time until the first person buzzes in. |
+| **3. Face-Off Buzz-In** | Tap **🔔 Team A Buzzed** or **🔔 Team B Buzzed** | Plays the Face-Off tone, advances to `faceoff-p1`, and **automatically starts their answer timer**. |
+| **4. Face-Off Turn 1** | Tap their answer (`1`–`8`) or tap **❌ Wrong Guess** (`X`) | • **If `#1` Answer**: That team immediately wins the Face-Off (`pass-or-play`).<br>• **If `#2`–`#8` Answer or Wrong Guess**: Flashes 1 temporary X on the TV (round strikes untouched) and passes the turn to the opposing team (`faceoff-p2`). |
+| **5. Face-Off Turn 2** | Tap 2nd player's answer (`1`–`8`) or tap **❌ Wrong Guess** (`X`) | Automatically compares ranks and advances to **`pass-or-play`** for the higher-ranking team! |
+| **6. Play or Pass** | Click **▶️ PLAY** or **🔀 PASS** | Assigns board control (`playing`) and resets the timer for the playing team (press `R` to start the countdown for each player). |
+| **7. Team Play (`0–3 X`)** | Tap answer (`1`–`8`) or **❌ Wrong (`X`)** | • **Correct answer or Strike 1/2**: Resets the Player Answer Timer to full duration (`R` to start, `T` to pause/resume).<br>• **Timer hits `0s` (`TIME!`)**: Sounds the time-up alert without forcing a transition—the Host can still tap a board answer, tap **❌ Wrong (`X`)**, or restart the timer.<br>• **Board Swept**: If all answers are revealed, awards the pot and enters `round-over`.<br>• **3rd Strike (`XXX`)**: **Automatically switches teams to `steal`**, shows **"CHANCE TO STEAL [POT] PTS!"** on the TV, and pre-loads the **30s Steal Timer**. |
+| **8. Steal Mode (`30s`)** | Click **⏱️ Start 30s Steal Timer (`R`)**, then tap board answer or **❌ Steal Missed (`X`)** | • **If Answer on Board**: Reveals tile, awards the pot to the stealing team, and enters `round-over`.<br>• **If Wrong (`X`)**: Triggers `X`, awards the pot to the original playing team, and enters `round-over`. |
+| **9. Round Complete** | Click **👁️ Reveal Answer #N (0 pts)**, then **⏭️ Next Round ▶** or **📋 Pick Any Round from Deck** | Reveals remaining unflipped tiles one by one without affecting scores, then lets you advance sequentially or select any round from the full deck (with `✓ [Used]` indicators, all still selectable). |
+| **10. Tie-Breaker / Match Winner** | Plays after the final regular round | • **If Tied (`T1 == T2`)**: Unlocks the **⚡ Sudden-Death Tie-Breaker** round—first team to answer wins.<br>• **When a Team Wins**: Stays in `round-over` so you can reveal remaining hidden answers first, then click **🏆 Show Winner Screen** to celebrate on TV and open **Next Match Setup**. |
 
 ---
 
