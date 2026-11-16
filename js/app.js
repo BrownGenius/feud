@@ -741,12 +741,15 @@ window.Feud = window.Feud || {};
 
     const codeBadge = document.getElementById("roomCodeBadge");
     const qrBtn = document.getElementById("btnQrCode");
+    const menuQrBtn = document.getElementById("hostMenuQrBtn");
     const leaveBtn = document.getElementById("btnLeaveRoom");
     const sub = document.getElementById("roleSubtitle");
 
     codeBadge.textContent = `Room: ${code}`;
     codeBadge.classList.remove("hidden");
-    if (qrBtn) qrBtn.classList.toggle("hidden", code === "SOLO");
+    const hideQr = code === "SOLO" || isRunningLocally();
+    if (qrBtn) qrBtn.classList.toggle("hidden", hideQr);
+    if (menuQrBtn) menuQrBtn.classList.toggle("hidden", hideQr);
     leaveBtn.classList.remove("hidden");
 
     syncTvViewPlacement(role);
@@ -1054,7 +1057,23 @@ window.Feud = window.Feud || {};
   // =====================================================================
   // 6. ROOM QR CODE MODAL
   // =====================================================================
+  function isRunningLocally() {
+    const proto = window.location.protocol;
+    const host = (window.location.hostname || "").toLowerCase();
+    return (
+      proto === "file:" ||
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "::1" ||
+      host === ""
+    );
+  }
+
   function openQrModal() {
+    if (isRunningLocally()) {
+      Feud.showToast("Join QR is only available when hosted online (not on file:// or localhost).");
+      return;
+    }
     const code = currentRoomCode || "SOLO";
     const baseUrl = window.location.href.split("?")[0].split("#")[0];
     const joinUrl = `${baseUrl}?room=${encodeURIComponent(code)}`;
@@ -3314,6 +3333,16 @@ window.Feud = window.Feud || {};
       if (e.key === "party_feud_played_history_v1") {
         Feud.renderBranding(roomState);
         Feud.populateRoundDropdowns(roomState);
+      } else if (e.key === "party_feud_custom_deck_v1") {
+        roomState.customDeck = Feud.loadSavedCustomDeck ? Feud.loadSavedCustomDeck() : null;
+        roomState.gameTitle = Feud.loadSavedGameTitle ? Feud.loadSavedGameTitle() : "Party Feud";
+        roomState.gameIcon = Feud.loadSavedGameIcon ? Feud.loadSavedGameIcon() : "🎉";
+        const presets = Feud.getActiveTeamPresets(roomState);
+        if (presets && presets[0]) {
+          roomState.team1Name = presets[0][0];
+          roomState.team2Name = presets[0][1];
+        }
+        syncSetupModalInputsFromState();
       }
     });
     document.addEventListener("click", (e) => {

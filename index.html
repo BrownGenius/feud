@@ -37,20 +37,10 @@
         </div>
       </div>
 
-      <!-- Step 2: Custom Icon & Game Show Title -->
-      <div class="setup-step-box">
-        <label class="field-label" for="deckGameTitleInput">🏷️ 2. Custom Icon &amp; Game Show Title</label>
-        <div class="input-pair">
-          <input id="deckGameIconInput" class="fm-num" style="width:56px; font-size:20px;" type="text" maxlength="4" placeholder="🎉" value="🎉" title="Emoji Icon" />
-          <input id="deckGameTitleInput" class="fm-txt" style="font-size:14px; text-transform:none;" type="text" placeholder="Party Feud" value="Party Feud" />
-          <button type="button" class="top-btn gold" onclick="saveCustomGameBranding()">Save</button>
-        </div>
-      </div>
-
-      <!-- Step 3: Team Names -->
+      <!-- Step 2: Team Names -->
       <div class="setup-step-box">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-          <span class="field-label">👥 3. Team Names</span>
+          <span class="field-label">👥 2. Team Names</span>
           <button type="button" class="top-btn" style="min-height:30px; font-size:11px;" onclick="cycleSetupTeamPresets()">🎲 Swap Preset Names</button>
         </div>
         <div class="buzzer-split-btns">
@@ -67,7 +57,7 @@
 
       <!-- Collapsible Secondary Options: Format, Timer & PIN -->
       <details class="setup-step-box">
-        <summary style="cursor:pointer; font-size:12px; font-weight:800; color:#fde68a;">⚙️ 4. Game Rules, Timer &amp; PIN Options</summary>
+        <summary style="cursor:pointer; font-size:12px; font-weight:800; color:#fde68a;">⚙️ 3. Game Rules, Timer &amp; PIN Options</summary>
         <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
           <div class="buzzer-split-btns">
             <div>
@@ -515,7 +505,7 @@
               <button type="button" id="hostBtnRevealRemaining" class="top-btn gold" onclick="hostRevealNextAnswer(); closeHostMoreMenu()">👁️ Reveal Next Answer (0 pts)</button>
               <button type="button" class="top-btn" onclick="openEditRoundModal(); closeHostMoreMenu()">✏️ Edit Round</button>
               <button type="button" class="top-btn" onclick="openDeckManagerModal(); closeHostMoreMenu()">📦 Load Deck</button>
-              <button type="button" class="top-btn host-more-mobile-only" onclick="openQrModal(); closeHostMoreMenu()">📱 Join QR</button>
+              <button type="button" id="hostMenuQrBtn" class="top-btn host-more-mobile-only" onclick="openQrModal(); closeHostMoreMenu()">📱 Join QR</button>
               <button type="button" class="top-btn host-more-mobile-only" onclick="toggleMute(); closeHostMoreMenu()">🔊 Sound</button>
               <button type="button" class="top-btn gold host-more-mobile-only" onclick="toggleFullScreen(); closeHostMoreMenu()">⛶ Fullscreen</button>
               <button type="button" class="top-btn host-more-mobile-only" onclick="leaveToLobby(); closeHostMoreMenu()">🏠 Lobby</button>
@@ -643,13 +633,13 @@
   </section>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
-  <script src="./data/questions.js?v=20261116al"></script>
-  <script src="./decks/catalog.js?v=20261116al"></script>
-  <script src="./js/audio.js?v=20261116al"></script>
-  <script src="./js/state.js?v=20261116al"></script>
-  <script src="./js/formats.js?v=20261116al"></script>
-  <script src="./js/sync.js?v=20261116al"></script>
-  <script src="./js/views.js?v=20261116al"></script>
-  <script src="./js/app.js?v=20261116al"></script>
+  <script src="./data/questions.js?v=20261116aq"></script>
+  <script src="./decks/catalog.js?v=20261116aq"></script>
+  <script src="./js/audio.js?v=20261116aq"></script>
+  <script src="./js/state.js?v=20261116aq"></script>
+  <script src="./js/formats.js?v=20261116aq"></script>
+  <script src="./js/sync.js?v=20261116aq"></script>
+  <script src="./js/views.js?v=20261116aq"></script>
+  <script src="./js/app.js?v=20261116aq"></script>
 </body>
 </html>

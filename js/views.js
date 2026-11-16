@@ -356,7 +356,7 @@ window.Feud = window.Feud || {};
         : "🔔 Step 1: Ready for the Face-Off";
       sayScript = isTieBreaker
         ? `“We are TIED! Welcome to the Sudden-Death Tie-Breaker! Give me one player from ${t1} and one player from ${t2} at the buzzers—the team that gets the #1 answer wins the entire match!”`
-        : `“Welcome to ${round.title} (${multWord} Points)! Give me one player from ${t1} and one player from ${t2} at the buzzer podiums—hands ready!”`;
+        : `“Welcome to Round ${roomState.roundIdx + 1} (${multWord} Points)! Give me one player from ${t1} and one player from ${t2} at the buzzer podiums—hands ready!”`;
       doGuide = `Click “👁️ Show Question on TV” below (or press Space), then read the survey question out loud. There is NO timer until the first player buzzes in!`;
       subtext = `Unlimited time until the first player buzzes (${round.answers.length} answers on the board).`;
       actionsHtml = `

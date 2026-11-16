@@ -719,7 +719,33 @@
         return null;
       }
 
-      async function loadSelectedDeck(val, updateUrl = true) {
+      function persistActiveDeckToGameStorage(isStarter) {
+        if (!Feud.saveCustomDeck) return;
+        if (isStarter) {
+          Feud.saveCustomDeck(null);
+          if (Feud.saveGameTitle) {
+            Feud.saveGameTitle((Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) || "Starter Party Deck");
+          }
+          if (Feud.saveGameIcon) {
+            Feud.saveGameIcon((Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameIcon) || "🎉");
+          }
+          return;
+        }
+        Feud.saveCustomDeck({
+          name: activeDeck.deckName,
+          teamPresets: activeDeck.teamPresets || null,
+          rounds: activeDeck.rounds || [],
+          fastMoney: activeDeck.fastMoney || []
+        });
+        if (Feud.saveGameTitle) {
+          Feud.saveGameTitle(activeDeck.deckName || activeDeck.gameTitle || "Party Feud");
+        }
+        if (Feud.saveGameIcon) {
+          Feud.saveGameIcon(activeDeck.gameIcon || "🎉");
+        }
+      }
+
+      async function loadSelectedDeck(val, updateUrl = true, persistSelection = false) {
         if (updateUrl) {
           revealedCardIds.clear();
           const p = new URLSearchParams(window.location.search);
@@ -753,6 +779,7 @@
             rounds: Feud.DEFAULT_ROUNDS || [],
             fastMoney: Feud.FAST_MONEY_QUESTIONS || []
           };
+          if (persistSelection) persistActiveDeckToGameStorage(true);
           if (updateUrl) syncUrlToSelection();
           renderReviewSheet();
           return;
@@ -764,9 +791,11 @@
             gameTitle: parsed.gameTitle || "Party Feud",
             gameIcon: parsed.gameIcon || "🎉",
             deckName: parsed.deckName || entry.label,
+            teamPresets: parsed.teamPresets || null,
             rounds: parsed.rounds || [],
             fastMoney: parsed.fastMoney || []
           };
+          if (persistSelection) persistActiveDeckToGameStorage(false);
           if (updateUrl) syncUrlToSelection();
           renderReviewSheet();
           return;
@@ -1177,7 +1206,7 @@
         updateAnswersStateUI();
       }
 
-      deckSelect.addEventListener("change", () => loadSelectedDeck(deckSelect.value, true));
+      deckSelect.addEventListener("change", () => loadSelectedDeck(deckSelect.value, true, true));
       levelSelect.addEventListener("change", () => {
         syncUrlToSelection();
         renderReviewSheet();
