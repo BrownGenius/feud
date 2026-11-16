@@ -709,6 +709,8 @@ window.Feud = window.Feud || {};
   }
 
   async function joinTeamBuzzer(teamNum, opts) {
+    Feud.showToast("Remote buzzers are currently disabled.");
+    return;
     const autoLaunched = Boolean(opts && opts.autoLaunched === true);
     Feud.unlockAudio();
     requestWakeLock();
@@ -748,6 +750,8 @@ window.Feud = window.Feud || {};
   }
 
   async function joinComboBuzzer(opts) {
+    Feud.showToast("Remote buzzers are currently disabled.");
+    return;
     const autoLaunched = Boolean(opts && opts.autoLaunched === true);
     Feud.unlockAudio();
     requestWakeLock();
@@ -869,7 +873,7 @@ window.Feud = window.Feud || {};
 
     codeBadge.textContent = `Room: ${code}`;
     codeBadge.classList.remove("hidden");
-    const hideQr = code === "SOLO" || isFileProtocol();
+    const hideQr = true;
     if (qrBtn) qrBtn.classList.toggle("hidden", hideQr);
     if (menuQrBtn) menuQrBtn.classList.toggle("hidden", hideQr);
     leaveBtn.classList.remove("hidden");
@@ -1388,6 +1392,8 @@ window.Feud = window.Feud || {};
   }
 
   function openQrModal(qrRole = "tv") {
+    Feud.showToast("Join QR is currently disabled.");
+    return;
     if (isFileProtocol()) {
       Feud.showToast("Join QR is only available when served over HTTP/HTTPS (not file://).");
       return;
@@ -3735,15 +3741,8 @@ window.Feud = window.Feud || {};
     window.addEventListener("feud-peer-status", (e) => {
       const detail = (e && e.detail) || {};
       const buzzerStatusPill = document.getElementById("hostBuzzerStatusPill");
-      if (buzzerStatusPill && detail.buzzers) {
-        const bz = detail.buzzers;
-        const count = (bz.t1 ? 1 : 0) + (bz.t2 ? 1 : 0);
-        buzzerStatusPill.textContent =
-          count === 0
-            ? "🔔 Buzzers: 0/2"
-            : `🔔 ${bz.t1 ? "T1✓" : "T1–"} • ${bz.t2 ? "T2✓" : "T2–"}`;
-        buzzerStatusPill.className = `pill-badge ${count === 2 ? "awake-ok" : ""}`;
-        applyBuzzerButtonLocks(bz);
+      if (buzzerStatusPill) {
+        buzzerStatusPill.classList.add("hidden");
       }
       ["buzzerConnStatusPill", "comboConnStatusPill"].forEach((id) => {
         const connPill = document.getElementById(id);

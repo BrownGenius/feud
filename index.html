@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>Party Feud — Live Party Multiplayer</title>
-  <link rel="stylesheet" href="./css/styles.css?v=20261116bz" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261116cb" />
 </head>
 <body>
 
@@ -332,7 +332,7 @@
       </article>
 
       <!-- ROLE 3 & 4: TEAM PODIUM BUZZERS -->
-      <article id="lobbyBuzzerCard" class="role-card">
+      <article id="lobbyBuzzerCard" class="role-card hidden">
         <div>
           <h2>🔔 3. Team Buzzers (Optional)</h2>
           <p style="margin-top:6px;">
@@ -508,7 +508,7 @@
         <div class="host-header-left">
           <button type="button" id="hostCompactRoundLabel" class="top-btn host-round-pill-btn" onclick="openHostPopover('round')" title="Tap to switch or swap round (while question is hidden)">Round 1 (1x)</button>
           <div class="flow-stepper host-clickable-stepper" id="hostFlowStepper" onclick="openHostPopover('phase')" title="Tap to override phase, active team, or strikes"></div>
-          <span id="hostBuzzerStatusPill" class="pill-badge" style="font-size:10px;" title="Connected remote team buzzers">🔔 Buzzers: 0/2</span>
+          <span id="hostBuzzerStatusPill" class="pill-badge hidden" style="font-size:10px;" title="Connected remote team buzzers">🔔 Buzzers: 0/2</span>
         </div>
         <div class="host-quick-timer-group">
           <button type="button" id="hostTurnTimerPill" class="turn-timer-pill display-font host-timer-pill-btn" onclick="openHostPopover('timer')" title="Tap to change timer duration or reset">
@@ -729,13 +729,13 @@
   </section>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
-  <script src="./data/questions.js?v=20261116bz"></script>
-  <script src="./decks/catalog.js?v=20261116bz"></script>
-  <script src="./js/audio.js?v=20261116bz"></script>
-  <script src="./js/state.js?v=20261116bz"></script>
-  <script src="./js/formats.js?v=20261116bz"></script>
-  <script src="./js/sync.js?v=20261116bz"></script>
-  <script src="./js/views.js?v=20261116bz"></script>
-  <script src="./js/app.js?v=20261116bz"></script>
+  <script src="./data/questions.js?v=20261116cb"></script>
+  <script src="./decks/catalog.js?v=20261116cb"></script>
+  <script src="./js/audio.js?v=20261116cb"></script>
+  <script src="./js/state.js?v=20261116cb"></script>
+  <script src="./js/formats.js?v=20261116cb"></script>
+  <script src="./js/sync.js?v=20261116cb"></script>
+  <script src="./js/views.js?v=20261116cb"></script>
+  <script src="./js/app.js?v=20261116cb"></script>
 </body>
 </html>
