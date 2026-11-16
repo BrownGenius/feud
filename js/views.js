@@ -150,6 +150,18 @@ window.Feud = window.Feud || {};
         : "⏱️ Start Timer";
     }
 
+    const showOnBuzzer =
+      (phase === "faceoff-p1" || phase === "faceoff-p2") &&
+      (running || isExpired || (rem > 0 && rem < dur));
+    ["buzzerTimerPill", "comboTimerPill"].forEach((id) => {
+      const bp = document.getElementById(id);
+      if (!bp) return;
+      bp.textContent = isExpired ? "⏰ TIME!" : `⏱️ ${rem}s`;
+      bp.className = `turn-timer-pill display-font${running ? " running" : ""}${
+        isUrgent ? " urgent" : ""
+      }${isExpired ? " expired" : ""}${showOnBuzzer ? "" : " hidden"}`;
+    });
+
     const autoStartOnXCheck = document.getElementById("hostAutoStartOnStrikeCheckbox");
     if (autoStartOnXCheck) {
       autoStartOnXCheck.checked = Boolean(roomState.autoStartTimerOnStrike);
@@ -716,10 +728,42 @@ window.Feud = window.Feud || {};
     }
   }
 
+  function renderTvQrOverlay(roomState) {
+    const overlayEl = document.getElementById("tvQrOverlay");
+    if (!overlayEl) return;
+    const qr = roomState && roomState.tvQrOverlay;
+    if (!qr || !qr.url) {
+      overlayEl.classList.add("hidden");
+      return;
+    }
+    const roleMap = {
+      tv: "📺 SCAN TO OPEN TV DISPLAY",
+      buzzer1: `🔔 SCAN FOR ${(roomState.team1Name || "TEAM 1").toUpperCase()} BUZZER`,
+      buzzer2: `🔔 SCAN FOR ${(roomState.team2Name || "TEAM 2").toUpperCase()} BUZZER`,
+      buzzer_combo: "⚡ SCAN FOR COMBO BUZZER"
+    };
+    const roleEl = document.getElementById("tvQrRoleLabel");
+    const codeEl = document.getElementById("tvQrRoomCode");
+    const urlEl = document.getElementById("tvQrUrlText");
+    const imgEl = document.getElementById("tvQrCodeImg");
+
+    if (roleEl) roleEl.textContent = roleMap[qr.role] || "📱 SCAN TO JOIN ROOM";
+    if (codeEl) codeEl.textContent = qr.roomCode || "";
+    if (urlEl) urlEl.textContent = qr.url;
+    if (imgEl && imgEl.dataset.qrUrl !== qr.url) {
+      imgEl.dataset.qrUrl = qr.url;
+      imgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=6&data=${encodeURIComponent(
+        qr.url
+      )}`;
+    }
+    overlayEl.classList.remove("hidden");
+  }
+
   function renderTvView(roomState, activeRole, handlers) {
     renderBranding(roomState);
     renderTurnTimerUI(roomState);
     renderGuidedFlowUI(roomState);
+    renderTvQrOverlay(roomState);
     const totalRounds = Feud.getRoundCount(roomState);
     const round = Feud.getRoundData(roomState, roomState.roundIdx);
     const multText =
@@ -1035,6 +1079,16 @@ window.Feud = window.Feud || {};
     if (undoBtn) {
       undoBtn.disabled = !(handlers && typeof handlers.canUndo === "function" && handlers.canUndo());
     }
+    const buzzerStatusPill = document.getElementById("hostBuzzerStatusPill");
+    if (buzzerStatusPill && Feud.getConnectedBuzzerTeams) {
+      const bz = Feud.getConnectedBuzzerTeams();
+      const count = (bz.t1 ? 1 : 0) + (bz.t2 ? 1 : 0);
+      buzzerStatusPill.textContent =
+        count === 0
+          ? "🔔 Buzzers: 0/2"
+          : `🔔 ${bz.t1 ? "T1✓" : "T1–"} • ${bz.t2 ? "T2✓" : "T2–"}`;
+      buzzerStatusPill.className = `pill-badge ${count === 2 ? "awake-ok" : ""}`;
+    }
     const stripT1Name = document.getElementById("hostStripT1Name");
     const stripT1Score = document.getElementById("hostStripT1Score");
     const stripT2Name = document.getElementById("hostStripT2Name");
@@ -1336,15 +1390,9 @@ window.Feud = window.Feud || {};
 
   function renderBuzzerView(roomState, activeRole) {
     renderBranding(roomState);
+    renderTurnTimerUI(roomState);
     const myTeam = activeRole === "buzzer1" ? 1 : 2;
     const myName = myTeam === 1 ? roomState.team1Name : roomState.team2Name;
-    const round = Feud.getRoundData(roomState, roomState.roundIdx);
-
-    document.getElementById("buzzerTeamLabel").textContent = `Team ${myTeam} Podium Buzzer`;
-    document.getElementById("buzzerTeamTitle").textContent = myName;
-    document.getElementById("buzzerRoundPrompt").textContent = roomState.questionRevealed
-      ? round.prompt
-      : "🔒 Waiting for Host to Reveal Question…";
 
     document.getElementById("buzzFootT1Name").textContent = roomState.team1Name;
     document.getElementById("buzzFootT1Score").textContent = String(roomState.team1Score || 0);
@@ -1355,8 +1403,11 @@ window.Feud = window.Feud || {};
     const icon = document.getElementById("giantBuzzIcon");
     const text = document.getElementById("giantBuzzText");
     const sub = document.getElementById("giantBuzzSub");
+    const banner = document.getElementById("buzzerStatusBanner");
 
-    btn.className = `giant-buzzer-btn ${myTeam === 1 ? "team-1-theme" : "team-2-theme"}`;
+    btn.className = `giant-buzzer-btn ${
+      myTeam === 1 ? "team-1-theme" : "team-2-theme"
+    } combo-buzzer-btn`;
 
     const phase =
       roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
@@ -1364,43 +1415,189 @@ window.Feud = window.Feud || {};
     const otherTeam = myTeam === 1 ? 2 : 1;
     const otherName = otherTeam === 1 ? roomState.team1Name : roomState.team2Name;
 
-    // Buzzers are only live at the start of each Face-Off. Afterwards, show who buzzed first
-    // (faceoffFirstTeam) until the next round's Face-Off begins.
-    const firstBuzzTeam =
-      roomState.buzzerWinner && String(phase).startsWith("faceoff")
+    const activeTurnTeam =
+      roomState.controllingTeam ||
+      (roomState.buzzerWinner && String(phase).startsWith("faceoff")
         ? roomState.buzzerWinner
-        : roomState.faceoffFirstTeam || 0;
-    const isFaceOffUnderway = String(phase).startsWith("faceoff") && phase !== "faceoff-ready" && phase !== "faceoff-buzz";
+        : roomState.faceoffFirstTeam || 0);
+    const isFaceOffUnderway = phase === "faceoff-p1" || phase === "faceoff-p2";
+    const dur = Number(roomState.turnTimerDuration) || 10;
+    const rawRem =
+      roomState.turnTimerRemaining !== undefined && roomState.turnTimerRemaining !== null
+        ? Number(roomState.turnTimerRemaining)
+        : dur;
+    const timerRunning = isFaceOffUnderway && Boolean(roomState.turnTimerRunning);
+    const timerExpired = isFaceOffUnderway && rawRem <= 0;
+    const showBigTimer =
+      isFaceOffUnderway && (timerRunning || timerExpired || (rawRem > 0 && rawRem < dur));
 
+    icon.classList.remove("is-big-timer", "is-urgent");
     if (canBuzz) {
       btn.disabled = false;
       icon.textContent = "🔔";
-      text.textContent = "BUZZ IN!";
-      sub.textContent = "Tap anywhere on this pad first";
+      text.textContent = myName;
+      sub.textContent = "Tap to buzz in!";
+      if (banner) {
+        banner.textContent = "🔔 BUZZERS ACTIVE — TAP FIRST!";
+      }
     } else if (!roomState.questionRevealed || phase === "faceoff-ready") {
       btn.disabled = true;
       btn.classList.add("locked-out-state");
       icon.textContent = "⏳";
-      text.textContent = "GET READY…";
-      sub.textContent = "Buzzer unlocks when the Host shows the Face-Off question";
-    } else if (isFaceOffUnderway && firstBuzzTeam === myTeam) {
+      text.textContent = myName;
+      sub.textContent = "Waiting for question…";
+      if (banner) banner.textContent = "⏳ GET READY — QUESTION HIDDEN";
+    } else if (isFaceOffUnderway && activeTurnTeam === myTeam) {
       btn.disabled = true;
       btn.classList.add("won-state");
-      icon.textContent = "🚨";
-      text.textContent = "YOU BUZZED FIRST!";
-      sub.textContent = "Give your answer to the Host!";
-    } else if (isFaceOffUnderway && firstBuzzTeam === otherTeam) {
+      if (showBigTimer) {
+        icon.textContent = timerExpired ? "TIME!" : String(rawRem);
+        icon.classList.add("is-big-timer");
+        if (timerExpired || (timerRunning && rawRem <= 3)) icon.classList.add("is-urgent");
+      } else {
+        icon.textContent = "🎤";
+      }
+      text.textContent = myName;
+      sub.textContent = "YOUR TURN!";
+      if (banner) banner.textContent = `🎤 ${myName}'S TURN!`;
+    } else if (isFaceOffUnderway && activeTurnTeam === otherTeam) {
       btn.disabled = true;
       btn.classList.add("locked-out-state");
-      icon.textContent = "🔒";
-      text.textContent = "LOCKED OUT";
-      sub.textContent = `${otherName} buzzed in first`;
+      icon.textContent = "⏳";
+      text.textContent = myName;
+      sub.textContent = "Waiting…";
+      if (banner) banner.textContent = `🎤 ${otherName}'S TURN!`;
     } else {
       btn.disabled = true;
       btn.classList.add("locked-out-state");
       icon.textContent = "🔒";
-      text.textContent = "BUZZERS LOCKED";
-      sub.textContent = "Buzzers re-open at the next round's Face-Off — watch the TV!";
+      text.textContent = myName;
+      sub.textContent = "Locked";
+      if (banner) banner.textContent = "🔒 BUZZERS LOCKED — WATCH TV";
+    }
+  }
+
+  function renderComboBuzzerView(roomState) {
+    renderBranding(roomState);
+    renderTurnTimerUI(roomState);
+    const t1Name = roomState.team1Name || "Team 1";
+    const t2Name = roomState.team2Name || "Team 2";
+    const s1 = roomState.team1Score || 0;
+    const s2 = roomState.team2Score || 0;
+
+    ["comboFootT1Name", "comboFootT1NameTop"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = t1Name;
+    });
+    ["comboFootT1Score", "comboFootT1ScoreTop"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(s1);
+    });
+    ["comboFootT2Name", "comboFootT2NameTop"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = t2Name;
+    });
+    ["comboFootT2Score", "comboFootT2ScoreTop"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(s2);
+    });
+
+    const btn1 = document.getElementById("comboBtnTeam1");
+    const btn2 = document.getElementById("comboBtnTeam2");
+    const title1 = document.getElementById("comboTitleT1");
+    const title2 = document.getElementById("comboTitleT2");
+    const sub1 = document.getElementById("comboSubT1");
+    const sub2 = document.getElementById("comboSubT2");
+    const icon1 = document.getElementById("comboIconT1");
+    const icon2 = document.getElementById("comboIconT2");
+    const setComboBanner = (msg) => {
+      ["comboStatusBanner", "comboStatusBannerTop"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = msg;
+      });
+    };
+
+    if (!btn1 || !btn2) return;
+    btn1.className = "giant-buzzer-btn team-1-theme combo-buzzer-btn combo-buzzer-top";
+    btn2.className = "giant-buzzer-btn team-2-theme combo-buzzer-btn";
+    if (title1) title1.textContent = t1Name;
+    if (title2) title2.textContent = t2Name;
+
+    const phase =
+      roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
+    const canBuzz1 = Feud.buildBuzzPatch ? Boolean(Feud.buildBuzzPatch(roomState, 1)) : false;
+    const canBuzz2 = Feud.buildBuzzPatch ? Boolean(Feud.buildBuzzPatch(roomState, 2)) : false;
+    const canBuzz = canBuzz1 && canBuzz2;
+
+    const activeTurnTeam =
+      roomState.controllingTeam ||
+      (roomState.buzzerWinner && String(phase).startsWith("faceoff")
+        ? roomState.buzzerWinner
+        : roomState.faceoffFirstTeam || 0);
+    const isFaceOffUnderway = phase === "faceoff-p1" || phase === "faceoff-p2";
+    const dur = Number(roomState.turnTimerDuration) || 10;
+    const rawRem =
+      roomState.turnTimerRemaining !== undefined && roomState.turnTimerRemaining !== null
+        ? Number(roomState.turnTimerRemaining)
+        : dur;
+    const timerRunning = isFaceOffUnderway && Boolean(roomState.turnTimerRunning);
+    const timerExpired = isFaceOffUnderway && rawRem <= 0;
+    const showBigTimer =
+      isFaceOffUnderway && (timerRunning || timerExpired || (rawRem > 0 && rawRem < dur));
+
+    if (icon1) icon1.classList.remove("is-big-timer", "is-urgent");
+    if (icon2) icon2.classList.remove("is-big-timer", "is-urgent");
+
+    if (canBuzz) {
+      btn1.disabled = false;
+      btn2.disabled = false;
+      if (icon1) icon1.textContent = "🔔";
+      if (icon2) icon2.textContent = "🔔";
+      if (sub1) sub1.textContent = "Tap to buzz in!";
+      if (sub2) sub2.textContent = "Tap to buzz in!";
+      setComboBanner("🔔 BUZZERS ACTIVE — TAP FIRST!");
+    } else if (!roomState.questionRevealed || phase === "faceoff-ready") {
+      btn1.disabled = true;
+      btn2.disabled = true;
+      btn1.classList.add("locked-out-state");
+      btn2.classList.add("locked-out-state");
+      if (icon1) icon1.textContent = "⏳";
+      if (icon2) icon2.textContent = "⏳";
+      if (sub1) sub1.textContent = "Waiting for question…";
+      if (sub2) sub2.textContent = "Waiting for question…";
+      setComboBanner("⏳ GET READY — QUESTION HIDDEN");
+    } else if (isFaceOffUnderway && (activeTurnTeam === 1 || activeTurnTeam === 2)) {
+      btn1.disabled = true;
+      btn2.disabled = true;
+      btn1.classList.add(activeTurnTeam === 1 ? "won-state" : "locked-out-state");
+      btn2.classList.add(activeTurnTeam === 2 ? "won-state" : "locked-out-state");
+      const activeIcon = activeTurnTeam === 1 ? icon1 : icon2;
+      const idleIcon = activeTurnTeam === 1 ? icon2 : icon1;
+      if (activeIcon) {
+        if (showBigTimer) {
+          activeIcon.textContent = timerExpired ? "TIME!" : String(rawRem);
+          activeIcon.classList.add("is-big-timer");
+          if (timerExpired || (timerRunning && rawRem <= 3)) {
+            activeIcon.classList.add("is-urgent");
+          }
+        } else {
+          activeIcon.textContent = "🎤";
+        }
+      }
+      if (idleIcon) idleIcon.textContent = "⏳";
+      if (sub1) sub1.textContent = activeTurnTeam === 1 ? "YOUR TURN!" : "Waiting…";
+      if (sub2) sub2.textContent = activeTurnTeam === 2 ? "YOUR TURN!" : "Waiting…";
+      setComboBanner(`🎤 ${activeTurnTeam === 1 ? t1Name : t2Name}'S TURN!`);
+    } else {
+      btn1.disabled = true;
+      btn2.disabled = true;
+      btn1.classList.add("locked-out-state");
+      btn2.classList.add("locked-out-state");
+      if (icon1) icon1.textContent = "🔒";
+      if (icon2) icon2.textContent = "🔒";
+      if (sub1) sub1.textContent = "Locked";
+      if (sub2) sub2.textContent = "Locked";
+      setComboBanner("🔒 BUZZERS LOCKED — WATCH TV");
     }
   }
 
@@ -1414,6 +1611,7 @@ window.Feud = window.Feud || {};
     populateRoundDropdowns,
     renderTvView,
     renderHostView,
-    renderBuzzerView
+    renderBuzzerView,
+    renderComboBuzzerView
   });
 })(window.Feud);

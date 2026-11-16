@@ -185,8 +185,14 @@ window.Feud = window.Feud || {};
 
       if (incoming.timeUpSeq && incoming.timeUpSeq !== lastTimeUpSeq) {
         lastTimeUpSeq = incoming.timeUpSeq;
-        if (activeRole === "tv") {
+        if (
+          activeRole === "tv" ||
+          activeRole === "buzzer1" ||
+          activeRole === "buzzer2" ||
+          activeRole === "buzzer_combo"
+        ) {
           Feud.playTimeUpBell();
+          if (navigator.vibrate && activeRole !== "tv") navigator.vibrate([150, 80, 150]);
           Feud.showToast("⏰ Time's Up!");
         }
       }
@@ -627,6 +633,10 @@ window.Feud = window.Feud || {};
       return;
     }
 
+    if (!autoLaunched) {
+      if (openTvDisplayWindow(code)) return;
+    }
+
     Feud.showToast(`Connecting TV to Room ${code}…`);
     const res = await Feud.joinExistingRoomSync({ code, role: "tv" });
     if (!res.ok) {
@@ -649,25 +659,48 @@ window.Feud = window.Feud || {};
 
   // Opens (or reuses) a dedicated TV Display window that auto-joins the given room.
   // Must be called synchronously inside the click handler so browsers don't block the popup.
-  function openTvDisplayWindow(code) {
+  const openedBuzzerPopups = { buzzer1: null, buzzer2: null, buzzer_combo: null };
+
+  function getOpenedPopupBuzzers() {
+    const out = { b1: false, b2: false, combo: false };
+    Object.keys(openedBuzzerPopups).forEach((role) => {
+      const w = openedBuzzerPopups[role];
+      if (w && !w.closed) {
+        if (role === "buzzer1") out.b1 = true;
+        if (role === "buzzer2") out.b2 = true;
+        if (role === "buzzer_combo") out.combo = true;
+      } else {
+        openedBuzzerPopups[role] = null;
+      }
+    });
+    return out;
+  }
+
+  function openRoleWindow(code, role, windowName, features) {
     const baseUrl = window.location.href.split("?")[0].split("#")[0];
-    const tvUrl = `${baseUrl}?room=${encodeURIComponent(code)}&role=tv`;
+    const targetUrl = `${baseUrl}?room=${encodeURIComponent(code)}&role=${encodeURIComponent(role)}`;
     let win = null;
     try {
-      win = window.open(tvUrl, "partyFeudTvDisplay", "popup=yes,width=1280,height=720");
+      win = window.open(targetUrl, windowName, features);
     } catch (e) {
       win = null;
     }
     if (!win) {
       Feud.showToast(
-        `⚠️ Popup blocked — allow popups for this site, or open a new window and join Room ${code} as TV Display.`
+        `⚠️ Popup blocked — allow popups for this site to open ${role} in a new window.`
       );
-      return false;
+      return null;
     }
     try {
       win.focus();
     } catch (e) {}
-    return true;
+    return win;
+  }
+
+  function openTvDisplayWindow(code) {
+    return Boolean(
+      openRoleWindow(code, "tv", "partyFeudTvDisplay", "popup=yes,width=1280,height=720")
+    );
   }
 
   function reopenTvWindow() {
@@ -675,10 +708,82 @@ window.Feud = window.Feud || {};
     openTvDisplayWindow(currentRoomCode);
   }
 
-  async function joinTeamBuzzer(teamNum) {
-    Feud.showToast(
-      `🔔 Remote Team ${teamNum} Buzzer is temporarily disabled. The Host manages buzzers on the Host screen.`
-    );
+  async function joinTeamBuzzer(teamNum, opts) {
+    const autoLaunched = Boolean(opts && opts.autoLaunched === true);
+    Feud.unlockAudio();
+    requestWakeLock();
+    const code = document.getElementById("buzzerRoomInput").value.trim().toUpperCase();
+    if (code.length < 4) {
+      Feud.showToast("Enter the 4-character Room Code first!");
+      return;
+    }
+
+    const role = teamNum === 1 ? "buzzer1" : "buzzer2";
+    if (!autoLaunched) {
+      const popupWin = openRoleWindow(
+        code,
+        role,
+        `partyFeudBuzzer${teamNum}`,
+        "popup=yes,width=480,height=780"
+      );
+      if (popupWin) {
+        openedBuzzerPopups[role] = popupWin;
+        refreshLobbyBuzzerLocks(false);
+        return;
+      }
+    }
+    Feud.showToast(`Connecting Team ${teamNum} Buzzer to ${code}…`);
+    const res = await Feud.joinExistingRoomSync({ code, role });
+    if (!res.ok) {
+      Feud.showToast(res.error || `Room "${code}" not found.`);
+      return;
+    }
+
+    roomState = { ...roomState, ...res.state };
+    currentRoomCode = code;
+    syncSequenceCounters(roomState);
+    Feud.saveLastSession(role, code);
+    enterRole(role, code);
+    Feud.showToast(`🔔 Team ${teamNum} Buzzer Ready!`);
+  }
+
+  async function joinComboBuzzer(opts) {
+    const autoLaunched = Boolean(opts && opts.autoLaunched === true);
+    Feud.unlockAudio();
+    requestWakeLock();
+    const code = document.getElementById("buzzerRoomInput").value.trim().toUpperCase();
+    if (code.length < 4) {
+      Feud.showToast("Enter the 4-character Room Code first!");
+      return;
+    }
+
+    const role = "buzzer_combo";
+    if (!autoLaunched) {
+      const popupWin = openRoleWindow(
+        code,
+        role,
+        "partyFeudComboBuzzer",
+        "popup=yes,width=540,height=860"
+      );
+      if (popupWin) {
+        openedBuzzerPopups[role] = popupWin;
+        refreshLobbyBuzzerLocks(false);
+        return;
+      }
+    }
+    Feud.showToast(`Connecting Combo Buzzer to ${code}…`);
+    const res = await Feud.joinExistingRoomSync({ code, role });
+    if (!res.ok) {
+      Feud.showToast(res.error || `Room "${code}" not found.`);
+      return;
+    }
+
+    roomState = { ...roomState, ...res.state };
+    currentRoomCode = code;
+    syncSequenceCounters(roomState);
+    Feud.saveLastSession(role, code);
+    enterRole(role, code);
+    Feud.showToast("🔔 Combo Buzzer Ready!");
   }
 
   async function startLocalSoloMode() {
@@ -728,9 +833,24 @@ window.Feud = window.Feud || {};
 
   function enterRole(role, code) {
     activeRole = role;
+    try {
+      const url = new URL(window.location.href);
+      if (code && code !== "SOLO") {
+        url.searchParams.set("room", code);
+        url.searchParams.set("role", role);
+      } else {
+        url.searchParams.delete("room");
+        url.searchParams.delete("role");
+      }
+      url.searchParams.delete("returnTo");
+      window.history.replaceState({}, "", url.toString());
+    } catch (e) {}
     document.body.classList.toggle("tv-viewport-lock", role === "tv" || role === "solo");
     // Anti-accident lock: Buzzer phones hide the top mode-switcher behind a 3-second hold
-    document.body.classList.toggle("buzzer-nav-locked", role === "buzzer1" || role === "buzzer2");
+    document.body.classList.toggle(
+      "buzzer-nav-locked",
+      role === "buzzer1" || role === "buzzer2" || role === "buzzer_combo"
+    );
     requestWakeLock();
     Feud.renderBranding(roomState);
 
@@ -738,6 +858,8 @@ window.Feud = window.Feud || {};
     document.getElementById("tvView").classList.add("hidden");
     document.getElementById("hostView").classList.add("hidden");
     document.getElementById("buzzerView").classList.add("hidden");
+    document.getElementById("comboBuzzerView")?.classList.add("hidden");
+    document.getElementById("comboBuzzerView")?.classList.add("hidden");
 
     const codeBadge = document.getElementById("roomCodeBadge");
     const qrBtn = document.getElementById("btnQrCode");
@@ -747,7 +869,7 @@ window.Feud = window.Feud || {};
 
     codeBadge.textContent = `Room: ${code}`;
     codeBadge.classList.remove("hidden");
-    const hideQr = code === "SOLO" || isRunningLocally();
+    const hideQr = code === "SOLO" || isFileProtocol();
     if (qrBtn) qrBtn.classList.toggle("hidden", hideQr);
     if (menuQrBtn) menuQrBtn.classList.toggle("hidden", hideQr);
     leaveBtn.classList.remove("hidden");
@@ -772,6 +894,9 @@ window.Feud = window.Feud || {};
     } else if (role === "buzzer1" || role === "buzzer2") {
       document.getElementById("buzzerView").classList.remove("hidden");
       sub.textContent = role === "buzzer1" ? "Team 1 Podium Buzzer" : "Team 2 Podium Buzzer";
+    } else if (role === "buzzer_combo") {
+      document.getElementById("comboBuzzerView")?.classList.remove("hidden");
+      sub.textContent = "Combo Shared Buzzer";
     }
 
     renderActiveView();
@@ -794,10 +919,10 @@ window.Feud = window.Feud || {};
   let buzzerExitTimer = null;
   let buzzerExitTick = null;
 
-  function buzzerExitHoldStart(ev) {
+  function buzzerExitHoldStart(ev, btnId = "buzzerExitHoldBtn") {
     if (ev && ev.preventDefault) ev.preventDefault();
-    buzzerExitHoldCancel();
-    const btn = document.getElementById("buzzerExitHoldBtn");
+    buzzerExitHoldCancel(btnId);
+    const btn = document.getElementById(btnId);
     const startedAt = Date.now();
     if (btn) btn.classList.add("holding");
     buzzerExitTick = setInterval(() => {
@@ -808,29 +933,45 @@ window.Feud = window.Feud || {};
       }
     }, 100);
     buzzerExitTimer = setTimeout(() => {
-      buzzerExitHoldCancel();
+      buzzerExitHoldCancel(btnId);
       if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
       leaveToLobby({ force: true });
     }, BUZZER_EXIT_HOLD_MS);
   }
 
-  function buzzerExitHoldCancel() {
+  function buzzerExitHoldCancel(btnId = "buzzerExitHoldBtn") {
     clearTimeout(buzzerExitTimer);
     clearInterval(buzzerExitTick);
     buzzerExitTimer = null;
     buzzerExitTick = null;
-    const btn = document.getElementById("buzzerExitHoldBtn");
-    if (btn) {
-      btn.classList.remove("holding");
-      btn.style.setProperty("--hold-pct", "0%");
-      btn.textContent = "🔒 Hold 3s to Exit Buzzer";
-    }
+    ["buzzerExitHoldBtn", "comboExitHoldBtn", btnId].forEach((id) => {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.classList.remove("holding");
+        btn.style.setProperty("--hold-pct", "0%");
+        btn.textContent = id === "comboExitHoldBtn" ? "🔒 Hold 3s to Exit" : "🔒 Hold 3s to Exit Buzzer";
+      }
+    });
   }
 
   function leaveToLobby(opts) {
     const force = Boolean(opts && opts.force === true);
+    if (activeRole === "host" && !force) {
+      const baseUrl = window.location.href.split("?")[0].split("#")[0];
+      const win = window.open(baseUrl, "_blank");
+      if (win) {
+        try {
+          win.focus();
+        } catch (e) {}
+        return;
+      }
+      if (!window.confirm("Leave Host View and return to the Lobby?")) return;
+    }
     // Guard: buzzer phones may only leave via the 3-second hold (or an explicit confirm)
-    if ((activeRole === "buzzer1" || activeRole === "buzzer2") && !force) {
+    if (
+      (activeRole === "buzzer1" || activeRole === "buzzer2" || activeRole === "buzzer_combo") &&
+      !force
+    ) {
       if (!window.confirm("Leave Buzzer Mode and return to the Lobby?")) return;
     }
     document.body.classList.remove("buzzer-nav-locked");
@@ -841,12 +982,20 @@ window.Feud = window.Feud || {};
     clearInterval(hostFmTimerInterval);
     hostFmTimerInterval = null;
     activeRole = "lobby";
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("room");
+      url.searchParams.delete("role");
+      url.searchParams.delete("returnTo");
+      window.history.replaceState({}, "", url.toString());
+    } catch (e) {}
     syncTvViewPlacement("lobby");
     document.body.classList.remove("tv-viewport-lock");
     document.getElementById("lobbyView").classList.remove("hidden");
     document.getElementById("tvView").classList.add("hidden");
     document.getElementById("hostView").classList.add("hidden");
     document.getElementById("buzzerView").classList.add("hidden");
+    document.getElementById("comboBuzzerView")?.classList.add("hidden");
     document.getElementById("roomCodeBadge").classList.add("hidden");
     document.getElementById("btnQrCode")?.classList.add("hidden");
     document.getElementById("btnLeaveRoom").classList.add("hidden");
@@ -1057,29 +1206,246 @@ window.Feud = window.Feud || {};
   // =====================================================================
   // 6. ROOM QR CODE MODAL
   // =====================================================================
-  function isRunningLocally() {
-    const proto = window.location.protocol;
-    const host = (window.location.hostname || "").toLowerCase();
-    return (
-      proto === "file:" ||
-      host === "localhost" ||
-      host === "127.0.0.1" ||
-      host === "::1" ||
-      host === ""
-    );
+  function applyBuzzerButtonLocks(bz) {
+    const info = bz || (Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {});
+    const b1 = Boolean(info.b1);
+    const b2 = Boolean(info.b2);
+    const combo = Boolean(info.combo);
+
+    const qrB1 = document.getElementById("qrTabB1");
+    const qrB2 = document.getElementById("qrTabB2");
+    const qrCombo = document.getElementById("qrTabCombo");
+    if (qrB1) {
+      qrB1.disabled = b1 || combo;
+      qrB1.textContent = combo
+        ? "🔒 Team 1 (Combo Open)"
+        : b1
+        ? "🔒 Team 1 (Open)"
+        : "🔔 Team 1 Buzzer";
+    }
+    if (qrB2) {
+      qrB2.disabled = b2 || combo;
+      qrB2.textContent = combo
+        ? "🔒 Team 2 (Combo Open)"
+        : b2
+        ? "🔒 Team 2 (Open)"
+        : "🔔 Team 2 Buzzer";
+    }
+    if (qrCombo) {
+      qrCombo.disabled = combo || b1 || b2;
+      qrCombo.textContent = combo
+        ? "🔒 Combo Buzzer (Open)"
+        : b1 || b2
+        ? "🔒 Combo Buzzer (T1/T2 Open)"
+        : "🔔 Combo Buzzer";
+    }
+
+    const lobbyB1 = document.getElementById("btnJoinBuzzer1");
+    const lobbyB2 = document.getElementById("btnJoinBuzzer2");
+    const lobbyCombo = document.getElementById("btnJoinBuzzerCombo");
+    if (lobbyB1) {
+      lobbyB1.disabled = b1 || combo;
+      lobbyB1.textContent = combo
+        ? "🔒 Team 1 (Combo Open)"
+        : b1
+        ? "🔒 Team 1 Open"
+        : "🔔 Team 1 Buzzer";
+    }
+    if (lobbyB2) {
+      lobbyB2.disabled = b2 || combo;
+      lobbyB2.textContent = combo
+        ? "🔒 Team 2 (Combo Open)"
+        : b2
+        ? "🔒 Team 2 Open"
+        : "🔔 Team 2 Buzzer";
+    }
+    if (lobbyCombo) {
+      lobbyCombo.disabled = combo || b1 || b2;
+      lobbyCombo.textContent = combo
+        ? "🔒 Combo Buzzer Open"
+        : b1 || b2
+        ? "🔒 Combo Buzzer (Team Open)"
+        : "🔔 Combo Buzzer (Shared Device)";
+    }
   }
 
-  function openQrModal() {
-    if (isRunningLocally()) {
-      Feud.showToast("Join QR is only available when hosted online (not on file:// or localhost).");
+  let lobbyProbeTimer = null;
+  function refreshLobbyBuzzerLocks(allowPeer = true) {
+    const popupBz = getOpenedPopupBuzzers();
+    const input = document.getElementById("buzzerRoomInput");
+    const code = (input ? input.value : "").trim().toUpperCase();
+    if (code.length < 4 || !Feud.probeRoomBuzzers) {
+      applyBuzzerButtonLocks(popupBz);
+      return;
+    }
+    applyBuzzerButtonLocks(popupBz);
+    Feud.probeRoomBuzzers(code, { allowPeer }).then((bz) => {
+      const latest = (input ? input.value : "").trim().toUpperCase();
+      if (latest === code) {
+        const curPop = getOpenedPopupBuzzers();
+        applyBuzzerButtonLocks({
+          b1: Boolean(bz.b1 || curPop.b1),
+          b2: Boolean(bz.b2 || curPop.b2),
+          combo: Boolean(bz.combo || curPop.combo)
+        });
+      }
+    });
+  }
+
+  const QR_LAN_HOST_KEY = "party_feud_lan_host_v1";
+  let detectedLanIp = "";
+  let lanIpDetectPromise = null;
+  let lastQrRole = "tv";
+
+  function isFileProtocol() {
+    return window.location.protocol === "file:";
+  }
+
+  function isLoopbackHost() {
+    const h = (window.location.hostname || "").toLowerCase();
+    return h === "localhost" || h === "127.0.0.1" || h === "::1" || h === "[::1]";
+  }
+
+  function getSavedLanHost() {
+    try {
+      return (localStorage.getItem(QR_LAN_HOST_KEY) || "").trim();
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function detectLanIp() {
+    if (detectedLanIp) return Promise.resolve(detectedLanIp);
+    if (lanIpDetectPromise) return lanIpDetectPromise;
+    const RTC = window.RTCPeerConnection || window.webkitRTCPeerConnection;
+    if (!RTC) return Promise.resolve("");
+
+    lanIpDetectPromise = new Promise((resolve) => {
+      let pc = null;
+      let done = false;
+      const finish = (ip) => {
+        if (done) return;
+        done = true;
+        try {
+          if (pc) pc.close();
+        } catch (e) {}
+        if (ip) detectedLanIp = ip;
+        resolve(ip || "");
+      };
+      const timer = setTimeout(() => finish(""), 750);
+      try {
+        pc = new RTC({ iceServers: [] });
+        pc.createDataChannel("");
+        pc.onicecandidate = (ev) => {
+          if (!ev || !ev.candidate || !ev.candidate.candidate) return;
+          const match = ev.candidate.candidate.match(
+            /\b((?:192\.168|10\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01]))\.\d{1,3}\.\d{1,3})\b/
+          );
+          if (match && match[1]) {
+            clearTimeout(timer);
+            finish(match[1]);
+          }
+        };
+        pc.createOffer()
+          .then((offer) => pc.setLocalDescription(offer))
+          .catch(() => {
+            clearTimeout(timer);
+            finish("");
+          });
+      } catch (e) {
+        clearTimeout(timer);
+        finish("");
+      }
+    });
+    return lanIpDetectPromise;
+  }
+
+  function getQrBaseUrl() {
+    const rawBase = window.location.href.split("?")[0].split("#")[0];
+    if (!isLoopbackHost()) return rawBase;
+    const overrideHost = getSavedLanHost() || detectedLanIp;
+    if (!overrideHost) return rawBase;
+    try {
+      const u = new URL(rawBase);
+      u.hostname = overrideHost;
+      return u.toString();
+    } catch (e) {
+      return rawBase;
+    }
+  }
+
+  function applyQrLanHost() {
+    const input = document.getElementById("qrLanHostInput");
+    const val = (input ? input.value : "").trim().replace(/^https?:\/\//i, "").split("/")[0].split(":")[0];
+    try {
+      if (val) {
+        localStorage.setItem(QR_LAN_HOST_KEY, val);
+      } else {
+        localStorage.removeItem(QR_LAN_HOST_KEY);
+      }
+    } catch (e) {}
+    openQrModal(lastQrRole || "tv");
+  }
+
+  function openQrModal(qrRole = "tv") {
+    if (isFileProtocol()) {
+      Feud.showToast("Join QR is only available when served over HTTP/HTTPS (not file://).");
+      return;
+    }
+    const cleanRole =
+      qrRole === "buzzer1" || qrRole === "buzzer2" || qrRole === "buzzer_combo" ? qrRole : "tv";
+    lastQrRole = cleanRole;
+    const bz = Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {};
+    if (
+      (cleanRole === "buzzer1" && (bz.b1 || bz.combo)) ||
+      (cleanRole === "buzzer2" && (bz.b2 || bz.combo)) ||
+      (cleanRole === "buzzer_combo" && (bz.combo || bz.b1 || bz.b2))
+    ) {
+      applyBuzzerButtonLocks(bz);
       return;
     }
     const code = currentRoomCode || "SOLO";
-    const baseUrl = window.location.href.split("?")[0].split("#")[0];
-    const joinUrl = `${baseUrl}?room=${encodeURIComponent(code)}`;
+    const baseUrl = getQrBaseUrl();
+    const joinUrl = `${baseUrl}?room=${encodeURIComponent(code)}&role=${encodeURIComponent(
+      cleanRole
+    )}`;
     const qrTextEl = document.getElementById("qrRoomCodeText");
     const qrUrlEl = document.getElementById("qrJoinUrlText");
     const qrImgEl = document.getElementById("qrCodeImg");
+
+    const lanWrap = document.getElementById("qrLanHostWrap");
+    const lanInput = document.getElementById("qrLanHostInput");
+    const lanHint = document.getElementById("qrLanHostHint");
+    if (lanWrap) {
+      const loopback = isLoopbackHost();
+      lanWrap.classList.toggle("hidden", !loopback);
+      if (loopback) {
+        const activeIp = getSavedLanHost() || detectedLanIp;
+        if (lanInput && document.activeElement !== lanInput) {
+          lanInput.value = activeIp;
+        }
+        if (lanHint) {
+          lanHint.textContent = activeIp
+            ? `Using network IP ${activeIp} instead of ${window.location.hostname}.`
+            : "Browser hid local IP — enter your PC's Wi-Fi IP (e.g. 192.168.1.50) so phones can scan.";
+        }
+        if (!activeIp) {
+          detectLanIp().then((ip) => {
+            if (ip && !getSavedLanHost()) {
+              const modal = document.getElementById("qrModal");
+              if (modal && !modal.classList.contains("hidden")) {
+                openQrModal(lastQrRole || cleanRole);
+              }
+            }
+          });
+        }
+      }
+    }
+
+    document.getElementById("qrTabTv")?.classList.toggle("gold", cleanRole === "tv");
+    document.getElementById("qrTabB1")?.classList.toggle("gold", cleanRole === "buzzer1");
+    document.getElementById("qrTabB2")?.classList.toggle("gold", cleanRole === "buzzer2");
+    document.getElementById("qrTabCombo")?.classList.toggle("gold", cleanRole === "buzzer_combo");
 
     if (qrTextEl) qrTextEl.textContent = code;
     if (qrUrlEl) qrUrlEl.textContent = joinUrl;
@@ -1089,10 +1455,20 @@ window.Feud = window.Feud || {};
       )}`;
     }
     document.getElementById("qrModal")?.classList.remove("hidden");
+    applyBuzzerButtonLocks();
+
+    if (activeRole === "host" && roomState) {
+      pushRoomPatch({
+        tvQrOverlay: { role: cleanRole, url: joinUrl, roomCode: code }
+      });
+    }
   }
 
   function closeQrModal() {
     document.getElementById("qrModal")?.classList.add("hidden");
+    if (activeRole === "host" && roomState && roomState.tvQrOverlay) {
+      pushRoomPatch({ tvQrOverlay: null });
+    }
   }
 
   // =====================================================================
@@ -1115,6 +1491,8 @@ window.Feud = window.Feud || {};
       updateEmbeddedTvScale();
     } else if (activeRole === "buzzer1" || activeRole === "buzzer2") {
       Feud.renderBuzzerView(roomState, activeRole);
+    } else if (activeRole === "buzzer_combo") {
+      Feud.renderComboBuzzerView(roomState);
     }
   }
 
@@ -1420,7 +1798,14 @@ window.Feud = window.Feud || {};
     }
   }
 
-  async function pressTeamBuzzer() {
+  let lastLocalBuzzAt = 0;
+
+  async function pressTeamBuzzer(ev) {
+    if (ev && ev.cancelable) ev.preventDefault();
+    const now = Date.now();
+    if (now - lastLocalBuzzAt < 250) return;
+    lastLocalBuzzAt = now;
+
     Feud.unlockAudio();
     const myTeam = activeRole === "buzzer1" ? 1 : 2;
     // Local first-tap guard (the Host re-validates authoritatively in sync.js#buildBuzzPatch)
@@ -1428,6 +1813,20 @@ window.Feud = window.Feud || {};
     Feud.playFaceOffTone(myTeam);
     if (navigator.vibrate) navigator.vibrate(120);
     await Feud.syncSendTeamBuzz(myTeam);
+  }
+
+  async function pressComboBuzzer(teamNum, ev) {
+    if (ev && ev.cancelable) ev.preventDefault();
+    const now = Date.now();
+    if (now - lastLocalBuzzAt < 250) return;
+    lastLocalBuzzAt = now;
+
+    Feud.unlockAudio();
+    const cleanTeam = teamNum === 2 ? 2 : 1;
+    if (Feud.buildBuzzPatch && !Feud.buildBuzzPatch(roomState, cleanTeam)) return;
+    Feud.playFaceOffTone(cleanTeam);
+    if (navigator.vibrate) navigator.vibrate(120);
+    await Feud.syncSendTeamBuzz(cleanTeam);
   }
 
   async function hostToggleAnswer(slotIdx) {
@@ -1825,10 +2224,11 @@ window.Feud = window.Feud || {};
         lastOverlayXCount: 1,
         strikeSeq: nextSeq,
         turnTimerRemaining: dur,
-        turnTimerRunning: false
+        turnTimerRunning: true
       });
+      startLocalTurnTimerLoop();
       Feud.showToast(
-        `${prefix}❌ Face-Off Miss (temp X — no round strike)! ${secondName}'s turn.`
+        `${prefix}❌ Face-Off Miss (temp X — no round strike)! ${secondName}'s turn (${dur}s timer started).`
       );
       return;
     }
@@ -3237,12 +3637,14 @@ window.Feud = window.Feud || {};
     cycleNextMatchChallengerPreset,
     confirmStartNextMatch,
     openQrModal,
+    applyQrLanHost,
     reopenTvWindow,
     closeQrModal,
     createHostRoom,
     joinHostRoom,
     joinTvDisplay,
     joinTeamBuzzer,
+    joinComboBuzzer,
     startLocalSoloMode,
     switchSoloAndHostView,
     openEditRoundModal,
@@ -3259,6 +3661,7 @@ window.Feud = window.Feud || {};
     downloadDeckAsFriendlyFeudJson,
     downloadDeckAsNativeJson,
     pressTeamBuzzer,
+    pressComboBuzzer,
     hostRevealQuestionAndStartTimer,
     hostToggleQuestionVisibility,
     hostRestartTurnTimer,
@@ -3329,8 +3732,54 @@ window.Feud = window.Feud || {};
         savedScriptPref !== null ? savedScriptPref === "1" : window.innerWidth < 960;
       applyHostScriptCollapsed(defaultCollapsed);
     } catch (e) {}
+    window.addEventListener("feud-peer-status", (e) => {
+      const detail = (e && e.detail) || {};
+      const buzzerStatusPill = document.getElementById("hostBuzzerStatusPill");
+      if (buzzerStatusPill && detail.buzzers) {
+        const bz = detail.buzzers;
+        const count = (bz.t1 ? 1 : 0) + (bz.t2 ? 1 : 0);
+        buzzerStatusPill.textContent =
+          count === 0
+            ? "🔔 Buzzers: 0/2"
+            : `🔔 ${bz.t1 ? "T1✓" : "T1–"} • ${bz.t2 ? "T2✓" : "T2–"}`;
+        buzzerStatusPill.className = `pill-badge ${count === 2 ? "awake-ok" : ""}`;
+        applyBuzzerButtonLocks(bz);
+      }
+      ["buzzerConnStatusPill", "comboConnStatusPill"].forEach((id) => {
+        const connPill = document.getElementById(id);
+        if (connPill) {
+          const ok = Boolean(detail.ok);
+          connPill.textContent = ok ? "🟢 Connected" : "🟡 Reconnecting…";
+          connPill.className = `pill-badge ${ok ? "awake-ok" : "awake-warn"}`;
+        }
+      });
+    });
+    const buzzerInputEl = document.getElementById("buzzerRoomInput");
+    if (buzzerInputEl) {
+      buzzerInputEl.addEventListener("input", () => {
+        clearTimeout(lobbyProbeTimer);
+        lobbyProbeTimer = setTimeout(() => refreshLobbyBuzzerLocks(true), 120);
+      });
+      buzzerInputEl.addEventListener("focus", () => refreshLobbyBuzzerLocks(true));
+    }
+    window.addEventListener("focus", () => {
+      if (activeRole === "lobby") refreshLobbyBuzzerLocks(true);
+    });
+    setInterval(() => {
+      const lobbyEl = document.getElementById("lobbyView");
+      if (activeRole === "lobby" && lobbyEl && !lobbyEl.classList.contains("hidden")) {
+        const hadPopup = Object.values(openedBuzzerPopups).some(Boolean);
+        if (hadPopup) {
+          const curPop = getOpenedPopupBuzzers();
+          applyBuzzerButtonLocks(curPop);
+        }
+      }
+    }, 1500);
+
     window.addEventListener("storage", (e) => {
-      if (e.key === "party_feud_played_history_v1") {
+      if (e.key && e.key.startsWith("party_feud_active_buzzers_")) {
+        if (activeRole === "lobby") refreshLobbyBuzzerLocks(false);
+      } else if (e.key === "party_feud_played_history_v1") {
         Feud.renderBranding(roomState);
         Feud.populateRoundDropdowns(roomState);
       } else if (e.key === "party_feud_custom_deck_v1") {
@@ -3399,10 +3848,38 @@ window.Feud = window.Feud || {};
         const el = document.getElementById(id);
         if (el) el.value = urlRoom;
       });
+      if (!urlRole) {
+        setTimeout(() => refreshLobbyBuzzerLocks(true), 200);
+      }
       if (urlRole === "tv") {
         // Auto-launched TV window: join immediately; unlock audio on the first click (browser autoplay policy)
         document.addEventListener("pointerdown", () => Feud.unlockAudio(), { once: true });
         joinTvDisplay({ autoLaunched: true });
+      } else if (urlRole === "buzzer1" || urlRole === "buzzer2") {
+        const teamNum = urlRole === "buzzer1" ? 1 : 2;
+        document.addEventListener("pointerdown", () => Feud.unlockAudio(), { once: true });
+        joinTeamBuzzer(teamNum, { autoLaunched: true });
+      } else if (urlRole === "buzzer_combo") {
+        document.addEventListener("pointerdown", () => Feud.unlockAudio(), { once: true });
+        joinComboBuzzer({ autoLaunched: true });
+      } else if (urlRole === "host") {
+        const last = Feud.loadLastSession();
+        const stored = Feud.loadRoomStateFromStorage ? Feud.loadRoomStateFromStorage(urlRoom) : null;
+        const pin =
+          (last && last.code === urlRoom && last.pin) || (stored && stored.pin) || "";
+        if (stored && pin && String(stored.pin) === String(pin)) {
+          roomState = { ...roomState, ...stored };
+          currentRoomCode = urlRoom;
+          syncSequenceCounters(roomState);
+          document.addEventListener("pointerdown", () => Feud.unlockAudio(), { once: true });
+          Feud.startHostRoomSync(urlRoom, roomState);
+          enterRole("host", urlRoom);
+        } else if (pin) {
+          const pinEl = document.getElementById("hostJoinPin");
+          if (pinEl) pinEl.value = pin;
+          document.addEventListener("pointerdown", () => Feud.unlockAudio(), { once: true });
+          joinHostRoom();
+        }
       }
     } else {
       const last = Feud.loadLastSession();
@@ -3416,6 +3893,7 @@ window.Feud = window.Feud || {};
           if (pinEl) pinEl.value = last.pin;
         }
       }
+      setTimeout(() => refreshLobbyBuzzerLocks(true), 200);
     }
   }
 

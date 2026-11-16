@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>Party Feud — Live Party Multiplayer</title>
-  <link rel="stylesheet" href="./css/styles.css?v=20261114r" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261116bz" />
 </head>
 <body>
 
@@ -177,11 +177,24 @@
         <button class="top-btn" onclick="closeQrModal()">✕ Close</button>
       </div>
       <p style="font-size:12px; color:#fde68a; line-height:1.4;">
-        Scan with the TV Display device to open Party Feud with Room Code <strong id="qrRoomCodeText" style="color:#fff;">----</strong> pre-filled!
+        Pick a role below and scan on that device to join Room <strong id="qrRoomCodeText" style="color:#fff;">----</strong>!
       </p>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">
+        <button id="qrTabTv" type="button" class="top-btn gold" onclick="openQrModal('tv')">📺 TV Display</button>
+        <button id="qrTabB1" type="button" class="top-btn" onclick="openQrModal('buzzer1')">🔔 Team 1 Buzzer</button>
+        <button id="qrTabB2" type="button" class="top-btn" onclick="openQrModal('buzzer2')">🔔 Team 2 Buzzer</button>
+        <button id="qrTabCombo" type="button" class="top-btn" onclick="openQrModal('buzzer_combo')">🔔 Combo Buzzer</button>
+      </div>
       <div class="qr-card-box">
         <img id="qrCodeImg" alt="Room Join QR Code" style="width:210px; height:210px; display:block;" />
         <div id="qrJoinUrlText" style="font-size:10px; font-weight:800; word-break:break-all; max-width:220px;"></div>
+      </div>
+      <div id="qrLanHostWrap" class="hidden" style="width:100%; display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+        <div style="display:flex; gap:6px; align-items:center;">
+          <input id="qrLanHostInput" class="lobby-input" type="text" placeholder="LAN IP (e.g. 192.168.1.50)" style="flex:1; min-width:0; padding:6px 10px; font-size:12px;" onkeydown="if(event.key==='Enter')applyQrLanHost()" />
+          <button type="button" class="top-btn gold" onclick="applyQrLanHost()">Apply IP</button>
+        </div>
+        <div id="qrLanHostHint" style="font-size:11px; color:#fde68a; line-height:1.3;"></div>
       </div>
     </div>
   </div>
@@ -268,7 +281,7 @@
     <section class="hero-banner">
       <h1 id="lobbyHeroTitle" class="hero-title display-font">🎉 Party Feud</h1>
       <p class="hero-desc">
-        <strong>Host</strong> creates a room &amp; picks the deck, and <strong>TV</strong> displays the board by room code or QR.
+        <strong>Host</strong> creates a room, <strong>TV</strong> displays the board, and <strong>Team Buzzers</strong> connect over local Wi-Fi.
       </p>
     </section>
 
@@ -318,8 +331,8 @@
         </div>
       </article>
 
-      <!-- ROLE 3 & 4: TEAM PODIUM BUZZERS (Temporarily disabled) -->
-      <article id="lobbyBuzzerCard" class="role-card hidden">
+      <!-- ROLE 3 & 4: TEAM PODIUM BUZZERS -->
+      <article id="lobbyBuzzerCard" class="role-card">
         <div>
           <h2>🔔 3. Team Buzzers (Optional)</h2>
           <p style="margin-top:6px;">
@@ -331,9 +344,10 @@
           <label class="field-label" for="buzzerRoomInput">Room Code</label>
           <input id="buzzerRoomInput" class="lobby-input" type="text" maxlength="4" placeholder="GA42" />
           <div class="buzzer-split-btns">
-            <button class="action-btn btn-red display-font" onclick="joinTeamBuzzer(1)">🔔 Team 1 Buzzer</button>
-            <button class="action-btn btn-blue display-font" onclick="joinTeamBuzzer(2)">🔔 Team 2 Buzzer</button>
+            <button id="btnJoinBuzzer1" class="action-btn btn-red display-font" onclick="joinTeamBuzzer(1)">🔔 Team 1 Buzzer</button>
+            <button id="btnJoinBuzzer2" class="action-btn btn-blue display-font" onclick="joinTeamBuzzer(2)">🔔 Team 2 Buzzer</button>
           </div>
+          <button id="btnJoinBuzzerCombo" class="action-btn btn-gold display-font" style="margin-top:6px;" onclick="joinComboBuzzer()">🔔 Combo Buzzer (Shared Device)</button>
         </div>
       </article>
     </div>
@@ -468,6 +482,20 @@
         </div>
       </div>
     </div>
+
+    <!-- LIVE QR JOIN OVERLAY ON TV (CONTROLLED BY HOST) -->
+    <div id="tvQrOverlay" class="tv-qr-overlay hidden" role="dialog" aria-modal="false">
+      <div class="marquee-panel tv-qr-card">
+        <div id="tvQrRoleLabel" class="tv-qr-role-label display-font">📺 TV DISPLAY</div>
+        <div class="tv-qr-code-wrap">
+          <img id="tvQrCodeImg" src="" alt="Scan to join room" width="260" height="260" />
+        </div>
+        <div class="tv-qr-room-pill">
+          ROOM: <strong id="tvQrRoomCode" class="display-font">----</strong>
+        </div>
+        <div id="tvQrUrlText" class="tv-qr-url"></div>
+      </div>
+    </div>
   </section>
 
   <!-- =====================================================================
@@ -480,6 +508,7 @@
         <div class="host-header-left">
           <button type="button" id="hostCompactRoundLabel" class="top-btn host-round-pill-btn" onclick="openHostPopover('round')" title="Tap to switch or swap round (while question is hidden)">Round 1 (1x)</button>
           <div class="flow-stepper host-clickable-stepper" id="hostFlowStepper" onclick="openHostPopover('phase')" title="Tap to override phase, active team, or strikes"></div>
+          <span id="hostBuzzerStatusPill" class="pill-badge" style="font-size:10px;" title="Connected remote team buzzers">🔔 Buzzers: 0/2</span>
         </div>
         <div class="host-quick-timer-group">
           <button type="button" id="hostTurnTimerPill" class="turn-timer-pill display-font host-timer-pill-btn" onclick="openHostPopover('timer')" title="Tap to change timer duration or reset">
@@ -590,56 +619,123 @@
         </div>
       </div>
     </div>
+
+    <!-- LIVE QR JOIN OVERLAY ON TV (CONTROLLED BY HOST) -->
+    <div id="tvQrOverlay" class="tv-qr-overlay hidden" role="dialog" aria-modal="false">
+      <div class="marquee-panel tv-qr-card">
+        <div id="tvQrRoleLabel" class="tv-qr-role-label display-font">📺 TV DISPLAY</div>
+        <div class="tv-qr-code-wrap">
+          <img id="tvQrCodeImg" src="" alt="Scan to join room" width="260" height="260" />
+        </div>
+        <div class="tv-qr-room-pill">
+          ROOM: <strong id="tvQrRoomCode" class="display-font">----</strong>
+        </div>
+        <div id="tvQrUrlText" class="tv-qr-url"></div>
+      </div>
+    </div>
   </section>
 
   <!-- =====================================================================
        VIEW 4: GIANT TEAM BUZZER MODE (PHONES 3 & 4)
        ===================================================================== -->
-  <section id="buzzerView" class="buzzer-stage hidden">
-    <div class="marquee-panel" style="text-align:center;">
-      <div class="brand-sub" id="buzzerTeamLabel">Team 1 Podium</div>
-      <h2 id="buzzerTeamTitle" class="hero-title display-font" style="font-size:26px;">Team A</h2>
-      <p id="buzzerRoundPrompt" style="font-size:13px; color:#e2e8f0; margin-top:4px;"></p>
+  <section id="buzzerView" class="combo-buzzer-stage hidden">
+    <div class="marquee-panel combo-middle-panel">
+      <div class="combo-middle-controls">
+        <span id="buzzerConnStatusPill" class="pill-badge awake-ok" style="font-size:10px;">🟢 Connected</span>
+        <span id="buzzerTimerPill" class="turn-timer-pill display-font hidden" style="font-size:12px; padding:2px 9px;">⏱️ 10s</span>
+        <button
+          id="buzzerExitHoldBtn"
+          type="button"
+          class="buzzer-exit-hold-btn"
+          style="min-height:28px; padding:3px 10px; font-size:11px; width:auto;"
+          onpointerdown="buzzerExitHoldStart(event, 'buzzerExitHoldBtn')"
+          onpointerup="buzzerExitHoldCancel('buzzerExitHoldBtn')"
+          onpointerleave="buzzerExitHoldCancel('buzzerExitHoldBtn')"
+          onpointercancel="buzzerExitHoldCancel('buzzerExitHoldBtn')"
+          oncontextmenu="return false;"
+        >🔒 Hold 3s to Exit</button>
+      </div>
+      <div class="combo-middle-upright">
+        <div id="buzzerStatusBanner" class="combo-status-banner display-font">🔔 BUZZERS READY!</div>
+        <div class="combo-scores-row">
+          <span><strong id="buzzFootT1Name">Team 1</strong>: <strong id="buzzFootT1Score" class="display-font" style="color:var(--gold);">0</strong></span>
+          <span><strong id="buzzFootT2Name">Team 2</strong>: <strong id="buzzFootT2Score" class="display-font" style="color:var(--gold);">0</strong></span>
+        </div>
+      </div>
     </div>
 
-    <button id="giantBuzzerBtn" class="giant-buzzer-btn team-1-theme" onclick="pressTeamBuzzer()">
+    <button id="giantBuzzerBtn" class="giant-buzzer-btn team-1-theme combo-buzzer-btn" onpointerdown="pressTeamBuzzer(event)" onkeydown="if(event.key===' '||event.key==='Enter')pressTeamBuzzer(event)">
       <span id="giantBuzzIcon" class="giant-buzz-icon">🔔</span>
-      <span id="giantBuzzText" class="giant-buzz-title display-font">BUZZ IN!</span>
-      <span id="giantBuzzSub" class="giant-buzz-sub">Tap anywhere on this pad first</span>
+      <span id="giantBuzzText" class="giant-buzz-title display-font">TEAM 1</span>
+      <span id="giantBuzzSub" class="giant-buzz-sub">Tap to buzz in!</span>
+    </button>
+  </section>
+
+  <!-- =====================================================================
+       VIEW 5: COMBO 1v1 TEAM BUZZER MODE (SHARED PHONE / IPAD)
+       ===================================================================== -->
+  <section id="comboBuzzerView" class="combo-buzzer-stage hidden">
+    <!-- Top 1/3: Team 1 (rotated 180 deg for face-to-face podium play) -->
+    <button id="comboBtnTeam1" class="giant-buzzer-btn team-1-theme combo-buzzer-btn combo-buzzer-top" onpointerdown="pressComboBuzzer(1, event)" onkeydown="if(event.key===' '||event.key==='Enter')pressComboBuzzer(1, event)">
+      <span id="comboIconT1" class="giant-buzz-icon">🔔</span>
+      <span id="comboTitleT1" class="giant-buzz-title display-font">TEAM 1</span>
+      <span id="comboSubT1" class="giant-buzz-sub">Tap to buzz in!</span>
     </button>
 
-    <div class="marquee-panel" style="display:flex; justify-content:space-around; text-align:center;">
-      <div>
-        <div class="brand-sub" id="buzzFootT1Name">Team 1</div>
-        <div id="buzzFootT1Score" class="display-font" style="font-size:28px; color:var(--gold);">0</div>
+    <!-- Middle Status Bar (mirrored top/bottom so both players read right-side up) -->
+    <div class="marquee-panel combo-middle-panel">
+      <!-- Top player (Team 1) upright view (rotated 180 deg) -->
+      <div class="combo-middle-mirrored">
+        <div id="comboStatusBannerTop" class="combo-status-banner display-font">🔔 BUZZERS READY!</div>
+        <div class="combo-scores-row">
+          <span><strong id="comboFootT1NameTop">Team 1</strong>: <strong id="comboFootT1ScoreTop" class="display-font" style="color:var(--gold);">0</strong></span>
+          <span><strong id="comboFootT2NameTop">Team 2</strong>: <strong id="comboFootT2ScoreTop" class="display-font" style="color:var(--gold);">0</strong></span>
+        </div>
       </div>
-      <div>
-        <div class="brand-sub" id="buzzFootT2Name">Team 2</div>
-        <div id="buzzFootT2Score" class="display-font" style="font-size:28px; color:var(--gold);">0</div>
+
+      <!-- Shared center controls -->
+      <div class="combo-middle-controls">
+        <span id="comboConnStatusPill" class="pill-badge awake-ok" style="font-size:10px;">🟢 Connected</span>
+        <span id="comboTimerPill" class="turn-timer-pill display-font hidden" style="font-size:12px; padding:2px 9px;">⏱️ 10s</span>
+        <button
+          id="comboExitHoldBtn"
+          type="button"
+          class="buzzer-exit-hold-btn"
+          style="min-height:28px; padding:3px 10px; font-size:11px; width:auto;"
+          onpointerdown="buzzerExitHoldStart(event, 'comboExitHoldBtn')"
+          onpointerup="buzzerExitHoldCancel('comboExitHoldBtn')"
+          onpointerleave="buzzerExitHoldCancel('comboExitHoldBtn')"
+          onpointercancel="buzzerExitHoldCancel('comboExitHoldBtn')"
+          oncontextmenu="return false;"
+        >🔒 Hold 3s to Exit</button>
+      </div>
+
+      <!-- Bottom player (Team 2) upright view -->
+      <div class="combo-middle-upright">
+        <div id="comboStatusBanner" class="combo-status-banner display-font">🔔 BUZZERS READY!</div>
+        <div class="combo-scores-row">
+          <span><strong id="comboFootT1Name">Team 1</strong>: <strong id="comboFootT1Score" class="display-font" style="color:var(--gold);">0</strong></span>
+          <span><strong id="comboFootT2Name">Team 2</strong>: <strong id="comboFootT2Score" class="display-font" style="color:var(--gold);">0</strong></span>
+        </div>
       </div>
     </div>
 
-    <!-- Anti-accident exit: replaces the hidden top-bar navigation on buzzer phones -->
-    <button
-      id="buzzerExitHoldBtn"
-      type="button"
-      class="buzzer-exit-hold-btn"
-      onpointerdown="buzzerExitHoldStart(event)"
-      onpointerup="buzzerExitHoldCancel()"
-      onpointerleave="buzzerExitHoldCancel()"
-      onpointercancel="buzzerExitHoldCancel()"
-      oncontextmenu="return false;"
-    >🔒 Hold 3s to Exit Buzzer</button>
+    <!-- Bottom 1/3: Team 2 (upright) -->
+    <button id="comboBtnTeam2" class="giant-buzzer-btn team-2-theme combo-buzzer-btn" onpointerdown="pressComboBuzzer(2, event)" onkeydown="if(event.key===' '||event.key==='Enter')pressComboBuzzer(2, event)">
+      <span id="comboIconT2" class="giant-buzz-icon">🔔</span>
+      <span id="comboTitleT2" class="giant-buzz-title display-font">TEAM 2</span>
+      <span id="comboSubT2" class="giant-buzz-sub">Tap to buzz in!</span>
+    </button>
   </section>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
-  <script src="./data/questions.js?v=20261116aq"></script>
-  <script src="./decks/catalog.js?v=20261116aq"></script>
-  <script src="./js/audio.js?v=20261116aq"></script>
-  <script src="./js/state.js?v=20261116aq"></script>
-  <script src="./js/formats.js?v=20261116aq"></script>
-  <script src="./js/sync.js?v=20261116aq"></script>
-  <script src="./js/views.js?v=20261116aq"></script>
-  <script src="./js/app.js?v=20261116aq"></script>
+  <script src="./data/questions.js?v=20261116bz"></script>
+  <script src="./decks/catalog.js?v=20261116bz"></script>
+  <script src="./js/audio.js?v=20261116bz"></script>
+  <script src="./js/state.js?v=20261116bz"></script>
+  <script src="./js/formats.js?v=20261116bz"></script>
+  <script src="./js/sync.js?v=20261116bz"></script>
+  <script src="./js/views.js?v=20261116bz"></script>
+  <script src="./js/app.js?v=20261116bz"></script>
 </body>
 </html>

@@ -708,6 +708,7 @@ window.Feud = window.Feud || {};
       dupBuzzSeq: 0,
       beSpecificSeq: 0,
       buzzerWinner: 0,
+      tvQrOverlay: null,
       customDeck: customDeck,
       customRounds: loadSavedCustomRounds(),
       fmClock: 20,
