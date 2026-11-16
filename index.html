@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>Party Feud — Live Party Multiplayer</title>
-  <link rel="stylesheet" href="./css/styles.css?v=20261116cb" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261116cc" />
 </head>
 <body>
 
@@ -281,7 +281,7 @@
     <section class="hero-banner">
       <h1 id="lobbyHeroTitle" class="hero-title display-font">🎉 Party Feud</h1>
       <p class="hero-desc">
-        <strong>Host</strong> creates a room, <strong>TV</strong> displays the board, and <strong>Team Buzzers</strong> connect over local Wi-Fi.
+        <strong>Host</strong> creates a room and runs the game; <strong>TV</strong> displays the live 16:9 game board.
       </p>
     </section>
 
@@ -432,7 +432,7 @@
         <div id="tvAnswerGrid" class="answers-columns"></div>
 
         <div id="tvBuzzerBanner" class="buzzer-banner-tv display-font">
-          🔔 Podium Buzzers Ready!
+          🔔 Face-Off Ready!
         </div>
 
         <div class="bulb-strip" aria-hidden="true">
@@ -534,7 +534,7 @@
               <button type="button" id="hostBtnRevealRemaining" class="top-btn gold" onclick="hostRevealNextAnswer(); closeHostMoreMenu()">👁️ Reveal Next Answer (0 pts)</button>
               <button type="button" class="top-btn" onclick="openEditRoundModal(); closeHostMoreMenu()">✏️ Edit Round</button>
               <button type="button" class="top-btn" onclick="openDeckManagerModal(); closeHostMoreMenu()">📦 Load Deck</button>
-              <button type="button" id="hostMenuQrBtn" class="top-btn host-more-mobile-only" onclick="openQrModal(); closeHostMoreMenu()">📱 Join QR</button>
+              <button type="button" id="hostMenuQrBtn" class="top-btn host-more-mobile-only hidden" onclick="openQrModal(); closeHostMoreMenu()">📱 Join QR</button>
               <button type="button" class="top-btn host-more-mobile-only" onclick="toggleMute(); closeHostMoreMenu()">🔊 Sound</button>
               <button type="button" class="top-btn gold host-more-mobile-only" onclick="toggleFullScreen(); closeHostMoreMenu()">⛶ Fullscreen</button>
               <button type="button" class="top-btn host-more-mobile-only" onclick="leaveToLobby(); closeHostMoreMenu()">🏠 Lobby</button>
@@ -617,20 +617,6 @@
         <div class="marquee-panel host-tv-monitor-card">
           <div id="hostTvMonitorDock" class="host-tv-monitor-dock"></div>
         </div>
-      </div>
-    </div>
-
-    <!-- LIVE QR JOIN OVERLAY ON TV (CONTROLLED BY HOST) -->
-    <div id="tvQrOverlay" class="tv-qr-overlay hidden" role="dialog" aria-modal="false">
-      <div class="marquee-panel tv-qr-card">
-        <div id="tvQrRoleLabel" class="tv-qr-role-label display-font">📺 TV DISPLAY</div>
-        <div class="tv-qr-code-wrap">
-          <img id="tvQrCodeImg" src="" alt="Scan to join room" width="260" height="260" />
-        </div>
-        <div class="tv-qr-room-pill">
-          ROOM: <strong id="tvQrRoomCode" class="display-font">----</strong>
-        </div>
-        <div id="tvQrUrlText" class="tv-qr-url"></div>
       </div>
     </div>
   </section>
@@ -729,13 +715,13 @@
   </section>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
-  <script src="./data/questions.js?v=20261116cb"></script>
-  <script src="./decks/catalog.js?v=20261116cb"></script>
-  <script src="./js/audio.js?v=20261116cb"></script>
-  <script src="./js/state.js?v=20261116cb"></script>
-  <script src="./js/formats.js?v=20261116cb"></script>
-  <script src="./js/sync.js?v=20261116cb"></script>
-  <script src="./js/views.js?v=20261116cb"></script>
-  <script src="./js/app.js?v=20261116cb"></script>
+  <script src="./data/questions.js?v=20261116cc"></script>
+  <script src="./decks/catalog.js?v=20261116cc"></script>
+  <script src="./js/audio.js?v=20261116cc"></script>
+  <script src="./js/state.js?v=20261116cc"></script>
+  <script src="./js/formats.js?v=20261116cc"></script>
+  <script src="./js/sync.js?v=20261116cc"></script>
+  <script src="./js/views.js?v=20261116cc"></script>
+  <script src="./js/app.js?v=20261116cc"></script>
 </body>
 </html>

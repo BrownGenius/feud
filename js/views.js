@@ -1019,7 +1019,7 @@ window.Feud = window.Feud || {};
     } else {
       buzzBanner.textContent = roomState.questionRevealed
         ? "🔔 Face-Off: Buzz In Now!"
-        : "🔔 Podium Buzzers Ready!";
+        : "🔔 Face-Off Ready!";
     }
   }
 

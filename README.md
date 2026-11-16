@@ -6,12 +6,9 @@ A zero-backend, multi-device **Party Feud** game show web app built to run direc
 
 ## ✨ Features
 
-* **📱 Live Multiplayer on Static GitHub Pages (Host + TV + Team Buzzers — Local Wi-Fi)**:
-  * **Host Remote (PIN-Locked)**: Streamlined mobile-first & desktop workspace with a **slim merged header**, live **Buzzer Connection Status** (`🔔 Buzzers: 0/2` / `T1✓ • T2✓`), **Guided Phase Coach & collapsible Teleprompter (`🎙️ SCRIPT` / `HIDE` for `🎙️ SAY` / `👉 DO`)**, an **interactive Team Score Strip**, an **un-scrolled full Answer Key** paired side-by-side with a height-matched **embedded 16:9 Live TV Screen monitor** on desktop (stacking below on narrow screens), **tap-to-edit contextual popovers**, strict **phase-gated controls**, **`↩️ Undo`** (25-step snapshot stack), clickable answer key, single-answer reveal (`👁️ Reveal Answer #N`), `🔍 Be More Specific` (`+5s` when timer is running), 1-tap Fast Money scoring chips, live question editor, and **Lobby** opening in a new tab.
-  * **TV Display (Auto-Launched Window or Separate Device)**: Widescreen 16:9 game board with 3D flipping tiles, Web Audio game show sound effects, live buzzer & steal alert banners, giant red `X` strike overlays (also mirrored inside the Host's mini Live TV monitor), a timer that stays hidden unless started, and an explicit **Match Winner Celebration** stage triggered when the Host clicks **🏆 Show Winner Screen**.
-  * **Team Podium Buzzers (Phones 3 & 4, or Combo Shared Device)**: Full-screen red/blue buzzer pads with instant `pointerdown` tap response, haptic vibration, Wake Lock, auto-reconnect + live connection status (`🟢 Connected` / `🟡 Reconnecting…`), **one active buzzer enforced per team**, 3-second hold-to-exit protection, and direct **Team 1 / Team 2 / Combo Buzzer** QR joining. **Combo Buzzer** (`?role=buzzer_combo`) runs full-screen on a single shared phone/iPad (Team 1 rotated 180° at top, mirrored status/scores/timer/exit in the middle, Team 2 at bottom) and scales to fit the available viewport. Buzzers stay locked while the question is hidden (`faceoff-ready`), unlock only once the Host reveals the question on TV (`faceoff-buzz`), and lock out after the first buzz until the next round.
-  * **URL-Preserved Room & Role (`?room=CODE&role=...`)**: Every active view encodes its room and role in the URL query string so reloading a tab (e.g. after a deployment) restores the exact same room and view automatically.
-  * *(Note: Remote client connections—TV Display & Team Buzzers—currently only support devices on the **same local Wi-Fi network**.)*
+* **🖥️ Dual-Screen Live Game Engine (Host Remote + TV Display)**:
+  * **Host Remote (PIN-Locked)**: Streamlined mobile-first & desktop workspace with a **slim merged header**, **Guided Phase Coach & collapsible Teleprompter (`🎙️ SCRIPT` / `HIDE` for `🎙️ SAY` / `👉 DO`)**, an **interactive Team Score Strip**, an **un-scrolled full Answer Key** paired side-by-side with an **embedded 16:9 Live TV Screen monitor** on desktop (stacking below on narrow screens), **tap-to-edit contextual popovers**, strict **phase-gated controls**, **`↩️ Undo`** (25-step snapshot stack), clickable answer key, single-answer reveal (`👁️ Reveal Answer #N`), `🔍 Be More Specific` (`+5s` when timer is running), 1-tap Fast Money scoring chips, live question editor, and **Lobby** opening in a new tab.
+  * **TV Display (Auto-Launched Window or Separate Browser Tab)**: Widescreen 16:9 game board with 3D flipping tiles, Web Audio game show sound effects, live Face-Off & steal alert banners, giant red `X` strike overlays (also mirrored inside the Host's mini Live TV monitor), a timer that stays hidden unless started, and an explicit **Match Winner Celebration** stage triggered when the Host clicks **🏆 Show Winner Screen**.
 * **🔄 Multi-Game Party Engine, Conditional Tie-Breaker & "Winner Stays On"**:
   * **Level-Preserving Unplayed Round Slicer**: Run 4–8+ consecutive games from a large question deck at the same party without repeating a question. Tracks played rounds & Fast Money sets in `localStorage` (marking a round as **Used** only once its question is revealed on TV), deals `3`, `4`, `5`, `6`, or `All` unused rounds per match (`🎲 Randomize by Level (1x→2x→3x)` by default), and lets you swap rounds from a `1x`/`2x`/`3x` tree while the question is still hidden.
   * **⚡ Conditional Sudden-Death Tie-Breaker**: A reserve Tie-Breaker round stays hidden unless both teams are tied at the end of regular rounds. Teams alternate until one picks the **`#1` answer** to win the match!
@@ -33,16 +30,14 @@ A zero-backend, multi-device **Party Feud** game show web app built to run direc
 
 ## 🚀 How to Play
 
-### Mode A: Multi-Device Party Setup (Same Local Wi-Fi Network)
-> **Note:** Client devices (TV Display and Team Buzzers) are currently only supported on the **same local Wi-Fi network** as the Host.
+### Mode A: Laptop + HDMI TV (Offline Dual-Window — Recommended)
+1. Plug your laptop into the TV in **Extended Display** mode (works both on GitHub Pages and offline via `file://`).
+2. On your laptop, click **✨ Create New Game Room** — a dedicated **TV Display** window (`?room=CODE&role=tv`) pops open automatically (or click **📺 Pop Out TV** inside `⋯` anytime).
+3. Drag the TV window onto your TV screen and click **⛶ Fullscreen**. Both windows sync instantaneously via `BroadcastChannel` + `localStorage`—even with Wi-Fi turned off—while your Host screen keeps a live embedded 16:9 TV monitor.
 
-1. Open your GitHub Pages URL on **Device 1 (Host)** and tap **Create New Game Room** to configure your deck, team names, and rules, generating a 4-character Room Code (e.g., `GA42`).
-2. Tap **📱 Join QR** in the top bar (choose **📺 TV Display**, **🔔 Team 1 Buzzer**, **🔔 Team 2 Buzzer**, or **⚡ Combo Buzzer**, or enter the Room Code manually) so the **TV Display** and **Team Buzzer devices** can join on the same Wi-Fi network. Each view keeps `?room=CODE&role=...` in its URL so a page refresh preserves your session.
-
-### Mode B: Laptop + HDMI TV (Offline Dual-Window)
-1. Plug your laptop into the TV in **Extended Display** mode.
-2. On your laptop, click **Create New Game Room** — a dedicated **TV Display** window (`?room=CODE&role=tv`) pops open automatically (or click **📺 Pop Out TV** inside `⋯` anytime).
-3. Drag the TV window onto your TV screen and click **⛶ Fullscreen**. Both windows sync instantaneously via `BroadcastChannel`—even with Wi-Fi turned off—while your Host screen keeps a live embedded 16:9 TV monitor.
+### Mode B: Joining by Room Code (Separate Browser Window / Same Wi-Fi)
+1. Open your URL on the Host device and click **✨ Create New Game Room** to generate a 4-character Room Code (e.g., `GA42`).
+2. On the TV device/window, enter the Room Code under **📺 2. TV Display** and click **📺 Launch TV Board** (`?room=CODE&role=tv`). Each view preserves `?room=CODE&role=...` in its URL so a page refresh restores your session.
 
 ---
 
@@ -229,7 +224,7 @@ A Party Feud Deck JSON file lets you customize the game title, emoji icon, deck 
 
 ```text
 feud/
-├── index.html                      # Main app UI (Lobby, TV, Host, Buzzers, Modals)
+├── index.html                      # Main app UI (Lobby, TV Display, Host Remote, Modals)
 ├── review.html                     # Printable 2-column question review sheet (?deck=...)
 ├── css/
 │   └── styles.css                  # Responsive game show styling & 3D tile animations
@@ -240,7 +235,7 @@ feud/
 │   ├── state.js                    # State management, multi-game slicer & localStorage
 │   ├── sync.js                     # PeerJS (WebRTC) + BroadcastChannel + Firebase sync
 │   ├── formats.js                  # Universal CSV, Friendly-Feud JSON & Deck parser/exporter
-│   ├── views.js                    # DOM renderers for TV, Host, and Buzzers
+│   ├── views.js                    # DOM renderers for TV Display and Host Remote
 │   └── audio.js                    # Web Audio API synthesizer (no external MP3 dependencies)
 └── decks/
     ├── catalog.js                          # Built-in deck registry for offline (file://) + online use
