@@ -119,6 +119,32 @@ window.Feud = window.Feud || {};
     return (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) || "Starter Party Deck";
   }
 
+  function formatDeckOptionLabel(item) {
+    if (!item) return "";
+    if (item.builtin === "starter") {
+      const rCount = Array.isArray(Feud.DEFAULT_ROUNDS) ? Feud.DEFAULT_ROUNDS.length : 6;
+      const fmSets = Array.isArray(Feud.FAST_MONEY_QUESTIONS)
+        ? Math.floor(Feud.FAST_MONEY_QUESTIONS.length / 5)
+        : 0;
+      const base = (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) || "Starter Party Deck";
+      const icon = (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameIcon) || "🎉";
+      return fmSets > 0
+        ? `${icon} ${base} • ${rCount} Rounds • ${fmSets} Fast Money`
+        : `${icon} ${base} • ${rCount} Rounds`;
+    }
+    if (item.data) {
+      const d = item.data;
+      const base = d.deckName || item.id.replace(/\.(json|csv)$/i, "");
+      const icon = d.gameIcon ? `${d.gameIcon} ` : "";
+      const rCount = Array.isArray(d.rounds) ? d.rounds.length : 0;
+      const fmSets = Array.isArray(d.fastMoney) ? Math.floor(d.fastMoney.length / 5) : 0;
+      return fmSets > 0
+        ? `${icon}${base} • ${rCount} Rounds • ${fmSets} Fast Money`
+        : `${icon}${base} • ${rCount} Rounds`;
+    }
+    return item.label || item.id || "";
+  }
+
   function getSourceRoundsList(roomState) {
     if (
       roomState &&
@@ -162,6 +188,53 @@ window.Feud = window.Feud || {};
       playedFmSets: Array.isArray(entry.playedFmSets) ? entry.playedFmSets : [],
       matchNumber: Number(entry.matchNumber) || 0
     };
+  }
+
+  function resolveDeckKey(deckKeyOrState) {
+    if (typeof deckKeyOrState === "string") return deckKeyOrState.trim();
+    return getDeckKey(deckKeyOrState);
+  }
+
+  function setRoundUsed(deckKeyOrState, sourceIdx, used) {
+    const key = resolveDeckKey(deckKeyOrState);
+    const idx = Number(sourceIdx);
+    if (!Number.isInteger(idx) || idx < 0) return;
+    const allHist = loadAllPlayedHistory();
+    const prevEntry = allHist[key] || { playedRounds: [], playedFmSets: [], matchNumber: 0 };
+    const set = new Set(
+      (Array.isArray(prevEntry.playedRounds) ? prevEntry.playedRounds : [])
+        .map((n) => Number(n))
+        .filter((n) => Number.isInteger(n) && n >= 0)
+    );
+    if (used) set.add(idx);
+    else set.delete(idx);
+    allHist[key] = {
+      ...prevEntry,
+      playedRounds: Array.from(set).sort((a, b) => a - b)
+    };
+    saveAllPlayedHistory(allHist);
+  }
+
+  function setAllRoundsUsed(deckKeyOrState, indices, used) {
+    const key = resolveDeckKey(deckKeyOrState);
+    const allHist = loadAllPlayedHistory();
+    const prevEntry = allHist[key] || { playedRounds: [], playedFmSets: [], matchNumber: 0 };
+    const set = new Set(
+      (Array.isArray(prevEntry.playedRounds) ? prevEntry.playedRounds : [])
+        .map((n) => Number(n))
+        .filter((n) => Number.isInteger(n) && n >= 0)
+    );
+    (indices || []).forEach((n) => {
+      const idx = Number(n);
+      if (!Number.isInteger(idx) || idx < 0) return;
+      if (used) set.add(idx);
+      else set.delete(idx);
+    });
+    allHist[key] = {
+      ...prevEntry,
+      playedRounds: Array.from(set).sort((a, b) => a - b)
+    };
+    saveAllPlayedHistory(allHist);
   }
 
   function resetDeckPlayedHistory(roomState) {
@@ -374,8 +447,7 @@ window.Feud = window.Feud || {};
       matchFastMoney = sourceFm.slice(0, 5);
     }
 
-    // Save updated played history
-    chosenIndices.forEach((i) => playedSet.add(i));
+    // Only mark Fast Money set as dealt; rounds are marked used only once their question is revealed!
     playedFmSet.add(fmSetIdx);
 
     const allHist = loadAllPlayedHistory();
@@ -423,7 +495,6 @@ window.Feud = window.Feud || {};
     );
     const currentSourceIdx =
       currentRound.sourceIdx !== undefined ? currentRound.sourceIdx : safeIdx;
-    playedSet.add(currentSourceIdx);
 
     const matchingLevelIndices = [];
     sourceRounds.forEach((r, idx) => {
@@ -460,15 +531,6 @@ window.Feud = window.Feud || {};
     if (candidates.length === 0) return null;
 
     const chosenSourceIdx = shuffleArray(candidates)[0];
-    playedSet.add(chosenSourceIdx);
-
-    const allHist = loadAllPlayedHistory();
-    const prevEntry = allHist[deckKey] || { playedRounds: [], playedFmSets: [], matchNumber: 1 };
-    allHist[deckKey] = {
-      ...prevEntry,
-      playedRounds: Array.from(playedSet)
-    };
-    saveAllPlayedHistory(allHist);
 
     const orig = sourceRounds[chosenSourceIdx];
     const newRoundObj = {
@@ -529,15 +591,6 @@ window.Feud = window.Feud || {};
       : Number(orig.multiplier) || 1;
 
     const playedSet = getAllPlayedSourceIndices(roomState);
-    playedSet.add(cleanSourceIdx);
-
-    const allHist = loadAllPlayedHistory();
-    const prevEntry = allHist[deckKey] || { playedRounds: [], playedFmSets: [], matchNumber: 1 };
-    allHist[deckKey] = {
-      ...prevEntry,
-      playedRounds: Array.from(playedSet)
-    };
-    saveAllPlayedHistory(allHist);
 
     const newRoundObj = {
       ...orig,
@@ -562,6 +615,33 @@ window.Feud = window.Feud || {};
       matchSourceIndices: nextMatchSourceIndices,
       usedRoundIndices: Array.from(playedSet)
     };
+  }
+
+  function markCurrentRoundUsed(roomState) {
+    if (!roomState) return null;
+    const deckKey = getDeckKey(roomState);
+    const curRound = getRoundData(roomState, roomState.roundIdx || 0);
+    const sourceIdx =
+      curRound && curRound.sourceIdx !== undefined
+        ? Number(curRound.sourceIdx)
+        : Number(roomState.roundIdx || 0);
+    const sourceRounds = getSourceRoundsList(roomState);
+    if (!Number.isInteger(sourceIdx) || sourceIdx < 0 || sourceIdx >= sourceRounds.length) {
+      return null;
+    }
+    const playedSet = getAllPlayedSourceIndices(roomState);
+    if (playedSet.has(sourceIdx)) {
+      return null;
+    }
+    playedSet.add(sourceIdx);
+    const allHist = loadAllPlayedHistory();
+    const prevEntry = allHist[deckKey] || { playedRounds: [], playedFmSets: [], matchNumber: 1 };
+    allHist[deckKey] = {
+      ...prevEntry,
+      playedRounds: Array.from(playedSet)
+    };
+    saveAllPlayedHistory(allHist);
+    return Array.from(playedSet);
   }
 
   function getActiveTeamPresets(roomState) {
@@ -798,10 +878,14 @@ window.Feud = window.Feud || {};
     loadSavedGameIcon,
     saveGameIcon,
     getDeckKey,
+    formatDeckOptionLabel,
     getSourceRoundsList,
     getSourceFastMoneyList,
     getDeckPlayStats,
+    setRoundUsed,
+    setAllRoundsUsed,
     getAllPlayedSourceIndices,
+    markCurrentRoundUsed,
     resetDeckPlayedHistory,
     buildMatchSlice,
     pickRandomUnplayedRoundForLevel,

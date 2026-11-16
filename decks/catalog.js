@@ -1,4 +1,4 @@
-﻿// =====================================================================
+// =====================================================================
 // DECK CATALOG & OFFLINE BUNDLE (decks/catalog.js)
 // Pre-registers decks in the /decks folder so they appear automatically
 // in the GUI selector and work 100% offline over file:// as well as
@@ -680,7 +680,7 @@ window.Feud.DECK_CATALOG = [
     data: {
   "gameTitle": "Family Feud 2025",
   "gameIcon": "⭐",
-  "deckName": "Family Feud 2025 (60 Rounds • 8 Fast Money Sets)",
+  "deckName": "Family Feud 2025",
   "teamPresets": [
     ["Team Red", "Team Blue"],
     ["The Champs", "The Challengers"],
@@ -1696,7 +1696,7 @@ window.Feud.DECK_CATALOG = [
     data: {
   "gameTitle": "Family Feud 2025",
   "gameIcon": "🌟",
-  "deckName": "Family Feud 2025 (Family-Friendly Edition • 60 Rounds)",
+  "deckName": "Family Feud 2025 (Family-Friendly Edition)",
   "teamPresets": [
     ["Team Parents", "Team Kids"],
     ["The Champs", "The Challengers"],
@@ -2677,7 +2677,7 @@ window.Feud.DECK_CATALOG = [
     data: {
     "gameTitle":  "Family Feud 2026",
     "gameIcon":  "🔥",
-    "deckName":  "Family Feud 2026 (60 Rounds • 8 Fast Money Sets)",
+    "deckName":  "Family Feud 2026",
     "teamPresets":  [
                         [
                             "Team Red",
@@ -4549,7 +4549,7 @@ window.Feud.DECK_CATALOG = [
     data: {
     "gameTitle":  "Family Feud 2026",
     "gameIcon":  "🌟",
-    "deckName":  "Family Feud 2026 (Family-Friendly Edition • 60 Rounds)",
+    "deckName":  "Family Feud 2026 (Family-Friendly Edition)",
     "teamPresets":  [
                         [
                             "Team Parents",
@@ -6418,7 +6418,7 @@ window.Feud.DECK_CATALOG = [
     data: {
     "gameTitle":  "Gandhi Samaj Diwali Feud 2026",
     "gameIcon":  "🪔",
-    "deckName":  "Gandhi Samaj 2026 (43 Rounds • 6 Fast Money Sets)",
+    "deckName":  "Gandhi Samaj 2026",
     "teamPresets":  [
                         [
                             "Baa \u0026 Bapuji All-Stars",
@@ -7775,7 +7775,7 @@ window.Feud.DECK_CATALOG = [
     data: {
     "gameTitle":  "Gandhi Samaj Diwali Feud 2026",
     "gameIcon":  "🪔",
-    "deckName":  "Gandhi Samaj 2026 (Meha Edition • 21 Rounds)",
+    "deckName":  "Gandhi Samaj 2026 (Meha Edition)",
     "teamPresets":  [
                         [
                             "Baa \u0026 Bapuji All-Stars",

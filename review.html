@@ -197,6 +197,9 @@
     }
 
     @media (max-width: 760px) {
+      .review-toolbar {
+        position: static;
+      }
       .cards-grid {
         grid-template-columns: 1fr;
       }
@@ -243,6 +246,41 @@
       background: #fee2e2;
       border-color: #dc2626;
       color: #991b1b;
+    }
+
+    .q-card.is-used {
+      opacity: 0.68;
+      background: #f8fafc;
+      border-style: dashed;
+    }
+
+    .card-used-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--ink);
+      cursor: pointer;
+      text-transform: none;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: #dcfce7;
+      border: 1px solid #22c55e;
+      color: #166534;
+    }
+
+    .card-used-toggle.is-used {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #991b1b;
+    }
+
+    .card-used-toggle input {
+      width: 13px;
+      height: 13px;
+      accent-color: #991b1b;
+      cursor: pointer;
     }
 
     .q-theme {
@@ -451,7 +489,7 @@
     <!-- Top Control Bar (Hidden when printing) -->
     <nav class="review-toolbar">
       <div class="toolbar-left">
-        <a href="./index.html" class="toolbar-btn secondary">◀ Back to Game</a>
+        <a href="./index.html" id="btnBackToGame" class="toolbar-btn secondary" onclick="if(window.opener && !window.opener.closed){window.opener.focus(); window.close(); return false;} const from=new URLSearchParams(window.location.search).get('from'); if(from==='setup'){window.location.href='./index.html?returnTo=setup'; return false;} if(window.history.length > 1 && document.referrer){window.history.back(); return false;}">◀ Back to Game</a>
 
         <div>
           <label class="toolbar-label" for="reviewDeckSelect">Deck:</label>
@@ -479,16 +517,18 @@
       </div>
 
       <div class="toolbar-right">
+        <button id="btnMarkAllUsed" type="button" class="toolbar-btn secondary" title="Mark all visible rounds as Used">
+          ☑️ Mark All Used
+        </button>
+        <button id="btnMarkAllUnused" type="button" class="toolbar-btn secondary" title="Mark all visible rounds as Unused">
+          ☐ Mark All Unused
+        </button>
         <button id="btnToggleAllAnswers" type="button" class="toolbar-btn secondary" title="Show or hide survey answers across all cards">
           👁️ Show All Answers
         </button>
         <button id="btnCopyShareUrl" type="button" class="toolbar-btn secondary" title="Copy shareable link to this deck review page">
           🔗 Copy Share Link
         </button>
-        <label class="toolbar-btn secondary" style="cursor:pointer;">
-          📂 Load .JSON / .CSV
-          <input id="reviewFileInput" type="file" accept=".json,.csv" style="display:none;" />
-        </label>
         <button type="button" class="toolbar-btn" onclick="window.print()">
           🖨️ Print / Save as PDF
         </button>
@@ -605,7 +645,23 @@
         catalog.forEach((item) => {
           const opt = document.createElement("option");
           opt.value = item.id;
-          opt.textContent = item.label;
+          let labelText = Feud.formatDeckOptionLabel
+            ? Feud.formatDeckOptionLabel(item)
+            : item.label;
+          if (Feud.getDeckPlayStats) {
+            const dName =
+              item.builtin === "starter"
+                ? (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) || "Starter Party Deck"
+                : (item.data && item.data.deckName) || item.id;
+            const dRounds =
+              item.builtin === "starter"
+                ? Feud.DEFAULT_ROUNDS || []
+                : (item.data && item.data.rounds) || [];
+            const st = Feud.getDeckPlayStats({ customDeck: { name: dName, rounds: dRounds } });
+            labelText +=
+              st.usedRoundsCount > 0 ? ` (${st.usedRoundsCount} Used)` : " (All Unused)";
+          }
+          opt.textContent = labelText;
           deckSelect.appendChild(opt);
         });
 
@@ -782,8 +838,10 @@
         const rounds = activeDeck.rounds || [];
         const fmList = activeDeck.fastMoney || [];
 
-        titleEl.textContent = `${activeDeck.gameIcon || "🎉"} ${activeDeck.gameTitle || "Party Feud"} — Question & Answer Review`;
-        subEl.textContent = `Deck: ${activeDeck.deckName} • Organized by Point Multiplier Level (1x → 2x → 3x)`;
+        titleEl.textContent = `${activeDeck.gameIcon || "🎉"} ${
+          activeDeck.deckName || activeDeck.gameTitle || "Party Feud"
+        } — Question & Answer Review`;
+        subEl.textContent = "Organized by Point Multiplier Level (1x → 2x → 3x)";
 
         const groups = [
           {
@@ -816,9 +874,19 @@
           }
         ];
 
+        const deckStats = Feud.getDeckPlayStats
+          ? Feud.getDeckPlayStats({ customDeck: { name: activeDeck.deckName, rounds } })
+          : { playedRounds: [], usedRoundsCount: 0, remainingRoundsCount: rounds.length };
+        const playedSet = new Set(deckStats.playedRounds || []);
+
         // Render top summary pills
         const pillParts = [
-          `<span class="summary-pill">Total Rounds: ${rounds.length}</span>`
+          `<span class="summary-pill">Total Rounds: ${rounds.length}</span>`,
+          `<span class="summary-pill" style="background:#dcfce7; border-color:#22c55e; color:#166534;">✨ Unused: ${Math.max(
+            0,
+            rounds.length - playedSet.size
+          )}</span>`,
+          `<span class="summary-pill" style="background:#fee2e2; border-color:#ef4444; color:#991b1b;">✓ Used: ${playedSet.size}</span>`
         ];
         groups.forEach((grp) => {
           const count = rounds.filter((r) => {
@@ -865,6 +933,7 @@
               const btnText = isRevealed ? "🙈 Hide Answers" : "👁️ Show Answers";
 
               const mult = Number(r.multiplier) || 1;
+              const isUsed = playedSet.has(idx);
               const sumPts = (r.answers || []).reduce((s, a) => s + (Number(a.points) || 0), 0);
               const rowsHtml = (r.answers || [])
                 .map((a, aIdx) => {
@@ -882,10 +951,16 @@
                 .join("");
 
               return `
-                <article id="${cardId}" class="q-card ${hiddenClass}">
+                <article id="${cardId}" class="q-card ${hiddenClass}${isUsed ? " is-used" : ""}">
                   <div class="q-card-head">
                     <span>Deck #${idx + 1} • ${escapeHtml(r.title || `Round ${idx + 1}`)}</span>
-                    <div style="display:flex; align-items:center; gap:6px;">
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                      <label class="card-used-toggle${isUsed ? " is-used" : ""}" title="${
+                        isUsed ? "Click to mark as Unused" : "Click to mark as Used"
+                      }">
+                        <input type="checkbox" data-used-round="${idx}" ${isUsed ? "checked" : ""} />
+                        ${isUsed ? "Used" : "Unused"}
+                      </label>
                       <span class="q-mult mult-${mult}">${mult}x Level (${sumPts} pts)</span>
                       <button type="button" class="ans-toggle-btn card-header-toggle-btn" data-toggle-card="${cardId}" title="Toggle answers for this question">
                         ${btnText}
@@ -1129,38 +1204,37 @@
         });
       }
 
-      fileInput.addEventListener("change", (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-        const isCsv = /\.csv$/i.test(file.name);
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          try {
-            const text = String(ev.target.result || "");
-            const parsed = isCsv ? Feud.parseFeudCsv(text) : Feud.parseFeudJson(text);
-            activeDeck = {
-              gameTitle: parsed.gameTitle || "Party Feud",
-              gameIcon: parsed.gameIcon || "🎉",
-              deckName: parsed.deckName || file.name,
-              rounds: parsed.rounds || [],
-              fastMoney: parsed.fastMoney || []
-            };
-            const customOpt = document.createElement("option");
-            customOpt.value = "__uploaded__";
-            customOpt.textContent = `📂 Uploaded: ${activeDeck.deckName} (${activeDeck.rounds.length} Rounds)`;
-            deckSelect.prepend(customOpt);
-            deckSelect.value = "__uploaded__";
-            renderReviewSheet();
-          } catch (err) {
-            alert("Could not parse deck file: " + (err.message || err));
-          }
-        };
-        reader.readAsText(file);
-      });
-
       if (toggleAllBtn) {
         toggleAllBtn.addEventListener("click", toggleAllAnswers);
       }
+
+      function setVisibleRoundsUsed(used) {
+        if (!activeDeck || !Feud.setAllRoundsUsed) return;
+        const boxes = rootEl.querySelectorAll("input[data-used-round]");
+        const indices = Array.from(boxes)
+          .map((el) => Number(el.getAttribute("data-used-round")))
+          .filter((n) => Number.isInteger(n) && n >= 0);
+        Feud.setAllRoundsUsed(activeDeck.deckName, indices, used);
+        renderReviewSheet();
+      }
+
+      const markAllUsedBtn = document.getElementById("btnMarkAllUsed");
+      const markAllUnusedBtn = document.getElementById("btnMarkAllUnused");
+      if (markAllUsedBtn) {
+        markAllUsedBtn.addEventListener("click", () => setVisibleRoundsUsed(true));
+      }
+      if (markAllUnusedBtn) {
+        markAllUnusedBtn.addEventListener("click", () => setVisibleRoundsUsed(false));
+      }
+
+      rootEl.addEventListener("change", (e) => {
+        const cb = e.target.closest("input[data-used-round]");
+        if (cb && activeDeck && Feud.setRoundUsed) {
+          const idx = Number(cb.getAttribute("data-used-round"));
+          Feud.setRoundUsed(activeDeck.deckName, idx, cb.checked);
+          renderReviewSheet();
+        }
+      });
 
       rootEl.addEventListener("click", (e) => {
         const btn = e.target.closest("[data-toggle-card]");

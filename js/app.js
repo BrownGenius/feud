@@ -231,6 +231,7 @@ window.Feud = window.Feud || {};
       Feud.renderBranding(roomState);
       if (customChanged) {
         Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
       }
       renderActiveView();
       if (activeRole === "host" && roomState.stage === "winner" && prevStage !== "winner") {
@@ -245,8 +246,20 @@ window.Feud = window.Feud || {};
     if ("buzzerWinner" in patch && !("buzzerArmedTeam" in patch)) {
       patch = { ...patch, buzzerArmedTeam: 0 };
     }
+    let markedUsed = null;
+    if (patch && patch.questionRevealed === true) {
+      const nextState = { ...roomState, ...patch };
+      markedUsed = Feud.markCurrentRoundUsed ? Feud.markCurrentRoundUsed(nextState) : null;
+      if (markedUsed) {
+        patch = { ...patch, usedRoundIndices: markedUsed };
+      }
+    }
     roomState = { ...roomState, ...patch, updatedAt: Date.now() };
     syncSequenceCounters(roomState);
+    if (markedUsed || "questionRevealed" in patch) {
+      Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
+    }
     Feud.renderBranding(roomState);
     renderActiveView();
     await Feud.syncPushPatch(patch, roomState);
@@ -283,7 +296,9 @@ window.Feud = window.Feud || {};
     catalog.forEach((item) => {
       const opt = document.createElement("option");
       opt.value = item.id;
-      opt.textContent = item.label;
+      opt.textContent = Feud.formatDeckOptionLabel
+        ? Feud.formatDeckOptionLabel(item)
+        : item.label;
       if (
         (!activeDeckName && item.builtin === "starter") ||
         (activeDeckName &&
@@ -314,8 +329,8 @@ window.Feud = window.Feud || {};
         ? ""
         : String(selectedVal).replace(/\.(json|csv)$/i, "");
     const reviewHref = deckSlug
-      ? `./review.html?deck=${encodeURIComponent(deckSlug)}`
-      : "./review.html";
+      ? `./review.html?deck=${encodeURIComponent(deckSlug)}&from=setup`
+      : "./review.html?from=setup";
     document.querySelectorAll(".review-deck-link").forEach((linkEl) => {
       linkEl.setAttribute("href", reviewHref);
     });
@@ -419,7 +434,15 @@ window.Feud = window.Feud || {};
     if (pinIn && lobbyPin && lobbyPin.value.trim()) {
       pinIn.value = lobbyPin.value.trim();
     }
+    syncDeckManagerBrandingInputs();
     Feud.renderBranding(roomState);
+  }
+
+  function syncDeckManagerBrandingInputs() {
+    const titleIn = document.getElementById("deckGameTitleInput");
+    const iconIn = document.getElementById("deckGameIconInput");
+    if (titleIn) titleIn.value = roomState.gameTitle || "Party Feud";
+    if (iconIn) iconIn.value = roomState.gameIcon || "🎉";
   }
 
   function openNewGameModal(preferredMode = "host") {
@@ -459,9 +482,15 @@ window.Feud = window.Feud || {};
   async function confirmStartNewGame(mode) {
     Feud.unlockAudio();
     clearUndoStack();
-    const iconVal = (document.getElementById("setupGameIconInput")?.value || "").trim() || "🎉";
+    const iconVal =
+      (document.getElementById("deckGameIconInput")?.value || "").trim() ||
+      roomState.gameIcon ||
+      "🎉";
     const titleVal =
-      (document.getElementById("setupGameTitleInput")?.value || "").trim() || "Party Feud";
+      (document.getElementById("deckGameTitleInput")?.value || "").trim() ||
+      roomState.gameTitle ||
+      (roomState.customDeck && roomState.customDeck.name) ||
+      "Party Feud";
     const t1Val = (document.getElementById("setupTeam1Input")?.value || "").trim() || "Team 1";
     const t2Val = (document.getElementById("setupTeam2Input")?.value || "").trim() || "Team 2";
     const timerDur =
@@ -727,6 +756,7 @@ window.Feud = window.Feud || {};
       document.getElementById("tvView").classList.remove("hidden");
       sub.textContent = `Host Remote • PIN: ${roomState.pin}`;
       Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
       requestAnimationFrame(() => updateEmbeddedTvScale());
     } else if (role === "tv") {
       document.getElementById("tvView").classList.remove("hidden");
@@ -735,6 +765,7 @@ window.Feud = window.Feud || {};
       document.getElementById("tvView").classList.remove("hidden");
       sub.textContent = "Single-Screen Interactive TV Board";
       Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
     } else if (role === "buzzer1" || role === "buzzer2") {
       document.getElementById("buzzerView").classList.remove("hidden");
       sub.textContent = role === "buzzer1" ? "Team 1 Podium Buzzer" : "Team 2 Podium Buzzer";
@@ -816,9 +847,7 @@ window.Feud = window.Feud || {};
     document.getElementById("roomCodeBadge").classList.add("hidden");
     document.getElementById("btnQrCode")?.classList.add("hidden");
     document.getElementById("btnLeaveRoom").classList.add("hidden");
-    document.getElementById("roleSubtitle").textContent = `4-Phone Multiplayer • ${Feud.getRoundCount(
-      roomState
-    )} Rounds`;
+    document.getElementById("roleSubtitle").textContent = "Live Party Multiplayer";
     Feud.renderBranding(roomState);
   }
 
@@ -1016,6 +1045,7 @@ window.Feud = window.Feud || {};
     });
 
     Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
     Feud.showToast(
       `🚀 Match #${slice.matchNumber} Started: ${t1} vs. ${t2} (Fresh Unplayed Rounds)!`
     );
@@ -1154,6 +1184,11 @@ window.Feud = window.Feud || {};
     Feud.unlockAudio();
     const nextShown = !roomState.questionRevealed;
     if (!nextShown) {
+      if (Array.isArray(roomState.revealed) && roomState.revealed.length > 0) {
+        Feud.showToast("Cannot hide the question after an answer has been revealed!");
+        return;
+      }
+      pushUndoSnapshot();
       stopLocalTurnTimerInterval();
       const dur = Number(roomState.turnTimerDuration) || 10;
       await pushRoomPatch({
@@ -1428,41 +1463,63 @@ window.Feud = window.Feud || {};
       : Feud.getRoundCount(roomState);
     const isFinalRegularRound = !isTieBreaker && roomState.roundIdx === regCount - 1;
 
-    // 0. SUDDEN-DEATH TIE-BREAKER ROUND: Whoever answers first immediately wins the round & match!
+    // 0. SUDDEN-DEATH TIE-BREAKER ROUND: Only ends when a team picks the #1 answer!
     if (isTieBreaker) {
-      const winTeam =
+      const activeTeam =
         roomState.controllingTeam ||
         roomState.buzzerWinner ||
         roomState.faceoffFirstTeam ||
         roomState.faceoffWinnerTeam ||
         1;
-      const winName = getTeamNameByNum(winTeam);
-      const awardPts = Math.max(pts, 10);
-      const nextT1 =
-        winTeam === 1 ? (roomState.team1Score || 0) + awardPts : roomState.team1Score || 0;
-      const nextT2 =
-        winTeam === 2 ? (roomState.team2Score || 0) + awardPts : roomState.team2Score || 0;
-      const nextFanfare = (roomState.fanfareSeq || 0) + 1;
-      setTimeout(() => Feud.playFanfare(), 400);
+      if (slotIdx === 0) {
+        const winName = getTeamNameByNum(activeTeam);
+        const awardPts = Math.max(pts, 10);
+        const nextT1 =
+          activeTeam === 1 ? (roomState.team1Score || 0) + awardPts : roomState.team1Score || 0;
+        const nextT2 =
+          activeTeam === 2 ? (roomState.team2Score || 0) + awardPts : roomState.team2Score || 0;
+        const nextFanfare = (roomState.fanfareSeq || 0) + 1;
+        setTimeout(() => Feud.playFanfare(), 400);
 
+        await pushRoomPatch({
+          stage: roomState.stage || "main",
+          questionRevealed: true,
+          revealed: Array.from(revSet),
+          pot: 0,
+          team1Score: nextT1,
+          team2Score: nextT2,
+          roundPhase: "round-over",
+          roundWinnerTeam: activeTeam,
+          controllingTeam: activeTeam,
+          buzzerWinner: 0,
+          buzzerArmedTeam: 0,
+          turnTimerRemaining: dur,
+          turnTimerRunning: false,
+          fanfareSeq: nextFanfare
+        });
+        Feud.showToast(
+          `🏆 Tie-Breaker #1 Answer! ${winName} Wins the Match! Reveal any remaining answers, then click "🏆 Show Winner Screen"!`
+        );
+        return;
+      }
+
+      const otherTeam = activeTeam === 1 ? 2 : 1;
+      const otherName = getTeamNameByNum(otherTeam);
+      const nextPhase = phase === "faceoff-p1" ? "faceoff-p2" : "faceoff-p1";
       await pushRoomPatch({
-        stage: roomState.stage || "main",
         questionRevealed: true,
         revealed: Array.from(revSet),
-        pot: 0,
-        team1Score: nextT1,
-        team2Score: nextT2,
-        roundPhase: "round-over",
-        roundWinnerTeam: winTeam,
-        controllingTeam: winTeam,
+        pot: newPot,
+        roundPhase: nextPhase,
+        faceoffFirstTeam: phase === "faceoff-p1" ? activeTeam : otherTeam,
+        controllingTeam: otherTeam,
         buzzerWinner: 0,
         buzzerArmedTeam: 0,
         turnTimerRemaining: dur,
-        turnTimerRunning: false,
-        fanfareSeq: nextFanfare
+        turnTimerRunning: false
       });
       Feud.showToast(
-        `🏆 Tie-Breaker Answered! ${winName} Wins the Match! Reveal any remaining answers, then click "🏆 Show Winner Screen"!`
+        `#${slotIdx + 1} revealed — must find the #1 answer to win! ${otherName}'s turn.`
       );
       return;
     }
@@ -1594,6 +1651,7 @@ window.Feud = window.Feud || {};
         );
       } else if (matchTied) {
         Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
         Feud.showToast(
           `⚡ TIE SCORE (${nextT1} – ${nextT2})! Sudden-Death Tie-Breaker Round Unlocked!`
         );
@@ -1646,6 +1704,7 @@ window.Feud = window.Feud || {};
         );
       } else if (matchTied) {
         Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
         Feud.showToast(
           `⚡ TIE SCORE (${nextT1} – ${nextT2})! Sudden-Death Tie-Breaker Round Unlocked!`
         );
@@ -1766,8 +1825,27 @@ window.Feud = window.Feud || {};
       const firstTeam = roomState.faceoffFirstTeam || roomState.faceoffWinnerTeam || 1;
       const firstName = getTeamNameByNum(firstTeam);
       const bestRank = roomState.faceoffBestRank ?? 999;
+      const curRoundForTie = Feud.getRoundData(roomState, roomState.roundIdx);
+      const isTieBreakerRound = Feud.isTieBreakerRound && Feud.isTieBreakerRound(curRoundForTie);
 
       Feud.showBigRedXOverlay(1);
+      if (isTieBreakerRound) {
+        await pushRoomPatch({
+          questionRevealed: true,
+          roundPhase: "faceoff-p1",
+          controllingTeam: firstTeam,
+          buzzerWinner: 0,
+          buzzerArmedTeam: 0,
+          lastOverlayXCount: 1,
+          strikeSeq: nextSeq,
+          turnTimerRemaining: dur,
+          turnTimerRunning: false
+        });
+        Feud.showToast(
+          `${prefix}❌ Tie-Breaker Miss! Back to ${firstName} — find the #1 answer to win!`
+        );
+        return;
+      }
       if (bestRank < 999) {
         await pushRoomPatch({
           questionRevealed: true,
@@ -1847,6 +1925,7 @@ window.Feud = window.Feud || {};
         );
       } else if (matchTied) {
         Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
         Feud.showToast(
           `⚡ TIE SCORE (${nextT1} – ${nextT2})! Sudden-Death Tie-Breaker Round Unlocked!`
         );
@@ -2075,6 +2154,7 @@ window.Feud = window.Feud || {};
       buzzerArmedTeam: 0
     });
     Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
     Feud.showToast(
       `🎲 Randomized Round ${roomState.roundIdx + 1} (${res.targetMult}x) → Deck #${
         res.chosenSourceIdx + 1
@@ -2084,6 +2164,14 @@ window.Feud = window.Feud || {};
 
   async function hostPickDeckRoundForSlot(sourceIdx, targetSlotIdx) {
     Feud.unlockAudio();
+    const phase =
+      roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
+    if (roomState.questionRevealed && phase !== "faceoff-ready") {
+      Feud.showToast("Round can only be swapped while the question is still hidden on TV!");
+      Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
+      return;
+    }
     const slot =
       targetSlotIdx !== undefined && !Number.isNaN(Number(targetSlotIdx))
         ? Number(targetSlotIdx)
@@ -2120,6 +2208,7 @@ window.Feud = window.Feud || {};
       buzzerArmedTeam: 0
     });
     Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
     Feud.showToast(
       `📋 Loaded Deck #${res.chosenSourceIdx + 1} into Round ${res.slotIdx + 1} (${res.targetMult}x)!`
     );
@@ -2314,6 +2403,7 @@ window.Feud = window.Feud || {};
       );
     } else if (matchTied) {
       Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
       Feud.showToast(
         `⚡ TIE SCORE (${nextT1} – ${nextT2})! Sudden-Death Tie-Breaker Round Unlocked!`
       );
@@ -2523,6 +2613,7 @@ window.Feud = window.Feud || {};
     closeEditRoundModal();
     await pushRoomPatch({ customRounds, revealed: [], pot: 0 });
     Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
     Feud.showToast("✅ Custom round saved locally & synced to TV!");
   }
 
@@ -2539,19 +2630,16 @@ window.Feud = window.Feud || {};
     closeEditRoundModal();
     await pushRoomPatch({ customRounds, revealed: [], pot: 0 });
     Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
     Feud.showToast("Restored default question & answers for this round.");
   }
 
   function openDeckManagerModal() {
-    const titleIn = document.getElementById("deckGameTitleInput");
-    const iconIn = document.getElementById("deckGameIconInput");
-    if (titleIn) titleIn.value = roomState.gameTitle || "Party Feud";
-    if (iconIn) iconIn.value = roomState.gameIcon || "🎉";
-    document.getElementById("deckManagerModal").classList.remove("hidden");
+    openNewGameModal("host");
   }
 
   function closeDeckManagerModal() {
-    document.getElementById("deckManagerModal").classList.add("hidden");
+    closeNewGameModal();
   }
 
   async function saveCustomGameBranding() {
@@ -2629,6 +2717,7 @@ window.Feud = window.Feud || {};
       Feud.saveCustomRounds(merged);
       await pushRoomPatch({ customRounds: merged, revealed: [], pot: 0 });
       Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
       if (closeModals) {
         closeDeckManagerModal();
         closeEditRoundModal();
@@ -2644,8 +2733,8 @@ window.Feud = window.Feud || {};
       fastMoney: parsed.fastMoney || null
     };
 
-    const nextTitle = parsed.gameTitle || roomState.gameTitle || "Party Feud";
-    const nextIcon = parsed.gameIcon || roomState.gameIcon || "🎉";
+    const nextTitle = customDeck.name || parsed.gameTitle || "Party Feud";
+    const nextIcon = parsed.gameIcon || "🎉";
     Feud.saveCustomDeck(customDeck);
     Feud.saveCustomRounds({});
     Feud.saveGameTitle(nextTitle);
@@ -2700,6 +2789,7 @@ window.Feud = window.Feud || {};
 
     Feud.populateRoundDropdowns(roomState);
     syncSetupModalInputsFromState();
+    syncSetupModalInputsFromState();
     if (closeModals) {
       closeDeckManagerModal();
       closeEditRoundModal();
@@ -2710,7 +2800,9 @@ window.Feud = window.Feud || {};
   async function restoreDefaultDeck(closeModals = true) {
     Feud.saveCustomDeck(null);
     Feud.saveCustomRounds({});
-    const defTitle = (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameTitle) || "Party Feud";
+    const defTitle =
+      (Feud.DEFAULT_DECK && (Feud.DEFAULT_DECK.deckName || Feud.DEFAULT_DECK.gameTitle)) ||
+      "Starter Party Deck";
     const defIcon = (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameIcon) || "🎉";
     Feud.saveGameTitle(defTitle);
     Feud.saveGameIcon(defIcon);
@@ -2748,6 +2840,7 @@ window.Feud = window.Feud || {};
     });
 
     Feud.populateRoundDropdowns(roomState);
+    syncSetupModalInputsFromState();
     syncSetupModalInputsFromState();
     if (closeModals) {
       closeDeckManagerModal();
@@ -2850,6 +2943,8 @@ window.Feud = window.Feud || {};
       hostHandleWrongAnswer({ fromTimer: false });
     } else if (e.key === "c" || e.key === "C") {
       hostClearStrikes();
+    } else if (e.key === "Escape") {
+      closeHostPopover();
     } else if (e.key === "ArrowRight") {
       hostNextRound();
     } else if (e.key === "ArrowLeft") {
@@ -2892,6 +2987,216 @@ window.Feud = window.Feud || {};
   function closeHostMoreMenu() {
     const menu = document.getElementById("hostMoreMenu");
     if (menu) menu.open = false;
+  }
+
+  let activePopoverKind = "";
+
+  async function hostSetExactScore(team, val) {
+    const parsed = Math.max(0, parseInt(val, 10) || 0);
+    pushUndoSnapshot();
+    await pushRoomPatch(team === 1 ? { team1Score: parsed } : { team2Score: parsed });
+    if (activePopoverKind === "team1" || activePopoverKind === "team2") {
+      renderHostPopoverBody(activePopoverKind);
+    }
+  }
+
+  function escapePopoverHtml(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function renderHostPopoverBody(kind) {
+    const titleEl = document.getElementById("hostPopoverTitle");
+    const bodyEl = document.getElementById("hostPopoverBody");
+    if (!titleEl || !bodyEl) return;
+
+    const t1 = roomState.team1Name || "Team 1";
+    const t2 = roomState.team2Name || "Team 2";
+    const phase =
+      roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
+
+    if (kind === "team1" || kind === "team2") {
+      const teamNum = kind === "team1" ? 1 : 2;
+      const name = teamNum === 1 ? t1 : t2;
+      const score = teamNum === 1 ? roomState.team1Score || 0 : roomState.team2Score || 0;
+      const pot = roomState.pot || 0;
+      const isCtrl = roomState.controllingTeam === teamNum;
+      titleEl.textContent = `👥 ${name}`;
+      bodyEl.innerHTML = `
+        <div class="host-popover-section">
+          <label class="field-label" for="popoverTeamNameInput">Team Name</label>
+          <input id="popoverTeamNameInput" class="host-team-input" type="text" value="${escapePopoverHtml(
+            name
+          )}" onchange="hostRenameTeam(${teamNum}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}" />
+        </div>
+        <div class="host-popover-section">
+          <label class="field-label" for="popoverTeamScoreInput">Score Override</label>
+          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            <button type="button" class="top-btn" onclick="hostAdjustScore(${teamNum}, -10).then(()=>renderHostPopoverBody('${kind}'))">-10</button>
+            <button type="button" class="top-btn" onclick="hostAdjustScore(${teamNum}, -1).then(()=>renderHostPopoverBody('${kind}'))">-1</button>
+            <input id="popoverTeamScoreInput" class="host-team-input" style="width:90px; text-align:center;" type="number" min="0" value="${score}" onchange="hostSetExactScore(${teamNum}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}" />
+            <button type="button" class="top-btn" onclick="hostAdjustScore(${teamNum}, 1).then(()=>renderHostPopoverBody('${kind}'))">+1</button>
+            <button type="button" class="top-btn" onclick="hostAdjustScore(${teamNum}, 10).then(()=>renderHostPopoverBody('${kind}'))">+10</button>
+          </div>
+        </div>
+        <div class="host-popover-section">
+          <span class="field-label">Turn &amp; Pot Controls</span>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button type="button" class="action-btn ${
+              isCtrl ? "btn-gold" : "btn-blue"
+            } display-font" onclick="hostSetControllingTeam(${teamNum}); closeHostPopover();">
+              ${isCtrl ? "✅ Currently Active Team" : `🎯 Make ${escapePopoverHtml(name)} Active Team`}
+            </button>
+            <button type="button" class="action-btn btn-gold display-font" ${
+              pot <= 0 ? "disabled" : ""
+            } onclick="hostAwardPot(${teamNum}); closeHostPopover();">
+              🏆 Award Round Pot (${pot} pts)
+            </button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if (kind === "round") {
+      const isHidden = !roomState.questionRevealed || phase === "faceoff-ready";
+      const curRound = Feud.getRoundData(roomState, roomState.roundIdx);
+      const src = Feud.getSourceRoundsList ? Feud.getSourceRoundsList(roomState) : [];
+      const used = Feud.getAllPlayedSourceIndices
+        ? Feud.getAllPlayedSourceIndices(roomState)
+        : new Set();
+      const curMult = Number(curRound.multiplier) || 1;
+      const isCurTie = Feud.isTieBreakerRound ? Feud.isTieBreakerRound(curRound) : false;
+      const treeGroups = [
+        { key: "1", label: "1x Single Points", match: (r, tie) => !tie && (Number(r.multiplier) || 1) === 1, open: !isCurTie && curMult === 1 },
+        { key: "2", label: "2x Double Points", match: (r, tie) => !tie && (Number(r.multiplier) || 1) === 2, open: !isCurTie && curMult === 2 },
+        { key: "3", label: "3x Triple Points", match: (r, tie) => !tie && (Number(r.multiplier) || 1) >= 3, open: !isCurTie && curMult >= 3 }
+      ];
+      const treeHtml = treeGroups
+        .map((grp) => {
+          const items = [];
+          src.forEach((sr, sIdx) => {
+            const tie = Feud.isTieBreakerRound ? Feud.isTieBreakerRound(sr) : false;
+            if (grp.match(sr, tie)) items.push({ sr, sIdx });
+          });
+          if (items.length === 0) return "";
+          const unusedCount = items.filter(({ sIdx }) => !used.has(sIdx)).length;
+          return `
+            <details class="round-tree-group"${grp.open ? " open" : ""}>
+              <summary class="round-tree-summary">
+                <span>${grp.label}</span>
+                <span class="round-tree-count">${unusedCount} unused / ${items.length}</span>
+              </summary>
+              <div class="round-tree-list">
+                ${items
+                  .map(({ sr, sIdx }) => {
+                    const isUsed = used.has(sIdx);
+                    const isCurrent = curRound && curRound.sourceIdx === sIdx;
+                    return `
+                      <button type="button" class="round-tree-item${isUsed ? " is-used" : ""}${
+                        isCurrent ? " is-current" : ""
+                      }" onclick="hostPickDeckRoundForSlot(${sIdx}, ${
+                        roomState.roundIdx
+                      }); closeHostPopover();">
+                        <span class="round-tree-q">#${sIdx + 1}: ${escapePopoverHtml(sr.prompt || "")}</span>
+                        <span class="round-tree-badge">${isCurrent ? "Current" : isUsed ? "✓ Used" : "Unused"}</span>
+                      </button>
+                    `;
+                  })
+                  .join("")}
+              </div>
+            </details>
+          `;
+        })
+        .join("");
+
+      titleEl.textContent = `🎯 ${curRound.title || `Round ${roomState.roundIdx + 1}`}`;
+      bodyEl.innerHTML = `
+        <div class="host-popover-section">
+          <button type="button" class="action-btn btn-gold display-font" onclick="hostRandomizeCurrentRound(); closeHostPopover();">🎲 Randomize (Same Level)</button>
+        </div>
+        <div class="host-popover-section">
+          <span class="field-label">📚 Choose a Round from Deck</span>
+          ${
+            isHidden
+              ? `<div class="round-tree-wrap">${treeHtml}</div>`
+              : `<p style="font-size:12px; color:#fde68a; margin:0;">Question is already revealed on TV. Reset Round or advance to the next round to swap from the deck.</p>`
+          }
+        </div>
+      `;
+      return;
+    }
+
+    if (kind === "phase") {
+      const ctrl = roomState.controllingTeam || 0;
+      titleEl.textContent = "⚡ Phase, Control & Strikes";
+      bodyEl.innerHTML = `
+        <div class="host-popover-section">
+          <span class="field-label">Board Control / Phase Override</span>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+            <button type="button" class="top-btn ${ctrl === 0 ? "gold" : ""}" onclick="hostSetControllingTeam(0); closeHostPopover();">⚡ Face-Off</button>
+            <button type="button" class="top-btn ${ctrl === 1 ? "gold" : ""}" onclick="hostSetControllingTeam(1); closeHostPopover();">🎯 ${escapePopoverHtml(t1)}</button>
+            <button type="button" class="top-btn ${ctrl === 2 ? "gold" : ""}" onclick="hostSetControllingTeam(2); closeHostPopover();">🎯 ${escapePopoverHtml(t2)}</button>
+          </div>
+        </div>
+        <div class="host-popover-section">
+          <span class="field-label">Manual Strike Overrides</span>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px;">
+            <button type="button" class="action-btn btn-red display-font" style="min-height:38px;" onclick="hostTriggerStrike(1); closeHostPopover();">X</button>
+            <button type="button" class="action-btn btn-red display-font" style="min-height:38px;" onclick="hostTriggerStrike(2); closeHostPopover();">XX</button>
+            <button type="button" class="action-btn btn-red display-font" style="min-height:38px;" onclick="hostTriggerStrike(3); closeHostPopover();">XXX</button>
+            <button type="button" class="top-btn" onclick="hostClearStrikes(); closeHostPopover();">Clear</button>
+          </div>
+        </div>
+        ${
+          !(Array.isArray(roomState.revealed) && roomState.revealed.length > 0)
+            ? `<div class="host-popover-section">
+                <button type="button" class="top-btn" onclick="hostToggleQuestionVisibility(); closeHostPopover();">
+                  ${roomState.questionRevealed ? "🙈 Hide Question on TV" : "👁️ Show Question Only on TV"}
+                </button>
+              </div>`
+            : ""
+        }
+      `;
+      return;
+    }
+
+    if (kind === "timer") {
+      const dur = Number(roomState.turnTimerDuration) || 10;
+      titleEl.textContent = "⏱️ Timer Settings";
+      bodyEl.innerHTML = `
+        <div class="host-popover-section">
+          <span class="field-label">Shot-Clock Duration</span>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            ${[5, 7, 10, 15, 30]
+              .map(
+                (s) =>
+                  `<button type="button" class="top-btn ${dur === s ? "gold" : ""}" onclick="hostSetTurnTimerDuration(${s}); closeHostPopover();">${s}s${
+                    s === 30 ? " (Steal)" : ""
+                  }</button>`
+              )
+              .join("")}
+          </div>
+        </div>
+        <div class="host-popover-section">
+          <button type="button" class="top-btn" onclick="hostStopResetTurnTimer(); closeHostPopover();">⏹️ Stop &amp; Reset Timer</button>
+        </div>
+      `;
+    }
+  }
+
+  function openHostPopover(kind) {
+    activePopoverKind = kind;
+    renderHostPopoverBody(kind);
+    document.getElementById("hostContextPopover")?.classList.remove("hidden");
+  }
+
+  function closeHostPopover() {
+    activePopoverKind = "";
+    document.getElementById("hostContextPopover")?.classList.add("hidden");
   }
 
   Object.assign(window, {
@@ -2968,7 +3273,10 @@ window.Feud = window.Feud || {};
     hostCyclePresets,
     hostRenameTeam,
     hostAdjustScore,
+    hostSetExactScore,
     hostAwardPot,
+    openHostPopover,
+    closeHostPopover,
     hostShowWinnerScreen,
     hostUndo,
     hostSwitchStage,
@@ -3002,16 +3310,34 @@ window.Feud = window.Feud || {};
         savedScriptPref !== null ? savedScriptPref === "1" : window.innerWidth < 960;
       applyHostScriptCollapsed(defaultCollapsed);
     } catch (e) {}
+    window.addEventListener("storage", (e) => {
+      if (e.key === "party_feud_played_history_v1") {
+        Feud.renderBranding(roomState);
+        Feud.populateRoundDropdowns(roomState);
+      }
+    });
     document.addEventListener("click", (e) => {
       const menu = document.getElementById("hostMoreMenu");
       if (menu && menu.open && !menu.contains(e.target)) {
         menu.open = false;
       }
+      if (activeRole === "host") {
+        const tvDock = document.getElementById("hostTvMonitorDock");
+        if (tvDock && tvDock.contains(e.target)) {
+          if (e.target.closest("#tvTeam1Card")) {
+            openHostPopover("team1");
+          } else if (e.target.closest("#tvTeam2Card")) {
+            openHostPopover("team2");
+          } else if (e.target.closest("#tvQuestionOverlay")) {
+            openHostPopover("round");
+          } else if (e.target.closest("#tvStrikesPill")) {
+            openHostPopover("phase");
+          }
+        }
+      }
     });
     Feud.renderBranding(roomState);
-    document.getElementById("roleSubtitle").textContent = `4-Phone Multiplayer • ${Feud.getRoundCount(
-      roomState
-    )} Rounds`;
+    document.getElementById("roleSubtitle").textContent = "Live Party Multiplayer";
 
     const params = new URLSearchParams(window.location.search);
     const urlTitle = (params.get("title") || "").trim();
@@ -3035,6 +3361,10 @@ window.Feud = window.Feud || {};
 
     const urlRoom = (params.get("room") || "").trim().toUpperCase();
     const urlRole = (params.get("role") || "").trim().toLowerCase();
+    const returnTo = (params.get("returnTo") || "").trim().toLowerCase();
+    if (returnTo === "setup") {
+      openNewGameModal("host");
+    }
     if (urlRoom) {
       ["hostJoinCode", "tvRoomInput", "buzzerRoomInput"].forEach((id) => {
         const el = document.getElementById(id);

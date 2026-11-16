@@ -79,14 +79,8 @@ window.Feud = window.Feud || {};
     const topIcon = document.getElementById("topBrandIcon");
     if (topIcon) topIcon.textContent = icon;
 
-    const lobbyBadge = document.getElementById("lobbyBadgeText");
-    if (lobbyBadge) lobbyBadge.textContent = `${icon} 4-Phone Live Party Setup`;
-
     const topTitle = document.getElementById("topBrandTitle");
     if (topTitle) topTitle.textContent = title;
-
-    const lobbyTitle = document.getElementById("lobbyHeroTitle");
-    if (lobbyTitle) lobbyTitle.textContent = title;
 
     const activeDeckNameText = document.getElementById("activeDeckNameText");
     if (activeDeckNameText) {
@@ -126,13 +120,15 @@ window.Feud = window.Feud || {};
 
     const labelText = isUnlimitedBuzzWait ? "READY" : isExpired ? "TIME!" : `${rem}s`;
 
+    const showOnTv = !isInactiveTimerPhase && (running || isExpired || (rem > 0 && rem < dur));
+
     const tvBadge = document.getElementById("tvTurnTimerBadge");
     const tvVal = document.getElementById("tvTurnTimerValue");
     if (tvBadge && tvVal) {
       tvVal.textContent = labelText;
       tvBadge.className = `turn-timer-pill display-font${running ? " running" : ""}${
         isUrgent ? " urgent" : ""
-      }${isExpired ? " expired" : ""}`;
+      }${isExpired ? " expired" : ""}${showOnTv ? "" : " hidden"}`;
     }
 
     const hostPill = document.getElementById("hostTurnTimerPill");
@@ -148,10 +144,10 @@ window.Feud = window.Feud || {};
     const canResume = !running && rem > 0 && rem < dur;
     if (hostToggleBtn) {
       hostToggleBtn.textContent = running
-        ? "⏸️ Pause"
+        ? "⏱️ Pause Timer"
         : canResume
-        ? "▶️ Resume"
-        : "▶️ Start";
+        ? "⏱️ Resume Timer"
+        : "⏱️ Start Timer";
     }
 
     const autoStartOnXCheck = document.getElementById("hostAutoStartOnStrikeCheckbox");
@@ -208,15 +204,21 @@ window.Feud = window.Feud || {};
         const playedSet = Feud.getAllPlayedSourceIndices
           ? Feud.getAllPlayedSourceIndices(roomState)
           : new Set();
+        const isQuestionHidden =
+          !roomState.questionRevealed ||
+          (roomState.roundPhase || "faceoff-ready") === "faceoff-ready";
         const deckOg = document.createElement("optgroup");
-        deckOg.label = "📚 All Deck Rounds (Used Marked • Click Any)";
+        deckOg.label = isQuestionHidden
+          ? "📚 All Deck Rounds (Used Marked • Click Any)"
+          : "📚 All Deck Rounds (Available While Question Hidden)";
         sourceRounds.forEach((sr, sIdx) => {
           const isUsed = playedSet.has(sIdx);
           const opt = document.createElement("option");
           opt.value = `deck:${sIdx}`;
-          opt.textContent = `${isUsed ? "✓ [Used] " : "• "}#${sIdx + 1} (${sr.multiplier || 1}x): ${(
+          opt.disabled = !isQuestionHidden;
+          opt.textContent = `${isUsed ? "✓ [Used] " : "• "}#${sIdx + 1} (${sr.multiplier || 1}x): ${
             sr.prompt || ""
-          ).slice(0, 40)}…`;
+          }`;
           deckOg.appendChild(opt);
         });
         sel.appendChild(deckOg);
@@ -290,7 +292,7 @@ window.Feud = window.Feud || {};
 
     const steps = isTieBreaker
       ? [
-          { id: "faceoff", label: "⚡ Sudden-Death Tie-Breaker (First Answer Wins!)" },
+          { id: "faceoff", label: "⚡ Sudden-Death Tie-Breaker (#1 Answer Wins!)" },
           { id: "round-over", label: "🏆 Match Complete" }
         ]
       : [
@@ -350,10 +352,10 @@ window.Feud = window.Feud || {};
 
     if (phase === "faceoff-ready") {
       headline = isTieBreaker
-        ? "⚡ Sudden-Death Tie-Breaker: First Correct Answer Wins the Match!"
+        ? "⚡ Sudden-Death Tie-Breaker: #1 Answer Wins the Match!"
         : "🔔 Step 1: Ready for the Face-Off";
       sayScript = isTieBreaker
-        ? `“We are TIED! Welcome to the Sudden-Death Tie-Breaker! Give me one player from ${t1} and one player from ${t2} at the buzzers—whoever answers this question on the board wins the entire match!”`
+        ? `“We are TIED! Welcome to the Sudden-Death Tie-Breaker! Give me one player from ${t1} and one player from ${t2} at the buzzers—the team that gets the #1 answer wins the entire match!”`
         : `“Welcome to ${round.title} (${multWord} Points)! Give me one player from ${t1} and one player from ${t2} at the buzzer podiums—hands ready!”`;
       doGuide = `Click “👁️ Show Question on TV” below (or press Space), then read the survey question out loud. There is NO timer until the first player buzzes in!`;
       subtext = `Unlimited time until the first player buzzes (${round.answers.length} answers on the board).`;
@@ -361,15 +363,13 @@ window.Feud = window.Feud || {};
         <button type="button" class="action-btn btn-gold display-font" onclick="hostRevealQuestionAndStartTimer()">
           👁️ Show Question on TV (Space)
         </button>
-        <button type="button" class="top-btn" onclick="hostManualBuzz(1)">🔔 ${escapeHtml(t1)} Buzzed</button>
-        <button type="button" class="top-btn" onclick="hostManualBuzz(2)">🔔 ${escapeHtml(t2)} Buzzed</button>
       `;
     } else if (phase === "faceoff-buzz") {
       headline = isTieBreaker
         ? "⚡ Tie-Breaker Live: Waiting for First Buzzer!"
         : "🔔 Face-Off: Waiting for First Buzzer (Unlimited Time)";
       sayScript = isTieBreaker
-        ? `“Sudden-Death Tie-Breaker! First team to give a survey answer on the board wins the game! Survey says: ‘${round.prompt}’ — Buzz in!”`
+        ? `“Sudden-Death Tie-Breaker! First team to get the #1 answer wins the game! Survey says: ‘${round.prompt}’ — Buzz in!”`
         : `“Top ${round.answers.length} answers are on the board! Survey says: ‘${round.prompt}’ — Buzz in!”`;
       doGuide = `Players have unlimited time until the first person buzzes in on their phone, OR click the button below for whichever team buzzed first (starts their ${dur}s answer timer).`;
       subtext =
@@ -392,10 +392,10 @@ window.Feud = window.Feud || {};
         : `🎤 Face-Off (1st Turn): ${firstName} Answering!`;
       sayScript = `“${firstName}, you buzzed in first! What is your answer for: ‘${round.prompt}’?”`;
       doGuide = isTieBreaker
-        ? `If ${firstName}'s answer is on the list below, click it—they immediately WIN the match! If NOT on the list, click “⚡ Wrong Guess (1 Temp X)” to pass the chance to ${secondName}.`
+        ? `If ${firstName}'s answer is #1, click it—they immediately WIN the match! Otherwise click their answer or “⚡ Wrong Guess” to pass to ${secondName}.`
         : `If their answer is on the list below, click it to reveal it and go to Play or Pass. If it's NOT on the list, click “⚡ Face-Off Wrong Guess (1 Temp X)” to pass the Face-Off turn to ${secondName}.`;
       subtext = isTieBreaker
-        ? `Sudden-Death Tie-Breaker: any answer on the board immediately wins the match!`
+        ? `Sudden-Death Tie-Breaker: only the #1 answer wins the match!`
         : `1st Face-Off guess does NOT add a round strike if wrong.`;
       actionsHtml = `
         <button type="button" class="action-btn btn-red display-font" onclick="hostFaceOffWrongGuess()">
@@ -552,26 +552,7 @@ window.Feud = window.Feud || {};
           isLastRegularRound && tieBreakerUnlocked
             ? `<button type="button" class="action-btn btn-red display-font" onclick="hostNextRound()">⚡ Start Sudden-Death Tie-Breaker ▶</button>`
             : !isLastRound
-            ? `<button type="button" class="action-btn btn-blue display-font" onclick="hostNextRound()">⏭️ Next Round ▶</button>
-               <select class="lobby-input" style="min-height:40px; font-size:12px; flex:1; min-width:200px;" onchange="if(this.value!==''){hostPickDeckRoundForSlot(Number(this.value), ${
-                 roomState.roundIdx + 1
-               }); this.value='';}">
-                 <option value="">📋 Or Pick Any Round from Deck…</option>
-                 ${(() => {
-                   const src = Feud.getSourceRoundsList ? Feud.getSourceRoundsList(roomState) : [];
-                   const used = Feud.getAllPlayedSourceIndices
-                     ? Feud.getAllPlayedSourceIndices(roomState)
-                     : new Set();
-                   return src
-                     .map((sr, sIdx) => {
-                       const mark = used.has(sIdx) ? "✓ [Used] " : "• ";
-                       return `<option value="${sIdx}">${mark}#${sIdx + 1} (${
-                         sr.multiplier || 1
-                       }x): ${escapeHtml((sr.prompt || "").slice(0, 44))}…</option>`;
-                     })
-                     .join("");
-                 })()}
-               </select>`
+            ? `<button type="button" class="action-btn btn-blue display-font" onclick="hostNextRound()">⏭️ Next Round ▶</button>`
             : `${
                 Boolean(roomState.enableFastMoney)
                   ? `<button type="button" class="action-btn btn-gold display-font" onclick="hostSwitchStage('fast')">⚡ Start Fast Money Bonus Round</button>`
@@ -1054,15 +1035,29 @@ window.Feud = window.Feud || {};
     if (undoBtn) {
       undoBtn.disabled = !(handlers && typeof handlers.canUndo === "function" && handlers.canUndo());
     }
-    const t1Input = document.getElementById("hostOverrideT1Name");
-    if (t1Input && document.activeElement !== t1Input) {
-      t1Input.value = roomState.team1Name || "Team 1";
-    }
-    const t2Input = document.getElementById("hostOverrideT2Name");
-    if (t2Input && document.activeElement !== t2Input) {
-      t2Input.value = roomState.team2Name || "Team 2";
-    }
+    const stripT1Name = document.getElementById("hostStripT1Name");
+    const stripT1Score = document.getElementById("hostStripT1Score");
+    const stripT2Name = document.getElementById("hostStripT2Name");
+    const stripT2Score = document.getElementById("hostStripT2Score");
+    const stripPotVal = document.getElementById("hostStripPotVal");
+    const stripT1Btn = document.getElementById("hostStripTeam1");
+    const stripT2Btn = document.getElementById("hostStripTeam2");
+    if (stripT1Name) stripT1Name.textContent = roomState.team1Name || "Team 1";
+    if (stripT1Score) stripT1Score.textContent = String(roomState.team1Score || 0);
+    if (stripT2Name) stripT2Name.textContent = roomState.team2Name || "Team 2";
+    if (stripT2Score) stripT2Score.textContent = String(roomState.team2Score || 0);
+    if (stripPotVal) stripPotVal.textContent = String(roomState.pot || 0);
+    const activeStripTeam =
+      (roomState.roundPhase === "round-over"
+        ? roomState.roundWinnerTeam || roomState.controllingTeam
+        : roomState.controllingTeam) || 0;
+    if (stripT1Btn) stripT1Btn.classList.toggle("is-active", activeStripTeam === 1);
+    if (stripT2Btn) stripT2Btn.classList.toggle("is-active", activeStripTeam === 2);
     const round = Feud.getRoundData(roomState, roomState.roundIdx);
+    const compactLabel = document.getElementById("hostCompactRoundLabel");
+    if (compactLabel) {
+      compactLabel.textContent = round.title || `Round ${roomState.roundIdx + 1} (${round.multiplier}x)`;
+    }
     const phase =
       roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
     const sel = document.getElementById("hostRoundSelect");
@@ -1091,6 +1086,16 @@ window.Feud = window.Feud || {};
     }
 
     document.getElementById("hostPromptText").textContent = round.prompt;
+    const isQuestionHidden = !roomState.questionRevealed || phase === "faceoff-ready";
+    const qBox = document.getElementById("hostQuestionBox");
+    const qHint = document.getElementById("hostQuestionSwapHint");
+    if (qBox) {
+      qBox.classList.toggle("is-swappable", isQuestionHidden);
+      qBox.title = isQuestionHidden ? "Tap to swap or pick another round from deck" : "";
+    }
+    if (qHint) {
+      qHint.classList.toggle("hidden", !isQuestionHidden);
+    }
 
     const toggleOnlyBtn = document.getElementById("hostBtnToggleQuestionOnly");
     if (toggleOnlyBtn) {

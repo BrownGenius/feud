@@ -79,7 +79,8 @@ stateDiagram-v2
     steal --> round_over : "Tap Answer (Steal Succeeds) OR Wrong Guess (Steal Missed)"
 
     round_over --> round_over : "Reveal Remaining Hidden Answers (0 pts)"
-    round_over --> faceoff_ready : "Next Round / Pick Any Deck Round"
+    round_over --> faceoff_ready : "Next Round"
+    faceoff_ready --> faceoff_ready : "Swap / Pick Any Round from Deck (While Hidden)"
     round_over --> winner : "Final Round Complete -> Show Winner Screen"
 ```
 
@@ -87,14 +88,14 @@ stateDiagram-v2
 
 | Phase (`roundPhase`) | Answer Tiles | Primary Host Actions Allowed |
 | :--- | :--- | :--- |
-| **`faceoff-ready`** | 🔒 Locked | **👁️ Show Question on TV (`Space`)** |
+| **`faceoff-ready`** | 🔒 Locked | **👁️ Show Question on TV (`Space`)**, **📋 Swap Round from Deck** (with `✓ [Used]` markers, while question is hidden) |
 | **`faceoff-buzz`** | 🔒 Locked | **🔔 Team A Buzzed** or **🔔 Team B Buzzed** |
 | **`faceoff-p1`** | 🔓 Unrevealed clickable | Tap revealed answer (`1`–`8`), **❌ Wrong Guess** (1 Temp X), or **🔍 Be More Specific** (`+5s`) |
 | **`faceoff-p2`** | 🔓 Unrevealed clickable | Tap 2nd player's answer (`1`–`8`), **❌ Wrong Guess**, or **🔍 Be More Specific** (`+5s`) |
 | **`pass-or-play`** | 🔒 Locked | **▶️ PLAY Board** or **🔀 PASS Board** |
 | **`playing`** | 🔓 Unrevealed clickable | Tap board answer (`1`–`8`), **❌ Wrong Answer (`X`)**, **🔍 Be More Specific** (`+5s`), or **🔄 Start Timer (`R`)** |
 | **`steal`** | 🔓 Unrevealed clickable | **⏱️ Start 30s Steal Timer (`R`)**, tap stolen answer (`1`–`8`), **❌ Steal Missed (`X`)**, or **🔍 Be More Specific** (`+5s`) |
-| **`round-over`** | 🔓 Unrevealed clickable (`0 pts`) | **👁️ Reveal Answer #N (0 pts)**, **⏭️ Next Round ▶**, **📋 Pick Any Round from Deck** (with `✓ [Used]` markers), or **🏆 Show Winner Screen** (final round) |
+| **`round-over`** | 🔓 Unrevealed clickable (`0 pts`) | **👁️ Reveal Answer #N (0 pts)**, **⏭️ Next Round ▶**, or **🏆 Show Winner Screen** (final round) |
 
 > **Tip:** Already-revealed answer tiles stay locked to prevent accidental taps—use **`↩️ Undo`** in the top bar to step back at any time, or open **`⚙️ Manual Overrides & Extra Controls`** to edit team names mid-game, adjust scores, or force board control.
 
@@ -110,7 +111,7 @@ stateDiagram-v2
 | **6. Play or Pass** | Click **▶️ PLAY** or **🔀 PASS** | Assigns board control (`playing`) and resets the timer for the playing team (press `R` to start the countdown for each player). |
 | **7. Team Play (`0–3 X`)** | Tap answer (`1`–`8`) or **❌ Wrong (`X`)** | • **Correct answer or Strike 1/2**: Resets the Player Answer Timer to full duration (`R` to start, `T` to pause/resume).<br>• **Timer hits `0s` (`TIME!`)**: Sounds the time-up alert without forcing a transition—the Host can still tap a board answer, tap **❌ Wrong (`X`)**, or restart the timer.<br>• **Board Swept**: If all answers are revealed, awards the pot and enters `round-over`.<br>• **3rd Strike (`XXX`)**: **Automatically switches teams to `steal`**, shows **"CHANCE TO STEAL [POT] PTS!"** on the TV, and pre-loads the **30s Steal Timer**. |
 | **8. Steal Mode (`30s`)** | Click **⏱️ Start 30s Steal Timer (`R`)**, then tap board answer or **❌ Steal Missed (`X`)** | • **If Answer on Board**: Reveals tile, awards the pot to the stealing team, and enters `round-over`.<br>• **If Wrong (`X`)**: Triggers `X`, awards the pot to the original playing team, and enters `round-over`. |
-| **9. Round Complete** | Click **👁️ Reveal Answer #N (0 pts)**, then **⏭️ Next Round ▶** or **📋 Pick Any Round from Deck** | Reveals remaining unflipped tiles one by one without affecting scores, then lets you advance sequentially or select any round from the full deck (with `✓ [Used]` indicators, all still selectable). |
+| **9. Round Complete** | Click **👁️ Reveal Answer #N (0 pts)**, then **⏭️ Next Round ▶** | Reveals remaining unflipped tiles one by one without affecting scores, then advances to the next round (where you can swap the round from the deck while the question is still hidden). |
 | **10. Tie-Breaker / Match Winner** | Plays after the final regular round | • **If Tied (`T1 == T2`)**: Unlocks the **⚡ Sudden-Death Tie-Breaker** round—first team to answer wins.<br>• **When a Team Wins**: Stays in `round-over` so you can reveal remaining hidden answers first, then click **🏆 Show Winner Screen** to celebrate on TV and open **Next Match Setup**. |
 
 ---
