@@ -179,9 +179,9 @@ window.Feud = window.Feud || {};
     if (trysteroLoadPromise) return trysteroLoadPromise;
     trysteroLoadPromise = (async () => {
       const cdns = [
-        "https://esm.sh/trystero",
-        "https://esm.run/trystero",
-        "https://cdn.jsdelivr.net/npm/trystero/+esm"
+        "https://esm.sh/trystero@0.20.0/nostr",
+        "https://cdn.jsdelivr.net/npm/trystero@0.20.0/nostr/+esm",
+        "https://esm.run/trystero@0.20.0/nostr"
       ];
       for (const url of cdns) {
         try {
@@ -1159,10 +1159,15 @@ window.Feud = window.Feud || {};
           }
         });
       } catch (e) {
-        fail({
-          ok: false,
-          error: `Could not initialize WebRTC P2P connection (${(e && e.message) || "unknown error"}).`
-        });
+        clearTimeout(timeoutId);
+        if (trysteroRoom && !isPrimaryHostPeer) {
+          try {
+            trysteroRoom.leave();
+          } catch (err) {}
+          trysteroRoom = null;
+          sendP2pAction = null;
+        }
+        connectMqttClient({ code, role, pin }).then(finish);
       }
     });
   }

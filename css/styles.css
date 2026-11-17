@@ -3242,5 +3242,20 @@ body:has(#buzzerView:not(.hidden)) .top-bar {
   color: #6ee7b7;
 }
 
+.app-build-badge {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(253, 230, 138, 0.55);
+  padding: 6px 12px 10px;
+}
+
+body.tv-viewport-lock .app-build-badge,
+body:has(#tvView:not(.hidden):not(.embedded-in-host)) .app-build-badge,
+body.buzzer-nav-locked .app-build-badge,
+body:has(#buzzerView:not(.hidden)) .app-build-badge,
+body:has(#comboBuzzerView:not(.hidden)) .app-build-badge {
+  display: none !important;
+}
+
 
 
