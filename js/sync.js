@@ -389,13 +389,13 @@ window.Feud = window.Feud || {};
       const now = Date.now();
       let changed = false;
       for (const [peerId, entry] of Array.from(hostConnections.entries())) {
-        if (!entry || !entry.open || now - (entry.lastSeenAt || 0) > 14000) {
+        if (!entry || !entry.open || now - (entry.lastSeenAt || 0) > 6500) {
           hostConnections.delete(peerId);
           changed = true;
         }
       }
       if (changed) updateHostPeerBadge();
-    }, 5000);
+    }, 2000);
   }
 
   async function startHostRoomSync(code, initialState) {
@@ -931,6 +931,7 @@ window.Feud = window.Feud || {};
       try {
         const client = mqttLib.connect(brokerUrl, {
           clean: true,
+          keepalive: 5,
           connectTimeout: 5000,
           reconnectPeriod: 3000,
           will: {
@@ -1184,13 +1185,13 @@ window.Feud = window.Feud || {};
           );
         } catch (e) {}
       }
-      if (Date.now() - lastPongAt > 14000) {
+      if (Date.now() - lastPongAt > 9000) {
         clearInterval(heartbeatTimer);
         clientConnOpen = false;
         const { code, role, pin } = clientJoinInfo;
         scheduleClientReconnect(code, role, pin, 0);
       }
-    }, 4000);
+    }, 2000);
   }
 
   function scheduleClientReconnect(code, role, pin, forcedDelay) {

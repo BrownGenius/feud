@@ -1258,14 +1258,36 @@ window.Feud = window.Feud || {};
     if (qrB1) qrB1.disabled = b1 || combo;
     if (qrB2) qrB2.disabled = b2 || combo;
     if (qrCombo) qrCombo.disabled = combo || b1 || b2;
-    if (badgeB1 && (b1 || combo)) {
-      badgeB1.textContent = combo ? "🔒 Combo Open" : "🔒 Team 1 Open";
+    const activeTvRole = roomState && roomState.tvQrOverlay ? roomState.tvQrOverlay.role : null;
+    if (badgeB1) {
+      badgeB1.textContent =
+        b1 || combo
+          ? combo
+            ? "🔒 Combo Open"
+            : "🔒 Team 1 Open"
+          : activeTvRole === "buzzer1"
+          ? "📺 Showing on TV (click to hide)"
+          : "Click to show on TV";
     }
-    if (badgeB2 && (b2 || combo)) {
-      badgeB2.textContent = combo ? "🔒 Combo Open" : "🔒 Team 2 Open";
+    if (badgeB2) {
+      badgeB2.textContent =
+        b2 || combo
+          ? combo
+            ? "🔒 Combo Open"
+            : "🔒 Team 2 Open"
+          : activeTvRole === "buzzer2"
+          ? "📺 Showing on TV (click to hide)"
+          : "Click to show on TV";
     }
-    if (badgeCombo && (combo || b1 || b2)) {
-      badgeCombo.textContent = combo ? "🔒 Combo Open" : "🔒 Team Buzzer Open";
+    if (badgeCombo) {
+      badgeCombo.textContent =
+        combo || b1 || b2
+          ? combo
+            ? "🔒 Combo Open"
+            : "🔒 Team Buzzer Open"
+          : activeTvRole === "buzzer_combo"
+          ? "📺 Showing on TV (click to hide)"
+          : "Click to show on TV";
     }
 
     const lobbyB1 = document.getElementById("btnJoinBuzzer1");
