@@ -561,6 +561,7 @@ window.Feud = window.Feud || {};
       });
 
       notifyStatus(`Room: ${currentCode} • Ready`, true);
+      startMqttHostSync(currentCode).catch(() => {});
     } catch (e) {
       await startMqttHostSync(currentCode);
     }
@@ -1073,15 +1074,17 @@ window.Feud = window.Feud || {};
       };
 
       const timeoutId = setTimeout(() => {
-        const detailHint =
-          joinStage === "relays"
-            ? "No P2P peers found — check Host is open"
-            : "No response from Host";
-        fail({
-          ok: false,
-          error: `Room "${code}" not found (${detailHint}). Check the Host screen.`
-        });
-      }, 15000);
+        if (trysteroRoom && !isPrimaryHostPeer) {
+          try {
+            trysteroRoom.leave();
+          } catch (err) {}
+          trysteroRoom = null;
+          sendP2pAction = null;
+        }
+        if (!everConnected && !settled && !isStale()) {
+          connectMqttClient({ code, role, pin }).then(finish);
+        }
+      }, 5000);
 
       if (trysteroRoom && !isPrimaryHostPeer) {
         try {
