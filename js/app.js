@@ -312,6 +312,7 @@ window.Feud = window.Feud || {};
         : item.label;
       if (
         (!activeDeckName && item.builtin === "starter") ||
+        (currentCatalogDeckId && item.id === currentCatalogDeckId) ||
         (activeDeckName &&
           item.data &&
           item.data.deckName &&
@@ -384,10 +385,13 @@ window.Feud = window.Feud || {};
     } catch (e) {}
   }
 
+  let currentCatalogDeckId = "";
+
   function syncDeckQueryParam(deckId) {
+    currentCatalogDeckId = deckId || "";
+    const clean = String(deckId || "").trim().replace(/\.(json|csv)$/i, "");
     try {
       const url = new URL(window.location.href);
-      const clean = String(deckId || "").trim().replace(/\.json$/i, "");
       if (clean && clean !== "__custom__") {
         url.searchParams.set("deck", clean);
       } else {
@@ -395,6 +399,13 @@ window.Feud = window.Feud || {};
       }
       window.history.replaceState({}, "", url.toString());
     } catch (e) {}
+    const reviewHref =
+      clean && clean !== "__custom__"
+        ? `./review.html?deck=${encodeURIComponent(clean)}&from=setup`
+        : "./review.html?from=setup";
+    document.querySelectorAll(".review-deck-link").forEach((linkEl) => {
+      linkEl.setAttribute("href", reviewHref);
+    });
   }
 
   async function onSelectCatalogDeck(deckId) {
@@ -403,10 +414,11 @@ window.Feud = window.Feud || {};
     const entry = catalog.find((c) => c.id === deckId);
     if (!entry) return;
 
+    syncDeckQueryParam(entry.builtin === "starter" ? "starter" : entry.id);
+
     if (entry.builtin === "starter") {
       await restoreDefaultDeck(false);
       syncSetupModalInputsFromState();
-      syncDeckQueryParam("starter");
       return;
     }
 
@@ -415,14 +427,12 @@ window.Feud = window.Feud || {};
       const jsonText = JSON.stringify(entry.data);
       await applyImportedDeckText(jsonText, entry.id, false, false);
       syncSetupModalInputsFromState();
-      syncDeckQueryParam(entry.id);
       return;
     }
 
     if (entry.file) {
       await fetchAndApplyRemoteDeck(entry.file, false);
       syncSetupModalInputsFromState();
-      syncDeckQueryParam(entry.id);
     }
   }
 
@@ -445,6 +455,8 @@ window.Feud = window.Feud || {};
     const rdsSel = document.getElementById("setupRoundsPerMatchSelect");
     const orderSel = document.getElementById("setupRoundOrderSelect");
     const fmCheck = document.getElementById("setupEnableFastMoneyCheckbox");
+    const fmLabel = document.getElementById("setupFastMoneyLabel");
+    const fmHint = document.getElementById("setupFastMoneyHint");
     const autoXCheck = document.getElementById("setupAutoStartOnStrikeCheckbox");
     const pinIn = document.getElementById("setupHostPinInput");
     const lobbyPin = document.getElementById("hostPinCreate");
@@ -455,8 +467,19 @@ window.Feud = window.Feud || {};
     if (t2In) t2In.value = roomState.team2Name || "Team Omega";
     if (timerSel) timerSel.value = String(roomState.turnTimerDuration || 10);
     if (rdsSel) rdsSel.value = String(roomState.roundsPerMatch ?? 4);
-    if (orderSel) orderSel.value = roomState.roundOrder || "shuffle-by-level";
-    if (fmCheck) fmCheck.checked = Boolean(roomState.enableFastMoney);
+    if (orderSel) orderSel.value = roomState.roundOrder || "sequential";
+    const hasFm = Feud.hasFastMoneyRounds ? Feud.hasFastMoneyRounds(roomState) : true;
+    if (fmCheck) {
+      fmCheck.disabled = !hasFm;
+      fmCheck.checked = hasFm && Boolean(roomState.enableFastMoney);
+    }
+    if (fmLabel) {
+      fmLabel.style.opacity = hasFm ? "1" : "0.45";
+      fmLabel.style.cursor = hasFm ? "pointer" : "not-allowed";
+    }
+    if (fmHint) {
+      fmHint.textContent = hasFm ? "" : "(Unavailable — no Fast Money rounds in this deck)";
+    }
     if (autoXCheck) autoXCheck.checked = Boolean(roomState.autoStartTimerOnStrike);
     if (pinIn && lobbyPin && lobbyPin.value.trim()) {
       pinIn.value = lobbyPin.value.trim();
@@ -527,10 +550,10 @@ window.Feud = window.Feud || {};
       10
     );
     const roundOrder =
-      document.getElementById("setupRoundOrderSelect")?.value || "shuffle-by-level";
-    const enableFastMoney = Boolean(
-      document.getElementById("setupEnableFastMoneyCheckbox")?.checked
-    );
+      document.getElementById("setupRoundOrderSelect")?.value || "sequential";
+    const hasFm = Feud.hasFastMoneyRounds ? Feud.hasFastMoneyRounds(roomState) : true;
+    const enableFastMoney =
+      hasFm && Boolean(document.getElementById("setupEnableFastMoneyCheckbox")?.checked);
     const autoStartTimerOnStrike = Boolean(
       document.getElementById("setupAutoStartOnStrikeCheckbox")?.checked
     );
@@ -570,7 +593,7 @@ window.Feud = window.Feud || {};
       matchNumber: slice.matchNumber,
       matchRounds: slice.matchRounds,
       matchSourceIndices: slice.matchSourceIndices,
-      usedRoundIndices: slice.usedRoundIndices || slice.matchSourceIndices || [],
+      usedRoundIndices: slice.usedRoundIndices || [],
       matchFastMoney: slice.matchFastMoney,
       activeFmSetIdx: slice.activeFmSetIdx,
       roundIdx: 0,
@@ -602,6 +625,7 @@ window.Feud = window.Feud || {};
     currentRoomCode = code;
     syncSequenceCounters(roomState);
     Feud.saveRoomStateToStorage(code, roomState);
+    syncDeckQueryParam(document.getElementById("deckManagerSelect")?.value || "starter");
     enterRole("host", code);
     Feud.saveLastSession("host", code, pinVal);
     await Feud.startHostRoomSync(code, roomState);
@@ -1221,7 +1245,7 @@ window.Feud = window.Feud || {};
       matchNumber: slice.matchNumber,
       matchRounds: slice.matchRounds,
       matchSourceIndices: slice.matchSourceIndices,
-      usedRoundIndices: slice.usedRoundIndices || slice.matchSourceIndices || [],
+      usedRoundIndices: slice.usedRoundIndices || [],
       matchFastMoney: slice.matchFastMoney,
       activeFmSetIdx: slice.activeFmSetIdx,
       roundIdx: 0,
@@ -3024,8 +3048,9 @@ window.Feud = window.Feud || {};
   // =====================================================================
   async function hostSwitchStage(stage) {
     pushUndoSnapshot();
-    if (stage === "fast" && !roomState.enableFastMoney) {
-      Feud.showToast("Fast Money is disabled for this match.");
+    const hasFm = Feud.hasFastMoneyRounds ? Feud.hasFastMoneyRounds(roomState) : true;
+    if (stage === "fast" && (!roomState.enableFastMoney || !hasFm)) {
+      Feud.showToast(hasFm ? "Fast Money is disabled for this match." : "This deck has no Fast Money rounds.");
       return;
     }
     stopLocalTurnTimerInterval();
@@ -3337,21 +3362,28 @@ window.Feud = window.Feud || {};
     const presets = Feud.getActiveTeamPresets({ customDeck });
     const [t1, t2] = presets[0] || [roomState.team1Name, roomState.team2Name];
 
+    const hasFm = Array.isArray(customDeck.fastMoney) && customDeck.fastMoney.length > 0;
+    const nextEnableFm = hasFm && Boolean(roomState.enableFastMoney);
+    const nextStage = !hasFm && roomState.stage === "fast" ? "main" : roomState.stage || "main";
+
     const slice = Feud.buildMatchSlice(
       { ...roomState, customDeck, usedRoundIndices: [] },
       {
         roundsPerMatch: roomState.roundsPerMatch ?? 4,
-        roundOrder: roomState.roundOrder || "shuffle-by-level",
-        enableFastMoney: Boolean(roomState.enableFastMoney)
+        roundOrder: roomState.roundOrder || "sequential",
+        enableFastMoney: nextEnableFm
       }
     );
-    const fmList =
-      slice.matchFastMoney && slice.matchFastMoney.length > 0
+    const fmList = hasFm
+      ? slice.matchFastMoney && slice.matchFastMoney.length > 0
         ? slice.matchFastMoney
-        : (customDeck.fastMoney || Feud.getFastMoneyList({ customDeck })).slice(0, 5);
+        : customDeck.fastMoney.slice(0, 5)
+      : [];
     stopLocalTurnTimerInterval();
     const dur = Number(roomState.turnTimerDuration) || 10;
     await pushRoomPatch({
+      stage: nextStage,
+      enableFastMoney: nextEnableFm,
       gameTitle: nextTitle,
       gameIcon: nextIcon,
       team1Name: t1,

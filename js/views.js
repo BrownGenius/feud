@@ -566,7 +566,8 @@ window.Feud = window.Feud || {};
             : !isLastRound
             ? `<button type="button" class="action-btn btn-blue display-font" onclick="hostNextRound()">⏭️ Next Round ▶</button>`
             : `${
-                Boolean(roomState.enableFastMoney)
+                Boolean(roomState.enableFastMoney) &&
+                (!Feud.hasFastMoneyRounds || Feud.hasFastMoneyRounds(roomState))
                   ? `<button type="button" class="action-btn btn-gold display-font" onclick="hostSwitchStage('fast')">⚡ Start Fast Money Bonus Round</button>`
                   : ""
               }<button type="button" class="action-btn btn-gold display-font" onclick="hostShowWinnerScreen()">🏆 Show Winner Screen</button>`
@@ -1150,7 +1151,10 @@ window.Feud = window.Feud || {};
 
     const fmTab = document.getElementById("hostTabFm");
     if (fmTab) {
-      fmTab.classList.toggle("hidden", !roomState.enableFastMoney);
+      const fmAvailable =
+        Boolean(roomState.enableFastMoney) &&
+        (!Feud.hasFastMoneyRounds || Feud.hasFastMoneyRounds(roomState));
+      fmTab.classList.toggle("hidden", !fmAvailable);
       fmTab.classList.toggle("gold", roomState.stage === "fast");
     }
     document.getElementById("hostTabMain").classList.toggle("gold", roomState.stage === "main");

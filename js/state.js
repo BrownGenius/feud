@@ -158,15 +158,16 @@ window.Feud = window.Feud || {};
   }
 
   function getSourceFastMoneyList(roomState) {
-    if (
-      roomState &&
-      roomState.customDeck &&
-      Array.isArray(roomState.customDeck.fastMoney) &&
-      roomState.customDeck.fastMoney.length > 0
-    ) {
-      return roomState.customDeck.fastMoney;
+    if (roomState && roomState.customDeck) {
+      return Array.isArray(roomState.customDeck.fastMoney)
+        ? roomState.customDeck.fastMoney
+        : [];
     }
     return Feud.FAST_MONEY_QUESTIONS;
+  }
+
+  function hasFastMoneyRounds(roomState) {
+    return getSourceFastMoneyList(roomState).length > 0;
   }
 
   function getDeckPlayStats(roomState) {
@@ -268,7 +269,7 @@ window.Feud = window.Feud || {};
       options.roundsPerMatch !== undefined
         ? Number(options.roundsPerMatch)
         : Number(roomState.roundsPerMatch) || 0;
-    const roundOrder = options.roundOrder || roomState.roundOrder || "shuffle-by-level";
+    const roundOrder = options.roundOrder || roomState.roundOrder || "sequential";
     const deckKey = getDeckKey(roomState);
     const sourceRounds = getSourceRoundsList(roomState);
     const sourceFm = getSourceFastMoneyList(roomState);
@@ -415,7 +416,6 @@ window.Feud = window.Feud || {};
         const unplayedTie = unplayedTieCandidates[0];
         const tieRound = sourceRounds[unplayedTie];
         if (tieRound) {
-          playedSet.add(unplayedTie);
           matchRounds.push({
             ...tieRound,
             sourceIdx: unplayedTie,
@@ -673,7 +673,7 @@ window.Feud = window.Feud || {};
       stage: "main", // 'main' | 'fast' | 'winner'
       enableFastMoney: false,
       roundsPerMatch: 4,
-      roundOrder: "shuffle-by-level",
+      roundOrder: "sequential",
       matchNumber: 1,
       matchRounds: null,
       matchSourceIndices: null,
@@ -882,6 +882,7 @@ window.Feud = window.Feud || {};
     formatDeckOptionLabel,
     getSourceRoundsList,
     getSourceFastMoneyList,
+    hasFastMoneyRounds,
     getDeckPlayStats,
     setRoundUsed,
     setAllRoundsUsed,
