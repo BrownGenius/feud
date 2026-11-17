@@ -3121,11 +3121,56 @@ body:has(#buzzerView:not(.hidden)) .top-bar {
   align-items: center;
   gap: 14px;
   padding: 24px 32px;
-  max-width: 560px;
+  max-width: 720px;
   width: 100%;
   text-align: center;
   border: 3px solid var(--gold);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+}
+
+.tv-qr-card:has(#tvQrDualWrap:not(.hidden)) {
+  max-width: 1120px;
+}
+
+.tv-qr-single-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.tv-qr-dual-wrap {
+  display: flex;
+  justify-content: space-between;
+  gap: clamp(80px, 14vw, 240px);
+  width: 100%;
+  align-items: center;
+}
+
+.tv-qr-dual-side {
+  flex: 1 1 0;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 2px solid rgba(251, 191, 36, 0.3);
+}
+
+.tv-qr-dual-side.t1 {
+  border-color: rgba(239, 68, 68, 0.75);
+}
+
+.tv-qr-dual-side.t2 {
+  border-color: rgba(59, 130, 246, 0.75);
+}
+
+.tv-qr-dual-title {
+  font-size: 20px;
+  color: #ffffff;
 }
 
 .tv-qr-role-label {
@@ -3162,23 +3207,60 @@ body:has(#buzzerView:not(.hidden)) .top-bar {
 
 /* 4-QR Grid Modal on Host */
 .qr-modal-wide {
-  max-width: 720px;
+  max-width: 900px;
   width: 96vw;
   text-align: center;
   align-items: center;
 }
 
-.qr-grid-4 {
+.qr-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .qr-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.qr-dual-pair {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   width: 100%;
+  min-width: 0;
 }
 
-@media (max-width: 540px) {
-  .qr-grid-4 {
-    grid-template-columns: 1fr;
-  }
+.qr-dual-half {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.qr-dual-label {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.qr-dual-label.t1 {
+  color: #fca5a5;
+}
+
+.qr-dual-label.t2 {
+  color: #93c5fd;
+}
+
+.qr-grid-img-sm {
+  width: 100%;
+  max-width: 112px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
 }
 
 .qr-grid-card {
@@ -3223,6 +3305,15 @@ body:has(#buzzerView:not(.hidden)) .top-bar {
   padding: 6px;
   border-radius: 10px;
   display: block;
+  object-fit: contain;
+}
+
+.qr-grid-img.qr-grid-img-sm {
+  width: 100%;
+  max-width: 116px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
 }
 
 .qr-grid-url {

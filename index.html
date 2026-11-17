@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Party Feud — Live Party Multiplayer</title>
-  <link rel="stylesheet" href="./css/styles.css?v=20261116dd" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261116dg" />
 </head>
 <body>
 
@@ -172,7 +172,7 @@
     </div>
   </div>
 
-  <!-- ROOM QR CODE & QUICK JOIN MODAL (ALL 4 ROLES) -->
+  <!-- ROOM QR CODE & QUICK JOIN MODAL (3 OPTIONS: TV, INDIVIDUAL BUZZERS, COMBO BUZZER) -->
   <div id="qrModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
     <div class="modal-card qr-modal-wide">
       <div style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:8px;">
@@ -183,26 +183,28 @@
         </div>
       </div>
       <p style="font-size:12px; color:#fde68a; line-height:1.4; margin:0;">
-        Scan any QR below, or <strong>click a QR card</strong> to display it large on the TV screen.
+        Choose an option below to display its QR code on the TV screen.
       </p>
-      <div class="qr-grid-4">
+      <div class="qr-grid-3">
         <button id="qrCard_tv" type="button" class="qr-grid-card" onclick="selectQrForTv('tv')">
           <span class="qr-grid-title display-font">📺 TV Display</span>
           <img id="qrImg_tv" alt="TV Display QR Code" class="qr-grid-img" />
           <span id="qrUrl_tv" class="qr-grid-url"></span>
           <span id="qrBadge_tv" class="qr-grid-status">Click to show on TV</span>
         </button>
-        <button id="qrCard_buzzer1" type="button" class="qr-grid-card" onclick="selectQrForTv('buzzer1')">
-          <span class="qr-grid-title display-font">🔔 Team 1 Buzzer</span>
-          <img id="qrImg_buzzer1" alt="Team 1 Buzzer QR Code" class="qr-grid-img" />
-          <span id="qrUrl_buzzer1" class="qr-grid-url"></span>
-          <span id="qrBadge_buzzer1" class="qr-grid-status">Click to show on TV</span>
-        </button>
-        <button id="qrCard_buzzer2" type="button" class="qr-grid-card" onclick="selectQrForTv('buzzer2')">
-          <span class="qr-grid-title display-font">🔔 Team 2 Buzzer</span>
-          <img id="qrImg_buzzer2" alt="Team 2 Buzzer QR Code" class="qr-grid-img" />
-          <span id="qrUrl_buzzer2" class="qr-grid-url"></span>
-          <span id="qrBadge_buzzer2" class="qr-grid-status">Click to show on TV</span>
+        <button id="qrCard_individual" type="button" class="qr-grid-card qr-grid-card-dual" onclick="selectQrForTv('individual')">
+          <span class="qr-grid-title display-font">🔔 Individual Buzzers</span>
+          <div class="qr-dual-pair">
+            <div class="qr-dual-half">
+              <span id="qrLabel_buzzer1" class="qr-dual-label t1">Team 1</span>
+              <img id="qrImg_buzzer1" alt="Team 1 Buzzer QR Code" class="qr-grid-img qr-grid-img-sm" />
+            </div>
+            <div class="qr-dual-half">
+              <span id="qrLabel_buzzer2" class="qr-dual-label t2">Team 2</span>
+              <img id="qrImg_buzzer2" alt="Team 2 Buzzer QR Code" class="qr-grid-img qr-grid-img-sm" />
+            </div>
+          </div>
+          <span id="qrBadge_individual" class="qr-grid-status">Click to show both on TV</span>
         </button>
         <button id="qrCard_buzzer_combo" type="button" class="qr-grid-card" onclick="selectQrForTv('buzzer_combo')">
           <span class="qr-grid-title display-font">🔔 Combo Buzzer</span>
@@ -556,13 +558,29 @@
     <div id="tvQrOverlay" class="tv-qr-overlay hidden" role="dialog" aria-modal="false">
       <div class="marquee-panel tv-qr-card">
         <div id="tvQrRoleLabel" class="tv-qr-role-label display-font">📺 TV DISPLAY</div>
-        <div class="tv-qr-code-wrap">
-          <img id="tvQrCodeImg" src="" alt="Scan to join room" width="260" height="260" />
+        <div id="tvQrSingleWrap" class="tv-qr-single-wrap">
+          <div class="tv-qr-code-wrap">
+            <img id="tvQrCodeImg" src="" alt="Scan to join room" width="260" height="260" />
+          </div>
+          <div id="tvQrUrlText" class="tv-qr-url"></div>
+        </div>
+        <div id="tvQrDualWrap" class="tv-qr-dual-wrap hidden">
+          <div class="tv-qr-dual-side t1">
+            <div id="tvQrT1Label" class="tv-qr-dual-title display-font">🔔 TEAM 1</div>
+            <div class="tv-qr-code-wrap">
+              <img id="tvQrCodeImgT1" src="" alt="Team 1 Buzzer QR" width="220" height="220" />
+            </div>
+          </div>
+          <div class="tv-qr-dual-side t2">
+            <div id="tvQrT2Label" class="tv-qr-dual-title display-font">🔔 TEAM 2</div>
+            <div class="tv-qr-code-wrap">
+              <img id="tvQrCodeImgT2" src="" alt="Team 2 Buzzer QR" width="220" height="220" />
+            </div>
+          </div>
         </div>
         <div class="tv-qr-room-pill">
           ROOM: <strong id="tvQrRoomCode" class="display-font">----</strong>
         </div>
-        <div id="tvQrUrlText" class="tv-qr-url"></div>
       </div>
     </div>
   </section>
@@ -786,17 +804,17 @@
     </button>
   </section>
 
-  <footer id="appBuildBadge" class="app-build-badge">Build v20261116dd</footer>
+  <footer id="appBuildBadge" class="app-build-badge">Build v20261116dg</footer>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js" async></script>
-  <script src="./data/questions.js?v=20261116dd"></script>
-  <script src="./decks/catalog.js?v=20261116dd"></script>
-  <script src="./js/audio.js?v=20261116dd"></script>
-  <script src="./js/state.js?v=20261116dd"></script>
-  <script src="./js/formats.js?v=20261116dd"></script>
-  <script src="./js/sync.js?v=20261116dd"></script>
-  <script src="./js/views.js?v=20261116dd"></script>
-  <script src="./js/app.js?v=20261116dd"></script>
+  <script src="./data/questions.js?v=20261116dg"></script>
+  <script src="./decks/catalog.js?v=20261116dg"></script>
+  <script src="./js/audio.js?v=20261116dg"></script>
+  <script src="./js/state.js?v=20261116dg"></script>
+  <script src="./js/formats.js?v=20261116dg"></script>
+  <script src="./js/sync.js?v=20261116dg"></script>
+  <script src="./js/views.js?v=20261116dg"></script>
+  <script src="./js/app.js?v=20261116dg"></script>
 </body>
 </html>

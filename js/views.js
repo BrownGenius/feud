@@ -732,29 +732,60 @@ window.Feud = window.Feud || {};
     const overlayEl = document.getElementById("tvQrOverlay");
     if (!overlayEl) return;
     const qr = roomState && roomState.tvQrOverlay;
-    if (!qr || !qr.url) {
+    if (!qr || (!qr.url && !qr.url1 && !qr.url2)) {
       overlayEl.classList.add("hidden");
       return;
     }
-    const roleMap = {
-      tv: "📺 SCAN TO OPEN TV DISPLAY",
-      buzzer1: `🔔 SCAN FOR ${(roomState.team1Name || "TEAM 1").toUpperCase()} BUZZER`,
-      buzzer2: `🔔 SCAN FOR ${(roomState.team2Name || "TEAM 2").toUpperCase()} BUZZER`,
-      buzzer_combo: "⚡ SCAN FOR COMBO BUZZER"
-    };
     const roleEl = document.getElementById("tvQrRoleLabel");
     const codeEl = document.getElementById("tvQrRoomCode");
-    const urlEl = document.getElementById("tvQrUrlText");
-    const imgEl = document.getElementById("tvQrCodeImg");
+    const singleWrap = document.getElementById("tvQrSingleWrap");
+    const dualWrap = document.getElementById("tvQrDualWrap");
 
-    if (roleEl) roleEl.textContent = roleMap[qr.role] || "📱 SCAN TO JOIN ROOM";
     if (codeEl) codeEl.textContent = qr.roomCode || "";
-    if (urlEl) urlEl.textContent = qr.url;
-    if (imgEl && imgEl.dataset.qrUrl !== qr.url) {
-      imgEl.dataset.qrUrl = qr.url;
-      imgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=6&data=${encodeURIComponent(
-        qr.url
-      )}`;
+
+    if (qr.role === "individual") {
+      if (roleEl) roleEl.textContent = "🔔 SCAN FOR INDIVIDUAL TEAM BUZZERS";
+      if (singleWrap) singleWrap.classList.add("hidden");
+      if (dualWrap) dualWrap.classList.remove("hidden");
+
+      const t1Label = document.getElementById("tvQrT1Label");
+      const t2Label = document.getElementById("tvQrT2Label");
+      const img1 = document.getElementById("tvQrCodeImgT1");
+      const img2 = document.getElementById("tvQrCodeImgT2");
+      if (t1Label) t1Label.textContent = `🔔 ${(roomState.team1Name || "TEAM 1").toUpperCase()}`;
+      if (t2Label) t2Label.textContent = `🔔 ${(roomState.team2Name || "TEAM 2").toUpperCase()}`;
+      if (img1 && qr.url1 && img1.dataset.qrUrl !== qr.url1) {
+        img1.dataset.qrUrl = qr.url1;
+        img1.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data=${encodeURIComponent(
+          qr.url1
+        )}`;
+      }
+      if (img2 && qr.url2 && img2.dataset.qrUrl !== qr.url2) {
+        img2.dataset.qrUrl = qr.url2;
+        img2.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data=${encodeURIComponent(
+          qr.url2
+        )}`;
+      }
+    } else {
+      const roleMap = {
+        tv: "📺 SCAN TO OPEN TV DISPLAY",
+        buzzer1: `🔔 SCAN FOR ${(roomState.team1Name || "TEAM 1").toUpperCase()} BUZZER`,
+        buzzer2: `🔔 SCAN FOR ${(roomState.team2Name || "TEAM 2").toUpperCase()} BUZZER`,
+        buzzer_combo: "⚡ SCAN FOR COMBO BUZZER"
+      };
+      if (roleEl) roleEl.textContent = roleMap[qr.role] || "📱 SCAN TO JOIN ROOM";
+      if (singleWrap) singleWrap.classList.remove("hidden");
+      if (dualWrap) dualWrap.classList.add("hidden");
+
+      const urlEl = document.getElementById("tvQrUrlText");
+      const imgEl = document.getElementById("tvQrCodeImg");
+      if (urlEl) urlEl.textContent = qr.url;
+      if (imgEl && imgEl.dataset.qrUrl !== qr.url) {
+        imgEl.dataset.qrUrl = qr.url;
+        imgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=6&data=${encodeURIComponent(
+          qr.url
+        )}`;
+      }
     }
     overlayEl.classList.remove("hidden");
   }

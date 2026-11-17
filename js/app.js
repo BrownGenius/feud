@@ -1249,35 +1249,28 @@ window.Feud = window.Feud || {};
     const b2 = Boolean(info.b2);
     const combo = Boolean(info.combo);
 
-    const qrB1 = document.getElementById("qrCard_buzzer1");
-    const qrB2 = document.getElementById("qrCard_buzzer2");
+    const qrInd = document.getElementById("qrCard_individual");
     const qrCombo = document.getElementById("qrCard_buzzer_combo");
-    const badgeB1 = document.getElementById("qrBadge_buzzer1");
-    const badgeB2 = document.getElementById("qrBadge_buzzer2");
+    const badgeInd = document.getElementById("qrBadge_individual");
     const badgeCombo = document.getElementById("qrBadge_buzzer_combo");
-    if (qrB1) qrB1.disabled = b1 || combo;
-    if (qrB2) qrB2.disabled = b2 || combo;
-    if (qrCombo) qrCombo.disabled = combo || b1 || b2;
+    const indLocked = combo || (b1 && b2);
+    const comboLocked = combo || b1 || b2;
+    if (qrInd) qrInd.disabled = indLocked;
+    if (qrCombo) qrCombo.disabled = comboLocked;
+
     const activeTvRole = roomState && roomState.tvQrOverlay ? roomState.tvQrOverlay.role : null;
-    if (badgeB1) {
-      badgeB1.textContent =
-        b1 || combo
-          ? combo
-            ? "🔒 Combo Open"
-            : "🔒 Team 1 Open"
-          : activeTvRole === "buzzer1"
-          ? "📺 Showing on TV (click to hide)"
-          : "Click to show on TV";
-    }
-    if (badgeB2) {
-      badgeB2.textContent =
-        b2 || combo
-          ? combo
-            ? "🔒 Combo Open"
-            : "🔒 Team 2 Open"
-          : activeTvRole === "buzzer2"
-          ? "📺 Showing on TV (click to hide)"
-          : "Click to show on TV";
+    if (badgeInd) {
+      badgeInd.textContent = combo
+        ? "🔒 Combo Open"
+        : b1 && b2
+        ? "🔒 Both Buzzers Open"
+        : activeTvRole === "individual"
+        ? "📺 Showing on TV (click to hide)"
+        : b1
+        ? "Team 1✓ — Click to show on TV"
+        : b2
+        ? "Team 2✓ — Click to show on TV"
+        : "Click to show both on TV";
     }
     if (badgeCombo) {
       badgeCombo.textContent =
@@ -1444,17 +1437,19 @@ window.Feud = window.Feud || {};
   }
 
   function refreshQrGridCards() {
-    const roles = ["tv", "buzzer1", "buzzer2", "buzzer_combo"];
     const activeTvRole = roomState && roomState.tvQrOverlay ? roomState.tvQrOverlay.role : null;
     const hideBtn = document.getElementById("qrHideFromTvBtn");
     if (hideBtn) hideBtn.classList.toggle("hidden", !activeTvRole);
 
-    roles.forEach((r) => {
+    const t1Lbl = document.getElementById("qrLabel_buzzer1");
+    const t2Lbl = document.getElementById("qrLabel_buzzer2");
+    if (t1Lbl && roomState) t1Lbl.textContent = roomState.team1Name || "Team 1";
+    if (t2Lbl && roomState) t2Lbl.textContent = roomState.team2Name || "Team 2";
+
+    ["tv", "buzzer1", "buzzer2", "buzzer_combo"].forEach((r) => {
       const url = buildQrJoinUrl(r);
       const imgEl = document.getElementById(`qrImg_${r}`);
       const urlEl = document.getElementById(`qrUrl_${r}`);
-      const cardEl = document.getElementById(`qrCard_${r}`);
-      const badgeEl = document.getElementById(`qrBadge_${r}`);
       if (urlEl) urlEl.textContent = url;
       if (imgEl && imgEl.dataset.qrUrl !== url) {
         imgEl.dataset.qrUrl = url;
@@ -1462,12 +1457,21 @@ window.Feud = window.Feud || {};
           url
         )}`;
       }
-      const isShowingOnTv = activeTvRole === r;
-      if (cardEl) cardEl.classList.toggle("is-active-on-tv", isShowingOnTv);
-      if (badgeEl && !(cardEl && cardEl.disabled)) {
-        badgeEl.textContent = isShowingOnTv ? "📺 Showing on TV (click to hide)" : "Click to show on TV";
-      }
     });
+
+    const cardTv = document.getElementById("qrCard_tv");
+    const badgeTv = document.getElementById("qrBadge_tv");
+    if (cardTv) cardTv.classList.toggle("is-active-on-tv", activeTvRole === "tv");
+    if (badgeTv) {
+      badgeTv.textContent =
+        activeTvRole === "tv" ? "📺 Showing on TV (click to hide)" : "Click to show on TV";
+    }
+
+    const cardInd = document.getElementById("qrCard_individual");
+    if (cardInd) cardInd.classList.toggle("is-active-on-tv", activeTvRole === "individual");
+
+    const cardCombo = document.getElementById("qrCard_buzzer_combo");
+    if (cardCombo) cardCombo.classList.toggle("is-active-on-tv", activeTvRole === "buzzer_combo");
   }
 
   function selectQrForTv(qrRole) {
@@ -1476,7 +1480,17 @@ window.Feud = window.Feud || {};
     const nextRole = !qrRole || qrRole === currentTvRole ? null : qrRole;
 
     if (activeRole === "host" && roomState) {
-      if (nextRole) {
+      if (nextRole === "individual") {
+        const code = currentRoomCode || "SOLO";
+        pushRoomPatch({
+          tvQrOverlay: {
+            role: "individual",
+            url1: buildQrJoinUrl("buzzer1"),
+            url2: buildQrJoinUrl("buzzer2"),
+            roomCode: code
+          }
+        });
+      } else if (nextRole) {
         const code = currentRoomCode || "SOLO";
         pushRoomPatch({
           tvQrOverlay: { role: nextRole, url: buildQrJoinUrl(nextRole), roomCode: code }
@@ -3895,12 +3909,20 @@ window.Feud = window.Feud || {};
     } catch (e) {}
     window.addEventListener("feud-client-connected", (e) => {
       const joinedRole = e && e.detail ? e.detail.role : "";
-      if (
-        activeRole === "host" &&
-        roomState &&
-        roomState.tvQrOverlay &&
-        (!joinedRole || roomState.tvQrOverlay.role === joinedRole)
-      ) {
+      if (activeRole !== "host" || !roomState || !roomState.tvQrOverlay) return;
+      const tvRole = roomState.tvQrOverlay.role;
+      if (tvRole === "individual" && (joinedRole === "buzzer1" || joinedRole === "buzzer2")) {
+        const bz = Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {};
+        if (bz.b1 && bz.b2) {
+          pushRoomPatch({ tvQrOverlay: null });
+          refreshQrGridCards();
+          applyBuzzerButtonLocks();
+          Feud.showToast("🔔 Both team buzzers connected — QR cleared from TV screen.");
+        } else {
+          refreshQrGridCards();
+          applyBuzzerButtonLocks();
+        }
+      } else if (!joinedRole || tvRole === joinedRole) {
         pushRoomPatch({ tvQrOverlay: null });
         refreshQrGridCards();
         applyBuzzerButtonLocks();
