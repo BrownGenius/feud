@@ -32,6 +32,12 @@ window.Feud = window.Feud || {};
     return isMuted;
   }
 
+  function setAudioMuted(muted) {
+    isMuted = Boolean(muted);
+    if (!isMuted) unlockAudio();
+    return isMuted;
+  }
+
   function toggleAudioMute() {
     isMuted = !isMuted;
     if (!isMuted) unlockAudio();
@@ -76,46 +82,37 @@ window.Feud = window.Feud || {};
       if (!ctx) return;
       const now = ctx.currentTime;
 
-      // Harsh, loud, annoying electrical game-show "BZZZT-BZZZZT!" buzzer
+      // Balanced, warm game-show "bzzzt-bzzzt" wrong-answer buzzer
       const shaper = ctx.createWaveShaper();
       const curve = new Float32Array(256);
       for (let i = 0; i < 256; i++) {
         const x = (i * 2) / 255 - 1;
-        curve[i] = Math.tanh(x * 4.8);
+        curve[i] = Math.tanh(x * 1.8);
       }
       shaper.curve = curve;
 
-      const presence = ctx.createBiquadFilter();
-      presence.type = "peaking";
-      presence.frequency.setValueAtTime(1250, now);
-      presence.Q.setValueAtTime(1.4, now);
-      presence.gain.setValueAtTime(8, now);
-
       const filter = ctx.createBiquadFilter();
       filter.type = "lowpass";
-      filter.frequency.setValueAtTime(4200, now);
-      filter.Q.setValueAtTime(2.0, now);
+      filter.frequency.setValueAtTime(1850, now);
+      filter.Q.setValueAtTime(1.0, now);
 
       const master = ctx.createGain();
-      master.gain.setValueAtTime(0.88, now);
+      master.gain.setValueAtTime(0.26, now);
 
-      presence.connect(filter);
       filter.connect(shaper);
       shaper.connect(master);
       master.connect(ctx.destination);
 
       const voices = [
-        { freq: 110.0, type: "sawtooth", weight: 0.45 },
-        { freq: 116.54, type: "square", weight: 0.48 },   // harsh minor-2nd rasp
-        { freq: 164.81, type: "square", weight: 0.36 },
-        { freq: 220.0, type: "sawtooth", weight: 0.32 },
-        { freq: 233.08, type: "square", weight: 0.34 },   // upper dissonant buzz
-        { freq: 329.63, type: "square", weight: 0.2 }     // biting high-mid edge
+        { freq: 110.0, type: "sawtooth", weight: 0.42 },
+        { freq: 116.54, type: "triangle", weight: 0.45 },
+        { freq: 164.81, type: "triangle", weight: 0.34 },
+        { freq: 220.0, type: "sawtooth", weight: 0.28 }
       ];
 
       const pulses = [
-        { start: 0, dur: 0.14, peak: 0.42 },
-        { start: 0.17, dur: 0.58, peak: 0.48 }
+        { start: 0, dur: 0.13, peak: 0.36 },
+        { start: 0.16, dur: 0.46, peak: 0.4 }
       ];
       pulses.forEach((pulse) => {
         voices.forEach((v) => {
@@ -124,14 +121,14 @@ window.Feud = window.Feud || {};
           const t0 = now + pulse.start;
           osc.type = v.type;
           osc.frequency.setValueAtTime(v.freq, t0);
-          osc.frequency.linearRampToValueAtTime(v.freq * 0.96, t0 + pulse.dur);
+          osc.frequency.linearRampToValueAtTime(v.freq * 0.97, t0 + pulse.dur);
           const lvl = pulse.peak * v.weight;
           gain.gain.setValueAtTime(0.0001, t0);
-          gain.gain.linearRampToValueAtTime(lvl, t0 + 0.003);
-          gain.gain.setValueAtTime(lvl * 0.94, t0 + pulse.dur * 0.85);
+          gain.gain.linearRampToValueAtTime(lvl, t0 + 0.008);
+          gain.gain.setValueAtTime(lvl * 0.9, t0 + pulse.dur * 0.8);
           gain.gain.exponentialRampToValueAtTime(0.0008, t0 + pulse.dur);
           osc.connect(gain);
-          gain.connect(presence);
+          gain.connect(filter);
           osc.start(t0);
           osc.stop(t0 + pulse.dur + 0.02);
         });
@@ -298,6 +295,7 @@ window.Feud = window.Feud || {};
   Object.assign(Feud, {
     unlockAudio,
     isAudioMuted,
+    setAudioMuted,
     toggleAudioMute,
     playDing,
     playBuzzerHonk,

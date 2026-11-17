@@ -160,6 +160,11 @@ window.Feud = window.Feud || {};
         }
       }
 
+      if (typeof incoming.soundMuted === "boolean") {
+        Feud.setAudioMuted(incoming.soundMuted);
+        syncMuteButtonLabels(incoming.soundMuted);
+      }
+
       if (incoming.fanfareSeq && incoming.fanfareSeq !== lastFanfareSeq) {
         lastFanfareSeq = incoming.fanfareSeq;
         if (activeRole === "tv") {
@@ -580,17 +585,37 @@ window.Feud = window.Feud || {};
     const code = Feud.generateRoomCode();
     currentRoomCode = code;
     syncSequenceCounters(roomState);
-    // Persist room state first so the new TV window can find it immediately (local/offline sync),
-    // then open the TV window synchronously while we're still inside the user's click.
     Feud.saveRoomStateToStorage(code, roomState);
-    const tvOpened = openTvDisplayWindow(code);
     enterRole("host", code);
     Feud.saveLastSession("host", code, pinVal);
     await Feud.startHostRoomSync(code, roomState);
-    if (tvOpened) {
-      Feud.showToast(
-        `Room ${code} created (Match #${slice.matchNumber})! 📺 TV window opened — drag it to your TV screen.`
-      );
+    openTvSetupChoiceModal(code);
+  }
+
+  function openTvSetupChoiceModal(code) {
+    const codeEl = document.getElementById("tvChoiceRoomCode");
+    if (codeEl) codeEl.textContent = code || currentRoomCode || "----";
+    const qrBtn = document.getElementById("tvChoiceQrBtn");
+    if (qrBtn) {
+      qrBtn.disabled = isFileProtocol();
+      qrBtn.title = isFileProtocol()
+        ? "QR requires http:// or https:// (not file://)"
+        : "Show TV QR code";
+    }
+    document.getElementById("tvSetupChoiceModal")?.classList.remove("hidden");
+  }
+
+  function chooseTvSetupOption(choice) {
+    document.getElementById("tvSetupChoiceModal")?.classList.add("hidden");
+    const code = currentRoomCode;
+    if (choice === "local") {
+      if (openTvDisplayWindow(code)) {
+        Feud.showToast(`Room ${code} ready! 📺 TV window opened — drag it to your TV screen.`);
+      }
+    } else if (choice === "qr") {
+      openRemoteTvQrModal();
+    } else {
+      Feud.showToast(`Room ${code} ready! Playing with Host screen view.`);
     }
   }
 
@@ -611,7 +636,6 @@ window.Feud = window.Feud || {};
     Feud.showToast(`Connecting to Room ${code}…`);
     const res = await Feud.joinExistingRoomSync({ code, role: "host", pin });
     if (!res.ok) {
-      Feud.playBuzzerHonk();
       Feud.showToast(res.error || "Could not unlock room.");
       return;
     }
@@ -709,8 +733,6 @@ window.Feud = window.Feud || {};
   }
 
   async function joinTeamBuzzer(teamNum, opts) {
-    Feud.showToast("Remote buzzers are currently disabled.");
-    return;
     const autoLaunched = Boolean(opts && opts.autoLaunched === true);
     Feud.unlockAudio();
     requestWakeLock();
@@ -735,7 +757,12 @@ window.Feud = window.Feud || {};
       }
     }
     Feud.showToast(`Connecting Team ${teamNum} Buzzer to ${code}…`);
-    const res = await Feud.joinExistingRoomSync({ code, role });
+    let res = await Feud.joinExistingRoomSync({ code, role });
+    if (!res.ok && autoLaunched && !(res.error && res.error.includes("already open"))) {
+      Feud.showToast(`Retrying Team ${teamNum} Buzzer connection…`);
+      await new Promise((r) => setTimeout(r, 1500));
+      res = await Feud.joinExistingRoomSync({ code, role });
+    }
     if (!res.ok) {
       Feud.showToast(res.error || `Room "${code}" not found.`);
       return;
@@ -750,8 +777,6 @@ window.Feud = window.Feud || {};
   }
 
   async function joinComboBuzzer(opts) {
-    Feud.showToast("Remote buzzers are currently disabled.");
-    return;
     const autoLaunched = Boolean(opts && opts.autoLaunched === true);
     Feud.unlockAudio();
     requestWakeLock();
@@ -776,7 +801,12 @@ window.Feud = window.Feud || {};
       }
     }
     Feud.showToast(`Connecting Combo Buzzer to ${code}…`);
-    const res = await Feud.joinExistingRoomSync({ code, role });
+    let res = await Feud.joinExistingRoomSync({ code, role });
+    if (!res.ok && autoLaunched && !(res.error && res.error.includes("already open"))) {
+      Feud.showToast("Retrying Combo Buzzer connection…");
+      await new Promise((r) => setTimeout(r, 1500));
+      res = await Feud.joinExistingRoomSync({ code, role });
+    }
     if (!res.ok) {
       Feud.showToast(res.error || `Room "${code}" not found.`);
       return;
@@ -873,7 +903,7 @@ window.Feud = window.Feud || {};
 
     codeBadge.textContent = `Room: ${code}`;
     codeBadge.classList.remove("hidden");
-    const hideQr = true;
+    const hideQr = code === "SOLO" || isFileProtocol();
     if (qrBtn) qrBtn.classList.toggle("hidden", hideQr);
     if (menuQrBtn) menuQrBtn.classList.toggle("hidden", hideQr);
     leaveBtn.classList.remove("hidden");
@@ -933,7 +963,10 @@ window.Feud = window.Feud || {};
       const left = Math.max(0, BUZZER_EXIT_HOLD_MS - (Date.now() - startedAt));
       if (btn) {
         btn.style.setProperty("--hold-pct", `${Math.round((1 - left / BUZZER_EXIT_HOLD_MS) * 100)}%`);
-        btn.textContent = `🔓 Keep holding… ${Math.ceil(left / 1000)}s`;
+        btn.textContent =
+          btnId === "comboExitHoldBtn"
+            ? `🔓 ${Math.ceil(left / 1000)}s`
+            : `🔓 Keep holding… ${Math.ceil(left / 1000)}s`;
       }
     }, 100);
     buzzerExitTimer = setTimeout(() => {
@@ -953,7 +986,7 @@ window.Feud = window.Feud || {};
       if (btn) {
         btn.classList.remove("holding");
         btn.style.setProperty("--hold-pct", "0%");
-        btn.textContent = id === "comboExitHoldBtn" ? "🔒 Hold 3s to Exit" : "🔒 Hold 3s to Exit Buzzer";
+        btn.textContent = id === "comboExitHoldBtn" ? "🔒" : "🔒 Hold 3s to Exit Buzzer";
       }
     });
   }
@@ -1216,32 +1249,23 @@ window.Feud = window.Feud || {};
     const b2 = Boolean(info.b2);
     const combo = Boolean(info.combo);
 
-    const qrB1 = document.getElementById("qrTabB1");
-    const qrB2 = document.getElementById("qrTabB2");
-    const qrCombo = document.getElementById("qrTabCombo");
-    if (qrB1) {
-      qrB1.disabled = b1 || combo;
-      qrB1.textContent = combo
-        ? "🔒 Team 1 (Combo Open)"
-        : b1
-        ? "🔒 Team 1 (Open)"
-        : "🔔 Team 1 Buzzer";
+    const qrB1 = document.getElementById("qrCard_buzzer1");
+    const qrB2 = document.getElementById("qrCard_buzzer2");
+    const qrCombo = document.getElementById("qrCard_buzzer_combo");
+    const badgeB1 = document.getElementById("qrBadge_buzzer1");
+    const badgeB2 = document.getElementById("qrBadge_buzzer2");
+    const badgeCombo = document.getElementById("qrBadge_buzzer_combo");
+    if (qrB1) qrB1.disabled = b1 || combo;
+    if (qrB2) qrB2.disabled = b2 || combo;
+    if (qrCombo) qrCombo.disabled = combo || b1 || b2;
+    if (badgeB1 && (b1 || combo)) {
+      badgeB1.textContent = combo ? "🔒 Combo Open" : "🔒 Team 1 Open";
     }
-    if (qrB2) {
-      qrB2.disabled = b2 || combo;
-      qrB2.textContent = combo
-        ? "🔒 Team 2 (Combo Open)"
-        : b2
-        ? "🔒 Team 2 (Open)"
-        : "🔔 Team 2 Buzzer";
+    if (badgeB2 && (b2 || combo)) {
+      badgeB2.textContent = combo ? "🔒 Combo Open" : "🔒 Team 2 Open";
     }
-    if (qrCombo) {
-      qrCombo.disabled = combo || b1 || b2;
-      qrCombo.textContent = combo
-        ? "🔒 Combo Buzzer (Open)"
-        : b1 || b2
-        ? "🔒 Combo Buzzer (T1/T2 Open)"
-        : "🔔 Combo Buzzer";
+    if (badgeCombo && (combo || b1 || b2)) {
+      badgeCombo.textContent = combo ? "🔒 Combo Open" : "🔒 Team Buzzer Open";
     }
 
     const lobbyB1 = document.getElementById("btnJoinBuzzer1");
@@ -1388,36 +1412,69 @@ window.Feud = window.Feud || {};
         localStorage.removeItem(QR_LAN_HOST_KEY);
       }
     } catch (e) {}
-    openQrModal(lastQrRole || "tv");
+    openQrModal(roomState && roomState.tvQrOverlay ? roomState.tvQrOverlay.role : null);
   }
 
-  function openQrModal(qrRole = "tv") {
-    Feud.showToast("Join QR is currently disabled.");
-    return;
+  function buildQrJoinUrl(role) {
+    const code = currentRoomCode || "SOLO";
+    const baseUrl = getQrBaseUrl();
+    return `${baseUrl}?room=${encodeURIComponent(code)}&role=${encodeURIComponent(role)}`;
+  }
+
+  function refreshQrGridCards() {
+    const roles = ["tv", "buzzer1", "buzzer2", "buzzer_combo"];
+    const activeTvRole = roomState && roomState.tvQrOverlay ? roomState.tvQrOverlay.role : null;
+    const hideBtn = document.getElementById("qrHideFromTvBtn");
+    if (hideBtn) hideBtn.classList.toggle("hidden", !activeTvRole);
+
+    roles.forEach((r) => {
+      const url = buildQrJoinUrl(r);
+      const imgEl = document.getElementById(`qrImg_${r}`);
+      const urlEl = document.getElementById(`qrUrl_${r}`);
+      const cardEl = document.getElementById(`qrCard_${r}`);
+      const badgeEl = document.getElementById(`qrBadge_${r}`);
+      if (urlEl) urlEl.textContent = url;
+      if (imgEl && imgEl.dataset.qrUrl !== url) {
+        imgEl.dataset.qrUrl = url;
+        imgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=4&data=${encodeURIComponent(
+          url
+        )}`;
+      }
+      const isShowingOnTv = activeTvRole === r;
+      if (cardEl) cardEl.classList.toggle("is-active-on-tv", isShowingOnTv);
+      if (badgeEl && !(cardEl && cardEl.disabled)) {
+        badgeEl.textContent = isShowingOnTv ? "📺 Showing on TV (click to hide)" : "Click to show on TV";
+      }
+    });
+  }
+
+  function selectQrForTv(qrRole) {
+    if (isFileProtocol()) return;
+    const currentTvRole = roomState && roomState.tvQrOverlay ? roomState.tvQrOverlay.role : null;
+    const nextRole = !qrRole || qrRole === currentTvRole ? null : qrRole;
+
+    if (activeRole === "host" && roomState) {
+      if (nextRole) {
+        const code = currentRoomCode || "SOLO";
+        pushRoomPatch({
+          tvQrOverlay: { role: nextRole, url: buildQrJoinUrl(nextRole), roomCode: code }
+        });
+      } else {
+        pushRoomPatch({ tvQrOverlay: null });
+      }
+    }
+    refreshQrGridCards();
+    applyBuzzerButtonLocks();
+  }
+
+  function openQrModal(initialTvRole = null) {
     if (isFileProtocol()) {
       Feud.showToast("Join QR is only available when served over HTTP/HTTPS (not file://).");
       return;
     }
-    const cleanRole =
-      qrRole === "buzzer1" || qrRole === "buzzer2" || qrRole === "buzzer_combo" ? qrRole : "tv";
-    lastQrRole = cleanRole;
-    const bz = Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {};
-    if (
-      (cleanRole === "buzzer1" && (bz.b1 || bz.combo)) ||
-      (cleanRole === "buzzer2" && (bz.b2 || bz.combo)) ||
-      (cleanRole === "buzzer_combo" && (bz.combo || bz.b1 || bz.b2))
-    ) {
-      applyBuzzerButtonLocks(bz);
-      return;
-    }
     const code = currentRoomCode || "SOLO";
-    const baseUrl = getQrBaseUrl();
-    const joinUrl = `${baseUrl}?room=${encodeURIComponent(code)}&role=${encodeURIComponent(
-      cleanRole
-    )}`;
     const qrTextEl = document.getElementById("qrRoomCodeText");
-    const qrUrlEl = document.getElementById("qrJoinUrlText");
-    const qrImgEl = document.getElementById("qrCodeImg");
+    if (qrTextEl) qrTextEl.textContent = code;
 
     const lanWrap = document.getElementById("qrLanHostWrap");
     const lanInput = document.getElementById("qrLanHostInput");
@@ -1440,7 +1497,7 @@ window.Feud = window.Feud || {};
             if (ip && !getSavedLanHost()) {
               const modal = document.getElementById("qrModal");
               if (modal && !modal.classList.contains("hidden")) {
-                openQrModal(lastQrRole || cleanRole);
+                openQrModal(roomState && roomState.tvQrOverlay ? roomState.tvQrOverlay.role : null);
               }
             }
           });
@@ -1448,26 +1505,86 @@ window.Feud = window.Feud || {};
       }
     }
 
-    document.getElementById("qrTabTv")?.classList.toggle("gold", cleanRole === "tv");
-    document.getElementById("qrTabB1")?.classList.toggle("gold", cleanRole === "buzzer1");
-    document.getElementById("qrTabB2")?.classList.toggle("gold", cleanRole === "buzzer2");
-    document.getElementById("qrTabCombo")?.classList.toggle("gold", cleanRole === "buzzer_combo");
-
-    if (qrTextEl) qrTextEl.textContent = code;
-    if (qrUrlEl) qrUrlEl.textContent = joinUrl;
-    if (qrImgEl) {
-      qrImgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data=${encodeURIComponent(
-        joinUrl
-      )}`;
-    }
     document.getElementById("qrModal")?.classList.remove("hidden");
-    applyBuzzerButtonLocks();
-
-    if (activeRole === "host" && roomState) {
+    if (initialTvRole && activeRole === "host" && roomState) {
       pushRoomPatch({
-        tvQrOverlay: { role: cleanRole, url: joinUrl, roomCode: code }
+        tvQrOverlay: {
+          role: initialTvRole,
+          url: buildQrJoinUrl(initialTvRole),
+          roomCode: code
+        }
       });
     }
+    refreshQrGridCards();
+    applyBuzzerButtonLocks();
+  }
+
+  function openRemoteTvQrModal() {
+    if (isFileProtocol()) {
+      Feud.showToast("Join QR is only available when served over HTTP/HTTPS (not file://).");
+      return;
+    }
+    const code = currentRoomCode || "SOLO";
+    const url = buildQrJoinUrl("tv");
+    const codeEl = document.getElementById("remoteTvQrRoomCode");
+    const urlEl = document.getElementById("remoteTvQrUrl");
+    const imgEl = document.getElementById("remoteTvQrImg");
+    if (codeEl) codeEl.textContent = code;
+    if (urlEl) urlEl.textContent = url;
+    if (imgEl && imgEl.dataset.qrUrl !== url) {
+      imgEl.dataset.qrUrl = url;
+      imgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data=${encodeURIComponent(
+        url
+      )}`;
+    }
+
+    const lanWrap = document.getElementById("remoteTvLanHostWrap");
+    const lanInput = document.getElementById("remoteTvLanHostInput");
+    const lanHint = document.getElementById("remoteTvLanHostHint");
+    if (lanWrap) {
+      const loopback = isLoopbackHost();
+      lanWrap.classList.toggle("hidden", !loopback);
+      if (loopback) {
+        const activeIp = getSavedLanHost() || detectedLanIp;
+        if (lanInput && document.activeElement !== lanInput) {
+          lanInput.value = activeIp;
+        }
+        if (lanHint) {
+          lanHint.textContent = activeIp
+            ? `Using network IP ${activeIp} instead of ${window.location.hostname}.`
+            : "Browser hid local IP — enter your PC's Wi-Fi IP (e.g. 192.168.1.50) so your TV can scan.";
+        }
+        if (!activeIp) {
+          detectLanIp().then((ip) => {
+            if (ip && !getSavedLanHost()) {
+              const modal = document.getElementById("remoteTvQrModal");
+              if (modal && !modal.classList.contains("hidden")) {
+                openRemoteTvQrModal();
+              }
+            }
+          });
+        }
+      }
+    }
+
+    document.getElementById("remoteTvQrModal")?.classList.remove("hidden");
+  }
+
+  function closeRemoteTvQrModal() {
+    document.getElementById("remoteTvQrModal")?.classList.add("hidden");
+  }
+
+  function applyRemoteTvLanHost() {
+    const input = document.getElementById("remoteTvLanHostInput");
+    const val = (input ? input.value : "").trim().replace(/^https?:\/\//i, "").split("/")[0].split(":")[0];
+    try {
+      if (val) {
+        localStorage.setItem(QR_LAN_HOST_KEY, val);
+      } else {
+        localStorage.removeItem(QR_LAN_HOST_KEY);
+      }
+    } catch (e) {}
+    openRemoteTvQrModal();
   }
 
   function closeQrModal() {
@@ -3310,9 +3427,21 @@ window.Feud = window.Feud || {};
   // =====================================================================
   // 10. TOP BAR UTILITIES & KEYBOARD SHORTCUTS
   // =====================================================================
+  function syncMuteButtonLabels(muted) {
+    const topBtn = document.getElementById("btnMute");
+    const menuBtn = document.getElementById("hostMenuMuteBtn");
+    const tvBtn = document.getElementById("tvMuteBtn");
+    if (topBtn) topBtn.textContent = muted ? "🔇 Muted" : "🔊 Sound";
+    if (menuBtn) menuBtn.textContent = muted ? "🔇 Muted" : "🔊 Sound";
+    if (tvBtn) tvBtn.textContent = muted ? "🔇" : "🔊";
+  }
+
   function toggleMute() {
     const muted = Feud.toggleAudioMute();
-    document.getElementById("btnMute").textContent = muted ? "🔇 Muted" : "🔊 Sound";
+    syncMuteButtonLabels(muted);
+    if (activeRole === "host" && roomState && currentRoomCode) {
+      pushRoomPatch({ soundMuted: muted });
+    }
     Feud.showToast(muted ? "Sound Muted" : "Sound Enabled");
   }
 
@@ -3643,6 +3772,10 @@ window.Feud = window.Feud || {};
     cycleNextMatchChallengerPreset,
     confirmStartNextMatch,
     openQrModal,
+    selectQrForTv,
+    chooseTvSetupOption,
+    closeRemoteTvQrModal,
+    applyRemoteTvLanHost,
     applyQrLanHost,
     reopenTvWindow,
     closeQrModal,
@@ -3738,17 +3871,50 @@ window.Feud = window.Feud || {};
         savedScriptPref !== null ? savedScriptPref === "1" : window.innerWidth < 960;
       applyHostScriptCollapsed(defaultCollapsed);
     } catch (e) {}
+    window.addEventListener("feud-client-connected", (e) => {
+      const joinedRole = e && e.detail ? e.detail.role : "";
+      if (
+        activeRole === "host" &&
+        roomState &&
+        roomState.tvQrOverlay &&
+        (!joinedRole || roomState.tvQrOverlay.role === joinedRole)
+      ) {
+        pushRoomPatch({ tvQrOverlay: null });
+        refreshQrGridCards();
+        applyBuzzerButtonLocks();
+        Feud.showToast("📱 Device connected — QR cleared from TV screen.");
+      }
+    });
+    window.addEventListener("feud-tv-connected", () => {
+      const modal = document.getElementById("remoteTvQrModal");
+      if (modal && !modal.classList.contains("hidden")) {
+        closeRemoteTvQrModal();
+        Feud.showToast("📺 Remote TV connected!");
+      }
+    });
     window.addEventListener("feud-peer-status", (e) => {
       const detail = (e && e.detail) || {};
       const buzzerStatusPill = document.getElementById("hostBuzzerStatusPill");
-      if (buzzerStatusPill) {
-        buzzerStatusPill.classList.add("hidden");
+      if (buzzerStatusPill && detail.buzzers) {
+        const bz = detail.buzzers;
+        const count = (bz.t1 ? 1 : 0) + (bz.t2 ? 1 : 0);
+        buzzerStatusPill.textContent =
+          count === 0
+            ? "🔔 Buzzers: 0/2"
+            : `🔔 ${bz.t1 ? "T1✓" : "T1–"} • ${bz.t2 ? "T2✓" : "T2–"}`;
+        buzzerStatusPill.className = `pill-badge ${count === 2 ? "awake-ok" : ""}`;
+        applyBuzzerButtonLocks(bz);
       }
       ["buzzerConnStatusPill", "comboConnStatusPill"].forEach((id) => {
         const connPill = document.getElementById(id);
         if (connPill) {
           const ok = Boolean(detail.ok);
-          connPill.textContent = ok ? "🟢 Connected" : "🟡 Reconnecting…";
+          if (id === "comboConnStatusPill") {
+            connPill.textContent = ok ? "🟢" : "🟡";
+            connPill.title = ok ? "Connected" : "Reconnecting…";
+          } else {
+            connPill.textContent = ok ? "🟢 Connected" : "🟡 Reconnecting…";
+          }
           connPill.className = `pill-badge ${ok ? "awake-ok" : "awake-warn"}`;
         }
       });

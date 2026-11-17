@@ -10,7 +10,7 @@ This document summarizes the architecture, priorities, coding style, and develop
    - Must run directly on **GitHub Pages (`https://`)**, local HTTP servers (`http://localhost` / LAN IP), and **offline via `file://`** (no build step, bundler, or Node server required).
 2. **Reliable Dual-Screen & Remote Play:**
    - **Offline / Same-Device:** `BroadcastChannel` + `localStorage` for instant Host + HDMI TV Display dual-window sync.
-   - **Cross-Device (Shared Wi-Fi & Remote):** `Trystero` (WebRTC P2P via multi-relay Nostr `wss://` signaling) with optional Firebase Firestore fallback in `js/sync.js`.
+   - **Cross-Device (Shared Wi-Fi & Remote):** `Trystero` (WebRTC P2P via multi-relay Nostr `wss://` signaling on `https://`) with automatic **MQTT-over-WSS** fallback (`http://` LAN servers or `!crypto.subtle`), plus optional Firebase Firestore in `js/sync.js`.
 3. **Strict Standard Family Feud Gameplay:**
    - Phase-gated workflow (`faceoff-ready` → `faceoff-buzz` → `faceoff-p1` → `faceoff-p2` → `pass-or-play` → `playing` → `steal` → `round-over` → `winner`), plus optional **Sudden-Death Tie-Breaker** (`#1` answer wins) and **Fast Money**.
    - **Undo (`↩️`)** via snapshot stack (`pushUndoSnapshot()`).
@@ -30,7 +30,7 @@ This document summarizes the architecture, priorities, coding style, and develop
 | `css/styles.css` | All styling, responsive breakpoints, 16:9 TV scaling, Host layout, and full-viewport `100dvh` Buzzer/Combo Buzzer layouts |
 | `js/app.js` | Controller, UI event handlers, Host phase transitions, timers, keyboard shortcuts, QR modal, URL routing |
 | `js/state.js` | Default `roomState` schema, multi-game unplayed round slicer, `localStorage` persistence, deck/round helpers |
-| `js/sync.js` | Hybrid sync (`Trystero` WebRTC P2P + `BroadcastChannel` + `localStorage` + optional Firebase), `buildBuzzPatch()`, buzzer locking/probing |
+| `js/sync.js` | Hybrid sync (`Trystero` WebRTC P2P + MQTT-over-WSS fallback + `BroadcastChannel` + `localStorage` + optional Firebase), `buildBuzzPatch()`, buzzer locking/probing |
 | `js/views.js` | Pure DOM renderers for TV Display, Host Remote, Team Buzzers, Combo Buzzer, and TV QR overlay |
 | `js/formats.js` | JSON / CSV deck parser & exporter (supports Friendly-Feud JSON and custom schemas) |
 | `js/audio.js` | Web Audio API sound synthesizer (no external audio file dependencies) |
@@ -48,9 +48,10 @@ This document summarizes the architecture, priorities, coding style, and develop
 - **Buzzer Exclusivity:**
   - At most **1 Team 1 Buzzer**, **1 Team 2 Buzzer**, or **1 Combo Buzzer** may be active per room.
   - `buzzer_combo` conflicts with both `buzzer1` and `buzzer2` (`buzzerRolesConflict()`), and Lobby / QR buttons must reflect disabled state (`disabled = true`).
-- **QR Code Rules:**
+- **QR Code & TV Setup Rules:**
+  - Starting a new Host room opens the **TV Screen Selection** modal (`Start Local TV Screen Window`, `Show QR Code for Remote TV Screen`, or `Continue Without Separate TV Screen`).
   - Hidden on `file://` and `SOLO` mode; enabled on `http://` and `https://`.
-  - Opening/switching QR tabs on Host updates `roomState.tvQrOverlay` so the TV Display shows/hides the QR overlay in sync; closing the modal clears `tvQrOverlay`.
+  - `#qrModal` displays all 4 QR codes simultaneously; clicking any card updates `roomState.tvQrOverlay` so the TV Display shows that QR code and auto-clears it once the device connects.
   - On loopback hosts (`localhost` / `127.0.0.1`), attempts WebRTC LAN IP detection and provides an editable LAN IP override (`localStorage`).
 - **Styling & Layout:**
   - Use CSS custom properties (`--gold`, etc.) and `clamp()` / `dvh` units for full-viewport buzzer views.

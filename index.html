@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Party Feud — Live Party Multiplayer</title>
-  <link rel="stylesheet" href="./css/styles.css?v=20261116cc" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261116cu" />
 </head>
 <body>
 
@@ -105,7 +108,7 @@
       <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; margin-top:4px;">
         <button type="button" class="top-btn" onclick="closeNewGameModal()">Cancel</button>
         <button type="button" class="action-btn btn-gold display-font" style="width:auto; min-height:46px; font-size:14px; padding:10px 20px;" onclick="confirmStartNewGame('host')">
-          🚀 Start New Game (Opens TV Window + Host View)
+          🚀 Start New Game
         </button>
       </div>
     </div>
@@ -169,25 +172,44 @@
     </div>
   </div>
 
-  <!-- ROOM QR CODE & QUICK JOIN MODAL -->
+  <!-- ROOM QR CODE & QUICK JOIN MODAL (ALL 4 ROLES) -->
   <div id="qrModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
-    <div class="modal-card" style="max-width:440px; text-align:center; align-items:center;">
-      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-        <h3 class="brand-title display-font">📱 Scan to Join Room</h3>
-        <button class="top-btn" onclick="closeQrModal()">✕ Close</button>
+    <div class="modal-card qr-modal-wide">
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:8px;">
+        <h3 class="brand-title display-font">📱 Scan to Join Room <span id="qrRoomCodeText" style="color:#fff;">----</span></h3>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button id="qrHideFromTvBtn" type="button" class="top-btn hidden" onclick="selectQrForTv(null)">📺 Hide from TV</button>
+          <button type="button" class="top-btn" onclick="closeQrModal()">✕ Close</button>
+        </div>
       </div>
-      <p style="font-size:12px; color:#fde68a; line-height:1.4;">
-        Pick a role below and scan on that device to join Room <strong id="qrRoomCodeText" style="color:#fff;">----</strong>!
+      <p style="font-size:12px; color:#fde68a; line-height:1.4; margin:0;">
+        Scan any QR below, or <strong>click a QR card</strong> to display it large on the TV screen.
       </p>
-      <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">
-        <button id="qrTabTv" type="button" class="top-btn gold" onclick="openQrModal('tv')">📺 TV Display</button>
-        <button id="qrTabB1" type="button" class="top-btn" onclick="openQrModal('buzzer1')">🔔 Team 1 Buzzer</button>
-        <button id="qrTabB2" type="button" class="top-btn" onclick="openQrModal('buzzer2')">🔔 Team 2 Buzzer</button>
-        <button id="qrTabCombo" type="button" class="top-btn" onclick="openQrModal('buzzer_combo')">🔔 Combo Buzzer</button>
-      </div>
-      <div class="qr-card-box">
-        <img id="qrCodeImg" alt="Room Join QR Code" style="width:210px; height:210px; display:block;" />
-        <div id="qrJoinUrlText" style="font-size:10px; font-weight:800; word-break:break-all; max-width:220px;"></div>
+      <div class="qr-grid-4">
+        <button id="qrCard_tv" type="button" class="qr-grid-card" onclick="selectQrForTv('tv')">
+          <span class="qr-grid-title display-font">📺 TV Display</span>
+          <img id="qrImg_tv" alt="TV Display QR Code" class="qr-grid-img" />
+          <span id="qrUrl_tv" class="qr-grid-url"></span>
+          <span id="qrBadge_tv" class="qr-grid-status">Click to show on TV</span>
+        </button>
+        <button id="qrCard_buzzer1" type="button" class="qr-grid-card" onclick="selectQrForTv('buzzer1')">
+          <span class="qr-grid-title display-font">🔔 Team 1 Buzzer</span>
+          <img id="qrImg_buzzer1" alt="Team 1 Buzzer QR Code" class="qr-grid-img" />
+          <span id="qrUrl_buzzer1" class="qr-grid-url"></span>
+          <span id="qrBadge_buzzer1" class="qr-grid-status">Click to show on TV</span>
+        </button>
+        <button id="qrCard_buzzer2" type="button" class="qr-grid-card" onclick="selectQrForTv('buzzer2')">
+          <span class="qr-grid-title display-font">🔔 Team 2 Buzzer</span>
+          <img id="qrImg_buzzer2" alt="Team 2 Buzzer QR Code" class="qr-grid-img" />
+          <span id="qrUrl_buzzer2" class="qr-grid-url"></span>
+          <span id="qrBadge_buzzer2" class="qr-grid-status">Click to show on TV</span>
+        </button>
+        <button id="qrCard_buzzer_combo" type="button" class="qr-grid-card" onclick="selectQrForTv('buzzer_combo')">
+          <span class="qr-grid-title display-font">🔔 Combo Buzzer</span>
+          <img id="qrImg_buzzer_combo" alt="Combo Buzzer QR Code" class="qr-grid-img" />
+          <span id="qrUrl_buzzer_combo" class="qr-grid-url"></span>
+          <span id="qrBadge_buzzer_combo" class="qr-grid-status">Click to show on TV</span>
+        </button>
       </div>
       <div id="qrLanHostWrap" class="hidden" style="width:100%; display:flex; flex-direction:column; gap:6px; margin-top:4px;">
         <div style="display:flex; gap:6px; align-items:center;">
@@ -195,6 +217,54 @@
           <button type="button" class="top-btn gold" onclick="applyQrLanHost()">Apply IP</button>
         </div>
         <div id="qrLanHostHint" style="font-size:11px; color:#fde68a; line-height:1.3;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TV SCREEN SELECTION MODAL (ON NEW GAME START) -->
+  <div id="tvSetupChoiceModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width:480px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+        <h3 class="brand-title display-font">📺 TV Screen Selection</h3>
+        <button type="button" class="top-btn" onclick="chooseTvSetupOption('none')">✕</button>
+      </div>
+      <p style="font-size:13px; color:#fde68a; line-height:1.45; margin:0;">
+        Room <strong id="tvChoiceRoomCode" style="color:#fff;">----</strong> is ready! How would you like to show the TV board?
+      </p>
+      <div style="display:flex; flex-direction:column; gap:10px; width:100%; margin-top:4px;">
+        <button type="button" class="action-btn btn-blue display-font" onclick="chooseTvSetupOption('local')">
+          🖥️ 1. Start Local TV Screen Window
+        </button>
+        <button id="tvChoiceQrBtn" type="button" class="action-btn btn-gold display-font" onclick="chooseTvSetupOption('qr')">
+          📱 2. Show QR Code for Remote TV Screen
+        </button>
+        <button type="button" class="action-btn btn-slate display-font" onclick="chooseTvSetupOption('none')">
+          🎛️ 3. Continue Without Separate TV Screen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REMOTE TV ONLY QR MODAL (AUTO-CLOSES WHEN REMOTE TV CONNECTS) -->
+  <div id="remoteTvQrModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width:420px; text-align:center; align-items:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+        <h3 class="brand-title display-font">📺 Connect Remote TV</h3>
+        <button type="button" class="top-btn" onclick="closeRemoteTvQrModal()">✕ Close</button>
+      </div>
+      <p style="font-size:12px; color:#fde68a; line-height:1.4; margin:0;">
+        Scan on your TV device to join Room <strong id="remoteTvQrRoomCode" style="color:#fff;">----</strong>. This closes automatically once connected.
+      </p>
+      <div class="qr-card-box">
+        <img id="remoteTvQrImg" alt="Remote TV Join QR Code" style="width:220px; height:220px; display:block;" />
+        <div id="remoteTvQrUrl" style="font-size:10px; font-weight:800; word-break:break-all; max-width:230px;"></div>
+      </div>
+      <div id="remoteTvLanHostWrap" class="hidden" style="width:100%; display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+        <div style="display:flex; gap:6px; align-items:center;">
+          <input id="remoteTvLanHostInput" class="lobby-input" type="text" placeholder="LAN IP (e.g. 192.168.1.50)" style="flex:1; min-width:0; padding:6px 10px; font-size:12px;" onkeydown="if(event.key==='Enter')applyRemoteTvLanHost()" />
+          <button type="button" class="top-btn gold" onclick="applyRemoteTvLanHost()">Apply IP</button>
+        </div>
+        <div id="remoteTvLanHostHint" style="font-size:11px; color:#fde68a; line-height:1.3;"></div>
       </div>
     </div>
   </div>
@@ -281,7 +351,7 @@
     <section class="hero-banner">
       <h1 id="lobbyHeroTitle" class="hero-title display-font">🎉 Party Feud</h1>
       <p class="hero-desc">
-        <strong>Host</strong> creates a room and runs the game; <strong>TV</strong> displays the live 16:9 game board.
+        <strong>Host</strong> creates a room, <strong>TV</strong> displays the board, and <strong>Team Buzzers</strong> connect over Wi-Fi or remotely.
       </p>
     </section>
 
@@ -332,7 +402,7 @@
       </article>
 
       <!-- ROLE 3 & 4: TEAM PODIUM BUZZERS -->
-      <article id="lobbyBuzzerCard" class="role-card hidden">
+      <article id="lobbyBuzzerCard" class="role-card">
         <div>
           <h2>🔔 3. Team Buzzers (Optional)</h2>
           <p style="margin-top:6px;">
@@ -364,7 +434,7 @@
 
     <!-- COMPACT FLOATING TV CORNER CONTROLS (REPLACES FULL TOP BAR ON CAST TV) -->
     <div class="tv-floating-controls">
-      <button type="button" class="top-btn" onclick="toggleMute()" title="Mute / Unmute Sound">🔊</button>
+      <button id="tvMuteBtn" type="button" class="top-btn" onclick="toggleMute()" title="Mute / Unmute Sound">🔊</button>
       <button type="button" class="top-btn gold" onclick="toggleFullScreen()" title="Toggle TV Fullscreen">⛶ Fullscreen</button>
     </div>
 
@@ -432,7 +502,7 @@
         <div id="tvAnswerGrid" class="answers-columns"></div>
 
         <div id="tvBuzzerBanner" class="buzzer-banner-tv display-font">
-          🔔 Face-Off Ready!
+          🔔 Podium Buzzers Ready!
         </div>
 
         <div class="bulb-strip" aria-hidden="true">
@@ -508,7 +578,7 @@
         <div class="host-header-left">
           <button type="button" id="hostCompactRoundLabel" class="top-btn host-round-pill-btn" onclick="openHostPopover('round')" title="Tap to switch or swap round (while question is hidden)">Round 1 (1x)</button>
           <div class="flow-stepper host-clickable-stepper" id="hostFlowStepper" onclick="openHostPopover('phase')" title="Tap to override phase, active team, or strikes"></div>
-          <span id="hostBuzzerStatusPill" class="pill-badge hidden" style="font-size:10px;" title="Connected remote team buzzers">🔔 Buzzers: 0/2</span>
+          <span id="hostBuzzerStatusPill" class="pill-badge" style="font-size:10px;" title="Connected remote team buzzers">🔔 Buzzers: 0/2</span>
         </div>
         <div class="host-quick-timer-group">
           <button type="button" id="hostTurnTimerPill" class="turn-timer-pill display-font host-timer-pill-btn" onclick="openHostPopover('timer')" title="Tap to change timer duration or reset">
@@ -534,8 +604,8 @@
               <button type="button" id="hostBtnRevealRemaining" class="top-btn gold" onclick="hostRevealNextAnswer(); closeHostMoreMenu()">👁️ Reveal Next Answer (0 pts)</button>
               <button type="button" class="top-btn" onclick="openEditRoundModal(); closeHostMoreMenu()">✏️ Edit Round</button>
               <button type="button" class="top-btn" onclick="openDeckManagerModal(); closeHostMoreMenu()">📦 Load Deck</button>
-              <button type="button" id="hostMenuQrBtn" class="top-btn host-more-mobile-only hidden" onclick="openQrModal(); closeHostMoreMenu()">📱 Join QR</button>
-              <button type="button" class="top-btn host-more-mobile-only" onclick="toggleMute(); closeHostMoreMenu()">🔊 Sound</button>
+              <button type="button" id="hostMenuQrBtn" class="top-btn host-more-mobile-only" onclick="openQrModal(); closeHostMoreMenu()">📱 Join QR</button>
+              <button id="hostMenuMuteBtn" type="button" class="top-btn host-more-mobile-only" onclick="toggleMute(); closeHostMoreMenu()">🔊 Sound</button>
               <button type="button" class="top-btn gold host-more-mobile-only" onclick="toggleFullScreen(); closeHostMoreMenu()">⛶ Fullscreen</button>
               <button type="button" class="top-btn host-more-mobile-only" onclick="leaveToLobby(); closeHostMoreMenu()">🏠 Lobby</button>
             </div>
@@ -629,6 +699,7 @@
       <div class="combo-middle-controls">
         <span id="buzzerConnStatusPill" class="pill-badge awake-ok" style="font-size:10px;">🟢 Connected</span>
         <span id="buzzerTimerPill" class="turn-timer-pill display-font hidden" style="font-size:12px; padding:2px 9px;">⏱️ 10s</span>
+        <button type="button" class="top-btn" style="min-height:28px; padding:3px 9px; font-size:11px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button>
         <button
           id="buzzerExitHoldBtn"
           type="button"
@@ -681,19 +752,21 @@
 
       <!-- Shared center controls -->
       <div class="combo-middle-controls">
-        <span id="comboConnStatusPill" class="pill-badge awake-ok" style="font-size:10px;">🟢 Connected</span>
+        <span id="comboConnStatusPill" class="pill-badge awake-ok" style="font-size:12px;" title="Connected">🟢</span>
         <span id="comboTimerPill" class="turn-timer-pill display-font hidden" style="font-size:12px; padding:2px 9px;">⏱️ 10s</span>
+        <button type="button" class="top-btn" style="min-height:28px; padding:3px 9px; font-size:12px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button>
         <button
           id="comboExitHoldBtn"
           type="button"
           class="buzzer-exit-hold-btn"
-          style="min-height:28px; padding:3px 10px; font-size:11px; width:auto;"
+          style="min-height:28px; padding:3px 10px; font-size:12px; width:auto;"
+          title="Hold 3s to Exit"
           onpointerdown="buzzerExitHoldStart(event, 'comboExitHoldBtn')"
           onpointerup="buzzerExitHoldCancel('comboExitHoldBtn')"
           onpointerleave="buzzerExitHoldCancel('comboExitHoldBtn')"
           onpointercancel="buzzerExitHoldCancel('comboExitHoldBtn')"
           oncontextmenu="return false;"
-        >🔒 Hold 3s to Exit</button>
+        >🔒</button>
       </div>
 
       <!-- Bottom player (Team 2) upright view -->
@@ -715,13 +788,13 @@
   </section>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
-  <script src="./data/questions.js?v=20261116cc"></script>
-  <script src="./decks/catalog.js?v=20261116cc"></script>
-  <script src="./js/audio.js?v=20261116cc"></script>
-  <script src="./js/state.js?v=20261116cc"></script>
-  <script src="./js/formats.js?v=20261116cc"></script>
-  <script src="./js/sync.js?v=20261116cc"></script>
-  <script src="./js/views.js?v=20261116cc"></script>
-  <script src="./js/app.js?v=20261116cc"></script>
+  <script src="./data/questions.js?v=20261116cu"></script>
+  <script src="./decks/catalog.js?v=20261116cu"></script>
+  <script src="./js/audio.js?v=20261116cu"></script>
+  <script src="./js/state.js?v=20261116cu"></script>
+  <script src="./js/formats.js?v=20261116cu"></script>
+  <script src="./js/sync.js?v=20261116cu"></script>
+  <script src="./js/views.js?v=20261116cu"></script>
+  <script src="./js/app.js?v=20261116cu"></script>
 </body>
 </html>
