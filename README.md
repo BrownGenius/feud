@@ -4,6 +4,9 @@ Turn your TV, laptop, and phones into a real **Family Feud–style party game sh
 
 Pick a ready-made question pack, cast or plug in a TV, hand phones to both teams as live buzzers (or share one phone in the middle for 1v1 **Combo Buzzer** mode), and host like a pro with a built-in teleprompter, game-show sound effects, and one-tap **Undo**.
 
+[![Play Now](https://img.shields.io/badge/🎮_Play_Now-browngenius.github.io%2Ffeud-f59e0b?style=for-the-badge)](https://browngenius.github.io/feud)
+[![Question Review](https://img.shields.io/badge/🖨️_Review_Questions-review.html-1e293b?style=for-the-badge)](https://browngenius.github.io/feud/review.html)
+
 ---
 
 ## 📸 See It in Action
@@ -35,7 +38,7 @@ Pick a ready-made question pack, cast or plug in a TV, hand phones to both teams
 ## 🚀 Quick Start (Play in 60 Seconds)
 
 ### Option 1: Party Setup (TV + Phone Buzzers via QR Code)
-1. Open Party Feud on your laptop or tablet and tap **✨ Create New Game Room**.
+1. Open **[Party Feud](https://browngenius.github.io/feud)** on your laptop or tablet and tap **✨ Create New Game Room**.
 2. Choose a question deck, enter your team names, and tap **🚀 Start New Game**.
 3. Pick how to show the TV board:
    * **Start Local TV Screen Window** (if your laptop is plugged into a TV via HDMI), or
