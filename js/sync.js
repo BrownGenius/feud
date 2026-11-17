@@ -1045,133 +1045,129 @@ window.Feud = window.Feud || {};
     const myGen = ++clientGen;
     const isStale = () => myGen !== clientGen || currentCode !== code || currentRole === "lobby";
 
-    return new Promise(async (resolve) => {
-      const trystero = await loadTrystero();
-      if (!trystero) {
-        resolve(await connectMqttClient({ code, role, pin }));
-        return;
-      }
-      if (isStale()) {
-        resolve({ ok: false, error: "Connection superseded." });
-        return;
-      }
-
-      let settled = false;
-      let everConnected = false;
-      let joinStage = "relays";
-      const finish = (res) => {
-        if (!settled) {
-          settled = true;
-          resolve(res);
-        }
-      };
-      const fail = (res) => {
-        clearTimeout(timeoutId);
-        finish(res);
-        if (!isStale() && (everConnected || reconnectAttempt > 0)) {
-          scheduleClientReconnect(code, role, pin);
-        }
-      };
-
-      const timeoutId = setTimeout(() => {
-        if (trysteroRoom && !isPrimaryHostPeer) {
+    // Race MQTT-WSS and Trystero WebRTC P2P in parallel so mobile connects in ~1-2s
+    // instead of waiting for Trystero/CDN timeouts first.
+    return new Promise((resolve) => {
+      let won = false;
+      const finishRace = (res, source) => {
+        if (won) return;
+        won = true;
+        if (source === "mqtt" && trysteroRoom && !isPrimaryHostPeer) {
           try {
             trysteroRoom.leave();
-          } catch (err) {}
+          } catch (e) {}
           trysteroRoom = null;
           sendP2pAction = null;
-        }
-        if (!everConnected && !settled && !isStale()) {
-          connectMqttClient({ code, role, pin }).then(finish);
-        }
-      }, 5000);
-
-      if (trysteroRoom && !isPrimaryHostPeer) {
-        try {
-          trysteroRoom.leave();
-        } catch (e) {}
-        trysteroRoom = null;
-        sendP2pAction = null;
-        clientHostPeerId = null;
-        clientConnOpen = false;
-      }
-
-      try {
-        if (!window.crypto || !window.crypto.subtle) {
-          fail({
-            ok: false,
-            error: "WebRTC P2P requires HTTPS (e.g. GitHub Pages) or localhost — crypto.subtle is blocked on plain http:// LAN IPs."
-          });
-          return;
-        }
-        const room = trystero.joinRoom(
-          { appId: TRYSTERO_APP_ID, rtcConfig: { iceServers: ICE_SERVERS } },
-          `room-${code}`
-        );
-        trysteroRoom = room;
-        const [sendP2p, onP2p] = room.makeAction("feud");
-        sendP2pAction = sendP2p;
-
-        room.onPeerJoin((peerId) => {
-          if (isStale() || trysteroRoom !== room) return;
-          joinStage = "waiting-state";
+          clientHostPeerId = null;
+        } else if (source === "p2p" && mqttClient && !isPrimaryHostPeer) {
           try {
-            sendP2pAction({ type: "HELLO", role, pin, clientId: tabClientId }, peerId);
+            mqttClient.end(true);
           } catch (e) {}
-        });
+          mqttClient = null;
+          mqttConnected = false;
+        }
+        resolve(res);
+      };
 
-        room.onPeerLeave((peerId) => {
-          if (isStale() || trysteroRoom !== room) return;
-          if (peerId === clientHostPeerId) {
-            clientConnOpen = false;
-            fail({ ok: false, error: `Connection to Room "${code}" closed.` });
-          }
-        });
+      connectMqttClient({ code, role, pin }).then((res) => {
+        if (!won && (res.ok || isStale())) {
+          finishRace(res, "mqtt");
+        }
+      });
 
-        onP2p((msg, peerId) => {
-          if (isStale() || trysteroRoom !== room || !msg || typeof msg !== "object") return;
-          lastPongAt = Date.now();
-          if (reconnectAttempt > 0) {
-            reconnectAttempt = 0;
-            clearTimeout(reconnectTimer);
-            notifyStatus(`Room: ${code} • Live`, true);
+      (async () => {
+        const trystero = await loadTrystero();
+        if (!trystero || won || isStale()) return;
+
+        let localRoom = null;
+        const p2pTimeout = setTimeout(() => {
+          if (!won && localRoom) {
+            try {
+              localRoom.leave();
+            } catch (e) {}
           }
-          if (msg.type === "PONG") return;
-          if (msg.type === "AUTH_DENIED") {
-            clearTimeout(timeoutId);
-            const reason = msg.reason || "❌ Access denied!";
-            const wasAlreadyJoined = settled;
-            cleanupSync();
-            finish({ ok: false, error: reason });
-            if (wasAlreadyJoined && onForcedExitCallback) {
-              onForcedExitCallback(reason);
-            }
+        }, 8000);
+
+        try {
+          if (!window.crypto || !window.crypto.subtle) {
+            clearTimeout(p2pTimeout);
             return;
           }
-          if (msg.type === "STATE_UPDATE" && msg.state) {
-            clientHostPeerId = peerId;
-            clientConnOpen = true;
-            everConnected = true;
-            reconnectAttempt = 0;
-            clearTimeout(timeoutId);
-            Feud.saveRoomStateToStorage(code, msg.state);
-            notifyStatus(`Room: ${code} • Live`, true);
-            startHeartbeat(myGen);
-            finish({ ok: true, state: msg.state });
-            if (onRemoteStateCallback) onRemoteStateCallback(msg.state);
+          localRoom = trystero.joinRoom(
+            { appId: TRYSTERO_APP_ID, rtcConfig: { iceServers: ICE_SERVERS } },
+            `room-${code}`
+          );
+          if (won || isStale()) {
+            clearTimeout(p2pTimeout);
+            try {
+              localRoom.leave();
+            } catch (e) {}
+            return;
           }
-        });
-      } catch (e) {
-        clearTimeout(timeoutId);
-        if (trysteroRoom && !isPrimaryHostPeer) {
-          try {
-            trysteroRoom.leave();
-          } catch (err) {}
-          trysteroRoom = null;
-          sendP2pAction = null;
+          trysteroRoom = localRoom;
+          const [sendP2p, onP2p] = localRoom.makeAction("feud");
+          sendP2pAction = sendP2p;
+
+          localRoom.onPeerJoin((peerId) => {
+            if (won || isStale() || trysteroRoom !== localRoom) return;
+            try {
+              sendP2pAction({ type: "HELLO", role, pin, clientId: tabClientId }, peerId);
+            } catch (e) {}
+          });
+
+          localRoom.onPeerLeave((peerId) => {
+            if (isStale() || trysteroRoom !== localRoom) return;
+            if (peerId === clientHostPeerId) {
+              clientConnOpen = false;
+              scheduleClientReconnect(code, role, pin);
+            }
+          });
+
+          onP2p((msg, peerId) => {
+            if (isStale() || trysteroRoom !== localRoom || !msg || typeof msg !== "object") return;
+            lastPongAt = Date.now();
+            if (reconnectAttempt > 0) {
+              reconnectAttempt = 0;
+              clearTimeout(reconnectTimer);
+              notifyStatus(`Room: ${code} • Live`, true);
+            }
+            if (msg.type === "PONG") return;
+            if (msg.type === "AUTH_DENIED") {
+              clearTimeout(p2pTimeout);
+              const reason = msg.reason || "❌ Access denied!";
+              const wasAlreadyJoined = won;
+              cleanupSync();
+              finishRace({ ok: false, error: reason }, "p2p");
+              if (wasAlreadyJoined && onForcedExitCallback) {
+                onForcedExitCallback(reason);
+              }
+              return;
+            }
+            if (msg.type === "STATE_UPDATE" && msg.state) {
+              clearTimeout(p2pTimeout);
+              clientHostPeerId = peerId;
+              clientConnOpen = true;
+              reconnectAttempt = 0;
+              Feud.saveRoomStateToStorage(code, msg.state);
+              notifyStatus(`Room: ${code} • Live`, true);
+              startHeartbeat(myGen);
+              finishRace({ ok: true, state: msg.state }, "p2p");
+              if (onRemoteStateCallback) onRemoteStateCallback(msg.state);
+            }
+          });
+        } catch (e) {
+          clearTimeout(p2pTimeout);
+          if (localRoom) {
+            try {
+              localRoom.leave();
+            } catch (err) {}
+          }
+          if (trysteroRoom === localRoom) {
+            trysteroRoom = null;
+            sendP2pAction = null;
+          }
         }
-        connectMqttClient({ code, role, pin }).then(finish);
-      }
+      })();
     });
   }
 
