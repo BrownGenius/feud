@@ -16,6 +16,251 @@ window.Feud.DECK_CATALOG = [
     builtin: "starter"
   },
   {
+    id: "2026-frc-rules.json",
+    label: "🤖 2026 FRC Game & Rules (14 Rounds • Fast Money)",
+    file: "./decks/2026-frc-rules.json",
+    data: {
+      "gameTitle": "Party Feud",
+      "gameIcon": "🤖",
+      "deckName": "2026 FRC Game & Rules (14 Rounds)",
+      "teamPresets": [
+        ["Red Alliance", "Blue Alliance"],
+        ["Mechanical", "Programming"],
+        ["Students", "Mentors"],
+        ["Drive Team", "Pit Crew"],
+        ["Scouting Team", "Strategy Team"]
+      ],
+      "rounds": [
+        {
+          "theme": "⚙️ Robot Inspection (R-Rules)",
+          "title": "Round 1",
+          "multiplier": 1,
+          "prompt": "Name a reason an FRC robot fails its initial inspection at competition.",
+          "answers": [
+            { "text": "Over the 125 lb weight limit", "points": 36 },
+            { "text": "Bumpers out of zone or corner gaps", "points": 24 },
+            { "text": "Sharp edges or exposed pinch points", "points": 15 },
+            { "text": "Main breaker inaccessible or unmarked", "points": 11 },
+            { "text": "Pneumatic system leak or over-pressure", "points": 8 },
+            { "text": "Illegal wire gauge or reversed polarity", "points": 6 }
+          ]
+        },
+        {
+          "theme": "🟥 Penalties & Cards (G-Rules)",
+          "title": "Round 2",
+          "multiplier": 1,
+          "prompt": "Name a rule violation that will earn your alliance an immediate Yellow or Red Card.",
+          "answers": [
+            { "text": "Entering field before green lights / field safe", "points": 35 },
+            { "text": "Damaging contact inside opponent frame perimeter", "points": 26 },
+            { "text": "Pinning opponent >3 seconds after referee countdown", "points": 18 },
+            { "text": "Deliberately tipping or flipping another robot", "points": 12 },
+            { "text": "Egregious conduct or referee disrespect (G201)", "points": 9 }
+          ]
+        },
+        {
+          "theme": "🧰 Pit Life & Survival",
+          "title": "Round 3",
+          "multiplier": 1,
+          "prompt": "Name an item or tool every team is frantically trying to borrow in the pits.",
+          "answers": [
+            { "text": "Zip ties or electrical / gaffer tape", "points": 33 },
+            { "text": "Freshly charged 12V robot battery", "points": 25 },
+            { "text": "7/16\" or 10mm wrench / socket", "points": 18 },
+            { "text": "1/4-20 bolts, nuts, or hardware", "points": 13 },
+            { "text": "Hex keys / Allen wrench set", "points": 6 },
+            { "text": "Rivet gun or pop rivets", "points": 5 }
+          ]
+        },
+        {
+          "theme": "⏱️ Pre-Match Checklist",
+          "title": "Round 4",
+          "multiplier": 1,
+          "prompt": "Name something the drive team must check or do right before the match starts.",
+          "answers": [
+            { "text": "Turn on main 120A robot breaker", "points": 37 },
+            { "text": "Plug in driver station joysticks / controllers", "points": 24 },
+            { "text": "Connect field Ethernet tether / check FMS link", "points": 17 },
+            { "text": "Pre-load the game piece properly", "points": 12 },
+            { "text": "Align robot on starting line / auto orientation", "points": 10 }
+          ]
+        },
+        {
+          "theme": "⚡ Field Disasters",
+          "title": "Round 5",
+          "multiplier": 2,
+          "prompt": "Name an excuse a drive team gives when their robot suddenly stops moving on the field.",
+          "answers": [
+            { "text": "Radio rebooted or lost wireless FMS link", "points": 40 },
+            { "text": "Battery brownout / voltage drop under load", "points": 24 },
+            { "text": "CAN bus wire snapped or disconnected", "points": 16 },
+            { "text": "Code crashed / RoboRIO watchdog loop error", "points": 11 },
+            { "text": "Main breaker tripped or wire pulled out", "points": 9 }
+          ]
+        },
+        {
+          "theme": "🤖 Autonomous Mode",
+          "title": "Round 6",
+          "multiplier": 2,
+          "prompt": "Name something a robot attempts to do during the 15-second Autonomous period.",
+          "answers": [
+            { "text": "Score a pre-loaded game piece", "points": 42 },
+            { "text": "Leave starting zone / Mobility taxi points", "points": 27 },
+            { "text": "Intake a center-field game piece", "points": 15 },
+            { "text": "Disrupt or block opposing alliance paths", "points": 9 },
+            { "text": "Sit dead / do nothing (Auto routine failed)", "points": 7 }
+          ]
+        },
+        {
+          "theme": "📐 Construction Limits (R-Rules)",
+          "title": "Round 7",
+          "multiplier": 2,
+          "prompt": "Name a part of the robot that must strictly follow Game Manual construction rules.",
+          "answers": [
+            { "text": "Bumpers (Height zone, backing, pool noodles)", "points": 44 },
+            { "text": "Frame Perimeter / Starting sizing envelope", "points": 25 },
+            { "text": "Maximum extension outside frame perimeter", "points": 15 },
+            { "text": "Robot battery mounting and tie-down strap", "points": 10 },
+            { "text": "Pneumatic storage tanks & pressure relief valve", "points": 6 }
+          ]
+        },
+        {
+          "theme": "📊 Scouting in the Stands",
+          "title": "Round 8",
+          "multiplier": 2,
+          "prompt": "Name something team scouts track while watching a match from the stands.",
+          "answers": [
+            { "text": "Number of game pieces scored / cycle times", "points": 44 },
+            { "text": "Autonomous success and starting position", "points": 26 },
+            { "text": "Endgame climb / hang level achieved", "points": 16 },
+            { "text": "Fouls and penalties committed", "points": 8 },
+            { "text": "Defensive capability and robot reliability", "points": 6 }
+          ]
+        },
+        {
+          "theme": "🥽 Safety First",
+          "title": "Round 9",
+          "multiplier": 3,
+          "prompt": "Name a safety violation that will get you scolded by the Safety Advisor in the pits.",
+          "answers": [
+            { "text": "Not wearing safety glasses", "points": 46 },
+            { "text": "Wearing open-toed shoes / sandals", "points": 25 },
+            { "text": "Running or horseplay in the pit aisles", "points": 14 },
+            { "text": "Using power tools without proper PPE", "points": 9 },
+            { "text": "Working on an enabled or pressurized robot", "points": 6 }
+          ]
+        },
+        {
+          "theme": "🙋 Human Player Duties",
+          "title": "Round 10",
+          "multiplier": 3,
+          "prompt": "Name something an FRC Human Player is responsible for during a match.",
+          "answers": [
+            { "text": "Feeding / introducing game pieces into play", "points": 45 },
+            { "text": "Throwing / tossing game pieces into scoring targets", "points": 25 },
+            { "text": "Triggering endgame activation or substation buttons", "points": 14 },
+            { "text": "Communicating field info / timer to drive team", "points": 10 },
+            { "text": "Staying behind the starting line / boundary", "points": 6 }
+          ]
+        },
+        {
+          "theme": "🛑 Match Delays & FMS",
+          "title": "Round 11",
+          "multiplier": 3,
+          "prompt": "Name a reason an FRC match gets delayed right before starting.",
+          "answers": [
+            { "text": "Robot cannot connect to the field FMS", "points": 42 },
+            { "text": "Alliance called a timeout coupon", "points": 24 },
+            { "text": "Field element repair or broken sensor", "points": 16 },
+            { "text": "Robot battery / bumper falling off on field", "points": 11 },
+            { "text": "Broken game piece or debris left on carpet", "points": 7 }
+          ]
+        },
+        {
+          "theme": "🏆 Alliance Selection & Playoffs",
+          "title": "Round 12",
+          "multiplier": 3,
+          "prompt": "Name a trait an Alliance Captain looks for when picking a playoff partner.",
+          "answers": [
+            { "text": "High game piece scoring rate / cycle consistency", "points": 40 },
+            { "text": "Reliable and fast endgame climb / hang", "points": 24 },
+            { "text": "Solid autonomous routine that does not conflict", "points": 18 },
+            { "text": "Heavy defense and counter-defense capability", "points": 11 },
+            { "text": "No robot breakdowns / clean electrical wiring", "points": 7 }
+          ]
+        },
+        {
+          "theme": "🏅 Prestige Awards",
+          "title": "Round 13",
+          "multiplier": 3,
+          "prompt": "Name an official FRC award that teams compete fiercely for at competitions.",
+          "answers": [
+            { "text": "FIRST Impact Award (Chairman's)", "points": 48 },
+            { "text": "Engineering Inspiration Award", "points": 22 },
+            { "text": "Industrial Design Award / Quality Award", "points": 13 },
+            { "text": "Rookie All-Star Award", "points": 10 },
+            { "text": "Autonomous Award / Innovation in Control", "points": 7 }
+          ]
+        },
+        {
+          "theme": "🔧 Robot Materials & Build Season",
+          "title": "Round 14",
+          "multiplier": 3,
+          "prompt": "Name a common material or part used to build an FRC robot.",
+          "answers": [
+            { "text": "Aluminum tubing / plates", "points": 42 },
+            { "text": "Polycarbonate / Lexan sheets", "points": 24 },
+            { "text": "3D-printed parts (PLA, PETG, Onyx)", "points": 16 },
+            { "text": "Pool noodles (for bumpers)", "points": 11 },
+            { "text": "Falcon, Kraken, or NEO brushless motors", "points": 7 }
+          ]
+        }
+      ],
+      "fastMoney": [
+        {
+          "prompt": "How many seconds does a robot have to clear out when warned for pinning an opponent?",
+          "hint": "3 seconds (78), 5 seconds (14), 10 seconds (8)"
+        },
+        {
+          "prompt": "Name a specific safety rule violation in the pits.",
+          "hint": "Not wearing safety glasses (55), Open-toed shoes (28), Running in pit aisles (17)"
+        },
+        {
+          "prompt": "Name an official FRC drive team role on the field.",
+          "hint": "Driver (48), Operator / Co-Pilot (26), Drive Coach (18), Human Player (8)"
+        },
+        {
+          "prompt": "Name the maximum legal weight of an FRC robot in pounds excluding battery and bumpers.",
+          "hint": "125 lbs (88), 120 lbs (8), 100 lbs (4)"
+        },
+        {
+          "prompt": "Name a sensor frequently mounted on an FRC robot.",
+          "hint": "Limelight / Vision Camera (44), Gyro / Pigeon IMU (28), Encoders (18), Beam-break sensor (10)"
+        },
+        {
+          "prompt": "Name a color of card shown by referees for rule violations.",
+          "hint": "Yellow Card (56), Red Card (42), White Card (2)"
+        },
+        {
+          "prompt": "Name a common mechanism seen on modern FRC robots.",
+          "hint": "Intake / Roller Claw (38), Swerve Drive / Drivetrain (30), Elevator / Lift (20), Shooter / Flywheel (12)"
+        },
+        {
+          "prompt": "Name something drive teams yell into their headsets during a match.",
+          "hint": "Shoot / Score! (36), Defense / Watch out! (28), Climb / Hang! (20), How much time? (16)"
+        },
+        {
+          "prompt": "Name an FRC game element from recent seasons.",
+          "hint": "Notes / Foam rings (34), Cones / Cubes (26), Coral / Algae (22), Cargo / Oversized balls (18)"
+        },
+        {
+          "prompt": "Name something teams give away at their pit table.",
+          "hint": "Team buttons / pins (52), Stickers (30), Candy / snacks (12), 3D printed swag (6)"
+        }
+      ]
+    }
+  },
+  {
     id: "desi-thanksgiving.json",
     label: "🦃 Desi Thanksgiving (37 Rounds • 5 Fast Money Sets)",
     file: "./decks/desi-thanksgiving.json",
