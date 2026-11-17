@@ -384,6 +384,19 @@ window.Feud = window.Feud || {};
     } catch (e) {}
   }
 
+  function syncDeckQueryParam(deckId) {
+    try {
+      const url = new URL(window.location.href);
+      const clean = String(deckId || "").trim().replace(/\.json$/i, "");
+      if (clean && clean !== "__custom__") {
+        url.searchParams.set("deck", clean);
+      } else {
+        url.searchParams.delete("deck");
+      }
+      window.history.replaceState({}, "", url.toString());
+    } catch (e) {}
+  }
+
   async function onSelectCatalogDeck(deckId) {
     if (!deckId || deckId === "__custom__") return;
     const catalog = getCatalogList();
@@ -393,6 +406,7 @@ window.Feud = window.Feud || {};
     if (entry.builtin === "starter") {
       await restoreDefaultDeck(false);
       syncSetupModalInputsFromState();
+      syncDeckQueryParam("starter");
       return;
     }
 
@@ -401,12 +415,14 @@ window.Feud = window.Feud || {};
       const jsonText = JSON.stringify(entry.data);
       await applyImportedDeckText(jsonText, entry.id, false, false);
       syncSetupModalInputsFromState();
+      syncDeckQueryParam(entry.id);
       return;
     }
 
     if (entry.file) {
       await fetchAndApplyRemoteDeck(entry.file, false);
       syncSetupModalInputsFromState();
+      syncDeckQueryParam(entry.id);
     }
   }
 
@@ -4043,7 +4059,18 @@ window.Feud = window.Feud || {};
 
     const urlDeck = (params.get("deck") || "").trim();
     if (urlDeck) {
-      fetchAndApplyRemoteDeck(urlDeck, true);
+      const catalog = getCatalogList();
+      const normUrlDeck = urlDeck.replace(/\.json$/i, "").toLowerCase();
+      const catMatch = catalog.find(
+        (c) =>
+          c.id.toLowerCase() === urlDeck.toLowerCase() ||
+          c.id.replace(/\.json$/i, "").toLowerCase() === normUrlDeck
+      );
+      if (catMatch) {
+        onSelectCatalogDeck(catMatch.id);
+      } else {
+        fetchAndApplyRemoteDeck(urlDeck, true);
+      }
     }
 
     const urlRoom = (params.get("room") || "").trim().toUpperCase();
