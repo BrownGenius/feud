@@ -1,80 +1,79 @@
-# 🎉 Party Feud — Live Party Multiplayer Game Engine
+# 🎉 Party Feud — Host Your Own Live Game Show
 
-A zero-backend, multi-device **Party Feud** game show web app built to run directly on **GitHub Pages** (or locally via HTTP / `file://`)—complete with a PIN-locked **Host Remote**, a 16:9 **TV Display Board**, **Remote Team & Combo Buzzers**, **3-Option Join QR**, an optional **Fast Money Bonus Round**, a **Multi-Game Unplayed Round Slicer**, and a **Printable Question Review & `Used` Tracker** (`review.html`).
+Turn your TV, laptop, and phones into a real **Family Feud–style party game show** in seconds — no app installs, no accounts, and no setup headaches.
 
----
-
-## 🌟 Key Feature Highlights
-
-| Area | Highlights |
-| :--- | :--- |
-| **🎙️ Host Remote Control** | Slim merged header, **Guided Phase Coach** & collapsible **Teleprompter (`🎙️ SCRIPT` / `HIDE`)**, un-scrolled full Answer Key, embedded 16:9 mini TV monitor, **tap-to-edit popovers**, strict phase gating, and **25-step `↩️ Undo`**. |
-| **📺 16:9 TV Display Board** | Widescreen board with 3D flipping tiles, Web Audio game-show SFX (and Host-synced mute), Face-Off & Steal alert banners, giant red `X` overlays, **TV Screen Selection** modal on game start, and **Match Winner Celebration**. |
-| **🔔 Remote & Combo Buzzers** | Dedicated **Team 1 / Team 2** phone buzzers and symmetrical **Combo Buzzer** (Team 1 rotated 180° at top, icon-only `🟢`/`⛶`/`🔒` center bar, Team 2 at bottom) with Face-Off buzz lock until question reveal & mutual-exclusion locks. |
-| **📱 3-Option Join QR** | Host modal with **TV Display**, **Individual Buzzers** (left/right side-by-side on TV), and **Combo Buzzer** QR cards—plus LAN IP override on `localhost` and automatic hide once devices connect. |
-| **🔌 Zero-Config Hybrid Sync** | **Trystero WebRTC P2P** (multi-relay Nostr) on `https://` + automatic **MQTT-over-WSS** fallback on `http://` LAN servers, plus offline `BroadcastChannel` + `localStorage` for HDMI dual-window play. |
-| **🔄 Multi-Game Party Engine** | Tracks `Used` rounds across consecutive games (`review.html` + `localStorage`), deals unplayed `1x → 2x → 3x` slices, unlocks **Sudden-Death Tie-Breaker** only on ties, and supports **Winner Stays On** / **Rematch**. |
+Pick a ready-made question pack, cast or plug in a TV, hand phones to both teams as live buzzers (or share one phone in the middle for 1v1 **Combo Buzzer** mode), and host like a pro with a built-in teleprompter, game-show sound effects, and one-tap **Undo**.
 
 ---
 
-## 📸 Gameplay Screenshots
+## 📸 See It in Action
 
-| Lobby & Room Setup | Host Remote + Mini TV |
+| Lobby & Room Setup | Host Control Screen + Mini TV |
 | :---: | :---: |
 | ![Lobby View](docs/screenshots/lobby.png) | ![Host Remote](docs/screenshots/host-remote.png) |
 
-| 16:9 TV Display Board | Question Review & `Used` Tracker |
+| 16:9 TV Display Board | Printable Question Review Sheet |
 | :---: | :---: |
 | ![TV Display](docs/screenshots/tv-board.png) | ![Question Review Sheet](docs/screenshots/review-sheet.png) |
 
-| Individual Team Buzzer (Active) | Combo Buzzer (Active) |
+| Individual Team Buzzer (Phone) | Combo Buzzer (Shared 1v1 Phone) |
 | :---: | :---: |
 | ![Individual Team Buzzer](docs/screenshots/team-buzzer.png) | ![Combo Buzzer](docs/screenshots/combo-buzzer.png) |
 
 ---
 
-## ✨ Features
+## ✨ Why Hosts & Players Love It
 
-* **📱 Live Multiplayer on Static GitHub Pages (Host + TV + Team Buzzers — Local Wi-Fi & Remote)**:
-  * **Host Remote (PIN-Locked)**: Streamlined mobile-first & desktop workspace with a **slim merged header**, live **Buzzer Connection Status** (`🔔 Buzzers: 0/2` / `T1✓ • T2✓`), **Guided Phase Coach & collapsible Teleprompter (`🎙️ SCRIPT` / `HIDE` for `🎙️ SAY` / `👉 DO`)**, an **interactive Team Score Strip**, an **un-scrolled full Answer Key** paired side-by-side with an **embedded 16:9 Live TV Screen monitor** on desktop (stacking below on narrow screens), **tap-to-edit contextual popovers**, strict **phase-gated controls**, **`↩️ Undo`** (25-step snapshot stack), clickable answer key, single-answer reveal (`👁️ Reveal Answer #N`), `🔍 Be More Specific` (`+5s` when timer is running), 1-tap Fast Money scoring chips, live question editor, and **Lobby** opening in a new tab.
-  * **TV Display (Local Window, Remote QR, or Host-Only)**: Widescreen 16:9 game board with 3D flipping tiles, Web Audio game show sound effects, live buzzer & steal alert banners, giant red `X` strike overlays (also mirrored inside the Host's mini Live TV monitor), live **Join QR** overlay controlled from the Host (auto-hides once a device connects), a timer that stays hidden unless started, and an explicit **Match Winner Celebration** stage triggered when the Host clicks **🏆 Show Winner Screen**. Starting a new game prompts a **TV Screen Selection** modal (`Start Local TV Screen Window`, `Show QR Code for Remote TV Screen`, or `Continue Without Separate TV Screen`).
-  * **Team Podium Buzzers (Phones 3 & 4, or Combo Buzzer Shared Device)**: Full-screen red/blue buzzer pads with instant `pointerdown` tap response, haptic vibration, Wake Lock, auto-reconnect + live connection status (`🟢 Connected` / `🟡 Reconnecting…`), **mutual-exclusion & one-active-buzzer enforcement** (one Team 1, one Team 2, or one Combo Buzzer, with disabled Lobby/QR button indicators), 3-second hold-to-exit protection, and direct **Team 1 / Team 2 / Combo Buzzer** QR joining. **Combo Buzzer** (`?role=buzzer_combo`) runs full-screen on a single shared phone/iPad (Team 1 rotated 180° at top, symmetrical mirrored status/scores and icon-only center controls `🟢` / `⛶` / `🔒`, Team 2 at bottom) and fits cleanly within the viewport. Buzzers stay locked while the question is hidden (`faceoff-ready`), unlock only once the Host reveals the question on TV (`faceoff-buzz`), and lock out after the first buzz until the next round.
-  * **URL-Preserved Room & Role (`?room=CODE&role=...`)**: Every active view encodes its room and role in the URL query string so reloading a tab restores the exact same room and view automatically.
-* **🔄 Multi-Game Party Engine, Conditional Tie-Breaker & "Winner Stays On"**:
-  * **Level-Preserving Unplayed Round Slicer**: Run 4–8+ consecutive games from a large question deck at the same party without repeating a question. Tracks played rounds & Fast Money sets in `localStorage` (marking a round as **Used** only once its question is revealed on TV), deals `3`, `4`, `5`, `6`, or `All` unused rounds per match (`🎲 Randomize by Level (1x→2x→3x)` by default), and lets you swap rounds from a `1x`/`2x`/`3x` tree while the question is still hidden.
-  * **⚡ Conditional Sudden-Death Tie-Breaker**: A reserve Tie-Breaker round stays hidden unless both teams are tied at the end of regular rounds. Teams alternate until one picks the **`#1` answer** to win the match!
-  * **🏁 Explicit Winner Screen & Next Match Setup**: When the final regular round (or Sudden-Death Tie-Breaker) ends, the board stays in `round-over` so the Host can reveal any remaining hidden answers (`0 pts`) to the crowd first. Clicking **🏆 Show Winner Screen** transitions the TV to the **🏆 Match Winner Celebration** and opens **Next Match Setup** (**👑 Winner Stays On**, **🔥 Rematch**, or **👥 Two New Teams**).
-  * **⚡ Optional Fast Money**: Enable or disable the Fast Money bonus round per game inside `⚙️ Game Rules, Timer & PIN Options`.
-* **🖨️ Printable Question Review & `Used` Manager (`review.html`)**:
-  * Open [`review.html`](./review.html) (or click **🖨️ Review** inside **New Game Setup**) to inspect all rounds and Fast Money questions in a clean 2-column print layout, toggle per-round **`Used` / `Unused`** checkboxes (with **`☑️ Mark All Used`** / **`☐ Mark All Unused`** bulk buttons persisted in `localStorage`), switch decks, and copy shareable URLs like `review.html?deck=desi-thanksgiving`.
-* **🔌 Hybrid Zero-Config Sync (`js/sync.js`)**:
-  * **Trystero WebRTC P2P (Multi-Relay Nostr Signaling) + MQTT-over-WSS Fallback**: Uses Trystero WebRTC P2P on HTTPS (`https://`) and automatically falls back to MQTT-over-WSS (`broker.emqx.io` / `test.mosquitto.org`) on plain `http://` LAN servers or non-secure contexts—with automatic reconnect, heartbeat recovery, and disconnect detection (`BYE` / MQTT Last Will / stale sweep).
-  * **`BroadcastChannel` + `localStorage`** for 100% offline dual-window play on a single laptop plugged into a TV via HDMI.
-  * **Optional Firebase Firestore** hook if you ever want cloud-persisted rooms.
-* **📦 Bundled & Auto-Discovered Question Decks (`decks/catalog.js`)**:
-  * **Auto-Populated GUI Deck Selector**: Bundled decks in `decks/catalog.js` work 100% offline over `file://`, and when hosted on GitHub Pages (`*.github.io`), any new `.json` or `.csv` file committed to the `/decks/` folder is discovered automatically via the GitHub API.
-  * **Party Feud Deck JSON (`.json`)**: Configures `gameTitle`, `gameIcon` (emoji), `deckName`, `teamPresets`, `rounds`, and `fastMoney`.
-  * **Direct URL Sharing**: Load any hosted CSV or JSON deck automatically via URL parameters:
-    `?deck=https://.../my-questions.json&title=Holiday+Party+Feud&icon=🎉`
+* **📺 Real TV Show Presentation:** Big 16:9 board with flipping answer tiles, giant red `X` strike overlays, suspenseful countdown timer, game-show dings/buzzers/fanfare, and a **Match Champion** celebration screen.
+* **🎙️ Stress-Free Hosting:** The Host screen shows all survey answers, a **live mini TV preview**, a **step-by-step coach**, a collapsible **Host Script** (`SAY` / `DO`), and a **25-step Undo** button so you can fix any mis-tap instantly.
+* **🔔 Phone Buzzers (No App Required):** Scan a QR code from the TV or Host screen to join as **Team 1 Buzzer**, **Team 2 Buzzer**, or **Combo Buzzer** (both teams on one shared phone/iPad facing each other). Buzzers stay locked until you reveal the question!
+* **🔄 Play All Night Without Repeats:** Tracks which questions you've already played across multiple games at the same party, includes a **printable Question Review Sheet** (`review.html`), and automatically unlocks a **Sudden-Death Tie-Breaker** if a match ends in a tie.
+* **⚡ Optional Fast Money Bonus Round:** Toggle Fast Money on or off for any game, complete with 20s / 25s clocks, hidden Player 1 answers, duplicate-answer buzzers, and 1-tap score chips.
 
 ---
 
-## 🚀 How to Play
+## 🚀 Quick Start (Play in 60 Seconds)
 
-### Mode A: Multi-Device Party Setup (Shared Wi-Fi & Remote Devices)
-1. Open your GitHub Pages URL (or local HTTP server via your LAN IP) on **Device 1 (Host)** and tap **✨ Create New Game Room** to configure your deck, team names, and rules, generating a 4-character Room Code (e.g., `GA42`).
-2. In the **TV Screen Selection** modal, choose **📱 2. Show QR Code for Remote TV Screen** (closes automatically once your TV connects), or tap **📱 Join QR** in the top bar anytime to view all 4 QR codes (**📺 TV Display**, **🔔 Team 1 Buzzer**, **🔔 Team 2 Buzzer**, **🔔 Combo Buzzer**)—clicking any QR card displays it on the TV screen until the device connects. *(When serving from `localhost`/`127.0.0.1`, you can also enter your PC's Wi-Fi IP in the QR modal.)* Each view keeps `?room=CODE&role=...` in its URL so a page refresh preserves your session.
+### Option 1: Party Setup (TV + Phone Buzzers via QR Code)
+1. Open Party Feud on your laptop or tablet and tap **✨ Create New Game Room**.
+2. Choose a question deck, enter your team names, and tap **🚀 Start New Game**.
+3. Pick how to show the TV board:
+   * **Start Local TV Screen Window** (if your laptop is plugged into a TV via HDMI), or
+   * **Show QR Code for Remote TV Screen** (scan on a smart TV/casting laptop — it disappears automatically once connected).
+4. Tap **📱 Join QR** anytime to put **Individual Buzzers** (Team 1 on the left, Team 2 on the right) or **Combo Buzzer** up on the TV for players to scan.
 
-### Mode B: Laptop + HDMI TV (Offline Dual-Window)
-1. Plug your laptop into the TV in **Extended Display** mode (works both on GitHub Pages and offline via `file://`).
-2. On your laptop, click **✨ Create New Game Room** and choose **🖥️ 1. Start Local TV Screen Window** in the **TV Screen Selection** modal (or click **📺 Pop Out TV** inside `⋯` anytime).
-3. Drag the TV window onto your TV screen and click **⛶ Fullscreen**. Both windows sync instantaneously via `BroadcastChannel` + `localStorage`—even with Wi-Fi turned off—while your Host screen keeps a live embedded 16:9 TV monitor.
+### Option 2: Laptop + HDMI TV (Works Even Offline)
+1. Plug your laptop into your TV in **Extended Display** mode (works even with Wi-Fi turned off by opening `index.html`).
+2. Start a room, pick **1. Start Local TV Screen Window**, drag that window onto your TV, and click **⛶ Fullscreen**.
 
 ---
 
-## 🎙️ Host Workflow State Machine & Timer Guide
+## 🎙️ How a Round Works (Host Guide)
 
-The Host Remote enforces a **strict phase-only workflow** so only actions valid for the current game phase are enabled, backed by a **`↩️ Undo`** button in the top round bar.
+1. **Mystery Question → Show Question (`Space`):** New rounds keep the question hidden on the TV so players can't read ahead. Once both podium players are ready, click **👁️ Show Question on TV** (`Space`) — buzzers unlock with no timer running yet.
+2. **Face-Off Buzz-In:** First team to buzz gets the shot clock.
+   * **`#1` Answer:** Instantly wins the Face-Off!
+   * **`#2`–`#8` Answer or Wrong Guess (`❌`):** Flashes 1 temporary `X` (without adding a round strike) and automatically starts the timer for the opposing player to try to beat it.
+3. **Play or Pass:** The Face-Off winner chooses **▶️ PLAY** or **🔀 PASS**.
+4. **Going Down the Line (`R` / `X`):** Press **`R`** to start each player's clock, tap matching answers (`1`–`8`) to flip them into the Round Pot, or press **`X`** for a wrong guess.
+   * **Need clarification?** Tap **🔍 Be More Specific** for a gentle double-buzz and `+5s` on the clock.
+   * **3 Strikes (`XXX`):** Automatically switches to the opposing team for a **30-second Steal**! If they hit an unrevealed answer, they steal the whole pot; if they miss, the original team keeps it.
+5. **Round Over & Winner Screen:** Reveal any remaining unguessed answers (`0 pts`) to the crowd, then click **⏭️ Next Round** — or after the final round, click **🏆 Show Winner Screen** to celebrate and start the next match (**Winner Stays On**, **Rematch**, or **Two New Teams**).
+
+---
+
+## 🛠️ For Developers & Self-Hosting
+
+### 🔌 Hybrid Zero-Config Sync Architecture (`js/sync.js`)
+Party Feud runs 100% statically with zero required backend or accounts:
+* **Trystero WebRTC P2P (`https://`):** Uses multi-relay Nostr `wss://` signaling on port `443` for the initial WebRTC handshake, then sends all room state and buzzes directly peer-to-peer over `RTCDataChannel`.
+* **Automatic MQTT-over-WSS Fallback (`http://` / non-secure contexts):** Automatically falls back to `wss://broker.emqx.io:8084/mqtt` (with `wss://test.mosquitto.org:8081/mqtt` fallback) when running on plain `http://` LAN servers where browsers restrict `crypto.subtle`, or if WebRTC P2P is blocked by strict NAT/firewalls. Strips `pin` and full `customDeck` payloads on MQTT broadcasts and uses MQTT Last Will + 2s/6.5s heartbeats for fast disconnect detection.
+* **`BroadcastChannel` + `localStorage`:** Instant zero-network sync for dual-window HDMI / `file://` play, plus `?room=CODE&role=...` URL state preservation on reload.
+* **Optional Firebase Firestore:** Drop a `window.FIREBASE_CONFIG` object in to enable cloud-persisted rooms.
+
+---
+
+### 🔄 Host Workflow State Machine (`roundPhase`)
 
 ```mermaid
 stateDiagram-v2
@@ -91,129 +90,45 @@ stateDiagram-v2
     state "winner (TV Celebration + Next Match)" as winner
 
     faceoff_ready --> faceoff_buzz : "Show Question on TV (Space)"
-    faceoff_buzz --> faceoff_p1 : "Tap Team A or Team B Buzzed"
+    faceoff_buzz --> faceoff_p1 : "Buzz In (Team 1 or Team 2)"
 
     faceoff_p1 --> pass_or_play : "Tap #1 Answer"
     faceoff_p1 --> faceoff_p2 : "Tap #2-#8 Answer OR Wrong Guess (1 Temp X)"
 
-    faceoff_p2 --> pass_or_play : "Tap Higher-Rank Answer / Lower-Rank / Wrong Guess"
+    faceoff_p2 --> pass_or_play : "Compare Rank / Wrong Guess"
 
     pass_or_play --> playing : "Choose PLAY or PASS"
 
-    playing --> playing : "Tap Answer (Board Not Swept) OR Wrong Guess (Strike 1 or 2)"
+    playing --> playing : "Tap Answer OR Strike 1-2"
     playing --> steal : "3rd Strike (XXX)"
-    playing --> round_over : "Board Swept (All Answers Revealed)"
+    playing --> round_over : "Board Swept"
 
-    steal --> round_over : "Tap Answer (Steal Succeeds) OR Wrong Guess (Steal Missed)"
+    steal --> round_over : "Steal Answer OR Steal Missed"
 
-    round_over --> round_over : "Reveal Remaining Hidden Answers (0 pts)"
+    round_over --> round_over : "Reveal Remaining Answers (0 pts)"
     round_over --> faceoff_ready : "Next Round"
-    faceoff_ready --> faceoff_ready : "Swap / Pick Any Round from Deck (While Hidden)"
+    faceoff_ready --> faceoff_ready : "Swap / Pick Round (While Hidden)"
     round_over --> winner : "Final Round Complete -> Show Winner Screen"
 ```
 
-### Allowed Actions by Phase
-
 | Phase (`roundPhase`) | Answer Tiles | Primary Host Actions Allowed |
 | :--- | :--- | :--- |
-| **`faceoff-ready`** | 🔒 Locked | **👁️ Show Question on TV (`Space`)**, or tap the Host question box / round pill to **Randomize** or **Choose a Round from Deck** (`1x`/`2x`/`3x` tree) |
-| **`faceoff-buzz`** | 🔒 Locked | **🔔 Team A Buzzed** or **🔔 Team B Buzzed** |
-| **`faceoff-p1`** | 🔓 Unrevealed clickable | Tap revealed answer (`1`–`8`), **❌ Wrong Guess** (1 Temp X), or **🔍 Be More Specific** (`+5s`) |
+| **`faceoff-ready`** | 🔒 Locked | **👁️ Show Question on TV (`Space`)**, or tap the Host question box / round pill to swap or randomize rounds (`1x`/`2x`/`3x` tree) |
+| **`faceoff-buzz`** | 🔒 Locked | **🔔 Team A Buzzed** or **🔔 Team B Buzzed** (remote buzzers unlocked) |
+| **`faceoff-p1`** | 🔓 Unrevealed clickable | Tap revealed answer (`1`–`8`), **❌ Wrong Guess** (1 Temp X + auto-starts Turn 2 timer), or **🔍 Be More Specific** (`+5s`) |
 | **`faceoff-p2`** | 🔓 Unrevealed clickable | Tap 2nd player's answer (`1`–`8`), **❌ Wrong Guess**, or **🔍 Be More Specific** (`+5s`) |
 | **`pass-or-play`** | 🔒 Locked | **▶️ PLAY Board** or **🔀 PASS Board** |
 | **`playing`** | 🔓 Unrevealed clickable | Tap board answer (`1`–`8`), **❌ Wrong Answer (`X`)**, **🔍 Be More Specific** (`+5s`), or **🔄 Start Timer (`R`)** |
 | **`steal`** | 🔓 Unrevealed clickable | **⏱️ Start 30s Steal Timer (`R`)**, tap stolen answer (`1`–`8`), **❌ Steal Missed (`X`)**, or **🔍 Be More Specific** (`+5s`) |
 | **`round-over`** | 🔓 Unrevealed clickable (`0 pts`) | **👁️ Reveal Answer #N (0 pts)**, **⏭️ Next Round ▶**, or **🏆 Show Winner Screen** (final round) |
 
-> **Tip:** Already-revealed answer tiles stay locked to prevent accidental taps—use **`↩️ Undo`** in the header to step back at any time, or **tap any element directly** (Team Score Strip / TV team card, hidden question box, phase stepper, or `⏱️` timer pill) to open its quick override popover.
-
-### Quick-Reference Cheat Sheet
-
-| Phase | Host Action (Button or Shortcut) | Automatic Game Flow & TV Behavior |
-| :--- | :--- | :--- |
-| **1. New Game Setup** | Click **✨ Create New Game Room** | Select your question deck (and optionally click **🖨️ Review**), enter **Team Names**, and expand **⚙️ Game Rules, Timer & PIN Options** if needed. |
-| **2. Start of Round** | Click **👁️ Show Question on TV** (`Space`) | Reveals the question on the TV. **No timer runs yet** (`faceoff-buzz`)—players have unlimited time until the first person buzzes in. |
-| **3. Face-Off Buzz-In** | Tap **🔔 Team A Buzzed** or **🔔 Team B Buzzed** | Plays the Face-Off tone, advances to `faceoff-p1`, and **automatically starts their answer timer**. |
-| **4. Face-Off Turn 1** | Tap their answer (`1`–`8`) or tap **❌ Wrong Guess** (`X`) | • **If `#1` Answer**: That team immediately wins the Face-Off (`pass-or-play`).<br>• **If `#2`–`#8` Answer**: Passes the turn to the opposing team (`faceoff-p2`).<br>• **If Wrong Guess (`X`)**: Flashes 1 temporary X on the TV (round strikes untouched), passes the turn to the opposing team (`faceoff-p2`), and **automatically starts their answer timer**. |
-| **5. Face-Off Turn 2** | Tap 2nd player's answer (`1`–`8`) or tap **❌ Wrong Guess** (`X`) | Automatically compares ranks and advances to **`pass-or-play`** for the higher-ranking team! |
-| **6. Play or Pass** | Click **▶️ PLAY** or **🔀 PASS** | Assigns board control (`playing`) and resets the timer for the playing team (press `R` to start the countdown for each player). |
-| **7. Team Play (`0–3 X`)** | Tap answer (`1`–`8`) or **❌ Wrong (`X`)** | • **Correct answer or Strike 1/2**: Resets the Player Answer Timer to full duration (`R` to start, `T` to pause/resume).<br>• **Timer hits `0s` (`TIME!`)**: Sounds the time-up alert without forcing a transition—the Host can still tap a board answer, tap **❌ Wrong (`X`)**, or restart the timer.<br>• **Board Swept**: If all answers are revealed, awards the pot and enters `round-over`.<br>• **3rd Strike (`XXX`)**: **Automatically switches teams to `steal`**, shows **"CHANCE TO STEAL [POT] PTS!"** on the TV, and pre-loads the **30s Steal Timer**. |
-| **8. Steal Mode (`30s`)** | Click **⏱️ Start 30s Steal Timer (`R`)**, then tap board answer or **❌ Steal Missed (`X`)** | • **If Answer on Board**: Reveals tile, awards the pot to the stealing team, and enters `round-over`.<br>• **If Wrong (`X`)**: Triggers `X`, awards the pot to the original playing team, and enters `round-over`. |
-| **9. Round Complete** | Click **👁️ Reveal Answer #N (0 pts)**, then **⏭️ Next Round ▶** | Reveals remaining unflipped tiles one by one without affecting scores, then advances to the next round (where you can swap the round from the deck while the question is still hidden). |
-| **10. Tie-Breaker / Match Winner** | Plays after the final regular round | • **If Tied (`T1 == T2`)**: Unlocks the **⚡ Sudden-Death Tie-Breaker** round—teams alternate until one picks the **`#1` answer** to win.<br>• **When a Team Wins**: Stays in `round-over` so you can reveal remaining hidden answers first, then click **🏆 Show Winner Screen** to celebrate on TV and open **Next Match Setup**. |
+> **Host Shortcuts & Popovers:** Tap any Team Score Card, the Phase Stepper, or the `⏱️` Timer Pill directly to open contextual override popovers.
 
 ---
 
-### 1. Creating a New Game (`🆕 New Game Setup`)
-When you click **✨ Create New Game Room**, the **New Game Setup** modal walks you through 3 streamlined steps:
-1. **Active Question Deck**:
-   * Choose any deck from the dropdown (`deckName • XX Rounds • XX Fast Money`), or click **🖨️ Review** to open the printable review sheet & `Used`/`Unused` manager.
-   * The **📊 Rounds Unused** badge shows how many questions remain unplayed in that deck across your party session (with a **↺ Reset Used** button to clear history anytime).
-2. **Team Names**: Enter **Team 1** and **Team 2** names (or click **🎲 Swap Preset Names** to cycle through your deck's `teamPresets`).
-3. **⚙️ Game Rules, Timer & PIN Options** *(collapsible)*: Choose **Rounds per Game** (`3`, `4`, `5`, `6`, or `All`), **Unplayed Round Selection** (`Randomize by Level`, `In Order by Level`, or `Random Shuffle`), **Include "Fast Money" Bonus Round**, **Player Answer Timer** (`5s`/`7s`/`10s`/`15s`), and **4-Digit Host PIN**.
+### 📊 Custom Question Decks (`/decks/`, JSON Schema & `review.html`)
 
----
-
-### 2. Starting a Round & The Face-Off (Hidden Question → Unlimited Wait → First Buzz)
-1. **Mystery Question State (`faceoff-ready`)**: Whenever a new round is selected, the question prompt on the **TV Display** starts **hidden** (`🔒 Question Hidden — Get Ready for the Face-Off!`) so players cannot read ahead while walking up to the podium. Meanwhile, the **Host Remote** displays the full question and answer key—and while hidden, you can **tap the question box** (or round pill) to randomize or pick another round from the `1x`/`2x`/`3x` tree.
-2. **Reveal Question on TV (`Space`)**: Once one player from each team is ready, the Host clicks **👁️ Show Question on TV (`Space`)** and reads the question aloud. Revealing the question marks that round as **Used** in `localStorage`, and **no timer starts yet** (`faceoff-buzz`).
-3. **Buzzing In & Face-Off Turns**:
-   * Tap **🔔 Team A Buzzed First** or **🔔 Team B Buzzed First** on the Host screen. This plays the Face-Off tone and starts that team's shot-clock (`faceoff-p1`).
-   * **Correct Answer**: Tap that answer on the Host Remote (`1`–`8`). The tile flips on the TV with a *Ding!*, points are added to the Round Pot, and the **timer automatically stops**.
-   * **Wrong Guess or Not #1 Answer**: If the first player misses (**❌ Face-Off Wrong Guess**, 1 temp `X` with no round strike) or doesn't get `#1`, the turn passes to the opposing player (`faceoff-p2`) — and on a **Wrong Guess**, the timer **automatically starts** for that second player.
-   * **Pass or Play**: Whichever team wins the Face-Off chooses to **Play** or **Pass** (`▶️ PLAY` / `🔀 PASS`).
-
----
-
-### 3. Going Down the Line (Asking Each Team Member)
-As the Host goes down the line asking each member of the playing team for an answer:
-1. **Start Next Player's Clock**: Each time you ask the next team member the question, tap **🔄 Start Timer** (or press **`R`**). The timer resets to full duration (`10s`, `7s`, etc.) and immediately counts down (playing a clock tick during the final 5 seconds).
-2. **If the Player Answers in Time**:
-   * **On the Board**: Tap the matching answer button (`1`–`8`). The tile flips on the TV, points add to the Round Pot, and the timer resets.
-   * **Wrong Answer**: Tap **❌ Wrong / X** (or press **`X`**). The Big Red `X` flashes on the TV & mini TV monitor, the strike counter increments, and the timer stops.
-3. **If the Timer Hits `0` (`TIME!`)**:
-   * The TV and Host Remote automatically sound the buzzer honk and flash `TIME!`. The Host can then tap **`X`** to issue a strike and press **`R`** for the next player.
-4. **Pausing, "Be More Specific", or Adjusting Anything Anytime**:
-   * **⏱️ Start / Pause / Resume Timer (`T`)**: Start, pause, or resume the shot-clock anytime; on the TV screen, the timer stays hidden unless started.
-   * **🔍 Be More Specific**: Plays a gentle double-buzz and adds `+5s` if the timer is running.
-   * **Tap-to-Edit Popovers**: Tap a **Team Card/Score** (name, exact score/`±1`/`±10`, make active, award pot), the **Phase Stepper** (board control & manual strikes `X`/`XX`/`XXX`), or the **`⏱️` Timer Pill** (duration `5s`/`7s`/`10s`/`15s`/`30s` or stop/reset).
-
----
-
-### 4. Three Strikes & The 30-Second Steal
-1. Once the playing team gets **3 Strikes (`XXX`)**:
-   * The TV automatically switches to the opposing team with **`🚨 [Stealing Team]: CHANCE TO STEAL [POT] PTS!`** and pre-loads the shot-clock to **`30s`**.
-2. **Steal Huddle Timer**: Click **⏱️ Start 30s Steal Timer (`R`)** to start the 30-second huddle countdown on the TV for the opposing team's single Steal attempt.
-3. **Resolving the Round**:
-   * **If the Steal Succeeds**: Tap the matching answer on the Host Remote—it flips, adds to the pot, and **automatically awards the pot to the stealing team**.
-   * **If the Steal Misses**: Tap **❌ Steal Missed (`X`)**—triggers `X` and **automatically awards the pot to the original playing team**.
-4. **Reveal Remaining Answers**: Click **👁️ Reveal Answer #N (0 pts)** to flip remaining unflipped answers one at a time on the TV without affecting the score, then click **⏭️ Next Round ▶**!
-
----
-
-### 5. Fast Money Bonus Round (`⚡ Fast Money` — Optional)
-If **Include "Fast Money" Bonus Round** was checked during game setup:
-1. Click **⚡ Fast Money** on the Host Remote to switch the TV to the Fast Money board.
-2. **Player 1 (20 Seconds)**: Player 2 steps out of the room/earshot. Click **`20s`** and **Start** to run the 20-second clock.
-3. **1-Tap Answer & Score Chips**: Beneath each Fast Money question on the Host Remote, tap any survey chip (e.g., `[Turkey • 38]` or `[❌ 0 Pts]`) to auto-fill both the answer text and points in one tap (or type a custom answer and tap the matching score chip). Tapping `[❌ 0 Pts]` (or entering `0`) triggers the zero-point buzzer honk, while positive points play the reveal ding!
-4. **Hide Player 1 & Run Player 2 (25 Seconds)**: Click **🙈 Hide/Show P1** so Player 1's answers are hidden on the TV, bring Player 2 back, click **`25s`**, and click **Start**. If Player 2 gives an identical answer to Player 1, tap **Dup ❌** to sound the duplicate-answer buzzer!
-
----
-
-### 6. Ending a Match & Running Multiple Games at a Party (`🏆 Show Winner Screen`)
-When the final round of a match finishes:
-1. **Reveal Remaining Answers First**: The game stays in `round-over` so you can click **👁️ Reveal Answer #N (0 pts)** (or tap hidden tiles) to show any unguessed answers to the crowd.
-2. **Show Winner Screen**: Click **🏆 Show Winner Screen** (or **🏁 End Match** in `⋯`) to transition the TV to the **🏆 Match Champion Celebration Screen** and open **Next Match Setup**:
-   * **👑 1. Winner Stays On**: Keeps the winning team as Team 1 (resetting scores to `0` for the new match) and prompts you for the **New Challenger Team (Team 2)** name.
-   * **🔥 2. Rematch (Same Teams)**: Keeps both **Team 1** and **Team 2** in their existing slots, resets scores to `0`, and deals a fresh set of unplayed rounds.
-   * **👥 3. Two New Teams**: Prompts for two fresh team names (or lets you click **🎲 Swap Preset Pair**).
-   * Click **🚀 Deal Next Unplayed Rounds & Start Match** to immediately deal the next slice of unused rounds and Fast Money questions.
-
----
-
-## 📊 Deck JSON Schema & Adding New Decks to `/decks/`
-
-A Party Feud Deck JSON file lets you customize the game title, emoji icon, deck name, team presets, rounds, and Fast Money questions:
+A Party Feud Deck JSON file configures `gameTitle`, `gameIcon`, `deckName`, `teamPresets`, `rounds`, and `fastMoney`:
 
 ```json
 {
@@ -245,26 +160,30 @@ A Party Feud Deck JSON file lets you customize the game title, emoji icon, deck 
 }
 ```
 
-### How `/decks/` Discovery Works:
-* **On GitHub Pages (`https://<user>.github.io/<repo>/`)**: Any `.json` or `.csv` file you commit to the `decks/` folder is **automatically discovered** via the GitHub Contents API and added to the **Select Question Deck** dropdown!
-* **Offline (`file://`)**: Register new decks in [`decks/catalog.js`](./decks/catalog.js) so they work instantaneously without a web server.
+* **GitHub Pages Auto-Discovery:** Any `.json` or `.csv` file committed to `/decks/` is automatically discovered via the GitHub Contents API.
+* **Offline (`file://`):** Register bundled decks in [`decks/catalog.js`](./decks/catalog.js).
+* **Direct URL Loading:** `?deck=https://.../my-questions.json&title=Holiday+Party+Feud&icon=🎉`
+* **Printable Review & `Used` Tracker:** Open [`review.html`](./review.html) (or `review.html?deck=desi-thanksgiving`) to inspect all rounds/Fast Money sets and toggle `Used` / `Unused` status in `localStorage`.
 
 ---
 
-## 📁 Repository Structure
+### 📁 Repository Structure
 
 ```text
 feud/
 ├── index.html                      # Main app UI (Lobby, TV Display, Host Remote, Buzzers, Modals)
 ├── review.html                     # Printable 2-column question review sheet (?deck=...)
+├── AGENT.md                        # AI/developer workflow, conventions & cache-busting guide
 ├── css/
 │   └── styles.css                  # Responsive game show styling & 3D tile animations
 ├── data/
 │   └── questions.js                # Generic default starter deck & configuration
+├── docs/
+│   └── screenshots/                # Gameplay screenshots embedded in README.md
 ├── js/
 │   ├── app.js                      # Controller, keyboard shortcuts & modal handlers
 │   ├── state.js                    # State management, multi-game slicer & localStorage
-│   ├── sync.js                     # Trystero WebRTC P2P + BroadcastChannel + Firebase sync
+│   ├── sync.js                     # Trystero WebRTC P2P + MQTT-WSS + BroadcastChannel + Firebase sync
 │   ├── formats.js                  # Universal CSV, Friendly-Feud JSON & Deck parser/exporter
 │   ├── views.js                    # DOM renderers for TV Display, Host Remote, and Buzzers
 │   └── audio.js                    # Web Audio API synthesizer (no external MP3 dependencies)
@@ -281,14 +200,11 @@ feud/
     └── template.csv                        # Sample spreadsheet template for Google Sheets / Excel
 ```
 
----
-
-## 🌐 Deploying Your Own Copy on GitHub Pages
-
+### 🌐 Deploying Your Own Copy on GitHub Pages
 1. Fork this repository on GitHub.
 2. Go to **Settings → Pages**.
 3. Under **Build and deployment**, select **Deploy from a branch** → `main` → `/ (root)` and click **Save**.
-4. Your live multiplayer Party Feud site will be ready at `https://<your-username>.github.io/<repo-name>/`!
+4. Your live Party Feud site will be ready at `https://<your-username>.github.io/<repo-name>/`!
 
 ## 📄 License
 
