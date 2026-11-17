@@ -1,6 +1,35 @@
 # 🎉 Party Feud — Live Party Multiplayer Game Engine
 
-A zero-backend, multi-device **Party Feud** game show web app built to run directly on **GitHub Pages** (or locally by opening `index.html`)—complete with a PIN-locked **Host Remote**, a 16:9 **TV Display Board**, an optional **Fast Money Bonus Round**, a **Multi-Game Unplayed Round Slicer**, and a **Printable Question Review & `Used` Tracker** (`review.html`).
+A zero-backend, multi-device **Party Feud** game show web app built to run directly on **GitHub Pages** (or locally via HTTP / `file://`)—complete with a PIN-locked **Host Remote**, a 16:9 **TV Display Board**, **Remote Team & Combo Buzzers**, **3-Option Join QR**, an optional **Fast Money Bonus Round**, a **Multi-Game Unplayed Round Slicer**, and a **Printable Question Review & `Used` Tracker** (`review.html`).
+
+---
+
+## 🌟 Key Feature Highlights
+
+| Area | Highlights |
+| :--- | :--- |
+| **🎙️ Host Remote Control** | Slim merged header, **Guided Phase Coach** & collapsible **Teleprompter (`🎙️ SCRIPT` / `HIDE`)**, un-scrolled full Answer Key, embedded 16:9 mini TV monitor, **tap-to-edit popovers**, strict phase gating, and **25-step `↩️ Undo`**. |
+| **📺 16:9 TV Display Board** | Widescreen board with 3D flipping tiles, Web Audio game-show SFX (and Host-synced mute), Face-Off & Steal alert banners, giant red `X` overlays, **TV Screen Selection** modal on game start, and **Match Winner Celebration**. |
+| **🔔 Remote & Combo Buzzers** | Dedicated **Team 1 / Team 2** phone buzzers and symmetrical **Combo Buzzer** (Team 1 rotated 180° at top, icon-only `🟢`/`⛶`/`🔒` center bar, Team 2 at bottom) with Face-Off buzz lock until question reveal & mutual-exclusion locks. |
+| **📱 3-Option Join QR** | Host modal with **TV Display**, **Individual Buzzers** (left/right side-by-side on TV), and **Combo Buzzer** QR cards—plus LAN IP override on `localhost` and automatic hide once devices connect. |
+| **🔌 Zero-Config Hybrid Sync** | **Trystero WebRTC P2P** (multi-relay Nostr) on `https://` + automatic **MQTT-over-WSS** fallback on `http://` LAN servers, plus offline `BroadcastChannel` + `localStorage` for HDMI dual-window play. |
+| **🔄 Multi-Game Party Engine** | Tracks `Used` rounds across consecutive games (`review.html` + `localStorage`), deals unplayed `1x → 2x → 3x` slices, unlocks **Sudden-Death Tie-Breaker** only on ties, and supports **Winner Stays On** / **Rematch**. |
+
+---
+
+## 📸 Gameplay Screenshots
+
+| Lobby & Room Setup | Host Remote + Mini TV |
+| :---: | :---: |
+| ![Lobby View](docs/screenshots/lobby.png) | ![Host Remote](docs/screenshots/host-remote.png) |
+
+| 16:9 TV Display Board | Question Review & `Used` Tracker |
+| :---: | :---: |
+| ![TV Display](docs/screenshots/tv-board.png) | ![Question Review Sheet](docs/screenshots/review-sheet.png) |
+
+| Individual Team Buzzer (Active) | Combo Buzzer (Active) |
+| :---: | :---: |
+| ![Individual Team Buzzer](docs/screenshots/team-buzzer.png) | ![Combo Buzzer](docs/screenshots/combo-buzzer.png) |
 
 ---
 
