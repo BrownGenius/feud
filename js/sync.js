@@ -456,12 +456,6 @@ window.Feud = window.Feud || {};
           });
         }
         updateHostPeerBadge();
-        const st = getLocalStateCallback ? getLocalStateCallback() : null;
-        if (st && sendP2pAction) {
-          try {
-            sendP2pAction({ type: "STATE_UPDATE", state: st }, peerId);
-          } catch (e) {}
-        }
       });
 
       room.onPeerLeave((peerId) => {
