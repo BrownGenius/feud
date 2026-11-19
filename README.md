@@ -85,16 +85,13 @@ Launch straight into any bundled question deck with one click — or open the pr
 ## 🚀 Quick Start (Play in 60 Seconds)
 
 ### Option 1: Party Setup (TV + Phone Buzzers via QR Code)
-1. Open **[Party Feud](https://browngenius.github.io/feud)** on your laptop or tablet and tap **✨ Create New Game Room**.
-2. Choose a question deck, enter your team names, and tap **🚀 Start New Game**.
-3. Pick how to show the TV board:
-   * **Start Local TV Screen Window** (if your laptop is plugged into a TV via HDMI), or
-   * **Show QR Code for Remote TV Screen** (scan on a smart TV/casting laptop — it disappears automatically once connected).
-4. Tap **📱 Join QR** anytime to put **Individual Buzzers** (Team 1 on the left, Team 2 on the right) or **Combo Buzzer** up on the TV for players to scan.
+1. Open **[Party Feud](https://browngenius.github.io/feud)** on your laptop or tablet — the game setup sits right on the Lobby!
+2. Pick a question deck, enter your team names, choose your **📺 TV Display** option (**Local Window (HDMI)**, **Remote TV (QR)**, or **Host Only**), and tap **🚀 Start Game**.
+3. Click **`📱 Buzzers: 0/2`** in the Host header anytime to open the unified **Connect TV & Buzzers** panel — project **Individual Buzzers** (Team 1 Blue on left, Team 2 Red on right) or **Combo Buzzer** onto the TV for players to scan.
 
 ### Option 2: Laptop + HDMI TV (Works Even Offline)
 1. Plug your laptop into your TV in **Extended Display** mode (works even with Wi-Fi turned off by opening `index.html`).
-2. Start a room, pick **1. Start Local TV Screen Window**, drag that window onto your TV, and click **⛶ Fullscreen**.
+2. Leave **🖥️ Local Window (HDMI)** selected and click **🚀 Start Game** — the TV window pops out automatically; drag it onto your TV and click **⛶ Fullscreen**.
 
 ---
 

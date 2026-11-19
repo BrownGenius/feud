@@ -219,6 +219,8 @@ button:disabled {
   flex-direction: column;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
+  max-width: 100%;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
 }
 
@@ -232,6 +234,82 @@ button:disabled {
   font-size: 13px;
   color: #e2e8f0;
   line-height: 1.4;
+}
+
+.lobby-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.lobby-grid-2 > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (min-width: 860px) {
+  .lobby-grid-2 {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  }
+}
+
+.lobby-host-card {
+  justify-content: flex-start;
+  border-color: rgba(251, 191, 36, 0.85);
+}
+
+.lobby-join-card {
+  justify-content: flex-start;
+}
+
+.setup-deck-tools summary {
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  color: #93c5fd;
+  user-select: none;
+}
+
+.tv-mode-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+@media (max-width: 520px) {
+  .tv-mode-group {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tv-mode-btn {
+  min-height: 40px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(148, 163, 184, 0.35);
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.tv-mode-btn:hover:not(:disabled) {
+  border-color: rgba(251, 191, 36, 0.75);
+}
+
+.tv-mode-btn.is-selected {
+  background: rgba(245, 158, 11, 0.24);
+  border-color: var(--gold);
+  color: #fef08a;
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.35);
+}
+
+.tv-mode-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .field-row {
@@ -304,8 +382,22 @@ button:disabled {
 
 .buzzer-split-btns {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.buzzer-split-btns > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 460px) {
+  .buzzer-split-btns .action-btn {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
 }
 
 /* =====================================================================
@@ -693,6 +785,8 @@ button:disabled {
 
 .host-team-input {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 42px;
   background: #0f172a;
   border: 1.5px solid var(--gold);
@@ -702,6 +796,16 @@ button:disabled {
   font-weight: 900;
   font-size: 16px;
   text-transform: uppercase;
+}
+
+.host-team-input.team-1-input {
+  border-color: rgba(96, 165, 250, 0.8);
+  color: #dbeafe;
+}
+
+.host-team-input.team-2-input {
+  border-color: rgba(248, 113, 113, 0.8);
+  color: #fee2e2;
 }
 
 /* =====================================================================
@@ -735,11 +839,11 @@ button:disabled {
 }
 
 .giant-buzzer-btn.team-1-theme {
-  background: radial-gradient(circle, #ef4444 0%, #991b1b 100%);
+  background: radial-gradient(circle, #3b82f6 0%, #1e3a8a 100%);
 }
 
 .giant-buzzer-btn.team-2-theme {
-  background: radial-gradient(circle, #3b82f6 0%, #1e3a8a 100%);
+  background: radial-gradient(circle, #ef4444 0%, #991b1b 100%);
 }
 
 .giant-buzzer-btn.won-state {
@@ -801,6 +905,8 @@ button:disabled {
 
 .fm-txt {
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
   min-height: 42px;
   background: #020617;
   border: 1.5px solid #334155;
@@ -1009,6 +1115,8 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .buzzer-banner-tv.steal-alert {
@@ -2475,7 +2583,6 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
   }
 
   body:has(#hostView:not(.hidden)) #roleSubtitle,
-  body:has(#hostView:not(.hidden)) #btnQrCode,
   body:has(#hostView:not(.hidden)) #wakeLockBadge,
   body:has(#hostView:not(.hidden)) #btnMute,
   body:has(#hostView:not(.hidden)) #btnFullscreen,
@@ -2748,11 +2855,32 @@ body:has(#lobbyView:not(.hidden)) .top-bar {
 }
 
 .host-strip-team.team-1 {
-  border-color: rgba(239, 68, 68, 0.45);
+  border-color: rgba(59, 130, 246, 0.55);
 }
 
 .host-strip-team.team-2 {
-  border-color: rgba(59, 130, 246, 0.45);
+  border-color: rgba(239, 68, 68, 0.55);
+}
+
+.host-devices-btn {
+  min-height: 28px;
+  padding: 4px 10px;
+  font-size: 11px;
+  border-color: rgba(251, 191, 36, 0.65);
+  background: rgba(245, 158, 11, 0.16);
+  color: #fde68a;
+}
+
+.host-devices-btn.is-ready {
+  border-color: rgba(52, 211, 153, 0.8);
+  background: rgba(6, 78, 59, 0.55);
+  color: #6ee7b7;
+}
+
+.host-devices-btn.is-partial {
+  border-color: rgba(96, 165, 250, 0.8);
+  background: rgba(30, 58, 138, 0.5);
+  color: #dbeafe;
 }
 
 .host-strip-team.is-active {
@@ -3161,11 +3289,11 @@ body:has(#buzzerView:not(.hidden)) .top-bar {
 }
 
 .tv-qr-dual-side.t1 {
-  border-color: rgba(239, 68, 68, 0.75);
+  border-color: rgba(59, 130, 246, 0.75);
 }
 
 .tv-qr-dual-side.t2 {
-  border-color: rgba(59, 130, 246, 0.75);
+  border-color: rgba(239, 68, 68, 0.75);
 }
 
 .tv-qr-dual-title {
@@ -3207,10 +3335,55 @@ body:has(#buzzerView:not(.hidden)) .top-bar {
 
 /* 4-QR Grid Modal on Host */
 .qr-modal-wide {
-  max-width: 900px;
+  max-width: 760px;
   width: 96vw;
   text-align: center;
   align-items: center;
+}
+
+.qr-tv-strip {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.86);
+  border: 2px solid rgba(96, 165, 250, 0.45);
+  text-align: left;
+}
+
+.qr-tv-strip-info {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.qr-tv-strip-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  max-width: 150px;
+  text-align: center;
+}
+
+.qr-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .qr-grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .qr-grid-3 {
@@ -3248,11 +3421,11 @@ body:has(#buzzerView:not(.hidden)) .top-bar {
 }
 
 .qr-dual-label.t1 {
-  color: #fca5a5;
+  color: #93c5fd;
 }
 
 .qr-dual-label.t2 {
-  color: #93c5fd;
+  color: #fca5a5;
 }
 
 .qr-grid-img-sm {

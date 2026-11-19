@@ -90,20 +90,19 @@ window.Feud = window.Feud || {};
     if (!badge) return;
     if (!("wakeLock" in navigator)) {
       badge.textContent = "☀️ Stay-Awake N/A";
-      badge.className = "pill-badge awake-warn";
+      badge.className = `pill-badge awake-warn${activeRole === "lobby" ? " hidden" : ""}`;
       return;
     }
     try {
       wakeLockSentinel = await navigator.wakeLock.request("screen");
-      badge.textContent = "☀️ Screen Awake";
-      badge.className = "pill-badge awake-ok";
+      badge.className = "pill-badge awake-ok hidden";
       wakeLockSentinel.addEventListener("release", () => {
         badge.textContent = "💤 Wake Lock Inactive";
-        badge.className = "pill-badge awake-warn";
+        badge.className = `pill-badge awake-warn${activeRole === "lobby" ? " hidden" : ""}`;
       });
     } catch (err) {
       badge.textContent = "💤 Wake Lock Inactive";
-      badge.className = "pill-badge awake-warn";
+      badge.className = `pill-badge awake-warn${activeRole === "lobby" ? " hidden" : ""}`;
     }
   }
 
@@ -385,6 +384,8 @@ window.Feud = window.Feud || {};
         statusEl.textContent =
           'Offline tip: Click "📂 Scan Folder" and pick your local decks/ folder (or "📄 Load Deck File") to add .json decks.';
         statusEl.style.color = "#fde68a";
+        const toolsDetails = document.getElementById("setupDeckToolsDetails");
+        if (toolsDetails) toolsDetails.open = true;
       } else {
         statusEl.textContent =
           'Scan your local decks/ folder or click "📄 Load Deck File" to add custom .json decks.';
@@ -645,9 +646,83 @@ window.Feud = window.Feud || {};
     if (iconIn) iconIn.value = roomState.gameIcon || "🎉";
   }
 
+  const TV_SETUP_MODE_KEY = "party_feud_tv_setup_mode_v1";
+  let selectedTvSetupMode = null;
+  let remoteTvConnected = false;
+  let localTvWindowOpened = false;
+  let qrModalOpenedForTvSetup = false;
+
+  function getDefaultTvSetupMode() {
+    if (isFileProtocol()) return "local";
+    return typeof window !== "undefined" && window.innerWidth >= 900 ? "local" : "none";
+  }
+
+  function getSelectedTvSetupMode() {
+    if (!selectedTvSetupMode) {
+      try {
+        const saved = localStorage.getItem(TV_SETUP_MODE_KEY);
+        if (saved === "local" || saved === "qr" || saved === "none") {
+          selectedTvSetupMode = saved;
+        }
+      } catch (e) {}
+    }
+    let mode = selectedTvSetupMode || getDefaultTvSetupMode();
+    if (isFileProtocol() && mode === "qr") {
+      mode = "local";
+    }
+    selectedTvSetupMode = mode;
+    return mode;
+  }
+
+  function syncTvSetupModeUi() {
+    const mode = getSelectedTvSetupMode();
+    const qrBtn = document.getElementById("tvModeBtnQr");
+    if (qrBtn) {
+      qrBtn.disabled = isFileProtocol();
+      qrBtn.title = isFileProtocol()
+        ? "Remote TV QR requires HTTP/HTTPS (use Local Window on file://)"
+        : "Show Remote TV QR code right after starting";
+    }
+    document.querySelectorAll("#tvModeChoiceGroup .tv-mode-btn").forEach((btn) => {
+      btn.classList.toggle("is-selected", btn.dataset.tvMode === mode);
+    });
+  }
+
+  function selectTvSetupMode(mode) {
+    if (mode !== "local" && mode !== "qr" && mode !== "none") return;
+    if (isFileProtocol() && mode === "qr") {
+      Feud.showToast("Remote TV QR requires HTTP/HTTPS — using Local Window.");
+      mode = "local";
+    }
+    selectedTvSetupMode = mode;
+    try {
+      localStorage.setItem(TV_SETUP_MODE_KEY, mode);
+    } catch (e) {}
+    syncTvSetupModeUi();
+  }
+
+  function mountSetupForm(targetSlotId) {
+    const form = document.getElementById("gameSetupForm");
+    const slot = document.getElementById(targetSlotId);
+    if (form && slot && form.parentElement !== slot) {
+      slot.appendChild(form);
+    }
+    const cancelBtn = document.getElementById("newGameModalCancelBtn");
+    if (cancelBtn) {
+      cancelBtn.classList.toggle("hidden", targetSlotId !== "newGameModalSlot");
+    }
+  }
+
   function openNewGameModal(preferredMode = "host") {
     Feud.unlockAudio();
     syncSetupModalInputsFromState();
+    syncTvSetupModeUi();
+    if (activeRole === "lobby") {
+      mountSetupForm("lobbySetupSlot");
+      document.getElementById("lobbyHostCard")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
+    mountSetupForm("newGameModalSlot");
     const modal = document.getElementById("newGameModal");
     if (modal) modal.classList.remove("hidden");
   }
@@ -655,6 +730,7 @@ window.Feud = window.Feud || {};
   function closeNewGameModal() {
     const modal = document.getElementById("newGameModal");
     if (modal) modal.classList.add("hidden");
+    mountSetupForm("lobbySetupSlot");
   }
 
   function cycleSetupTeamPresets() {
@@ -772,40 +848,31 @@ window.Feud = window.Feud || {};
     closeNewGameModal();
 
     const code = Feud.generateRoomCode();
+    const tvMode = getSelectedTvSetupMode();
+    remoteTvConnected = false;
+    localTvWindowOpened = false;
+    qrModalOpenedForTvSetup = false;
+
     currentRoomCode = code;
     syncSequenceCounters(roomState);
     Feud.saveRoomStateToStorage(code, roomState);
     syncDeckQueryParam(document.getElementById("deckManagerSelect")?.value || "starter");
+
+    // Open local TV window synchronously during the click gesture so browsers allow the popup
+    if (tvMode === "local") {
+      localTvWindowOpened = openTvDisplayWindow(code);
+    }
+
     enterRole("host", code);
     Feud.saveLastSession("host", code, pinVal);
     await Feud.startHostRoomSync(code, roomState);
-    openTvSetupChoiceModal(code);
-  }
 
-  function openTvSetupChoiceModal(code) {
-    const codeEl = document.getElementById("tvChoiceRoomCode");
-    if (codeEl) codeEl.textContent = code || currentRoomCode || "----";
-    const qrBtn = document.getElementById("tvChoiceQrBtn");
-    if (qrBtn) {
-      qrBtn.disabled = isFileProtocol();
-      qrBtn.title = isFileProtocol()
-        ? "QR requires http:// or https:// (not file://)"
-        : "Show TV QR code";
-    }
-    document.getElementById("tvSetupChoiceModal")?.classList.remove("hidden");
-  }
-
-  function chooseTvSetupOption(choice) {
-    document.getElementById("tvSetupChoiceModal")?.classList.add("hidden");
-    const code = currentRoomCode;
-    if (choice === "local") {
-      if (openTvDisplayWindow(code)) {
-        Feud.showToast(`Room ${code} ready! 📺 TV window opened — drag it to your TV screen.`);
-      }
-    } else if (choice === "qr") {
-      openRemoteTvQrModal();
+    if (tvMode === "qr") {
+      openQrModal(null, { forTvSetup: true });
+    } else if (tvMode === "local" && localTvWindowOpened) {
+      Feud.showToast(`Room ${code} ready! 📺 TV window opened — drag it to your TV screen.`);
     } else {
-      Feud.showToast(`Room ${code} ready! Playing with Host screen view.`);
+      Feud.showToast(`Room ${code} ready! Click "📱 Buzzers: 0/2" anytime to connect TV or phones.`);
     }
   }
 
@@ -815,7 +882,7 @@ window.Feud = window.Feud || {};
 
   async function joinHostRoom() {
     Feud.unlockAudio();
-    const code = document.getElementById("hostJoinCode").value.trim().toUpperCase();
+    const code = document.getElementById("joinRoomCodeInput").value.trim().toUpperCase();
     const pin = document.getElementById("hostJoinPin").value.trim();
 
     if (code.length < 4 || pin.length < 4) {
@@ -841,7 +908,7 @@ window.Feud = window.Feud || {};
   async function joinTvDisplay(opts) {
     const autoLaunched = Boolean(opts && opts.autoLaunched === true);
     Feud.unlockAudio();
-    const code = document.getElementById("tvRoomInput").value.trim().toUpperCase();
+    const code = document.getElementById("joinRoomCodeInput").value.trim().toUpperCase();
     if (code.length < 4) {
       Feud.showToast("Enter the 4-character Room Code from the Host.");
       return;
@@ -866,7 +933,7 @@ window.Feud = window.Feud || {};
     enterRole("tv", code);
     Feud.showToast(
       autoLaunched
-        ? `📺 TV connected to Room ${code}! Drag this window to the TV, then click ⛶ TV Fullscreen (click once to enable sound).`
+        ? `📺 TV connected to Room ${code}! Drag this window to the TV, then click ⛶ Fullscreen (click once to enable sound).`
         : `📺 TV Display connected to Room ${code}!`
     );
   }
@@ -919,14 +986,15 @@ window.Feud = window.Feud || {};
 
   function reopenTvWindow() {
     if (!currentRoomCode || currentRoomCode === "SOLO") return;
-    openTvDisplayWindow(currentRoomCode);
+    localTvWindowOpened = openTvDisplayWindow(currentRoomCode);
+    updateQrTvStatusBadge();
   }
 
   async function joinTeamBuzzer(teamNum, opts) {
     const autoLaunched = Boolean(opts && opts.autoLaunched === true);
     Feud.unlockAudio();
     requestWakeLock();
-    const code = document.getElementById("buzzerRoomInput").value.trim().toUpperCase();
+    const code = document.getElementById("joinRoomCodeInput").value.trim().toUpperCase();
     if (code.length < 4) {
       Feud.showToast("Enter the 4-character Room Code first!");
       return;
@@ -970,7 +1038,7 @@ window.Feud = window.Feud || {};
     const autoLaunched = Boolean(opts && opts.autoLaunched === true);
     Feud.unlockAudio();
     requestWakeLock();
-    const code = document.getElementById("buzzerRoomInput").value.trim().toUpperCase();
+    const code = document.getElementById("joinRoomCodeInput").value.trim().toUpperCase();
     if (code.length < 4) {
       Feud.showToast("Enter the 4-character Room Code first!");
       return;
@@ -1086,16 +1154,13 @@ window.Feud = window.Feud || {};
     document.getElementById("comboBuzzerView")?.classList.add("hidden");
 
     const codeBadge = document.getElementById("roomCodeBadge");
-    const qrBtn = document.getElementById("btnQrCode");
-    const menuQrBtn = document.getElementById("hostMenuQrBtn");
+    const fsBtn = document.getElementById("btnFullscreen");
     const leaveBtn = document.getElementById("btnLeaveRoom");
     const sub = document.getElementById("roleSubtitle");
 
     codeBadge.textContent = `Room: ${code}`;
     codeBadge.classList.remove("hidden");
-    const hideQr = code === "SOLO" || isFileProtocol();
-    if (qrBtn) qrBtn.classList.toggle("hidden", hideQr);
-    if (menuQrBtn) menuQrBtn.classList.toggle("hidden", hideQr);
+    if (fsBtn) fsBtn.classList.toggle("hidden", role !== "solo");
     leaveBtn.classList.remove("hidden");
 
     syncTvViewPlacement(role);
@@ -1208,6 +1273,9 @@ window.Feud = window.Feud || {};
     stopLocalTurnTimerInterval();
     clearInterval(hostFmTimerInterval);
     hostFmTimerInterval = null;
+    remoteTvConnected = false;
+    localTvWindowOpened = false;
+    qrModalOpenedForTvSetup = false;
     activeRole = "lobby";
     try {
       const url = new URL(window.location.href);
@@ -1218,13 +1286,17 @@ window.Feud = window.Feud || {};
     } catch (e) {}
     syncTvViewPlacement("lobby");
     document.body.classList.remove("tv-viewport-lock");
+    closeNewGameModal();
+    syncSetupModalInputsFromState();
+    syncTvSetupModeUi();
     document.getElementById("lobbyView").classList.remove("hidden");
     document.getElementById("tvView").classList.add("hidden");
     document.getElementById("hostView").classList.add("hidden");
     document.getElementById("buzzerView").classList.add("hidden");
     document.getElementById("comboBuzzerView")?.classList.add("hidden");
     document.getElementById("roomCodeBadge").classList.add("hidden");
-    document.getElementById("btnQrCode")?.classList.add("hidden");
+    document.getElementById("btnFullscreen")?.classList.add("hidden");
+    document.getElementById("wakeLockBadge")?.classList.add("hidden");
     document.getElementById("btnLeaveRoom").classList.add("hidden");
     document.getElementById("roleSubtitle").textContent = "Live Party Multiplayer";
     Feud.renderBranding(roomState);
@@ -1505,7 +1577,7 @@ window.Feud = window.Feud || {};
   let lobbyProbeTimer = null;
   function refreshLobbyBuzzerLocks(allowPeer = true) {
     const popupBz = getOpenedPopupBuzzers();
-    const input = document.getElementById("buzzerRoomInput");
+    const input = document.getElementById("joinRoomCodeInput");
     const code = (input ? input.value : "").trim().toUpperCase();
     if (code.length < 4 || !Feud.probeRoomBuzzers) {
       applyBuzzerButtonLocks(popupBz);
@@ -1626,35 +1698,45 @@ window.Feud = window.Feud || {};
     return `${baseUrl}?room=${encodeURIComponent(code)}&role=${encodeURIComponent(role)}`;
   }
 
+  function updateQrTvStatusBadge() {
+    const tvBadge = document.getElementById("qrTvStatusBadge");
+    if (!tvBadge) return;
+    if (remoteTvConnected) {
+      tvBadge.textContent = "✅ Remote TV Connected";
+      tvBadge.className = "pill-badge awake-ok";
+    } else if (localTvWindowOpened) {
+      tvBadge.textContent = "🖥️ Local TV Open";
+      tvBadge.className = "pill-badge awake-ok";
+    } else {
+      tvBadge.textContent = "Waiting for TV…";
+      tvBadge.className = "pill-badge";
+    }
+  }
+
   function refreshQrGridCards() {
     const activeTvRole = roomState && roomState.tvQrOverlay ? roomState.tvQrOverlay.role : null;
     const hideBtn = document.getElementById("qrHideFromTvBtn");
     if (hideBtn) hideBtn.classList.toggle("hidden", !activeTvRole);
+    updateQrTvStatusBadge();
 
     const t1Lbl = document.getElementById("qrLabel_buzzer1");
     const t2Lbl = document.getElementById("qrLabel_buzzer2");
     if (t1Lbl && roomState) t1Lbl.textContent = roomState.team1Name || "Team 1";
     if (t2Lbl && roomState) t2Lbl.textContent = roomState.team2Name || "Team 2";
 
-    ["tv", "buzzer1", "buzzer2", "buzzer_combo"].forEach((r) => {
-      const url = buildQrJoinUrl(r);
-      const imgEl = document.getElementById(`qrImg_${r}`);
-      const urlEl = document.getElementById(`qrUrl_${r}`);
-      if (urlEl) urlEl.textContent = url;
-      if (imgEl && imgEl.dataset.qrUrl !== url) {
-        imgEl.dataset.qrUrl = url;
-        imgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=4&data=${encodeURIComponent(
-          url
-        )}`;
-      }
-    });
-
-    const cardTv = document.getElementById("qrCard_tv");
-    const badgeTv = document.getElementById("qrBadge_tv");
-    if (cardTv) cardTv.classList.toggle("is-active-on-tv", activeTvRole === "tv");
-    if (badgeTv) {
-      badgeTv.textContent =
-        activeTvRole === "tv" ? "📺 Showing on TV (click to hide)" : "Click to show on TV";
+    if (!isFileProtocol()) {
+      ["tv", "buzzer1", "buzzer2", "buzzer_combo"].forEach((r) => {
+        const url = buildQrJoinUrl(r);
+        const imgEl = document.getElementById(`qrImg_${r}`);
+        const urlEl = document.getElementById(`qrUrl_${r}`);
+        if (urlEl) urlEl.textContent = url;
+        if (imgEl && imgEl.dataset.qrUrl !== url) {
+          imgEl.dataset.qrUrl = url;
+          imgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=4&data=${encodeURIComponent(
+            url
+          )}`;
+        }
+      });
     }
 
     const cardInd = document.getElementById("qrCard_individual");
@@ -1693,20 +1775,22 @@ window.Feud = window.Feud || {};
     applyBuzzerButtonLocks();
   }
 
-  function openQrModal(initialTvRole = null) {
-    if (isFileProtocol()) {
-      Feud.showToast("Join QR is only available when served over HTTP/HTTPS (not file://).");
-      return;
-    }
+  function openQrModal(initialTvRole = null, opts = {}) {
+    qrModalOpenedForTvSetup = Boolean(opts && opts.forTvSetup);
     const code = currentRoomCode || "SOLO";
     const qrTextEl = document.getElementById("qrRoomCodeText");
     if (qrTextEl) qrTextEl.textContent = code;
+
+    const fileProto = isFileProtocol();
+    document.getElementById("qrRemoteTvBox")?.classList.toggle("hidden", fileProto);
+    document.getElementById("qrBuzzersSection")?.classList.toggle("hidden", fileProto);
+    document.getElementById("qrFileModeHint")?.classList.toggle("hidden", !fileProto);
 
     const lanWrap = document.getElementById("qrLanHostWrap");
     const lanInput = document.getElementById("qrLanHostInput");
     const lanHint = document.getElementById("qrLanHostHint");
     if (lanWrap) {
-      const loopback = isLoopbackHost();
+      const loopback = !fileProto && isLoopbackHost();
       lanWrap.classList.toggle("hidden", !loopback);
       if (loopback) {
         const activeIp = getSavedLanHost() || detectedLanIp;
@@ -1716,14 +1800,17 @@ window.Feud = window.Feud || {};
         if (lanHint) {
           lanHint.textContent = activeIp
             ? `Using network IP ${activeIp} instead of ${window.location.hostname}.`
-            : "Browser hid local IP — enter your PC's Wi-Fi IP (e.g. 192.168.1.50) so phones can scan.";
+            : "Browser hid local IP — enter your PC's Wi-Fi IP (e.g. 192.168.1.50) so phones and TVs can scan.";
         }
         if (!activeIp) {
           detectLanIp().then((ip) => {
             if (ip && !getSavedLanHost()) {
               const modal = document.getElementById("qrModal");
               if (modal && !modal.classList.contains("hidden")) {
-                openQrModal(roomState && roomState.tvQrOverlay ? roomState.tvQrOverlay.role : null);
+                openQrModal(
+                  roomState && roomState.tvQrOverlay ? roomState.tvQrOverlay.role : null,
+                  { forTvSetup: qrModalOpenedForTvSetup }
+                );
               }
             }
           });
@@ -1732,7 +1819,7 @@ window.Feud = window.Feud || {};
     }
 
     document.getElementById("qrModal")?.classList.remove("hidden");
-    if (initialTvRole && activeRole === "host" && roomState) {
+    if (!fileProto && initialTvRole && activeRole === "host" && roomState) {
       pushRoomPatch({
         tvQrOverlay: {
           role: initialTvRole,
@@ -1745,75 +1832,8 @@ window.Feud = window.Feud || {};
     applyBuzzerButtonLocks();
   }
 
-  function openRemoteTvQrModal() {
-    if (isFileProtocol()) {
-      Feud.showToast("Join QR is only available when served over HTTP/HTTPS (not file://).");
-      return;
-    }
-    const code = currentRoomCode || "SOLO";
-    const url = buildQrJoinUrl("tv");
-    const codeEl = document.getElementById("remoteTvQrRoomCode");
-    const urlEl = document.getElementById("remoteTvQrUrl");
-    const imgEl = document.getElementById("remoteTvQrImg");
-    if (codeEl) codeEl.textContent = code;
-    if (urlEl) urlEl.textContent = url;
-    if (imgEl && imgEl.dataset.qrUrl !== url) {
-      imgEl.dataset.qrUrl = url;
-      imgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data=${encodeURIComponent(
-        url
-      )}`;
-    }
-
-    const lanWrap = document.getElementById("remoteTvLanHostWrap");
-    const lanInput = document.getElementById("remoteTvLanHostInput");
-    const lanHint = document.getElementById("remoteTvLanHostHint");
-    if (lanWrap) {
-      const loopback = isLoopbackHost();
-      lanWrap.classList.toggle("hidden", !loopback);
-      if (loopback) {
-        const activeIp = getSavedLanHost() || detectedLanIp;
-        if (lanInput && document.activeElement !== lanInput) {
-          lanInput.value = activeIp;
-        }
-        if (lanHint) {
-          lanHint.textContent = activeIp
-            ? `Using network IP ${activeIp} instead of ${window.location.hostname}.`
-            : "Browser hid local IP — enter your PC's Wi-Fi IP (e.g. 192.168.1.50) so your TV can scan.";
-        }
-        if (!activeIp) {
-          detectLanIp().then((ip) => {
-            if (ip && !getSavedLanHost()) {
-              const modal = document.getElementById("remoteTvQrModal");
-              if (modal && !modal.classList.contains("hidden")) {
-                openRemoteTvQrModal();
-              }
-            }
-          });
-        }
-      }
-    }
-
-    document.getElementById("remoteTvQrModal")?.classList.remove("hidden");
-  }
-
-  function closeRemoteTvQrModal() {
-    document.getElementById("remoteTvQrModal")?.classList.add("hidden");
-  }
-
-  function applyRemoteTvLanHost() {
-    const input = document.getElementById("remoteTvLanHostInput");
-    const val = (input ? input.value : "").trim().replace(/^https?:\/\//i, "").split("/")[0].split(":")[0];
-    try {
-      if (val) {
-        localStorage.setItem(QR_LAN_HOST_KEY, val);
-      } else {
-        localStorage.removeItem(QR_LAN_HOST_KEY);
-      }
-    } catch (e) {}
-    openRemoteTvQrModal();
-  }
-
   function closeQrModal() {
+    qrModalOpenedForTvSetup = false;
     document.getElementById("qrModal")?.classList.add("hidden");
     if (activeRole === "host" && roomState && roomState.tvQrOverlay) {
       pushRoomPatch({ tvQrOverlay: null });
@@ -4049,9 +4069,7 @@ window.Feud = window.Feud || {};
     confirmStartNextMatch,
     openQrModal,
     selectQrForTv,
-    chooseTvSetupOption,
-    closeRemoteTvQrModal,
-    applyRemoteTvLanHost,
+    selectTvSetupMode,
     applyQrLanHost,
     reopenTvWindow,
     closeQrModal,
@@ -4140,6 +4158,8 @@ window.Feud = window.Feud || {};
     }
     populateDeckCatalogSelect();
     updateLocalDecksFolderUi();
+    syncSetupModalInputsFromState();
+    syncTvSetupModeUi();
     window.addEventListener("feud-decks-updated", () => {
       populateDeckCatalogSelect();
       updateLocalDecksFolderUi();
@@ -4155,6 +4175,10 @@ window.Feud = window.Feud || {};
     } catch (e) {}
     window.addEventListener("feud-client-connected", (e) => {
       const joinedRole = e && e.detail ? e.detail.role : "";
+      if (joinedRole === "tv") {
+        remoteTvConnected = true;
+        updateQrTvStatusBadge();
+      }
       if (activeRole !== "host" || !roomState || !roomState.tvQrOverlay) return;
       const tvRole = roomState.tvQrOverlay.role;
       if (tvRole === "individual" && (joinedRole === "buzzer1" || joinedRole === "buzzer2")) {
@@ -4176,9 +4200,13 @@ window.Feud = window.Feud || {};
       }
     });
     window.addEventListener("feud-tv-connected", () => {
-      const modal = document.getElementById("remoteTvQrModal");
+      remoteTvConnected = true;
+      updateQrTvStatusBadge();
+      const modal = document.getElementById("qrModal");
       if (modal && !modal.classList.contains("hidden")) {
-        closeRemoteTvQrModal();
+        if (qrModalOpenedForTvSetup) {
+          closeQrModal();
+        }
         Feud.showToast("📺 Remote TV connected!");
       }
     });
@@ -4190,9 +4218,11 @@ window.Feud = window.Feud || {};
         const count = (bz.t1 ? 1 : 0) + (bz.t2 ? 1 : 0);
         buzzerStatusPill.textContent =
           count === 0
-            ? "🔔 Buzzers: 0/2"
-            : `🔔 ${bz.t1 ? "T1✓" : "T1–"} • ${bz.t2 ? "T2✓" : "T2–"}`;
-        buzzerStatusPill.className = `pill-badge ${count === 2 ? "awake-ok" : ""}`;
+            ? "📱 Buzzers: 0/2"
+            : `📱 ${bz.t1 ? "T1✓" : "T1–"} • ${bz.t2 ? "T2✓" : "T2–"}`;
+        buzzerStatusPill.className = `top-btn host-devices-btn${
+          count === 2 ? " is-ready" : count === 1 ? " is-partial" : ""
+        }`;
         applyBuzzerButtonLocks(bz);
       }
       ["buzzerConnStatusPill", "comboConnStatusPill"].forEach((id) => {
@@ -4209,13 +4239,13 @@ window.Feud = window.Feud || {};
         }
       });
     });
-    const buzzerInputEl = document.getElementById("buzzerRoomInput");
-    if (buzzerInputEl) {
-      buzzerInputEl.addEventListener("input", () => {
+    const joinRoomInputEl = document.getElementById("joinRoomCodeInput");
+    if (joinRoomInputEl) {
+      joinRoomInputEl.addEventListener("input", () => {
         clearTimeout(lobbyProbeTimer);
         lobbyProbeTimer = setTimeout(() => refreshLobbyBuzzerLocks(true), 120);
       });
-      buzzerInputEl.addEventListener("focus", () => refreshLobbyBuzzerLocks(true));
+      joinRoomInputEl.addEventListener("focus", () => refreshLobbyBuzzerLocks(true));
     }
     window.addEventListener("focus", () => {
       if (activeRole === "lobby") refreshLobbyBuzzerLocks(true);
@@ -4311,10 +4341,8 @@ window.Feud = window.Feud || {};
       openNewGameModal("host");
     }
     if (urlRoom) {
-      ["hostJoinCode", "tvRoomInput", "buzzerRoomInput"].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) el.value = urlRoom;
-      });
+      const joinEl = document.getElementById("joinRoomCodeInput");
+      if (joinEl) joinEl.value = urlRoom;
       if (!urlRole) {
         setTimeout(() => refreshLobbyBuzzerLocks(true), 200);
       }
@@ -4351,10 +4379,8 @@ window.Feud = window.Feud || {};
     } else {
       const last = Feud.loadLastSession();
       if (last && last.code && last.code !== "SOLO") {
-        ["hostJoinCode", "tvRoomInput", "buzzerRoomInput"].forEach((id) => {
-          const el = document.getElementById(id);
-          if (el) el.value = last.code;
-        });
+        const joinEl = document.getElementById("joinRoomCodeInput");
+        if (joinEl) joinEl.value = last.code;
         if (last.pin) {
           const pinEl = document.getElementById("hostJoinPin");
           if (pinEl) pinEl.value = last.pin;

@@ -29,118 +29,21 @@
   <meta name="twitter:description" content="Free, zero-login Family Feud game show for your TV with live QR phone buzzers, sound effects, teleprompter, and 300+ built-in rounds." />
   <meta name="twitter:image" content="https://browngenius.github.io/feud/docs/screenshots/tv-board.png" />
   <meta name="twitter:image:alt" content="Party Feud 16:9 TV Display Board showing revealed survey answers and scores" />
-  <link rel="stylesheet" href="./css/styles.css?v=20261118c" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261118d" />
 </head>
 <body>
 
   <!-- TOAST MESSAGE -->
   <div id="toastBanner" class="toast-banner hidden" role="status"></div>
 
-  <!-- NEW GAME SETUP WIZARD MODAL (DECK, MATCH FORMAT, TEAMS, TIMER & PIN) -->
-  <div id="newGameModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+  <!-- NEW GAME / SWITCH DECK MODAL (RE-USES #gameSetupForm WHEN OPENED FROM HOST VIEW) -->
+  <div id="newGameModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" onclick="if(event.target===this)closeNewGameModal()">
     <div class="modal-card">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-        <h3 class="brand-title display-font">🆕 New Game Setup</h3>
+        <h3 class="brand-title display-font">🆕 New Game / Switch Deck</h3>
         <button class="top-btn" onclick="closeNewGameModal()">✕ Close</button>
       </div>
-      <p style="font-size:12px; color:#fde68a; line-height:1.45;">
-        Choose a question deck, scan your local <code>/decks</code> folder, or load custom <code>.json</code> deck files, then set rounds, team names, and timers!
-      </p>
-
-      <!-- Step 1: Active Question Deck & Multi-Game Usage -->
-      <div class="setup-step-box">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-          <span class="field-label">📚 1. Active Question Deck</span>
-          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-            <span id="setupDeckUsageBadge" class="pill-badge awake-ok" style="min-height:26px; font-size:10px;">📊 All Rounds Unused</span>
-            <button type="button" class="top-btn" style="min-height:26px; padding:2px 8px; font-size:10px;" onclick="resetCurrentDeckHistory()" title="Mark all rounds in this deck as unplayed">↺ Reset Used</button>
-          </div>
-        </div>
-        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-          <select id="deckManagerSelect" class="fm-txt" style="flex:1; min-width:190px; font-size:13px; text-transform:none;" onchange="onSelectCatalogDeck(this.value)"></select>
-          <a href="./review.html?from=setup" target="_blank" rel="opener" class="top-btn gold review-deck-link" style="text-decoration:none; display:inline-flex; align-items:center;">🖨️ Review</a>
-        </div>
-        <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
-          <button id="btnScanDecksFolder" type="button" class="top-btn" style="min-height:32px; font-size:11px;" onclick="scanLocalDecksFolder()" title="Scan your local decks/ folder to discover .json decks offline">📂 Scan Folder</button>
-          <button id="btnRescanDecksFolder" type="button" class="top-btn hidden" style="min-height:32px; font-size:11px;" onclick="rescanSavedDecksFolder()" title="Re-read decks from your previously linked local folder">🔄 Re-scan</button>
-          <button id="btnLoadCustomDeckFile" type="button" class="top-btn" style="min-height:32px; font-size:11px;" onclick="openCustomDeckFilePicker()" title="Load one or more custom .json deck files">📄 Load Deck File</button>
-          <input id="localDecksFolderInput" type="file" webkitdirectory multiple accept=".json" class="hidden" onchange="onLocalDecksFolderInputChange(event)" />
-          <input id="customDeckFileInput" type="file" multiple accept=".json" class="hidden" onchange="onCustomDeckFileInputChange(event)" />
-        </div>
-        <div id="localDecksFolderStatus" style="font-size:11px; color:#cbd5e1; line-height:1.35;"></div>
-      </div>
-
-      <!-- Step 2: Team Names -->
-      <div class="setup-step-box">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-          <span class="field-label">👥 2. Team Names</span>
-          <button type="button" class="top-btn" style="min-height:30px; font-size:11px;" onclick="cycleSetupTeamPresets()">🎲 Swap Preset Names</button>
-        </div>
-        <div class="buzzer-split-btns">
-          <div>
-            <label class="field-label" for="setupTeam1Input" style="font-size:10px;">Team 1 Name</label>
-            <input id="setupTeam1Input" class="host-team-input" style="margin-top:4px;" type="text" placeholder="Team 1" value="Team Alpha" />
-          </div>
-          <div>
-            <label class="field-label" for="setupTeam2Input" style="font-size:10px;">Team 2 Name</label>
-            <input id="setupTeam2Input" class="host-team-input" style="margin-top:4px;" type="text" placeholder="Team 2" value="Team Omega" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Collapsible Secondary Options: Format, Timer & PIN -->
-      <details class="setup-step-box">
-        <summary style="cursor:pointer; font-size:12px; font-weight:800; color:#fde68a;">⚙️ 3. Game Rules, Timer &amp; PIN Options</summary>
-        <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
-          <div class="buzzer-split-btns">
-            <div>
-              <label class="field-label" for="setupRoundsPerMatchSelect" style="font-size:10px;">Rounds Per Game</label>
-              <select id="setupRoundsPerMatchSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;">
-                <option value="3">3 Rounds (1x, 2x, 3x)</option>
-                <option value="4" selected>4 Rounds (Standard: 1x, 1x, 2x, 3x)</option>
-                <option value="5">5 Rounds (1x, 1x, 2x, 2x, 3x)</option>
-                <option value="6">6 Rounds (1x, 1x, 2x, 2x, 3x, 3x)</option>
-                <option value="0">All Rounds in Deck</option>
-              </select>
-            </div>
-            <div>
-              <label class="field-label" for="setupRoundOrderSelect" style="font-size:10px;">Unplayed Round Selection</label>
-              <select id="setupRoundOrderSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;">
-                <option value="sequential" selected>📋 In Order by Level (Keep 1x → 2x → 3x, No Repeats)</option>
-                <option value="shuffle-by-level">🎲 Randomize by Level (Keep 1x → 2x → 3x, No Repeats)</option>
-                <option value="shuffle">🔀 Random Shuffle (Any Level, Unplayed)</option>
-              </select>
-            </div>
-          </div>
-          <label id="setupFastMoneyLabel" style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:800; color:#fef08a; cursor:pointer;">
-            <input id="setupEnableFastMoneyCheckbox" type="checkbox" style="width:18px; height:18px; accent-color:#fbbf24;" />
-            <span>⚡ Include "Fast Money" Bonus Round in this game <span id="setupFastMoneyHint" style="font-size:11px; color:#94a3b8; font-weight:700;"></span></span>
-          </label>
-          <div class="buzzer-split-btns">
-            <div>
-              <label class="field-label" for="setupTurnTimerSelect">⏱️ Player Answer Timer</label>
-              <select id="setupTurnTimerSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:13px;">
-                <option value="5">5 Seconds (Fast Pace)</option>
-                <option value="7">7 Seconds (TV Standard)</option>
-                <option value="10" selected>10 Seconds (Party Standard)</option>
-                <option value="15">15 Seconds (Relaxed)</option>
-              </select>
-            </div>
-            <div id="setupPinBox">
-              <label class="field-label" for="setupHostPinInput">🔒 4-Digit Host PIN</label>
-              <input id="setupHostPinInput" class="fm-txt" style="width:100%; margin-top:4px; font-size:16px; text-align:center; letter-spacing:0.15em;" type="tel" maxlength="4" placeholder="1234" value="1234" />
-            </div>
-          </div>
-        </div>
-      </details>
-
-      <!-- Launch Actions -->
-      <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; margin-top:4px;">
-        <button type="button" class="top-btn" onclick="closeNewGameModal()">Cancel</button>
-        <button type="button" class="action-btn btn-gold display-font" style="width:auto; min-height:46px; font-size:14px; padding:10px 20px;" onclick="confirmStartNewGame('host')">
-          🚀 Start New Game
-        </button>
-      </div>
+      <div id="newGameModalSlot"></div>
     </div>
   </div>
 
@@ -202,101 +105,79 @@
     </div>
   </div>
 
-  <!-- ROOM QR CODE & QUICK JOIN MODAL (3 OPTIONS: TV, INDIVIDUAL BUZZERS, COMBO BUZZER) -->
-  <div id="qrModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+  <!-- UNIFIED CONNECT TV & BUZZERS MODAL -->
+  <div id="qrModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" onclick="if(event.target===this)closeQrModal()">
     <div class="modal-card qr-modal-wide">
-      <div style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:8px;">
-        <h3 class="brand-title display-font">📱 Scan to Join Room <span id="qrRoomCodeText" style="color:#fff;">----</span></h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:8px; flex-wrap:wrap;">
+        <h3 class="brand-title display-font">📱 Connect TV &amp; Buzzers — Room <span id="qrRoomCodeText" style="color:#fff;">----</span></h3>
         <div style="display:flex; gap:6px; align-items:center;">
-          <button id="qrHideFromTvBtn" type="button" class="top-btn hidden" onclick="selectQrForTv(null)">📺 Hide from TV</button>
+          <button id="qrHideFromTvBtn" type="button" class="top-btn hidden" onclick="selectQrForTv(null)">📺 Hide QR from TV</button>
           <button type="button" class="top-btn" onclick="closeQrModal()">✕ Close</button>
         </div>
       </div>
-      <p style="font-size:12px; color:#fde68a; line-height:1.4; margin:0;">
-        Choose an option below to display its QR code on the TV screen.
-      </p>
-      <div class="qr-grid-3">
-        <button id="qrCard_tv" type="button" class="qr-grid-card" onclick="selectQrForTv('tv')">
-          <span class="qr-grid-title display-font">📺 TV Display</span>
-          <img id="qrImg_tv" alt="TV Display QR Code" class="qr-grid-img" />
-          <span id="qrUrl_tv" class="qr-grid-url"></span>
-          <span id="qrBadge_tv" class="qr-grid-status">Click to show on TV</span>
-        </button>
-        <button id="qrCard_individual" type="button" class="qr-grid-card qr-grid-card-dual" onclick="selectQrForTv('individual')">
-          <span class="qr-grid-title display-font">🔔 Individual Buzzers</span>
-          <div class="qr-dual-pair">
-            <div class="qr-dual-half">
-              <span id="qrLabel_buzzer1" class="qr-dual-label t1">Team 1</span>
-              <img id="qrImg_buzzer1" alt="Team 1 Buzzer QR Code" class="qr-grid-img qr-grid-img-sm" />
-            </div>
-            <div class="qr-dual-half">
-              <span id="qrLabel_buzzer2" class="qr-dual-label t2">Team 2</span>
-              <img id="qrImg_buzzer2" alt="Team 2 Buzzer QR Code" class="qr-grid-img qr-grid-img-sm" />
-            </div>
+
+      <!-- TV Display Strip -->
+      <div class="qr-tv-strip">
+        <div class="qr-tv-strip-info">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span class="qr-grid-title display-font" style="font-size:16px;">📺 TV Display</span>
+            <span id="qrTvStatusBadge" class="pill-badge">Waiting for TV…</span>
           </div>
-          <span id="qrBadge_individual" class="qr-grid-status">Click to show both on TV</span>
-        </button>
-        <button id="qrCard_buzzer_combo" type="button" class="qr-grid-card" onclick="selectQrForTv('buzzer_combo')">
-          <span class="qr-grid-title display-font">🔔 Combo Buzzer</span>
-          <img id="qrImg_buzzer_combo" alt="Combo Buzzer QR Code" class="qr-grid-img" />
-          <span id="qrUrl_buzzer_combo" class="qr-grid-url"></span>
-          <span id="qrBadge_buzzer_combo" class="qr-grid-status">Click to show on TV</span>
-        </button>
+          <p style="font-size:12px; color:#cbd5e1; margin:0; line-height:1.4;">
+            Plug into a TV via HDMI and pop out a local window, or scan the QR on a smart TV / casting laptop.
+          </p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <button type="button" class="action-btn btn-blue display-font" style="width:auto; min-height:40px; padding:8px 16px; font-size:13px;" onclick="reopenTvWindow()">
+              🖥️ Open Local TV Window
+            </button>
+          </div>
+        </div>
+        <div id="qrRemoteTvBox" class="qr-tv-strip-qr">
+          <img id="qrImg_tv" alt="TV Display QR Code" class="qr-grid-img" style="width:124px; height:124px;" />
+          <span id="qrUrl_tv" class="qr-grid-url"></span>
+          <span class="qr-grid-status">Scan on Remote TV</span>
+        </div>
       </div>
+
+      <!-- Phone Buzzers Section -->
+      <div id="qrBuzzersSection" style="width:100%; display:flex; flex-direction:column; gap:8px;">
+        <p style="font-size:12px; color:#fde68a; line-height:1.4; margin:0; text-align:left;">
+          🔔 <strong>Phone Buzzers (Optional):</strong> Click either option below to project large QR codes onto the TV screen (auto-hides once players connect).
+        </p>
+        <div class="qr-grid-2">
+          <button id="qrCard_individual" type="button" class="qr-grid-card qr-grid-card-dual" onclick="selectQrForTv('individual')">
+            <span class="qr-grid-title display-font">🔔 Individual Buzzers (2 Phones)</span>
+            <div class="qr-dual-pair">
+              <div class="qr-dual-half">
+                <span id="qrLabel_buzzer1" class="qr-dual-label t1">Team 1</span>
+                <img id="qrImg_buzzer1" alt="Team 1 Buzzer QR Code" class="qr-grid-img qr-grid-img-sm" />
+              </div>
+              <div class="qr-dual-half">
+                <span id="qrLabel_buzzer2" class="qr-dual-label t2">Team 2</span>
+                <img id="qrImg_buzzer2" alt="Team 2 Buzzer QR Code" class="qr-grid-img qr-grid-img-sm" />
+              </div>
+            </div>
+            <span id="qrBadge_individual" class="qr-grid-status">Click to show both on TV</span>
+          </button>
+          <button id="qrCard_buzzer_combo" type="button" class="qr-grid-card" onclick="selectQrForTv('buzzer_combo')">
+            <span class="qr-grid-title display-font">🔔 Combo Buzzer (1 Shared Phone)</span>
+            <img id="qrImg_buzzer_combo" alt="Combo Buzzer QR Code" class="qr-grid-img" style="width:124px; height:124px;" />
+            <span id="qrUrl_buzzer_combo" class="qr-grid-url"></span>
+            <span id="qrBadge_buzzer_combo" class="qr-grid-status">Click to show on TV</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="qrFileModeHint" class="hidden" style="font-size:12px; color:#fde68a; line-height:1.45; text-align:left; background:rgba(15,23,42,0.7); border:1px solid rgba(251,191,36,0.3); border-radius:12px; padding:10px 12px; width:100%;">
+        ⚠️ Phone QR buzzers require serving over HTTP/HTTPS (such as GitHub Pages or a local web server). On offline <code>file://</code>, use <strong>🖥️ Open Local TV Window</strong> above for HDMI dual-screen play!
+      </div>
+
       <div id="qrLanHostWrap" class="hidden" style="width:100%; display:flex; flex-direction:column; gap:6px; margin-top:4px;">
         <div style="display:flex; gap:6px; align-items:center;">
           <input id="qrLanHostInput" class="lobby-input" type="text" placeholder="LAN IP (e.g. 192.168.1.50)" style="flex:1; min-width:0; padding:6px 10px; font-size:12px;" onkeydown="if(event.key==='Enter')applyQrLanHost()" />
           <button type="button" class="top-btn gold" onclick="applyQrLanHost()">Apply IP</button>
         </div>
         <div id="qrLanHostHint" style="font-size:11px; color:#fde68a; line-height:1.3;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TV SCREEN SELECTION MODAL (ON NEW GAME START) -->
-  <div id="tvSetupChoiceModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
-    <div class="modal-card" style="max-width:480px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-        <h3 class="brand-title display-font">📺 TV Screen Selection</h3>
-        <button type="button" class="top-btn" onclick="chooseTvSetupOption('none')">✕</button>
-      </div>
-      <p style="font-size:13px; color:#fde68a; line-height:1.45; margin:0;">
-        Room <strong id="tvChoiceRoomCode" style="color:#fff;">----</strong> is ready! How would you like to show the TV board?
-      </p>
-      <div style="display:flex; flex-direction:column; gap:10px; width:100%; margin-top:4px;">
-        <button type="button" class="action-btn btn-blue display-font" onclick="chooseTvSetupOption('local')">
-          🖥️ 1. Start Local TV Screen Window
-        </button>
-        <button id="tvChoiceQrBtn" type="button" class="action-btn btn-gold display-font" onclick="chooseTvSetupOption('qr')">
-          📱 2. Show QR Code for Remote TV Screen
-        </button>
-        <button type="button" class="action-btn btn-slate display-font" onclick="chooseTvSetupOption('none')">
-          🎛️ 3. Continue Without Separate TV Screen
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- REMOTE TV ONLY QR MODAL (AUTO-CLOSES WHEN REMOTE TV CONNECTS) -->
-  <div id="remoteTvQrModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
-    <div class="modal-card" style="max-width:420px; text-align:center; align-items:center;">
-      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-        <h3 class="brand-title display-font">📺 Connect Remote TV</h3>
-        <button type="button" class="top-btn" onclick="closeRemoteTvQrModal()">✕ Close</button>
-      </div>
-      <p style="font-size:12px; color:#fde68a; line-height:1.4; margin:0;">
-        Scan on your TV device to join Room <strong id="remoteTvQrRoomCode" style="color:#fff;">----</strong>. This closes automatically once connected.
-      </p>
-      <div class="qr-card-box">
-        <img id="remoteTvQrImg" alt="Remote TV Join QR Code" style="width:220px; height:220px; display:block;" />
-        <div id="remoteTvQrUrl" style="font-size:10px; font-weight:800; word-break:break-all; max-width:230px;"></div>
-      </div>
-      <div id="remoteTvLanHostWrap" class="hidden" style="width:100%; display:flex; flex-direction:column; gap:6px; margin-top:4px;">
-        <div style="display:flex; gap:6px; align-items:center;">
-          <input id="remoteTvLanHostInput" class="lobby-input" type="text" placeholder="LAN IP (e.g. 192.168.1.50)" style="flex:1; min-width:0; padding:6px 10px; font-size:12px;" onkeydown="if(event.key==='Enter')applyRemoteTvLanHost()" />
-          <button type="button" class="top-btn gold" onclick="applyRemoteTvLanHost()">Apply IP</button>
-        </div>
-        <div id="remoteTvLanHostHint" style="font-size:11px; color:#fde68a; line-height:1.3;"></div>
       </div>
     </div>
   </div>
@@ -324,7 +205,7 @@
       </p>
 
       <div style="display:flex; flex-wrap:wrap; gap:8px;">
-        <button class="top-btn gold" onclick="closeEditRoundModal(); openDeckManagerModal();">📦 Import / Export Full Deck (JSON)</button>
+        <button class="top-btn gold" onclick="closeEditRoundModal(); openNewGameModal('host');">📚 Switch / Load Deck</button>
         <button class="top-btn" onclick="resetCurrentRoundToDefault()">↺ Restore Default for This Round</button>
       </div>
 
@@ -366,91 +247,179 @@
 
     <div class="status-cluster">
       <span id="roomCodeBadge" class="pill-badge room-live hidden">Room: ----</span>
-      <button id="btnQrCode" class="top-btn hidden" onclick="openQrModal()">📱 Join QR</button>
-      <span id="wakeLockBadge" class="pill-badge awake-warn" onclick="requestWakeLock()" title="Tap to keep screen awake">
+      <span id="wakeLockBadge" class="pill-badge awake-warn hidden" onclick="requestWakeLock()" title="Tap to keep screen awake">
         ☀️ Screen Awake
       </span>
       <button id="btnMute" class="top-btn" onclick="toggleMute()">🔊 Sound</button>
-      <button id="btnFullscreen" class="top-btn gold" onclick="toggleFullScreen()">⛶ TV Fullscreen</button>
+      <button id="btnFullscreen" class="top-btn gold hidden" onclick="toggleFullScreen()">⛶ TV Fullscreen</button>
       <button id="btnLeaveRoom" class="top-btn hidden" onclick="leaveToLobby()">Lobby</button>
     </div>
   </header>
 
   <!-- =====================================================================
-       VIEW 1: MULTIPLAYER LOBBY (CHOOSE DEVICE ROLE)
+       VIEW 1: MULTIPLAYER LOBBY (1-CLICK GAME START + UNIFIED JOIN PANEL)
        ===================================================================== -->
   <main id="lobbyView" class="lobby-wrap">
     <section class="hero-banner">
       <h1 id="lobbyHeroTitle" class="hero-title display-font">🎉 Party Feud</h1>
       <p class="hero-desc">
-        <strong>Host</strong> creates a room, <strong>TV</strong> displays the board, and <strong>Team Buzzers</strong> connect over Wi-Fi or remotely.
+        Start a live game in seconds — cast or plug into a TV, and let players buzz in with any phone.
       </p>
     </section>
 
-    <div class="role-grid">
-      <!-- ROLE 1: HOST REMOTE (PIN PROTECTED) -->
-      <article class="role-card">
+    <div class="lobby-grid-2">
+      <!-- LEFT PRIMARY CARD: HOST A NEW GAME (INLINE 1-CLICK SETUP) -->
+      <article id="lobbyHostCard" class="role-card lobby-host-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+          <h2>🎙️ Host a New Game</h2>
+          <span class="pill-badge awake-ok" style="min-height:24px; font-size:10px;">⚡ 1-Click Start</span>
+        </div>
+
+        <div id="lobbySetupSlot">
+          <div id="gameSetupForm" style="display:flex; flex-direction:column; gap:12px;">
+            <!-- 1. Question Deck -->
+            <div class="setup-step-box">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                <span class="field-label">📚 1. Question Deck</span>
+                <span id="setupDeckUsageBadge" class="pill-badge awake-ok" style="min-height:24px; font-size:10px;">📊 All Rounds Unused</span>
+              </div>
+              <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-width:0;">
+                <select id="deckManagerSelect" class="fm-txt" style="flex:1 1 180px; min-width:0; max-width:100%; font-size:13px; text-transform:none;" onchange="onSelectCatalogDeck(this.value)"></select>
+                <a href="./review.html?from=setup" target="_blank" rel="opener" class="top-btn gold review-deck-link" style="text-decoration:none; display:inline-flex; align-items:center;">🖨️ Review</a>
+              </div>
+              <details id="setupDeckToolsDetails" class="setup-deck-tools">
+                <summary>📂 Custom Deck / Local Folder / Reset Used</summary>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+                  <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+                    <button id="btnScanDecksFolder" type="button" class="top-btn" style="min-height:32px; font-size:11px;" onclick="scanLocalDecksFolder()" title="Scan your local decks/ folder to discover .json decks offline">📂 Scan Folder</button>
+                    <button id="btnRescanDecksFolder" type="button" class="top-btn hidden" style="min-height:32px; font-size:11px;" onclick="rescanSavedDecksFolder()" title="Re-read decks from your previously linked local folder">🔄 Re-scan</button>
+                    <button id="btnLoadCustomDeckFile" type="button" class="top-btn" style="min-height:32px; font-size:11px;" onclick="openCustomDeckFilePicker()" title="Load one or more custom .json deck files">📄 Load Deck File</button>
+                    <button type="button" class="top-btn" style="min-height:32px; font-size:11px;" onclick="resetCurrentDeckHistory()" title="Mark all rounds in this deck as unplayed">↺ Reset Used</button>
+                    <input id="localDecksFolderInput" type="file" webkitdirectory multiple accept=".json" class="hidden" onchange="onLocalDecksFolderInputChange(event)" />
+                    <input id="customDeckFileInput" type="file" multiple accept=".json" class="hidden" onchange="onCustomDeckFileInputChange(event)" />
+                  </div>
+                  <div id="localDecksFolderStatus" style="font-size:11px; color:#cbd5e1; line-height:1.35;"></div>
+                </div>
+              </details>
+            </div>
+
+            <!-- 2. Team Names -->
+            <div class="setup-step-box">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                <span class="field-label">👥 2. Team Names</span>
+                <button type="button" class="top-btn" style="min-height:28px; padding:4px 10px; font-size:11px;" onclick="cycleSetupTeamPresets()">🎲 Swap Names</button>
+              </div>
+              <div class="buzzer-split-btns">
+                <div>
+                  <label class="field-label" for="setupTeam1Input" style="font-size:10px; color:#93c5fd;">Team 1 (Blue)</label>
+                  <input id="setupTeam1Input" class="host-team-input team-1-input" style="margin-top:4px;" type="text" placeholder="Team 1" value="Team Alpha" />
+                </div>
+                <div>
+                  <label class="field-label" for="setupTeam2Input" style="font-size:10px; color:#fca5a5;">Team 2 (Red)</label>
+                  <input id="setupTeam2Input" class="host-team-input team-2-input" style="margin-top:4px;" type="text" placeholder="Team 2" value="Team Omega" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. TV Display Mode -->
+            <div class="setup-step-box">
+              <span class="field-label">📺 3. TV Display</span>
+              <div id="tvModeChoiceGroup" class="tv-mode-group" role="radiogroup" aria-label="TV Display Mode">
+                <button type="button" class="tv-mode-btn" data-tv-mode="local" onclick="selectTvSetupMode('local')">🖥️ Local Window (HDMI)</button>
+                <button type="button" id="tvModeBtnQr" class="tv-mode-btn" data-tv-mode="qr" onclick="selectTvSetupMode('qr')">📱 Remote TV (QR)</button>
+                <button type="button" class="tv-mode-btn" data-tv-mode="none" onclick="selectTvSetupMode('none')">🎛️ Host Only</button>
+              </div>
+            </div>
+
+            <!-- Collapsible Game Rules, Timer & PIN -->
+            <details class="setup-step-box">
+              <summary style="cursor:pointer; font-size:12px; font-weight:800; color:#fde68a;">⚙️ Game Rules, Timer &amp; PIN Options</summary>
+              <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
+                <div class="buzzer-split-btns">
+                  <div>
+                    <label class="field-label" for="setupRoundsPerMatchSelect" style="font-size:10px;">Rounds Per Game</label>
+                    <select id="setupRoundsPerMatchSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;">
+                      <option value="3">3 Rounds (1x, 2x, 3x)</option>
+                      <option value="4" selected>4 Rounds (Standard: 1x, 1x, 2x, 3x)</option>
+                      <option value="5">5 Rounds (1x, 1x, 2x, 2x, 3x)</option>
+                      <option value="6">6 Rounds (1x, 1x, 2x, 2x, 3x, 3x)</option>
+                      <option value="0">All Rounds in Deck</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label" for="setupRoundOrderSelect" style="font-size:10px;">Unplayed Round Selection</label>
+                    <select id="setupRoundOrderSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;">
+                      <option value="sequential" selected>📋 In Order by Level (Keep 1x → 2x → 3x, No Repeats)</option>
+                      <option value="shuffle-by-level">🎲 Randomize by Level (Keep 1x → 2x → 3x, No Repeats)</option>
+                      <option value="shuffle">🔀 Random Shuffle (Any Level, Unplayed)</option>
+                    </select>
+                  </div>
+                </div>
+                <label id="setupFastMoneyLabel" style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:800; color:#fef08a; cursor:pointer;">
+                  <input id="setupEnableFastMoneyCheckbox" type="checkbox" style="width:18px; height:18px; accent-color:#fbbf24;" />
+                  <span>⚡ Include "Fast Money" Bonus Round in this game <span id="setupFastMoneyHint" style="font-size:11px; color:#94a3b8; font-weight:700;"></span></span>
+                </label>
+                <div class="buzzer-split-btns">
+                  <div>
+                    <label class="field-label" for="setupTurnTimerSelect">⏱️ Player Answer Timer</label>
+                    <select id="setupTurnTimerSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:13px;">
+                      <option value="5">5 Seconds (Fast Pace)</option>
+                      <option value="7">7 Seconds (TV Standard)</option>
+                      <option value="10" selected>10 Seconds (Party Standard)</option>
+                      <option value="15">15 Seconds (Relaxed)</option>
+                    </select>
+                  </div>
+                  <div id="setupPinBox">
+                    <label class="field-label" for="setupHostPinInput">🔒 4-Digit Host PIN</label>
+                    <input id="setupHostPinInput" class="fm-txt" style="width:100%; margin-top:4px; font-size:16px; text-align:center; letter-spacing:0.15em;" type="tel" maxlength="4" placeholder="1234" value="1234" />
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            <!-- Primary CTA -->
+            <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; margin-top:2px;">
+              <button id="newGameModalCancelBtn" type="button" class="top-btn hidden" onclick="closeNewGameModal()">Cancel</button>
+              <button type="button" class="action-btn btn-gold display-font" style="flex:1; min-height:50px; font-size:16px;" onclick="confirmStartNewGame('host')">
+                🚀 Start Game
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- RIGHT SECONDARY CARD: JOIN AN EXISTING ROOM -->
+      <article id="lobbyJoinCard" class="role-card lobby-join-card">
         <div>
-          <h2>🎙️ 1. Host Remote</h2>
+          <h2>📱 Join an Existing Room</h2>
           <p style="margin-top:6px;">
-            Create a room, choose your question deck, and run the game with a live mini TV monitor.
+            Joining on another screen or phone? Enter the Room Code (or scan the QR on the Host/TV).
           </p>
         </div>
 
         <div class="field-row">
-          <button class="action-btn btn-gold display-font" onclick="openNewGameModal('host')">
-            ✨ Create New Game Room
+          <label class="field-label" for="joinRoomCodeInput">Room Code</label>
+          <input id="joinRoomCodeInput" class="lobby-input" type="text" maxlength="4" placeholder="GA42" />
+        </div>
+
+        <div class="field-row">
+          <button class="action-btn btn-blue display-font" onclick="joinTvDisplay()">
+            📺 Join as TV Display
           </button>
+          <div class="buzzer-split-btns" style="margin-top:4px;">
+            <button id="btnJoinBuzzer1" class="action-btn btn-blue display-font" onclick="joinTeamBuzzer(1)">🔔 Team 1 Buzzer</button>
+            <button id="btnJoinBuzzer2" class="action-btn btn-red display-font" onclick="joinTeamBuzzer(2)">🔔 Team 2 Buzzer</button>
+          </div>
+          <button id="btnJoinBuzzerCombo" class="action-btn btn-gold display-font" style="margin-top:4px;" onclick="joinComboBuzzer()">🔔 Combo Buzzer (Shared Phone)</button>
         </div>
 
         <details class="lobby-rejoin-details" style="border-top:1px solid rgba(251,191,36,0.25); padding-top:10px;">
-          <summary style="cursor:pointer; font-size:12px; font-weight:700; color:#fde68a;">Already hosting? Rejoin a room</summary>
+          <summary style="cursor:pointer; font-size:12px; font-weight:700; color:#fde68a;">🎙️ Rejoin as Host (PIN)</summary>
           <div class="field-row" style="margin-top:10px;">
-            <div class="input-pair">
-              <input id="hostJoinCode" class="lobby-input" type="text" maxlength="4" placeholder="CODE" />
-              <input id="hostJoinPin" class="lobby-input" type="tel" maxlength="4" placeholder="PIN" />
-            </div>
+            <input id="hostJoinPin" class="lobby-input" type="tel" maxlength="4" placeholder="4-Digit PIN" />
             <button class="action-btn btn-slate" onclick="joinHostRoom()">Unlock Host Mode</button>
           </div>
         </details>
-      </article>
-
-      <!-- ROLE 2: TV DISPLAY MODE -->
-      <article class="role-card">
-        <div>
-          <h2>📺 2. TV Display</h2>
-          <p style="margin-top:6px;">
-            Cast or open on the living room TV. Shows only numbered tiles, scores, and buzzers.
-          </p>
-        </div>
-
-        <div class="field-row">
-          <label class="field-label" for="tvRoomInput">Room Code</label>
-          <input id="tvRoomInput" class="lobby-input" type="text" maxlength="4" placeholder="GA42" />
-          <button class="action-btn btn-blue display-font" onclick="joinTvDisplay()">
-            📺 Launch TV Board
-          </button>
-        </div>
-      </article>
-
-      <!-- ROLE 3 & 4: TEAM PODIUM BUZZERS -->
-      <article id="lobbyBuzzerCard" class="role-card">
-        <div>
-          <h2>🔔 3. Team Buzzers (Optional)</h2>
-          <p style="margin-top:6px;">
-            One phone per team at the podium. First tap wins the Face-Off and locks out the other team.
-          </p>
-        </div>
-
-        <div class="field-row">
-          <label class="field-label" for="buzzerRoomInput">Room Code</label>
-          <input id="buzzerRoomInput" class="lobby-input" type="text" maxlength="4" placeholder="GA42" />
-          <div class="buzzer-split-btns">
-            <button id="btnJoinBuzzer1" class="action-btn btn-red display-font" onclick="joinTeamBuzzer(1)">🔔 Team 1 Buzzer</button>
-            <button id="btnJoinBuzzer2" class="action-btn btn-blue display-font" onclick="joinTeamBuzzer(2)">🔔 Team 2 Buzzer</button>
-          </div>
-          <button id="btnJoinBuzzerCombo" class="action-btn btn-gold display-font" style="margin-top:6px;" onclick="joinComboBuzzer()">🔔 Combo Buzzer (Shared Device)</button>
-        </div>
       </article>
     </div>
   </main>
@@ -625,14 +594,14 @@
         <div class="host-header-left">
           <button type="button" id="hostCompactRoundLabel" class="top-btn host-round-pill-btn" onclick="openHostPopover('round')" title="Tap to switch or swap round (while question is hidden)">Round 1 (1x)</button>
           <div class="flow-stepper host-clickable-stepper" id="hostFlowStepper" onclick="openHostPopover('phase')" title="Tap to override phase, active team, or strikes"></div>
-          <span id="hostBuzzerStatusPill" class="pill-badge" style="font-size:10px;" title="Connected remote team buzzers">🔔 Buzzers: 0/2</span>
+          <button type="button" id="hostBuzzerStatusPill" class="top-btn host-devices-btn" onclick="openQrModal()" title="Connect TV display or phone buzzers">📱 Buzzers: 0/2</button>
         </div>
         <div class="host-quick-timer-group">
           <button type="button" id="hostTurnTimerPill" class="turn-timer-pill display-font host-timer-pill-btn" onclick="openHostPopover('timer')" title="Tap to change timer duration or reset">
             ⏱️ <span id="hostTurnTimerDisplay">10s</span>
           </button>
-          <button id="hostBtnTurnTimerToggle" class="top-btn host-quick-pause-btn" onclick="hostToggleTurnTimer()" title="Start, pause, or resume timer (T)">
-            ⏱️ Start Timer
+          <button id="hostBtnTurnTimerToggle" class="top-btn host-quick-pause-btn hidden" onclick="hostToggleTurnTimer()" title="Pause or resume active timer (T)">
+            ⏸️ Pause
           </button>
           <button type="button" id="hostScriptToggleBtn" class="top-btn host-script-toggle-btn" onclick="toggleHostScript()" title="Show or hide the SAY/DO teleprompter script">
             🎙️ Hide Script
@@ -641,19 +610,15 @@
           <details id="hostMoreMenu" class="host-more-menu">
             <summary class="top-btn host-more-summary" title="Menu & Extra Controls">⋯</summary>
             <div class="host-more-dropdown">
-              <button type="button" id="hostTabMain" class="top-btn gold" onclick="hostSwitchStage('main'); closeHostMoreMenu()">🎯 Main Board</button>
+              <button type="button" id="hostTabMain" class="top-btn gold hidden" onclick="hostSwitchStage('main'); closeHostMoreMenu()">🎯 Main Board</button>
               <button type="button" id="hostTabFm" class="top-btn" onclick="hostSwitchStage('fast'); closeHostMoreMenu()">⚡ Fast Money</button>
-              <button type="button" id="hostTabWinner" class="top-btn gold" onclick="openNextMatchModal(); closeHostMoreMenu()">🏁 End Match</button>
               <button type="button" class="top-btn gold" onclick="reopenTvWindow(); closeHostMoreMenu()" title="Open or focus the separate TV Display window">📺 Pop Out TV</button>
-              <button type="button" class="top-btn" onclick="openHostPopover('timer'); closeHostMoreMenu()">⏱️ Timer Settings</button>
-              <button type="button" class="top-btn gold" onclick="hostRandomizeCurrentRound(); closeHostMoreMenu()" title="Pick a random unplayed question of the same multiplier level (1x / 2x / 3x) from the deck">🎲 Randomize (Same Level)</button>
+              <button type="button" class="top-btn gold" onclick="hostRandomizeCurrentRound(); closeHostMoreMenu()" title="Pick a random unplayed question of the same multiplier level (1x / 2x / 3x) from the deck">🎲 Randomize Round</button>
               <button type="button" class="top-btn" onclick="hostResetRound(); closeHostMoreMenu()">↺ Reset Round</button>
-              <button type="button" id="hostBtnRevealRemaining" class="top-btn gold" onclick="hostRevealNextAnswer(); closeHostMoreMenu()">👁️ Reveal Next Answer (0 pts)</button>
               <button type="button" class="top-btn" onclick="openEditRoundModal(); closeHostMoreMenu()">✏️ Edit Round</button>
-              <button type="button" class="top-btn" onclick="openDeckManagerModal(); closeHostMoreMenu()">📦 Load Deck</button>
-              <button type="button" id="hostMenuQrBtn" class="top-btn host-more-mobile-only" onclick="openQrModal(); closeHostMoreMenu()">📱 Join QR</button>
+              <button type="button" class="top-btn" onclick="openNewGameModal('host'); closeHostMoreMenu()">🆕 New Game / Switch Deck</button>
+              <button type="button" id="hostTabWinner" class="top-btn gold" onclick="openNextMatchModal(); closeHostMoreMenu()">🏁 End Match</button>
               <button id="hostMenuMuteBtn" type="button" class="top-btn host-more-mobile-only" onclick="toggleMute(); closeHostMoreMenu()">🔊 Sound</button>
-              <button type="button" class="top-btn gold host-more-mobile-only" onclick="toggleFullScreen(); closeHostMoreMenu()">⛶ Fullscreen</button>
               <button type="button" class="top-btn host-more-mobile-only" onclick="leaveToLobby(); closeHostMoreMenu()">🏠 Lobby</button>
             </div>
           </details>
@@ -834,17 +799,17 @@
     </button>
   </section>
 
-  <footer id="appBuildBadge" class="app-build-badge">Build v20261118c</footer>
+  <footer id="appBuildBadge" class="app-build-badge">Build v20261118d</footer>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js" async></script>
-  <script src="./data/questions.js?v=20261118c"></script>
-  <script src="./js/audio.js?v=20261118c"></script>
-  <script src="./js/state.js?v=20261118c"></script>
-  <script src="./js/formats.js?v=20261118c"></script>
-  <script src="./js/decks.js?v=20261118c"></script>
-  <script src="./js/sync.js?v=20261118c"></script>
-  <script src="./js/views.js?v=20261118c"></script>
-  <script src="./js/app.js?v=20261118c"></script>
+  <script src="./data/questions.js?v=20261118d"></script>
+  <script src="./js/audio.js?v=20261118d"></script>
+  <script src="./js/state.js?v=20261118d"></script>
+  <script src="./js/formats.js?v=20261118d"></script>
+  <script src="./js/decks.js?v=20261118d"></script>
+  <script src="./js/sync.js?v=20261118d"></script>
+  <script src="./js/views.js?v=20261118d"></script>
+  <script src="./js/app.js?v=20261118d"></script>
 </body>
 </html>

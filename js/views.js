@@ -143,11 +143,8 @@ window.Feud = window.Feud || {};
     const hostToggleBtn = document.getElementById("hostBtnTurnTimerToggle");
     const canResume = !running && rem > 0 && rem < dur;
     if (hostToggleBtn) {
-      hostToggleBtn.textContent = running
-        ? "⏱️ Pause Timer"
-        : canResume
-        ? "⏱️ Resume Timer"
-        : "⏱️ Start Timer";
+      hostToggleBtn.classList.toggle("hidden", !running && !canResume);
+      hostToggleBtn.textContent = running ? "⏸️ Pause" : "▶️ Resume";
     }
 
     const showOnBuzzer =
@@ -387,10 +384,10 @@ window.Feud = window.Feud || {};
       subtext =
         "No timer is running yet — timer starts automatically as soon as the first player buzzes in.";
       actionsHtml = `
-        <button type="button" class="action-btn btn-red display-font" onclick="hostManualBuzz(1)">
+        <button type="button" class="action-btn btn-blue display-font" onclick="hostManualBuzz(1)">
           🔔 ${escapeHtml(t1)} Buzzed First
         </button>
-        <button type="button" class="action-btn btn-blue display-font" onclick="hostManualBuzz(2)">
+        <button type="button" class="action-btn btn-red display-font" onclick="hostManualBuzz(2)">
           🔔 ${escapeHtml(t2)} Buzzed First
         </button>
       `;
@@ -1117,9 +1114,11 @@ window.Feud = window.Feud || {};
       const count = (bz.t1 ? 1 : 0) + (bz.t2 ? 1 : 0);
       buzzerStatusPill.textContent =
         count === 0
-          ? "🔔 Buzzers: 0/2"
-          : `🔔 ${bz.t1 ? "T1✓" : "T1–"} • ${bz.t2 ? "T2✓" : "T2–"}`;
-      buzzerStatusPill.className = `pill-badge ${count === 2 ? "awake-ok" : ""}`;
+          ? "📱 Buzzers: 0/2"
+          : `📱 ${bz.t1 ? "T1✓" : "T1–"} • ${bz.t2 ? "T2✓" : "T2–"}`;
+      buzzerStatusPill.className = `top-btn host-devices-btn${
+        count === 2 ? " is-ready" : count === 1 ? " is-partial" : ""
+      }`;
     }
     const stripT1Name = document.getElementById("hostStripT1Name");
     const stripT1Score = document.getElementById("hostStripT1Score");
@@ -1157,7 +1156,11 @@ window.Feud = window.Feud || {};
       fmTab.classList.toggle("hidden", !fmAvailable);
       fmTab.classList.toggle("gold", roomState.stage === "fast");
     }
-    document.getElementById("hostTabMain").classList.toggle("gold", roomState.stage === "main");
+    const mainTab = document.getElementById("hostTabMain");
+    if (mainTab) {
+      mainTab.classList.toggle("hidden", roomState.stage !== "fast");
+      mainTab.classList.toggle("gold", roomState.stage === "main");
+    }
 
     const coachCard = document.getElementById("hostFlowCoachCard");
     if (coachCard) {
@@ -1248,23 +1251,6 @@ window.Feud = window.Feud || {};
 
     list.appendChild(colL);
     if (colR.children.length > 0) list.appendChild(colR);
-
-    const revRemBtn = document.getElementById("hostBtnRevealRemaining");
-    if (revRemBtn) {
-      let nextIdx = -1;
-      for (let i = 0; i < round.answers.length; i++) {
-        if (!revSet.has(i)) {
-          nextIdx = i;
-          break;
-        }
-      }
-      const remCount = Math.max(0, round.answers.length - revSet.size);
-      revRemBtn.disabled = remCount === 0;
-      revRemBtn.textContent =
-        remCount > 0
-          ? `👁️ Reveal Answer #${nextIdx + 1} (${remCount} Left • 0 pts)`
-          : "✅ All Answers Revealed";
-    }
 
     // Phase-aware strike controls: disable round strikes during Face-Off / Round Over
     const isFaceOff = String(phase).startsWith("faceoff");
