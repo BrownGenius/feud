@@ -10,8 +10,14 @@ window.Feud = window.Feud || {};
 (function (Feud) {
   const TRYSTERO_APP_ID = "party-feud-live-v1";
   const MQTT_BROKERS = [
-    "wss://broker.emqx.io:8084/mqtt",
-    "wss://test.mosquitto.org:8081/mqtt"
+    { url: "wss://iot.coreflux.cloud:443/mqtt", label: "Coreflux-443" },
+    {
+      url: "wss://public.cloud.shiftr.io:443",
+      label: "Shiftr-443",
+      options: { username: "public", password: "public" }
+    },
+    { url: "wss://broker.emqx.io:8084/mqtt", label: "EMQX-8084" },
+    { url: "wss://broker.hivemq.com:8884/mqtt", label: "HiveMQ-8884" }
   ];
   const ICE_SERVERS = [
     { urls: "stun:stun.l.google.com:19302" },
@@ -23,7 +29,11 @@ window.Feud = window.Feud || {};
   let sendP2pAction = null;
   let mqttClient = null;
   let mqttConnected = false;
-  let mqttBrokerIdx = 0;
+  let hostMqttClients = new Map(); // brokerUrl -> { client, connected, label }
+  let clientPendingMqtt = new Set();
+  let hostRelayWarnTimer = null;
+  let hostRelayWarned = false;
+  let activeMqttBrokerUrl = "";
   let hostConnections = new Map(); // peerId -> { peerId, role, clientId, lastSeenAt, open }
   let localBuzzerTabs = new Map();
   let clientHostPeerId = null;
@@ -55,17 +65,23 @@ window.Feud = window.Feud || {};
   let getLocalStateCallback = null;
   let onForcedExitCallback = null;
   let pendingRoleCheck = null;
+  let pendingLocalHostProbe = null;
 
   function getTabClientId() {
+    const fresh = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
     try {
+      // Embedded iframes on the same origin share sessionStorage with siblings; keep each isolated.
+      if (window.self !== window.top) {
+        return `frm-${fresh}`;
+      }
       let id = sessionStorage.getItem("party_feud_tab_client_id");
       if (!id) {
-        id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+        id = fresh;
         sessionStorage.setItem("party_feud_tab_client_id", id);
       }
       return id;
     } catch (e) {
-      return `mem-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+      return `mem-${fresh}`;
     }
   }
   const tabClientId = getTabClientId();
@@ -117,14 +133,46 @@ window.Feud = window.Feud || {};
     return { t1: b1 || combo, t2: b2 || combo, b1, b2, combo };
   }
 
-  function notifyStatus(statusText, isLive = true) {
+  function getConnectedHostMqttCount() {
+    let count = 0;
+    hostMqttClients.forEach((entry) => {
+      if (entry && entry.connected) count += 1;
+    });
+    return count;
+  }
+
+  function getSyncDiagnostics() {
+    return {
+      mqttConnectedCount: getConnectedHostMqttCount(),
+      mqttBrokers: MQTT_BROKERS.map((b) => ({
+        url: b.url,
+        label: b.label,
+        connected: Boolean(hostMqttClients.get(b.url) && hostMqttClients.get(b.url).connected)
+      })),
+      trysteroReady: Boolean(trysteroRoom),
+      relayOk:
+        window.location.protocol === "file:"
+          ? true
+          : getConnectedHostMqttCount() > 0 || firebaseReady || !hostRelayWarned
+    };
+  }
+
+  function notifyStatus(statusText, isLive = true, extra = {}) {
     if (onConnectionStatusCallback) {
       onConnectionStatusCallback(statusText, isLive);
     }
+    const relayOk =
+      extra && extra.relayOk !== undefined ? extra.relayOk : Boolean(isLive);
     try {
       window.dispatchEvent(
         new CustomEvent("feud-peer-status", {
-          detail: { text: statusText, ok: isLive, buzzers: getConnectedBuzzerTeams() }
+          detail: {
+            text: statusText,
+            ok: isLive,
+            relayOk,
+            mqttCount: getConnectedHostMqttCount(),
+            buzzers: getConnectedBuzzerTeams()
+          }
         })
       );
     } catch (e) {}
@@ -149,25 +197,36 @@ window.Feud = window.Feud || {};
     if (mqttLoadPromise) return mqttLoadPromise;
     mqttLoadPromise = new Promise((resolve) => {
       const urls = [
-        "https://unpkg.com/mqtt/dist/mqtt.min.js",
-        "https://cdn.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"
+        "https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js",
+        "https://unpkg.com/mqtt@5/dist/mqtt.min.js"
       ];
       const tryNext = (idx) => {
         if (idx >= urls.length) {
+          mqttLoadPromise = null;
           resolve(null);
           return;
         }
         const script = document.createElement("script");
         script.src = urls[idx];
         script.async = true;
-        script.onload = () => {
-          if (window.mqtt && typeof window.mqtt.connect === "function") {
+        let settled = false;
+        let timer = null;
+        const finishAttempt = (ok) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          if (ok && window.mqtt && typeof window.mqtt.connect === "function") {
             resolve(window.mqtt);
           } else {
+            try {
+              script.remove();
+            } catch (e) {}
             tryNext(idx + 1);
           }
         };
-        script.onerror = () => tryNext(idx + 1);
+        timer = setTimeout(() => finishAttempt(false), 4500);
+        script.onload = () => finishAttempt(true);
+        script.onerror = () => finishAttempt(false);
         document.head.appendChild(script);
       };
       tryNext(0);
@@ -185,7 +244,12 @@ window.Feud = window.Feud || {};
       ];
       for (const url of cdns) {
         try {
-          const mod = await import(url);
+          const timeoutPromise = new Promise((res) => setTimeout(() => res(null), 5000));
+          const importPromise = import(url).catch((e) => {
+            console.warn(`Trystero CDN load failed (${url}):`, e);
+            return null;
+          });
+          const mod = await Promise.race([importPromise, timeoutPromise]);
           if (mod && typeof mod.joinRoom === "function") {
             return mod;
           }
@@ -193,6 +257,7 @@ window.Feud = window.Feud || {};
           console.warn(`Trystero CDN load failed (${url}):`, e);
         }
       }
+      trysteroLoadPromise = null;
       return null;
     })();
     return trysteroLoadPromise;
@@ -246,6 +311,20 @@ window.Feud = window.Feud || {};
     );
   }
 
+  function hasLocalBuzzerConflict(role, incomingClientId) {
+    if (role !== "buzzer1" && role !== "buzzer2" && role !== "buzzer_combo") return false;
+    const now = Date.now();
+    for (const [cid, entry] of Array.from(localBuzzerTabs.entries())) {
+      if (!entry || now - (entry.lastSeenAt || 0) > 12000) {
+        localBuzzerTabs.delete(cid);
+        continue;
+      }
+      if (cid === incomingClientId) continue;
+      if (buzzerRolesConflict(entry.role, role)) return true;
+    }
+    return false;
+  }
+
   function openBroadcastChannel(code) {
     if (broadcastChan) {
       try {
@@ -278,6 +357,67 @@ window.Feud = window.Feud || {};
           if (st && broadcastChan) {
             broadcastChan.postMessage({ type: "STATE_UPDATE", state: st });
           }
+        } else if (
+          msg.type === "LOCAL_HOST_PING" &&
+          msg.clientId !== tabClientId &&
+          (currentRole === "host" || isPrimaryHostPeer)
+        ) {
+          const st = getLocalStateCallback ? getLocalStateCallback() : null;
+          if (msg.role === "host") {
+            if (st && String(msg.pin) !== String(st.pin)) {
+              if (broadcastChan) {
+                broadcastChan.postMessage({
+                  type: "LOCAL_HOST_AUTH_DENIED",
+                  targetClientId: msg.clientId,
+                  reason: "❌ Incorrect Host PIN! Access denied."
+                });
+              }
+              return;
+            }
+          }
+          if (msg.role === "buzzer1" || msg.role === "buzzer2" || msg.role === "buzzer_combo") {
+            const conflict =
+              Boolean(findActiveTeamBuzzer(msg.role, msg.clientId || "")) ||
+              hasLocalBuzzerConflict(msg.role, msg.clientId || "");
+            if (conflict) {
+              const label =
+                msg.role === "buzzer_combo"
+                  ? "A Team Buzzer"
+                  : `Team ${msg.role === "buzzer1" ? 1 : 2}'s buzzer`;
+              if (broadcastChan) {
+                broadcastChan.postMessage({
+                  type: "LOCAL_HOST_AUTH_DENIED",
+                  targetClientId: msg.clientId,
+                  reason: `🔒 ${label} is already open in another tab or device!`
+                });
+              }
+              return;
+            }
+            localBuzzerTabs.set(msg.clientId, { role: msg.role, lastSeenAt: Date.now() });
+            updateHostPeerBadge();
+          }
+          if (broadcastChan) {
+            broadcastChan.postMessage({
+              type: "LOCAL_HOST_PONG",
+              targetClientId: msg.clientId,
+              state: st
+            });
+          }
+        } else if (
+          msg.type === "LOCAL_HOST_PONG" &&
+          msg.targetClientId === tabClientId &&
+          pendingLocalHostProbe
+        ) {
+          pendingLocalHostProbe.resolve({ alive: true, state: msg.state });
+        } else if (
+          msg.type === "LOCAL_HOST_AUTH_DENIED" &&
+          msg.targetClientId === tabClientId &&
+          pendingLocalHostProbe
+        ) {
+          pendingLocalHostProbe.resolve({
+            authDenied: true,
+            reason: msg.reason || "❌ Access denied!"
+          });
         } else if (msg.type === "CLAIM_ROLE_CHECK" && msg.clientId !== tabClientId) {
           const selfConflicts =
             (currentRole === "buzzer1" ||
@@ -306,14 +446,20 @@ window.Feud = window.Feud || {};
             localBuzzerTabs.set(msg.clientId, { role: msg.role, lastSeenAt: Date.now() });
             const next = getConnectedBuzzerTeams();
             if (prev.b1 !== next.b1 || prev.b2 !== next.b2 || prev.combo !== next.combo) {
-              persistActiveBuzzers();
-              notifyStatus(`Room: ${currentCode} • Live`, true);
+              if (isPrimaryHostPeer) {
+                updateHostPeerBadge();
+              } else {
+                notifyStatus(`Room: ${currentCode} • Live`, true);
+              }
             }
           }
         } else if (msg.type === "BUZZER_GOODBYE" && msg.clientId !== tabClientId) {
           if (localBuzzerTabs.delete(msg.clientId)) {
-            persistActiveBuzzers();
-            notifyStatus(`Room: ${currentCode} • Live`, true);
+            if (isPrimaryHostPeer) {
+              updateHostPeerBadge();
+            } else {
+              notifyStatus(`Room: ${currentCode} • Live`, true);
+            }
           }
         } else if (msg.type === "PROBE_BUZZERS" && msg.clientId !== tabClientId) {
           const isBuzzerOrHost =
@@ -331,6 +477,36 @@ window.Feud = window.Feud || {};
         }
       };
     } catch (e) {}
+  }
+
+  function probeLocalBroadcastHost(role, pin = "", timeoutMs = 300) {
+    if (!broadcastChan) {
+      return Promise.resolve({ alive: false });
+    }
+    return new Promise((resolve) => {
+      let done = false;
+      const finishProbe = (res) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        if (pendingLocalHostProbe && pendingLocalHostProbe.resolve === finishProbe) {
+          pendingLocalHostProbe = null;
+        }
+        resolve(res);
+      };
+      const timer = setTimeout(() => finishProbe({ alive: false }), timeoutMs);
+      pendingLocalHostProbe = { resolve: finishProbe };
+      try {
+        broadcastChan.postMessage({
+          type: "LOCAL_HOST_PING",
+          role,
+          pin,
+          clientId: tabClientId
+        });
+      } catch (e) {
+        finishProbe({ alive: false });
+      }
+    });
   }
 
   function buzzerRolesConflict(r1, r2) {
@@ -370,12 +546,23 @@ window.Feud = window.Feud || {};
   }
 
   function updateHostPeerBadge() {
+    if (!currentCode || currentCode === "SOLO") return;
     persistActiveBuzzers();
-    const count = hostConnections.size;
-    if (count > 0) {
-      notifyStatus(`Room: ${currentCode} • 📱 ${count} Connected`, true);
+    if (window.location.protocol === "file:") {
+      notifyStatus(`Room: ${currentCode} (Local Sync)`, true, { relayOk: true });
+    } else if (hostConnections.size > 0) {
+      notifyStatus(`Room: ${currentCode} • 📱 ${hostConnections.size} Connected`, true, {
+        relayOk: true
+      });
+    } else if (getConnectedHostMqttCount() > 0 || firebaseReady) {
+      hostRelayWarned = false;
+      notifyStatus(`Room: ${currentCode} • Ready`, true, { relayOk: true });
+    } else if (hostRelayWarned) {
+      notifyStatus(`Room: ${currentCode} • ⚠️ Relay Blocked (Local Only)`, false, {
+        relayOk: false
+      });
     } else {
-      notifyStatus(`Room: ${currentCode} • Ready`, true);
+      notifyStatus(`Room: ${currentCode} • Connecting…`, true, { relayOk: true });
     }
   }
 
@@ -389,13 +576,41 @@ window.Feud = window.Feud || {};
       const now = Date.now();
       let changed = false;
       for (const [peerId, entry] of Array.from(hostConnections.entries())) {
-        if (!entry || !entry.open || now - (entry.lastSeenAt || 0) > 6500) {
+        if (!entry || !entry.open || now - (entry.lastSeenAt || 0) > 15000) {
           hostConnections.delete(peerId);
+          changed = true;
+        }
+      }
+      for (const [cid, entry] of Array.from(localBuzzerTabs.entries())) {
+        if (!entry || now - (entry.lastSeenAt || 0) > 12000) {
+          localBuzzerTabs.delete(cid);
           changed = true;
         }
       }
       if (changed) updateHostPeerBadge();
     }, 2000);
+  }
+
+  function armHostRelayWarnTimer(code) {
+    clearTimeout(hostRelayWarnTimer);
+    hostRelayWarned = false;
+    if (window.location.protocol === "file:" || code === "SOLO") {
+      hostRelayWarnTimer = null;
+      return;
+    }
+    hostRelayWarnTimer = setTimeout(() => {
+      hostRelayWarnTimer = null;
+      if (
+        isPrimaryHostPeer &&
+        currentCode === code &&
+        getConnectedHostMqttCount() === 0 &&
+        !firebaseReady &&
+        hostConnections.size === 0
+      ) {
+        hostRelayWarned = true;
+        updateHostPeerBadge();
+      }
+    }, 7000);
   }
 
   async function startHostRoomSync(code, initialState) {
@@ -415,149 +630,166 @@ window.Feud = window.Feud || {};
     }
 
     if (code === "SOLO") {
-      notifyStatus("Room: SOLO (Single-Screen)", true);
+      notifyStatus("Room: SOLO (Single-Screen)", true, { relayOk: true });
       return;
     }
 
-    const hasFb = await initOptionalFirebase();
-    if (hasFb) {
-      try {
-        await firestoreMod.setDoc(getFirestoreRoomRef(currentCode), initialState);
-        subscribeFirestoreRoom(currentCode);
-      } catch (e) {}
-    }
-
-    const useMqtt = shouldUseMqttTransport();
-    const trystero = useMqtt ? null : await loadTrystero();
-    if (!trystero) {
-      await startMqttHostSync(currentCode);
+    if (window.location.protocol === "file:") {
+      updateHostPeerBadge();
       return;
     }
 
-    try {
-      const room = trystero.joinRoom(
-        { appId: TRYSTERO_APP_ID, rtcConfig: { iceServers: ICE_SERVERS } },
-        `room-${currentCode}`
-      );
-      trysteroRoom = room;
-      const [sendP2p, onP2p] = room.makeAction("feud");
-      sendP2pAction = sendP2p;
+    armHostRelayWarnTimer(currentCode);
+    updateHostPeerBadge();
 
-      room.onPeerJoin((peerId) => {
-        if (!isPrimaryHostPeer || trysteroRoom !== room) return;
-        const existing = hostConnections.get(peerId);
-        if (!existing) {
-          hostConnections.set(peerId, {
-            peerId,
-            role: "client",
-            clientId: "",
-            lastSeenAt: Date.now(),
-            open: true
-          });
-        }
-        updateHostPeerBadge();
-      });
-
-      room.onPeerLeave((peerId) => {
-        if (trysteroRoom !== room) return;
-        if (hostConnections.delete(peerId)) {
+    initOptionalFirebase()
+      .then(async (hasFb) => {
+        if (!hasFb || !isPrimaryHostPeer || currentCode !== code.toUpperCase()) return;
+        try {
+          await firestoreMod.setDoc(getFirestoreRoomRef(currentCode), initialState);
+          if (!isPrimaryHostPeer || currentCode !== code.toUpperCase()) return;
+          subscribeFirestoreRoom(currentCode);
+          clearTimeout(hostRelayWarnTimer);
+          hostRelayWarnTimer = null;
+          hostRelayWarned = false;
           updateHostPeerBadge();
-        }
-      });
+        } catch (e) {}
+      })
+      .catch(() => {});
 
-      onP2p((msg, peerId) => {
-        if (!isPrimaryHostPeer || trysteroRoom !== room || !msg || typeof msg !== "object") return;
-        const st = getLocalStateCallback ? getLocalStateCallback() : null;
-        const existing = hostConnections.get(peerId);
-        if (existing) existing.lastSeenAt = Date.now();
+    startMqttHostSync(currentCode).catch(() => {});
 
-        if (msg.type === "PING") {
+    if (!shouldUseMqttTransport()) {
+      loadTrystero()
+        .then((trystero) => {
+          if (!trystero || !isPrimaryHostPeer || currentCode !== code.toUpperCase()) return;
           try {
-            sendP2pAction({ type: "PONG", t: msg.t || 0 }, peerId);
-          } catch (e) {}
-          return;
-        }
-
-        if (msg.type === "BYE") {
-          hostConnections.delete(peerId);
-          updateHostPeerBadge();
-          return;
-        }
-
-        if (msg.type === "PROBE_BUZZERS") {
-          try {
-            sendP2pAction({ type: "BUZZERS_REPORT", buzzers: getConnectedBuzzerTeams() }, peerId);
-          } catch (e) {}
-          return;
-        }
-
-        if (msg.type === "HELLO") {
-          if (msg.role === "host") {
-            if (st && String(msg.pin) !== String(st.pin)) {
-              try {
-                sendP2pAction({ type: "AUTH_DENIED", reason: "Incorrect Host PIN!" }, peerId);
-              } catch (e) {}
-              return;
-            }
-          }
-          if (msg.role === "buzzer1" || msg.role === "buzzer2" || msg.role === "buzzer_combo") {
-            const active = findActiveTeamBuzzer(msg.role, msg.clientId || "");
-            if (active && active.peerId !== peerId) {
-              const label =
-                msg.role === "buzzer_combo"
-                  ? "A Team Buzzer"
-                  : `Team ${msg.role === "buzzer1" ? 1 : 2}'s buzzer`;
-              try {
-                sendP2pAction(
-                  {
-                    type: "AUTH_DENIED",
-                    reason: `🔒 ${label} is already open on another device!`
-                  },
-                  peerId
-                );
-              } catch (e) {}
-              hostConnections.delete(peerId);
-              updateHostPeerBadge();
-              return;
-            }
-          }
-          hostConnections.set(peerId, {
-            peerId,
-            role: msg.role || "client",
-            clientId: msg.clientId || "",
-            lastSeenAt: Date.now(),
-            open: true
-          });
-          updateHostPeerBadge();
-          try {
-            window.dispatchEvent(
-              new CustomEvent("feud-client-connected", { detail: { role: msg.role || "client" } })
+            const room = trystero.joinRoom(
+              { appId: TRYSTERO_APP_ID, rtcConfig: { iceServers: ICE_SERVERS } },
+              `room-${currentCode}`
             );
-          } catch (e) {}
-          if (msg.role === "tv") {
-            try {
-              window.dispatchEvent(new CustomEvent("feud-tv-connected"));
-            } catch (e) {}
-          }
-          if (st) {
-            try {
-              sendP2pAction({ type: "STATE_UPDATE", state: st }, peerId);
-            } catch (e) {}
-          }
-        } else if (msg.type === "BUZZ") {
-          handleIncomingBuzzOnHost(Number(msg.team));
-        } else if (msg.type === "HOST_PATCH" && msg.patch && st) {
-          const merged = { ...st, ...msg.patch, updatedAt: Date.now() };
-          Feud.saveRoomStateToStorage(currentCode, merged);
-          if (onRemoteStateCallback) onRemoteStateCallback(merged);
-          broadcastFromHostToPeers(merged);
-        }
-      });
+            trysteroRoom = room;
+            const [sendP2p, onP2p] = room.makeAction("feud");
+            sendP2pAction = sendP2p;
 
-      notifyStatus(`Room: ${currentCode} • Ready`, true);
-      startMqttHostSync(currentCode).catch(() => {});
-    } catch (e) {
-      await startMqttHostSync(currentCode);
+            room.onPeerJoin((peerId) => {
+              if (!isPrimaryHostPeer || trysteroRoom !== room) return;
+              const existing = hostConnections.get(peerId);
+              if (!existing) {
+                hostConnections.set(peerId, {
+                  peerId,
+                  role: "client",
+                  clientId: "",
+                  lastSeenAt: Date.now(),
+                  open: true
+                });
+              }
+              updateHostPeerBadge();
+            });
+
+            room.onPeerLeave((peerId) => {
+              if (trysteroRoom !== room) return;
+              if (hostConnections.delete(peerId)) {
+                updateHostPeerBadge();
+              }
+            });
+
+            onP2p((msg, peerId) => {
+              if (!isPrimaryHostPeer || trysteroRoom !== room || !msg || typeof msg !== "object") {
+                return;
+              }
+              const st = getLocalStateCallback ? getLocalStateCallback() : null;
+
+              if (msg.type === "PING") {
+                handleHostPingMsg(msg, peerId, (replyMsg) => {
+                  try {
+                    sendP2pAction(replyMsg, peerId);
+                  } catch (e) {}
+                });
+                return;
+              }
+
+              const existing = hostConnections.get(peerId);
+              if (existing) existing.lastSeenAt = Date.now();
+
+              if (msg.type === "BYE") {
+                hostConnections.delete(peerId);
+                updateHostPeerBadge();
+                return;
+              }
+
+              if (msg.type === "PROBE_BUZZERS") {
+                try {
+                  sendP2pAction({ type: "BUZZERS_REPORT", buzzers: getConnectedBuzzerTeams() }, peerId);
+                } catch (e) {}
+                return;
+              }
+
+              if (msg.type === "HELLO") {
+                if (msg.role === "host") {
+                  if (st && String(msg.pin) !== String(st.pin)) {
+                    try {
+                      sendP2pAction({ type: "AUTH_DENIED", reason: "Incorrect Host PIN!" }, peerId);
+                    } catch (e) {}
+                    return;
+                  }
+                }
+                if (msg.role === "buzzer1" || msg.role === "buzzer2" || msg.role === "buzzer_combo") {
+                  const active = findActiveTeamBuzzer(msg.role, msg.clientId || "");
+                  if (active && active.peerId !== peerId) {
+                    const label =
+                      msg.role === "buzzer_combo"
+                        ? "A Team Buzzer"
+                        : `Team ${msg.role === "buzzer1" ? 1 : 2}'s buzzer`;
+                    try {
+                      sendP2pAction(
+                        {
+                          type: "AUTH_DENIED",
+                          reason: `🔒 ${label} is already open on another device!`
+                        },
+                        peerId
+                      );
+                    } catch (e) {}
+                    hostConnections.delete(peerId);
+                    updateHostPeerBadge();
+                    return;
+                  }
+                }
+                hostConnections.set(peerId, {
+                  peerId,
+                  role: msg.role || "client",
+                  clientId: msg.clientId || "",
+                  lastSeenAt: Date.now(),
+                  open: true
+                });
+                updateHostPeerBadge();
+                try {
+                  window.dispatchEvent(
+                    new CustomEvent("feud-client-connected", { detail: { role: msg.role || "client" } })
+                  );
+                } catch (e) {}
+                if (msg.role === "tv") {
+                  try {
+                    window.dispatchEvent(new CustomEvent("feud-tv-connected"));
+                  } catch (e) {}
+                }
+                if (st) {
+                  try {
+                    sendP2pAction({ type: "STATE_UPDATE", state: st }, peerId);
+                  } catch (e) {}
+                }
+              } else if (msg.type === "BUZZ") {
+                handleIncomingBuzzOnHost(Number(msg.team));
+              } else if (msg.type === "HOST_PATCH" && msg.patch && st) {
+                const merged = { ...st, ...msg.patch, updatedAt: Date.now() };
+                Feud.saveRoomStateToStorage(currentCode, merged);
+                if (onRemoteStateCallback) onRemoteStateCallback(merged);
+                broadcastFromHostToPeers(merged);
+              }
+            });
+          } catch (e) {}
+        })
+        .catch(() => {});
     }
   }
 
@@ -570,16 +802,58 @@ window.Feud = window.Feud || {};
     return copy;
   }
 
-  function handleHostIncomingMsg(msg, senderId, replyFn) {
-    if (!isPrimaryHostPeer || !msg || typeof msg !== "object") return;
-    const st = getLocalStateCallback ? getLocalStateCallback() : null;
+  function handleHostPingMsg(msg, senderId, replyFn) {
     const existing = hostConnections.get(senderId);
-    if (existing) existing.lastSeenAt = Date.now();
-
-    if (msg.type === "PING") {
+    if (existing) {
+      existing.lastSeenAt = Date.now();
       replyFn({ type: "PONG", t: msg.t || 0 });
       return;
     }
+    if (msg.role === "buzzer1" || msg.role === "buzzer2" || msg.role === "buzzer_combo") {
+      const active = findActiveTeamBuzzer(msg.role, msg.clientId || "");
+      if (active && active.peerId !== senderId) {
+        const label =
+          msg.role === "buzzer_combo"
+            ? "A Team Buzzer"
+            : `Team ${msg.role === "buzzer1" ? 1 : 2}'s buzzer`;
+        replyFn({
+          type: "AUTH_DENIED",
+          reason: `🔒 ${label} is already open on another device!`
+        });
+        return;
+      }
+    }
+    if (msg.role) {
+      hostConnections.set(senderId, {
+        peerId: senderId,
+        role: msg.role,
+        clientId: msg.clientId || "",
+        lastSeenAt: Date.now(),
+        open: true
+      });
+      updateHostPeerBadge();
+      replyFn({ type: "PONG", t: msg.t || 0 });
+      const st = getLocalStateCallback ? getLocalStateCallback() : null;
+      if (st) {
+        replyFn({ type: "STATE_UPDATE", state: st });
+      }
+      return;
+    }
+    replyFn({ type: "PONG", t: msg.t || 0 });
+  }
+
+  function handleHostIncomingMsg(msg, senderId, replyFn) {
+    if (!isPrimaryHostPeer || !msg || typeof msg !== "object") return;
+    const st = getLocalStateCallback ? getLocalStateCallback() : null;
+
+    if (msg.type === "PING") {
+      handleHostPingMsg(msg, senderId, replyFn);
+      return;
+    }
+
+    const existing = hostConnections.get(senderId);
+    if (existing) existing.lastSeenAt = Date.now();
+
     if (msg.type === "BYE") {
       if (hostConnections.delete(senderId)) updateHostPeerBadge();
       return;
@@ -643,62 +917,121 @@ window.Feud = window.Feud || {};
   }
 
   async function startMqttHostSync(code) {
-    const mqttLib = await loadMqttJs();
-    if (!mqttLib || !isPrimaryHostPeer || currentCode !== code) {
-      notifyStatus(`Room: ${code} (Local Sync)`, true);
+    if (window.location.protocol === "file:") {
+      updateHostPeerBadge();
       return;
     }
-    const brokerUrl = MQTT_BROKERS[mqttBrokerIdx % MQTT_BROKERS.length];
-    try {
-      const client = mqttLib.connect(brokerUrl, {
-        clean: true,
-        connectTimeout: 5000,
-        reconnectPeriod: 3000
-      });
-      mqttClient = client;
-
-      client.on("connect", () => {
-        if (mqttClient !== client || !isPrimaryHostPeer || currentCode !== code) return;
-        mqttConnected = true;
-        client.subscribe(`party-feud/v1/${code}/host`);
-        notifyStatus(`Room: ${code} • Ready`, true);
-      });
-
-      client.on("message", (topic, payload) => {
-        if (mqttClient !== client || !isPrimaryHostPeer || currentCode !== code) return;
-        try {
-          const parsed = JSON.parse(payload.toString());
-          const senderId = parsed && parsed.senderId;
-          const msg = parsed && parsed.msg;
-          if (!senderId || !msg) return;
-          handleHostIncomingMsg(msg, senderId, (replyMsg) => {
-            if (!mqttClient || !mqttConnected) return;
-            const outMsg =
-              replyMsg.type === "STATE_UPDATE"
-                ? { ...replyMsg, state: compactStateForMqtt(replyMsg.state) }
-                : replyMsg;
-            try {
-              mqttClient.publish(
-                `party-feud/v1/${code}/reply/${senderId}`,
-                JSON.stringify({ senderId: tabClientId, msg: outMsg }),
-                { qos: 1 }
-              );
-            } catch (e) {}
-          });
-        } catch (e) {}
-      });
-
-      client.on("error", () => {
-        if (mqttClient !== client) return;
-        mqttConnected = false;
-        mqttBrokerIdx += 1;
-      });
-      client.on("close", () => {
-        if (mqttClient === client) mqttConnected = false;
-      });
-    } catch (e) {
-      notifyStatus(`Room: ${code} (Local Sync)`, true);
+    const mqttLib = await loadMqttJs();
+    if (!mqttLib || !isPrimaryHostPeer || currentCode !== code) {
+      if (isPrimaryHostPeer && currentCode === code) {
+        clearTimeout(hostRelayWarnTimer);
+        hostRelayWarnTimer = null;
+        if (!firebaseReady && hostConnections.size === 0) {
+          hostRelayWarned = true;
+        }
+        updateHostPeerBadge();
+      }
+      return;
     }
+
+    MQTT_BROKERS.forEach((broker) => {
+      if (!isPrimaryHostPeer || currentCode !== code) return;
+      const existingEntry = hostMqttClients.get(broker.url);
+      if (existingEntry && existingEntry.client) {
+        if (existingEntry.connected) return;
+        try {
+          existingEntry.client.end(true);
+        } catch (e) {}
+      }
+
+      const entry = { client: null, connected: false, label: broker.label };
+      hostMqttClients.set(broker.url, entry);
+
+      try {
+        const client = mqttLib.connect(broker.url, {
+          clean: true,
+          connectTimeout: 5000,
+          reconnectPeriod: 6000,
+          ...(broker.options || {})
+        });
+        entry.client = client;
+
+        client.on("connect", () => {
+          if (entry.client !== client || !isPrimaryHostPeer || currentCode !== code) {
+            try {
+              client.end(true);
+            } catch (e) {}
+            return;
+          }
+          entry.connected = true;
+          hostRelayWarned = false;
+          clearTimeout(hostRelayWarnTimer);
+          hostRelayWarnTimer = null;
+          client.subscribe(`party-feud/v1/${code}/host`, { qos: 1 });
+          updateHostPeerBadge();
+        });
+
+        client.on("message", (topic, payload) => {
+          if (entry.client !== client || !isPrimaryHostPeer || currentCode !== code) return;
+          try {
+            const parsed = JSON.parse(payload.toString());
+            const senderId = parsed && parsed.senderId;
+            const msg = parsed && parsed.msg;
+            if (!senderId || !msg) return;
+            handleHostIncomingMsg(msg, senderId, (replyMsg) => {
+              if (!entry.connected || entry.client !== client) return;
+              const outMsg =
+                replyMsg.type === "STATE_UPDATE"
+                  ? { ...replyMsg, state: compactStateForMqtt(replyMsg.state) }
+                  : replyMsg;
+              try {
+                client.publish(
+                  `party-feud/v1/${code}/reply/${senderId}`,
+                  JSON.stringify({ senderId: tabClientId, msg: outMsg }),
+                  { qos: 1 }
+                );
+              } catch (e) {}
+            });
+          } catch (e) {}
+        });
+
+        const handleDrop = () => {
+          if (entry.client !== client) return;
+          entry.connected = false;
+          if (
+            isPrimaryHostPeer &&
+            currentCode === code &&
+            getConnectedHostMqttCount() === 0 &&
+            !hostRelayWarnTimer
+          ) {
+            if (!firebaseReady && hostConnections.size === 0) {
+              hostRelayWarned = true;
+            }
+            updateHostPeerBadge();
+          }
+        };
+        client.on("error", handleDrop);
+        client.on("close", handleDrop);
+      } catch (e) {
+        entry.connected = false;
+      }
+    });
+  }
+
+  function retryHostRelay() {
+    if (!isPrimaryHostPeer || !currentCode || currentCode === "SOLO") return;
+    if (window.location.protocol === "file:") return;
+    for (const [url, entry] of Array.from(hostMqttClients.entries())) {
+      if (entry && !entry.connected && entry.client) {
+        try {
+          entry.client.end(true);
+        } catch (e) {}
+        hostMqttClients.delete(url);
+      }
+    }
+    armHostRelayWarnTimer(currentCode);
+    updateHostPeerBadge();
+    startMqttHostSync(currentCode).catch(() => {});
   }
 
   // Single source of truth for whether a buzz is legal in the current room state.
@@ -753,16 +1086,17 @@ window.Feud = window.Feud || {};
         sendP2pAction({ type: "STATE_UPDATE", state: fullState });
       } catch (e) {}
     }
-    if (mqttClient && mqttConnected && currentCode) {
-      try {
-        mqttClient.publish(
-          `party-feud/v1/${currentCode}/state`,
-          JSON.stringify({
-            senderId: tabClientId,
-            msg: { type: "STATE_UPDATE", state: compactStateForMqtt(fullState) }
-          })
-        );
-      } catch (e) {}
+    if (currentCode && hostMqttClients.size > 0) {
+      const payload = JSON.stringify({
+        senderId: tabClientId,
+        msg: { type: "STATE_UPDATE", state: compactStateForMqtt(fullState) }
+      });
+      hostMqttClients.forEach((entry) => {
+        if (!entry || !entry.connected || !entry.client) return;
+        try {
+          entry.client.publish(`party-feud/v1/${currentCode}/state`, payload);
+        } catch (e) {}
+      });
     }
   }
 
@@ -802,6 +1136,16 @@ window.Feud = window.Feud || {};
     });
   }
 
+  function clearPendingClientMqtt(exceptClient = null) {
+    for (const c of Array.from(clientPendingMqtt)) {
+      if (c === exceptClient) continue;
+      clientPendingMqtt.delete(c);
+      try {
+        c.end(true);
+      } catch (e) {}
+    }
+  }
+
   async function joinExistingRoomSync({ code, role, pin = "" }) {
     cleanupSync();
     currentCode = code.toUpperCase();
@@ -810,8 +1154,40 @@ window.Feud = window.Feud || {};
 
     openBroadcastChannel(currentCode);
 
+    const localProbe = await probeLocalBroadcastHost(role, pin, 300);
+    if (localProbe && localProbe.authDenied) {
+      cleanupSync();
+      return { ok: false, error: localProbe.reason || "❌ Access denied!" };
+    }
+    if (localProbe && localProbe.alive) {
+      const stateToUse = localProbe.state || Feud.loadRoomStateFromStorage(currentCode);
+      if (role === "host" && stateToUse && String(stateToUse.pin) !== String(pin)) {
+        cleanupSync();
+        return { ok: false, error: "❌ Incorrect Host PIN! Access denied." };
+      }
+      hasLocalBroadcastSync = Boolean(broadcastChan);
+      lastLocalSyncAt = Date.now();
+      if (broadcastChan && (role === "buzzer1" || role === "buzzer2" || role === "buzzer_combo")) {
+        clearInterval(localPresenceTimer);
+        localPresenceTimer = setInterval(() => {
+          if (!broadcastChan) return;
+          try {
+            broadcastChan.postMessage({
+              type: "BUZZER_PRESENCE",
+              role,
+              clientId: tabClientId
+            });
+          } catch (e) {}
+        }, 4000);
+      }
+      notifyStatus(`Room: ${currentCode} • Live`, true);
+      return { ok: true, state: stateToUse };
+    }
+
+    hasLocalBroadcastSync = false;
     const localState = Feud.loadRoomStateFromStorage(currentCode);
-    if (localState) {
+
+    if (localState && window.location.protocol === "file:") {
       if (role === "host" && String(localState.pin) !== String(pin)) {
         cleanupSync();
         return { ok: false, error: "❌ Incorrect Host PIN! Access denied." };
@@ -832,31 +1208,36 @@ window.Feud = window.Feud || {};
       }
       hasLocalBroadcastSync = Boolean(broadcastChan);
       lastLocalSyncAt = Date.now();
-      if (broadcastChan) {
+      if (broadcastChan && (role === "buzzer1" || role === "buzzer2" || role === "buzzer_combo")) {
         try {
-          broadcastChan.postMessage({ type: "REQUEST_STATE" });
-          if (role === "buzzer1" || role === "buzzer2" || role === "buzzer_combo") {
-            broadcastChan.postMessage({
-              type: "BUZZER_PRESENCE",
-              role,
-              clientId: tabClientId
-            });
-            clearInterval(localPresenceTimer);
-            localPresenceTimer = setInterval(() => {
-              if (!broadcastChan) return;
-              try {
-                broadcastChan.postMessage({
-                  type: "BUZZER_PRESENCE",
-                  role,
-                  clientId: tabClientId
-                });
-              } catch (e) {}
-            }, 4000);
-          }
+          broadcastChan.postMessage({
+            type: "BUZZER_PRESENCE",
+            role,
+            clientId: tabClientId
+          });
+          clearInterval(localPresenceTimer);
+          localPresenceTimer = setInterval(() => {
+            if (!broadcastChan) return;
+            try {
+              broadcastChan.postMessage({
+                type: "BUZZER_PRESENCE",
+                role,
+                clientId: tabClientId
+              });
+            } catch (e) {}
+          }, 4000);
         } catch (e) {}
       }
-      connectPeerClient({ code: currentCode, role, pin }).catch(() => {});
       notifyStatus(`Room: ${currentCode} • Live`, true);
+      return { ok: true, state: localState };
+    }
+
+    if (localState && role === "host") {
+      if (String(localState.pin) !== String(pin)) {
+        cleanupSync();
+        return { ok: false, error: "❌ Incorrect Host PIN! Access denied." };
+      }
+      await startHostRoomSync(currentCode, localState);
       return { ok: true, state: localState };
     }
 
@@ -867,6 +1248,7 @@ window.Feud = window.Feud || {};
         if (snap.exists()) {
           const data = snap.data();
           if (role === "host" && String(data.pin) !== String(pin)) {
+            cleanupSync();
             return { ok: false, error: "❌ Incorrect Host PIN! Access denied." };
           }
           subscribeFirestoreRoom(currentCode);
@@ -876,47 +1258,28 @@ window.Feud = window.Feud || {};
       } catch (e) {}
     }
 
-    return await connectPeerClient({ code: currentCode, role, pin });
+    const remoteRes = await connectPeerClient({ code: currentCode, role, pin });
+    if (!remoteRes || !remoteRes.ok) {
+      cleanupSync();
+    }
+    return remoteRes;
   }
 
-  function connectMqttClient({ code, role, pin }) {
+  function connectMqttClient({ code, role, pin, gen }) {
     clientJoinInfo = { code, role, pin };
-    const myGen = ++clientGen;
+    const myGen = gen !== undefined ? gen : ++clientGen;
     const isStale = () => myGen !== clientGen || currentCode !== code || currentRole === "lobby";
 
     return new Promise(async (resolve) => {
       const mqttLib = await loadMqttJs();
       if (!mqttLib) {
-        resolve({ ok: false, error: "Network sync unavailable." });
+        resolve({ ok: false, error: "Network sync unavailable (could not load relay client)." });
         return;
       }
       if (isStale()) {
         resolve({ ok: false, error: "Connection superseded." });
         return;
       }
-
-      let settled = false;
-      let everConnected = false;
-      const finish = (res) => {
-        if (!settled) {
-          settled = true;
-          resolve(res);
-        }
-      };
-      const fail = (res) => {
-        clearTimeout(timeoutId);
-        finish(res);
-        if (!isStale() && (everConnected || reconnectAttempt > 0)) {
-          scheduleClientReconnect(code, role, pin);
-        }
-      };
-
-      const timeoutId = setTimeout(() => {
-        fail({
-          ok: false,
-          error: `Room "${code}" not found via MQTT relay. Check the Host screen.`
-        });
-      }, 12000);
 
       if (mqttClient && !isPrimaryHostPeer) {
         try {
@@ -925,32 +1288,140 @@ window.Feud = window.Feud || {};
         mqttClient = null;
         mqttConnected = false;
         clientConnOpen = false;
+        activeMqttBrokerUrl = "";
       }
+      clearPendingClientMqtt();
 
-      const brokerUrl = MQTT_BROKERS[mqttBrokerIdx % MQTT_BROKERS.length];
-      try {
-        const client = mqttLib.connect(brokerUrl, {
-          clean: true,
-          keepalive: 5,
-          connectTimeout: 5000,
-          reconnectPeriod: 3000,
-          will: {
-            topic: `party-feud/v1/${code}/host`,
-            payload: JSON.stringify({
-              senderId: tabClientId,
-              msg: { type: "BYE", role, clientId: tabClientId }
-            }),
-            qos: 1,
-            retain: false
+      let settled = false;
+      let everConnected = false;
+      let anyBrokerConnected = false;
+      let closedBrokers = 0;
+      const attemptClients = new Set();
+      const helloTimers = [];
+
+      const clearHelloTimers = () => {
+        while (helloTimers.length) {
+          clearTimeout(helloTimers.pop());
+        }
+      };
+
+      const closeAttemptClients = (keepClient = null) => {
+        for (const c of Array.from(attemptClients)) {
+          if (c === keepClient) continue;
+          attemptClients.delete(c);
+          clientPendingMqtt.delete(c);
+          try {
+            c.end(true);
+          } catch (e) {}
+        }
+      };
+
+      const finish = (res) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        clearHelloTimers();
+        closeAttemptClients(res && res.ok ? mqttClient : null);
+        resolve(res);
+      };
+
+      const fail = (res) => {
+        finish(res);
+        if (!isStale() && (everConnected || reconnectAttempt > 0)) {
+          scheduleClientReconnect(code, role, pin);
+        }
+      };
+
+      const timeoutId = setTimeout(() => {
+        fail(
+          anyBrokerConnected
+            ? {
+                ok: false,
+                error: `Room "${code}" not found via relay. Check that the Host screen is open and connected.`
+              }
+            : {
+                ok: false,
+                error: "Unable to reach cloud relay (check internet or lab firewall)."
+              }
+        );
+      }, 12000);
+
+      const replyTopic = `party-feud/v1/${code}/reply/${tabClientId}`;
+      const stateTopic = `party-feud/v1/${code}/state`;
+
+      MQTT_BROKERS.forEach((broker) => {
+        if (isStale() || settled) return;
+        let client = null;
+        let thisFailed = false;
+        try {
+          client = mqttLib.connect(broker.url, {
+            clean: true,
+            keepalive: 8,
+            connectTimeout: 5000,
+            reconnectPeriod: 0,
+            ...(broker.options || {}),
+            will: {
+              topic: `party-feud/v1/${code}/host`,
+              payload: JSON.stringify({
+                senderId: tabClientId,
+                msg: { type: "BYE", role, clientId: tabClientId }
+              }),
+              qos: 1,
+              retain: false
+            }
+          });
+        } catch (e) {
+          closedBrokers += 1;
+          if (!settled && !anyBrokerConnected && closedBrokers >= MQTT_BROKERS.length) {
+            fail({
+              ok: false,
+              error: "Unable to reach cloud relay (check internet or lab firewall)."
+            });
           }
-        });
-        mqttClient = client;
+          return;
+        }
+
+        attemptClients.add(client);
+        clientPendingMqtt.add(client);
+
+        const markBrokerClosed = () => {
+          if (thisFailed) return;
+          thisFailed = true;
+          closedBrokers += 1;
+          if (mqttClient === client) {
+            mqttConnected = false;
+            clientConnOpen = false;
+            activeMqttBrokerUrl = "";
+            if (everConnected && !isStale()) {
+              scheduleClientReconnect(code, role, pin);
+            }
+          }
+          attemptClients.delete(client);
+          clientPendingMqtt.delete(client);
+          if (!settled && !anyBrokerConnected && closedBrokers >= MQTT_BROKERS.length) {
+            fail({
+              ok: false,
+              error: "Unable to reach cloud relay (check internet or lab firewall)."
+            });
+          }
+        };
 
         client.on("connect", () => {
-          if (isStale() || mqttClient !== client) return;
-          mqttConnected = true;
+          if (isStale() || settled || everConnected) {
+            if (mqttClient !== client) {
+              attemptClients.delete(client);
+              clientPendingMqtt.delete(client);
+              try {
+                client.end(true);
+              } catch (e) {}
+            }
+            return;
+          }
+          anyBrokerConnected = true;
           const sendHello = () => {
-            if (isStale() || mqttClient !== client || !mqttConnected || everConnected) return;
+            if (isStale() || everConnected || (settled && mqttClient !== client) || !client.connected) {
+              return;
+            }
             try {
               client.publish(
                 `party-feud/v1/${code}/host`,
@@ -962,20 +1433,19 @@ window.Feud = window.Feud || {};
               );
             } catch (e) {}
           };
-          client.subscribe(
-            [`party-feud/v1/${code}/state`, `party-feud/v1/${code}/reply/${tabClientId}`],
-            { qos: 1 },
-            () => {
-              sendHello();
-              setTimeout(sendHello, 1000);
-              setTimeout(sendHello, 2500);
-              setTimeout(sendHello, 5000);
-            }
-          );
+          client.subscribe([replyTopic, stateTopic], { qos: 1 }, () => {
+            if (isStale() || everConnected) return;
+            sendHello();
+            helloTimers.push(setTimeout(sendHello, 1200));
+            helloTimers.push(setTimeout(sendHello, 3000));
+            helloTimers.push(setTimeout(sendHello, 6000));
+          });
         });
 
         client.on("message", (topic, payload) => {
-          if (isStale() || mqttClient !== client) return;
+          if (isStale()) return;
+          if (everConnected && mqttClient !== client) return;
+
           let parsed = null;
           try {
             parsed = JSON.parse(payload.toString());
@@ -984,29 +1454,43 @@ window.Feud = window.Feud || {};
           }
           const msg = parsed && parsed.msg;
           if (!msg || typeof msg !== "object") return;
-          lastPongAt = Date.now();
-          if (reconnectAttempt > 0) {
-            reconnectAttempt = 0;
-            clearTimeout(reconnectTimer);
-            notifyStatus(`Room: ${code} • Live`, true);
-          }
-          if (msg.type === "PONG") return;
+
           if (msg.type === "AUTH_DENIED") {
-            clearTimeout(timeoutId);
             const reason = msg.reason || "❌ Access denied!";
-            const wasAlreadyJoined = settled;
+            const wasJoined = everConnected;
+            finish({ ok: false, error: reason, authDenied: true });
             cleanupSync();
-            finish({ ok: false, error: reason });
-            if (wasAlreadyJoined && onForcedExitCallback) {
+            if (wasJoined && onForcedExitCallback) {
               onForcedExitCallback(reason);
             }
             return;
           }
+
+          if (msg.type === "PONG") {
+            lastPongAt = Date.now();
+            if (reconnectAttempt > 0) {
+              reconnectAttempt = 0;
+              clearTimeout(reconnectTimer);
+              notifyStatus(`Room: ${code} • Live`, true);
+            }
+            return;
+          }
+
           if (msg.type === "STATE_UPDATE" && msg.state) {
-            clientConnOpen = true;
+            // Require direct /reply/<clientId> handshake on initial join so Host has definitely
+            // registered our HELLO before the client marks itself connected.
+            if (!everConnected && topic !== replyTopic) {
+              return;
+            }
             everConnected = true;
+            clientConnOpen = true;
+            mqttClient = client;
+            mqttConnected = true;
+            activeMqttBrokerUrl = broker.url;
+            clientPendingMqtt.delete(client);
+            lastPongAt = Date.now();
             reconnectAttempt = 0;
-            clearTimeout(timeoutId);
+            clearTimeout(reconnectTimer);
             Feud.saveRoomStateToStorage(code, msg.state);
             notifyStatus(`Room: ${code} • Live`, true);
             startHeartbeat(myGen);
@@ -1015,20 +1499,9 @@ window.Feud = window.Feud || {};
           }
         });
 
-        client.on("error", () => {
-          if (mqttClient !== client) return;
-          mqttConnected = false;
-          mqttBrokerIdx += 1;
-        });
-        client.on("close", () => {
-          if (mqttClient === client) {
-            mqttConnected = false;
-            clientConnOpen = false;
-          }
-        });
-      } catch (e) {
-        fail({ ok: false, error: "Could not connect to MQTT relay." });
-      }
+        client.on("error", markBrokerClosed);
+        client.on("close", markBrokerClosed);
+      });
     });
   }
 
@@ -1040,11 +1513,27 @@ window.Feud = window.Feud || {};
     const myGen = ++clientGen;
     const isStale = () => myGen !== clientGen || currentCode !== code || currentRole === "lobby";
 
-    // Race MQTT-WSS and Trystero WebRTC P2P in parallel so mobile connects in ~1-2s
-    // instead of waiting for Trystero/CDN timeouts first.
+    // Race MQTT-WSS (port 443 + fallbacks) and Trystero WebRTC P2P in parallel.
     return new Promise((resolve) => {
       let won = false;
-      const finishRace = (res, source) => {
+      let mqttDone = false;
+      let p2pDone = false;
+      let mqttResult = null;
+      let p2pResult = null;
+
+      const maybeFinishFailure = () => {
+        if (won || !mqttDone || !p2pDone) return;
+        won = true;
+        if (!isStale()) cleanupSync();
+        resolve(
+          (mqttResult && mqttResult.error ? mqttResult : p2pResult) || {
+            ok: false,
+            error: `Room "${code}" not found. Check the Host screen and network.`
+          }
+        );
+      };
+
+      const finishWin = (res, source) => {
         if (won) return;
         won = true;
         if (source === "mqtt" && trysteroRoom && !isPrimaryHostPeer) {
@@ -1054,40 +1543,60 @@ window.Feud = window.Feud || {};
           trysteroRoom = null;
           sendP2pAction = null;
           clientHostPeerId = null;
-        } else if (source === "p2p" && mqttClient && !isPrimaryHostPeer) {
-          try {
-            mqttClient.end(true);
-          } catch (e) {}
-          mqttClient = null;
-          mqttConnected = false;
+        } else if (source === "p2p" && (mqttClient || clientPendingMqtt.size > 0) && !isPrimaryHostPeer) {
+          clearPendingClientMqtt();
+          if (mqttClient) {
+            try {
+              mqttClient.end(true);
+            } catch (e) {}
+            mqttClient = null;
+            mqttConnected = false;
+            activeMqttBrokerUrl = "";
+          }
         }
         resolve(res);
       };
 
-      connectMqttClient({ code, role, pin }).then((res) => {
-        if (!won && (res.ok || isStale())) {
-          finishRace(res, "mqtt");
+      connectMqttClient({ code, role, pin, gen: myGen }).then((res) => {
+        mqttDone = true;
+        mqttResult = res;
+        if (won || isStale()) return;
+        if (res && (res.ok || res.authDenied)) {
+          finishWin(res, "mqtt");
+        } else {
+          maybeFinishFailure();
         }
       });
 
       (async () => {
-        const trystero = await loadTrystero();
-        if (!trystero || won || isStale()) return;
-
-        let localRoom = null;
-        const p2pTimeout = setTimeout(() => {
-          if (!won && localRoom) {
-            try {
-              localRoom.leave();
-            } catch (e) {}
-          }
-        }, 8000);
+        const markP2pFailed = (errRes) => {
+          if (p2pDone) return;
+          p2pDone = true;
+          p2pResult = errRes || { ok: false, error: "WebRTC P2P unavailable." };
+          maybeFinishFailure();
+        };
 
         try {
-          if (!window.crypto || !window.crypto.subtle) {
-            clearTimeout(p2pTimeout);
+          const trystero = await loadTrystero();
+          if (!trystero || won || isStale() || !window.crypto || !window.crypto.subtle) {
+            markP2pFailed();
             return;
           }
+
+          let localRoom = null;
+          const p2pTimeout = setTimeout(() => {
+            if (!won && localRoom && !clientConnOpen) {
+              try {
+                localRoom.leave();
+              } catch (e) {}
+              if (trysteroRoom === localRoom) {
+                trysteroRoom = null;
+                sendP2pAction = null;
+              }
+            }
+            markP2pFailed({ ok: false, error: "Peer P2P timed out." });
+          }, 10000);
+
           localRoom = trystero.joinRoom(
             { appId: TRYSTERO_APP_ID, rtcConfig: { iceServers: ICE_SERVERS } },
             `room-${code}`
@@ -1097,6 +1606,7 @@ window.Feud = window.Feud || {};
             try {
               localRoom.leave();
             } catch (e) {}
+            markP2pFailed();
             return;
           }
           trysteroRoom = localRoom;
@@ -1130,37 +1640,31 @@ window.Feud = window.Feud || {};
             if (msg.type === "AUTH_DENIED") {
               clearTimeout(p2pTimeout);
               const reason = msg.reason || "❌ Access denied!";
-              const wasAlreadyJoined = won;
+              const wasJoined = won;
+              p2pDone = true;
+              finishWin({ ok: false, error: reason, authDenied: true }, "p2p");
               cleanupSync();
-              finishRace({ ok: false, error: reason }, "p2p");
-              if (wasAlreadyJoined && onForcedExitCallback) {
+              if (wasJoined && onForcedExitCallback) {
                 onForcedExitCallback(reason);
               }
               return;
             }
             if (msg.type === "STATE_UPDATE" && msg.state) {
               clearTimeout(p2pTimeout);
+              p2pDone = true;
               clientHostPeerId = peerId;
               clientConnOpen = true;
               reconnectAttempt = 0;
+              lastPongAt = Date.now();
               Feud.saveRoomStateToStorage(code, msg.state);
               notifyStatus(`Room: ${code} • Live`, true);
               startHeartbeat(myGen);
-              finishRace({ ok: true, state: msg.state }, "p2p");
+              finishWin({ ok: true, state: msg.state }, "p2p");
               if (onRemoteStateCallback) onRemoteStateCallback(msg.state);
             }
           });
         } catch (e) {
-          clearTimeout(p2pTimeout);
-          if (localRoom) {
-            try {
-              localRoom.leave();
-            } catch (err) {}
-          }
-          if (trysteroRoom === localRoom) {
-            trysteroRoom = null;
-            sendP2pAction = null;
-          }
+          markP2pFailed({ ok: false, error: "Peer P2P failed." });
         }
       })();
     });
@@ -1173,25 +1677,31 @@ window.Feud = window.Feud || {};
         clearInterval(heartbeatTimer);
         return;
       }
+      const pingMsg = {
+        type: "PING",
+        t: Date.now(),
+        role: currentRole,
+        clientId: tabClientId
+      };
       if (sendP2pAction && clientConnOpen && clientHostPeerId) {
         try {
-          sendP2pAction({ type: "PING", t: Date.now() }, clientHostPeerId);
+          sendP2pAction(pingMsg, clientHostPeerId);
         } catch (e) {}
       } else if (mqttClient && mqttConnected && currentCode) {
         try {
           mqttClient.publish(
             `party-feud/v1/${currentCode}/host`,
-            JSON.stringify({ senderId: tabClientId, msg: { type: "PING", t: Date.now() } })
+            JSON.stringify({ senderId: tabClientId, msg: pingMsg })
           );
         } catch (e) {}
       }
-      if (Date.now() - lastPongAt > 9000) {
+      if (Date.now() - lastPongAt > 11000) {
         clearInterval(heartbeatTimer);
         clientConnOpen = false;
         const { code, role, pin } = clientJoinInfo;
         scheduleClientReconnect(code, role, pin, 0);
       }
-    }, 2000);
+    }, 2500);
   }
 
   function scheduleClientReconnect(code, role, pin, forcedDelay) {
@@ -1334,12 +1844,16 @@ window.Feud = window.Feud || {};
 
   function cleanupSync() {
     clearTimeout(reconnectTimer);
+    clearTimeout(hostRelayWarnTimer);
     clearInterval(heartbeatTimer);
     clearInterval(localPresenceTimer);
     clearInterval(hostSweepTimer);
+    hostRelayWarnTimer = null;
+    hostRelayWarned = false;
     localPresenceTimer = null;
     hostSweepTimer = null;
     pendingRoleCheck = null;
+    pendingLocalHostProbe = null;
     hasLocalBroadcastSync = false;
     lastLocalSyncAt = 0;
     clientGen += 1;
@@ -1390,22 +1904,23 @@ window.Feud = window.Feud || {};
       } catch (e) {}
       trysteroRoom = null;
     }
+    clearPendingClientMqtt();
+    hostMqttClients.forEach((entry) => {
+      if (entry && entry.client) {
+        try {
+          entry.client.end(true);
+        } catch (e) {}
+      }
+    });
+    hostMqttClients.clear();
     if (mqttClient) {
       try {
-        if (mqttConnected && currentCode && !isPrimaryHostPeer) {
-          mqttClient.publish(
-            `party-feud/v1/${currentCode}/host`,
-            JSON.stringify({
-              senderId: tabClientId,
-              msg: { type: "BYE", role: currentRole, clientId: tabClientId }
-            })
-          );
-        }
         mqttClient.end(true);
       } catch (e) {}
       mqttClient = null;
       mqttConnected = false;
     }
+    activeMqttBrokerUrl = "";
     sendP2pAction = null;
     clientHostPeerId = null;
     clientConnOpen = false;
@@ -1565,6 +2080,8 @@ window.Feud = window.Feud || {};
   Object.assign(Feud, {
     initSyncCallbacks,
     getConnectedBuzzerTeams,
+    getSyncDiagnostics,
+    retryHostRelay,
     probeRoomBuzzers,
     startHostRoomSync,
     joinExistingRoomSync,

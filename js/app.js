@@ -143,10 +143,12 @@ window.Feud = window.Feud || {};
       leaveToLobby({ force: true });
       Feud.showToast(reason || "🔒 This buzzer is already open on another device.");
     },
-    onStatusChange: (statusText) => {
+    onStatusChange: (statusText, isLive = true) => {
       const codeBadge = document.getElementById("roomCodeBadge");
       if (codeBadge && activeRole !== "lobby") {
         codeBadge.textContent = statusText;
+        codeBadge.classList.toggle("room-live", isLive !== false);
+        codeBadge.classList.toggle("awake-warn", isLive === false);
       }
     },
     onRemoteState: (incoming) => {
@@ -1775,6 +1777,25 @@ window.Feud = window.Feud || {};
     applyBuzzerButtonLocks();
   }
 
+  function updateQrRelayWarning(relayOk) {
+    const warnEl = document.getElementById("qrRelayWarnBanner");
+    if (!warnEl) return;
+    const show =
+      activeRole === "host" &&
+      !isFileProtocol() &&
+      currentRoomCode &&
+      currentRoomCode !== "SOLO" &&
+      relayOk === false;
+    warnEl.classList.toggle("hidden", !show);
+  }
+
+  function retryHostRelayConnection() {
+    if (Feud.retryHostRelay) {
+      Feud.retryHostRelay();
+    }
+    Feud.showToast("🔄 Retrying cloud relay connection…");
+  }
+
   function openQrModal(initialTvRole = null, opts = {}) {
     qrModalOpenedForTvSetup = Boolean(opts && opts.forTvSetup);
     const code = currentRoomCode || "SOLO";
@@ -1785,6 +1806,8 @@ window.Feud = window.Feud || {};
     document.getElementById("qrRemoteTvBox")?.classList.toggle("hidden", fileProto);
     document.getElementById("qrBuzzersSection")?.classList.toggle("hidden", fileProto);
     document.getElementById("qrFileModeHint")?.classList.toggle("hidden", !fileProto);
+    const diag = Feud.getSyncDiagnostics ? Feud.getSyncDiagnostics() : { relayOk: true };
+    updateQrRelayWarning(diag.relayOk);
 
     const lanWrap = document.getElementById("qrLanHostWrap");
     const lanInput = document.getElementById("qrLanHostInput");
@@ -4068,6 +4091,7 @@ window.Feud = window.Feud || {};
     cycleNextMatchChallengerPreset,
     confirmStartNextMatch,
     openQrModal,
+    retryHostRelayConnection,
     selectQrForTv,
     selectTvSetupMode,
     applyQrLanHost,
@@ -4238,6 +4262,9 @@ window.Feud = window.Feud || {};
           connPill.className = `pill-badge ${ok ? "awake-ok" : "awake-warn"}`;
         }
       });
+      if ("relayOk" in detail) {
+        updateQrRelayWarning(detail.relayOk);
+      }
     });
     const joinRoomInputEl = document.getElementById("joinRoomCodeInput");
     if (joinRoomInputEl) {

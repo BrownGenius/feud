@@ -29,7 +29,7 @@
   <meta name="twitter:description" content="Free, zero-login Family Feud game show for your TV with live QR phone buzzers, sound effects, teleprompter, and 300+ built-in rounds." />
   <meta name="twitter:image" content="https://browngenius.github.io/feud/docs/screenshots/tv-board.png" />
   <meta name="twitter:image:alt" content="Party Feud 16:9 TV Display Board showing revealed survey answers and scores" />
-  <link rel="stylesheet" href="./css/styles.css?v=20261118d" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261118e" />
 </head>
 <body>
 
@@ -165,6 +165,13 @@
             <span id="qrUrl_buzzer_combo" class="qr-grid-url"></span>
             <span id="qrBadge_buzzer_combo" class="qr-grid-status">Click to show on TV</span>
           </button>
+        </div>
+      </div>
+
+      <div id="qrRelayWarnBanner" class="hidden" style="font-size:12px; color:#fef08a; line-height:1.45; text-align:left; background:rgba(120,53,15,0.65); border:1.5px solid #fbbf24; border-radius:12px; padding:10px 12px; width:100%;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+          <span>⚠️ <strong>Cloud relay unreachable from this network</strong> (likely blocked by a work/lab firewall). Phones on cellular/5G won't see this room until relay access succeeds or phones join the same Wi-Fi/hotspot.</span>
+          <button type="button" class="top-btn gold" style="min-height:32px; font-size:11px; flex-shrink:0;" onclick="retryHostRelayConnection()">🔄 Retry Relay</button>
         </div>
       </div>
 
@@ -799,17 +806,17 @@
     </button>
   </section>
 
-  <footer id="appBuildBadge" class="app-build-badge">Build v20261118d</footer>
+  <footer id="appBuildBadge" class="app-build-badge">Build v20261118e</footer>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js" async></script>
-  <script src="./data/questions.js?v=20261118d"></script>
-  <script src="./js/audio.js?v=20261118d"></script>
-  <script src="./js/state.js?v=20261118d"></script>
-  <script src="./js/formats.js?v=20261118d"></script>
-  <script src="./js/decks.js?v=20261118d"></script>
-  <script src="./js/sync.js?v=20261118d"></script>
-  <script src="./js/views.js?v=20261118d"></script>
-  <script src="./js/app.js?v=20261118d"></script>
+  <script src="./data/questions.js?v=20261118e"></script>
+  <script src="./js/audio.js?v=20261118e"></script>
+  <script src="./js/state.js?v=20261118e"></script>
+  <script src="./js/formats.js?v=20261118e"></script>
+  <script src="./js/decks.js?v=20261118e"></script>
+  <script src="./js/sync.js?v=20261118e"></script>
+  <script src="./js/views.js?v=20261118e"></script>
+  <script src="./js/app.js?v=20261118e"></script>
 </body>
 </html>
