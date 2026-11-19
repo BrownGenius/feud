@@ -2,14 +2,14 @@
 
 Turn your TV, laptop, and phones into a real **Family Feud–style party game show** in seconds — no app installs, no accounts, and no setup headaches.
 
-Pick from **370+ built-in survey rounds**, cast or plug in a TV, hand phones to both teams as live buzzers (or share one phone in the middle for 1v1 **Combo Buzzer** mode), and host like a pro with a built-in teleprompter, game-show sound effects, and one-tap **Undo**.
+Pick from **300+ built-in survey rounds**, cast or plug in a TV, hand phones to both teams as live buzzers (or share one phone in the middle for 1v1 **Combo Buzzer** mode), and host like a pro with a built-in teleprompter, game-show sound effects, and one-tap **Undo**.
 
 [![Play Now](https://img.shields.io/badge/🎮_Play_Now-browngenius.github.io%2Ffeud-f59e0b?style=for-the-badge)](https://browngenius.github.io/feud)
 [![Question Review](https://img.shields.io/badge/🖨️_Review_Questions-review.html-1e293b?style=for-the-badge)](https://browngenius.github.io/feud/review.html)
 
 ![Free & Open Source](https://img.shields.io/badge/Free_%26_Open_Source-MIT-22c55e?style=flat-square)
 ![Zero Backend • Offline Ready](https://img.shields.io/badge/Zero_Backend-Offline_Ready-3b82f6?style=flat-square)
-![370+ Built-In Rounds](https://img.shields.io/badge/Built--In_Questions-370%2B_Rounds-a855f7?style=flat-square)
+![300+ Built-In Rounds](https://img.shields.io/badge/Built--In_Questions-300%2B_Rounds-a855f7?style=flat-square)
 
 <p align="center">
   <img src="docs/screenshots/demo.gif" alt="Party Feud live demo: Phone QR buzzer syncing in real time to 16:9 TV board with 3D flipping answer tiles, giant red X strike overlay, and Match Champion celebration" width="880" />
@@ -45,8 +45,6 @@ Launch straight into any bundled question deck with one click — or open the pr
 | **🌟 Family Feud 2025 (Family-Friendly)** | 60 Clean All-Ages Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=2025-family-friendly) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2025-family-friendly) |
 | **🤖 2026 FRC Game & Rules** | 24 FIRST Robotics Competition Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=2026-frc-rules) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2026-frc-rules) |
 | **🦃 Desi Thanksgiving** | 37 Rounds • 5 Fast Money Sets | [▶ Play](https://browngenius.github.io/feud/?deck=desi-thanksgiving) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=desi-thanksgiving) |
-| **🪔 Gandhi Samaj 2026** | 43 Rounds • 6 Fast Money Sets | [▶ Play](https://browngenius.github.io/feud/?deck=gandhi-samaj-2026) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=gandhi-samaj-2026) |
-| **🪔 Gandhi Samaj 2026 (Meha Edition)** | 21 Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=gandhi-samaj-2026-meha-edition) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=gandhi-samaj-2026-meha-edition) |
 | **🎉 Starter Party Deck** | 6 Classic Party Rounds • Fast Money | [▶ Play](https://browngenius.github.io/feud/?deck=starter) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=starter) |
 
 ---
@@ -69,7 +67,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 | **Live Phone Buzzers** | **QR Scan — Team 1, Team 2 & Shared Combo** | ❌ None (honor system / yelling) | ⚠️ Separate buzzer app or paid tier |
 | **Host Controls** | **Full Answer Key, Live Mini TV, Teleprompter & 25-Step Undo** | ❌ Clunky slide presenter view | ⚠️ Basic host toggles |
 | **TV Presentation & SFX** | **3D Flipping Tiles, Game-Show Audio, Big Red `X`, Winner Screen** | ⚠️ Static slides, manual point math | ✅ Varies |
-| **Custom Decks & No Repeats** | **370+ Built-In Rounds, AI/CSV/JSON Decks & Multi-Game Used Tracker** | ❌ Hard to edit slides | ⚠️ Locked or paywalled |
+| **Custom Decks & No Repeats** | **300+ Built-In Rounds, AI/CSV/JSON Decks & Multi-Game Used Tracker** | ❌ Hard to edit slides | ⚠️ Locked or paywalled |
 | **Offline Mode** | **Works Offline Over HDMI (`file://`)** | ✅ Local file | ❌ Requires internet server |
 
 ---
@@ -314,8 +312,6 @@ feud/
     ├── 2026-family-friendly.json           # Family Feud 2026 (Family-Friendly Edition)
     ├── 2026-frc-rules.json                 # 2026 FRC Game & Rules (24 Rounds)
     ├── desi-thanksgiving.json              # 37-Round + 5 Fast Money Desi Thanksgiving Party Pack
-    ├── gandhi-samaj-2026.json              # Gandhi Samaj 2026 (43 Rounds • 6 Fast Money Sets)
-    ├── gandhi-samaj-2026-meha-edition.json # Gandhi Samaj 2026 (Meha Edition • 21 Rounds)
     ├── sample-friendly-feud.json           # Sample Friendly-Feud compatible JSON pack
     └── template.csv                        # Sample spreadsheet template for Google Sheets / Excel
 ```
