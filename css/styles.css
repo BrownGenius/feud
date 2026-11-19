@@ -3128,16 +3128,40 @@ body:has(#buzzerView:not(.hidden)) .top-bar {
 }
 
 .combo-buzzer-btn .giant-buzz-icon {
-  font-size: clamp(48px, 14dvh, 180px);
+  font-size: clamp(44px, min(13dvh, 22vw), 150px);
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .combo-buzzer-btn .giant-buzz-title {
-  font-size: clamp(32px, 9dvh, 120px);
+  font-size: clamp(24px, min(7.5dvh, 10vw), 96px);
   line-height: 1.05;
+  max-width: 100%;
+  overflow-wrap: break-word;
 }
 
 .combo-buzzer-btn .giant-buzz-sub {
-  font-size: clamp(16px, 4dvh, 52px);
+  font-size: clamp(13px, min(3.2dvh, 4.4vw), 38px);
+  line-height: 1.15;
+  max-width: 100%;
+}
+
+#comboBuzzerView .combo-buzzer-btn {
+  padding: clamp(4px, 1dvh, 14px) clamp(8px, 2.5vw, 18px);
+  gap: clamp(2px, 0.5dvh, 8px);
+}
+
+#comboBuzzerView .combo-buzzer-btn .giant-buzz-icon {
+  font-size: clamp(28px, min(7.5dvh, 15vw), 88px);
+}
+
+#comboBuzzerView .combo-buzzer-btn .giant-buzz-title {
+  font-size: clamp(18px, min(4.6dvh, 7.8vw), 56px);
+  line-height: 1.05;
+}
+
+#comboBuzzerView .combo-buzzer-btn .giant-buzz-sub {
+  font-size: clamp(12px, min(2.4dvh, 4.2vw), 26px);
   line-height: 1.15;
 }
 
@@ -3217,11 +3241,15 @@ body:has(#buzzerView:not(.hidden)) .top-bar {
 
 .giant-buzz-icon.is-big-timer {
   font-family: "Oswald", "Anton", Impact, sans-serif;
-  font-size: clamp(56px, 16dvh, 220px);
+  font-size: clamp(48px, min(14dvh, 24vw), 180px);
   font-weight: 900;
   line-height: 1;
   color: var(--gold);
   text-shadow: 0 3px 12px rgba(0, 0, 0, 0.55);
+}
+
+#comboBuzzerView .combo-buzzer-btn .giant-buzz-icon.is-big-timer {
+  font-size: clamp(32px, min(8.5dvh, 17vw), 104px);
 }
 
 .giant-buzz-icon.is-big-timer.is-urgent {

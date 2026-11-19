@@ -903,16 +903,6 @@ window.Feud = window.Feud || {};
     roomState.team2Name = t2;
   }
 
-  async function loadBuiltInDeck(deckKey) {
-    if (deckKey === "starter") {
-      await onSelectCatalogDeck("starter");
-    } else if (deckKey === "desi-thanksgiving") {
-      await onSelectCatalogDeck("desi-thanksgiving.json");
-    } else if (deckKey === "friendly-sample") {
-      await onSelectCatalogDeck("sample-friendly-feud.json");
-    }
-  }
-
   function syncTournamentFormatAvailability() {
     const formatSel = document.getElementById("setupMatchFormatSelect");
     if (!formatSel) return;
@@ -4987,7 +4977,6 @@ Rules:
     onSetupMatchFormatChange,
     onBoardThemeChange,
     cycleBoardTheme,
-    loadBuiltInDeck,
     confirmStartNewGame,
     startInstantDemoMode,
     demoSimulateBuzz,

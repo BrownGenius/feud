@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-19T17:10:11.379Z",
+  "generatedAt": "2026-11-19T17:32:27.230Z",
   "decks": [
     {
       "id": "2026-frc-rules.json",
@@ -80,17 +80,6 @@
       "fastMoneySets": 8,
       "tags": [
         "family-friendly",
-        "classic"
-      ]
-    },
-    {
-      "id": "sample-friendly-feud.json",
-      "file": "./decks/sample-friendly-feud.json",
-      "deckName": "Sample Friendly Feud",
-      "gameIcon": "🎉",
-      "roundsCount": 2,
-      "fastMoneySets": 0,
-      "tags": [
         "classic"
       ]
     }

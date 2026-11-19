@@ -297,8 +297,6 @@ feud/
 ├── AGENT.md                        # AI/developer workflow, conventions & cache-busting guide
 ├── css/
 │   └── styles.css                  # Responsive game show styling, themes & 3D tile animations
-├── data/
-│   └── questions.js                # Generic default starter deck & configuration
 ├── icons/
 │   └── icon.svg                    # Vector PWA & favicon app icon
 ├── scripts/
@@ -307,7 +305,7 @@ feud/
 │   └── screenshots/                # Gameplay demo GIF & screenshots embedded in README.md
 ├── js/
 │   ├── app.js                      # Controller, demo/tournament/AI builder & modal handlers
-│   ├── state.js                    # State management, multi-game slicer, tournament & localStorage
+│   ├── state.js                    # Built-in Starter deck, state management, tournament & localStorage
 │   ├── sync.js                     # Trystero WebRTC P2P + MQTT-WSS + BroadcastChannel + Firebase sync
 │   ├── formats.js                  # Universal Party Feud & Friendly-Feud JSON parser/exporter
 │   ├── decks.js                    # Manifest loader, tag filter, #deckData URL codec & folder scanner
@@ -321,8 +319,7 @@ feud/
     ├── 2026-family-friendly.json           # Family Feud 2026 (Family-Friendly Edition)
     ├── 2026-frc-rules.json                 # 2026 FRC Game & Rules (24 Rounds)
     ├── bollywood-music-movies.json         # Bollywood Music & Movies (12 Rounds • Fast Money)
-    ├── desi-thanksgiving.json              # 37-Round + 5 Fast Money Desi Thanksgiving Party Pack
-    └── sample-friendly-feud.json           # Sample Friendly-Feud compatible JSON pack
+    └── desi-thanksgiving.json              # 37-Round + 5 Fast Money Desi Thanksgiving Party Pack
 ```
 
 </details>
