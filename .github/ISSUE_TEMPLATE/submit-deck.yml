@@ -1,0 +1,57 @@
+name: "🎴 Submit a Question Deck"
+description: "Share a custom Party Feud JSON question pack (generated with the AI Deck Builder or written by hand) to include in /decks!"
+title: "[Deck]: "
+labels: ["deck-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing a question deck with the **Party Feud** community! 🎉
+        > **Tip:** You can generate and validate a deck in seconds using the **`✨ AI Deck`** button on [browngenius.github.io/feud](https://browngenius.github.io/feud).
+
+  - type: input
+    id: deck-name
+    attributes:
+      label: Deck Title & Round Count
+      description: "Example: 90s Movies & Pop Culture (12 Rounds)"
+      placeholder: "e.g. 90s Movies & Pop Culture (12 Rounds)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Primary Category Tag
+      options:
+        - "family-friendly (All Ages)"
+        - "classic (General Party)"
+        - "holidays (Seasonal / Holiday)"
+        - "movies-music (Pop Culture / Entertainment)"
+        - "robotics (STEM / FRC / Classroom)"
+    validations:
+      required: true
+
+  - type: input
+    id: share-link
+    attributes:
+      label: Shareable Deck Link (Optional)
+      description: "If you clicked '🔗 Copy Share Link (#deckData)' in the AI Deck Builder, paste the URL here so anyone can play it immediately!"
+      placeholder: "https://browngenius.github.io/feud/#deckData=z...."
+
+  - type: textarea
+    id: deck-json
+    attributes:
+      label: Deck JSON Content
+      description: "Paste your validated Party Feud .json deck below."
+      render: json
+      placeholder: |
+        {
+          "gameTitle": "Party Feud",
+          "gameIcon": "🎬",
+          "deckName": "My Custom Deck (12 Rounds)",
+          "tags": ["family-friendly"],
+          "rounds": [ ... ],
+          "fastMoney": [ ... ]
+        }
+    validations:
+      required: true

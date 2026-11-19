@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: "🎮 Play Party Feud Live"
+    url: "https://browngenius.github.io/feud"
+    about: "Launch the live game show or use the in-app ✨ AI Deck Builder"
+  - name: "💬 Community Discussions & Ideas"
+    url: "https://github.com/BrownGenius/feud/discussions"
+    about: "Ask questions, suggest features, or share custom #deckData links"

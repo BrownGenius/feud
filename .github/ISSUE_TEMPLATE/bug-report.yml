@@ -1,0 +1,42 @@
+name: "🐛 Bug Report"
+description: "Report an issue with the Host Remote, TV Display, Phone Buzzers, or Question Review Sheet"
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: role
+    attributes:
+      label: Which screen / device role was affected?
+      options:
+        - "Lobby / New Game Setup"
+        - "Host Remote Control"
+        - "TV Display Board"
+        - "Individual Team Buzzer (Phone)"
+        - "Combo Buzzer (Shared Phone / Tablet)"
+        - "Question Review Sheet (review.html)"
+        - "AI Custom Deck Builder"
+    validations:
+      required: true
+
+  - type: input
+    id: build-version
+    attributes:
+      label: Build Version
+      description: "Shown at the very bottom of the Lobby or Host screen (e.g. Build v20261119c)"
+      placeholder: "e.g. Build v20261119c"
+
+  - type: input
+    id: environment
+    attributes:
+      label: Device, OS & Browser
+      placeholder: "e.g. Windows 11 Chrome + iPhone 16 Safari (or Offline file://)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: What happened & steps to reproduce?
+      description: "Tell us what you clicked and what you expected to happen."
+    validations:
+      required: true

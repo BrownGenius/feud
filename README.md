@@ -171,7 +171,7 @@ Rules:
 4. **Self-Host in Your Fork:** Save the `.json` file into your fork's `/decks/` folder on GitHub Pages — a GitHub Action automatically updates [`decks/manifest.json`](./decks/manifest.json) on push (with automatic fallback to the GitHub Contents API or local HTTP directory listing)!
 * Already have decks built for *Friendly-Feud* (`rounds[].ans` / `pnt` + `final_round`)? Those `.json` files work automatically everywhere too!
 
-> **🤝 Contribute a Question Pack:** Made a great themed deck (Movies, Sports, Holiday Trivia, Classroom Review, Pop Culture)? **No JavaScript needed!** Open a Pull Request adding your `.json` file to `/decks/`, or share it in a GitHub Issue so other hosts can play it too.
+> **🤝 Contribute a Question Pack:** Made a great themed deck (Movies, Sports, Holiday Trivia, Classroom Review, Pop Culture)? **No JavaScript needed!** Open a Pull Request adding your `.json` file to `/decks/`, or submit it via the **[🎴 Submit a Question Deck](https://github.com/BrownGenius/feud/issues/new?template=submit-deck.yml)** Issue form — see **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for details.
 
 ---
 
@@ -294,13 +294,19 @@ feud/
 ├── review.html                     # Printable 2-column question review sheet (?deck=...)
 ├── manifest.webmanifest            # PWA web app manifest for standalone install
 ├── sw.js                           # Service Worker (network-first with offline app-shell fallback)
+├── CONTRIBUTING.md                 # Guide for submitting question decks & code contributions
 ├── AGENT.md                        # AI/developer workflow, conventions & cache-busting guide
+├── .github/
+│   ├── workflows/validate-pr.yml   # Automated CI validating JS syntax, deck schemas & cache versions
+│   ├── ISSUE_TEMPLATE/             # Issue forms for submitting question decks & bug reports
+│   └── pull_request_template.md    # Pull request checklist
 ├── css/
 │   └── styles.css                  # Responsive game show styling, themes & 3D tile animations
 ├── icons/
 │   └── icon.svg                    # Vector PWA & favicon app icon
 ├── scripts/
-│   └── generate-manifest.js        # Generates decks/manifest.json with metadata & category tags
+│   ├── generate-manifest.js        # Generates decks/manifest.json with metadata & category tags
+│   └── validate-repo.js            # Validates deck JSON schemas, JS syntax & cache-busting sync
 ├── docs/
 │   └── screenshots/                # Gameplay demo GIF & screenshots embedded in README.md
 ├── js/
