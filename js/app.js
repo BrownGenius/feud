@@ -1517,34 +1517,57 @@ window.Feud = window.Feud || {};
     const qrCombo = document.getElementById("qrCard_buzzer_combo");
     const badgeInd = document.getElementById("qrBadge_individual");
     const badgeCombo = document.getElementById("qrBadge_buzzer_combo");
-    const indLocked = combo || (b1 && b2);
-    const comboLocked = combo || b1 || b2;
-    if (qrInd) qrInd.disabled = indLocked;
-    if (qrCombo) qrCombo.disabled = comboLocked;
+    const indComplete = !combo && b1 && b2;
+    const indGreyed = combo;
+    const indLocked = indComplete || indGreyed;
+    const comboComplete = combo;
+    const comboGreyed = !combo && (b1 || b2);
+    const comboLocked = comboComplete || comboGreyed;
+    if (qrInd) {
+      qrInd.disabled = indLocked;
+      qrInd.classList.toggle("is-greyed-out", indGreyed);
+      qrInd.classList.toggle("is-complete", indComplete);
+    }
+    if (qrCombo) {
+      qrCombo.disabled = comboLocked;
+      qrCombo.classList.toggle("is-greyed-out", comboGreyed);
+      qrCombo.classList.toggle("is-complete", comboComplete);
+    }
+
+    document.getElementById("qrImg_buzzer1")?.classList.toggle("hidden", b1);
+    document.getElementById("qrConnected_buzzer1")?.classList.toggle("hidden", !b1);
+    document.getElementById("qrImg_buzzer2")?.classList.toggle("hidden", b2);
+    document.getElementById("qrConnected_buzzer2")?.classList.toggle("hidden", !b2);
+    document.getElementById("qrImg_buzzer_combo")?.classList.toggle("hidden", combo);
+    document.getElementById("qrUrl_buzzer_combo")?.classList.toggle("hidden", combo);
+    document.getElementById("qrConnected_buzzer_combo")?.classList.toggle("hidden", !combo);
 
     const activeTvRole = roomState && roomState.tvQrOverlay ? roomState.tvQrOverlay.role : null;
     if (badgeInd) {
-      badgeInd.textContent = combo
-        ? "🔒 Combo Open"
-        : b1 && b2
-        ? "🔒 Both Buzzers Open"
+      badgeInd.textContent = indGreyed
+        ? "🔒 Combo Buzzer Connected"
+        : indComplete
+        ? "✅ Both Buzzers Connected!"
         : activeTvRole === "individual"
-        ? "📺 Showing on TV (click to hide)"
+        ? b1
+          ? "Team 1 ✅ — Showing Team 2 on TV (click to hide)"
+          : b2
+          ? "Team 2 ✅ — Showing Team 1 on TV (click to hide)"
+          : "📺 Showing on TV (click to hide)"
         : b1
-        ? "Team 1✓ — Click to show on TV"
+        ? "Team 1 ✅ — Click to show Team 2 on TV"
         : b2
-        ? "Team 2✓ — Click to show on TV"
+        ? "Team 2 ✅ — Click to show Team 1 on TV"
         : "Click to show both on TV";
     }
     if (badgeCombo) {
-      badgeCombo.textContent =
-        combo || b1 || b2
-          ? combo
-            ? "🔒 Combo Open"
-            : "🔒 Team Buzzer Open"
-          : activeTvRole === "buzzer_combo"
-          ? "📺 Showing on TV (click to hide)"
-          : "Click to show on TV";
+      badgeCombo.textContent = comboComplete
+        ? "✅ Combo Buzzer Connected!"
+        : comboGreyed
+        ? "🔒 Individual Buzzer Connected"
+        : activeTvRole === "buzzer_combo"
+        ? "📺 Showing on TV (click to hide)"
+        : "Click to show on TV";
     }
 
     const lobbyB1 = document.getElementById("btnJoinBuzzer1");
@@ -1748,33 +1771,108 @@ window.Feud = window.Feud || {};
     if (cardCombo) cardCombo.classList.toggle("is-active-on-tv", activeTvRole === "buzzer_combo");
   }
 
+  function isQrRoleLocked(qrRole, bz) {
+    const info = bz || (Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {});
+    if (qrRole === "individual") return Boolean(info.combo || (info.b1 && info.b2));
+    if (qrRole === "buzzer_combo") return Boolean(info.combo || info.b1 || info.b2);
+    if (qrRole === "buzzer1") return Boolean(info.combo || info.b1);
+    if (qrRole === "buzzer2") return Boolean(info.combo || info.b2);
+    return false;
+  }
+
+  function buildTvQrOverlayPayload(qrRole, bz, code) {
+    const info = bz || (Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {});
+    if (qrRole === "individual") {
+      return {
+        role: "individual",
+        url1: buildQrJoinUrl("buzzer1"),
+        url2: buildQrJoinUrl("buzzer2"),
+        roomCode: code,
+        b1Connected: Boolean(info.b1),
+        b2Connected: Boolean(info.b2)
+      };
+    }
+    return {
+      role: qrRole,
+      url: buildQrJoinUrl(qrRole),
+      roomCode: code
+    };
+  }
+
+  function syncTvQrOverlayWithBuzzers(bz, toastOnClear = true) {
+    if (activeRole !== "host" || !roomState || !roomState.tvQrOverlay) return;
+    const info = bz || (Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {});
+    const b1 = Boolean(info.b1);
+    const b2 = Boolean(info.b2);
+    const combo = Boolean(info.combo);
+    const ov = roomState.tvQrOverlay;
+
+    if (ov.role === "individual") {
+      if ((b1 && b2) || combo) {
+        pushRoomPatch({ tvQrOverlay: null });
+        refreshQrGridCards();
+        applyBuzzerButtonLocks(info);
+        if (toastOnClear) {
+          Feud.showToast(
+            combo
+              ? "🔔 Combo Buzzer connected — QR cleared from TV screen."
+              : "🔔 Both team buzzers connected — QR cleared from TV screen."
+          );
+        }
+      } else if (Boolean(ov.b1Connected) !== b1 || Boolean(ov.b2Connected) !== b2) {
+        pushRoomPatch({
+          tvQrOverlay: {
+            ...ov,
+            b1Connected: b1,
+            b2Connected: b2
+          }
+        });
+        refreshQrGridCards();
+        applyBuzzerButtonLocks(info);
+      }
+      return;
+    }
+
+    if (ov.role === "buzzer_combo" && (combo || b1 || b2)) {
+      pushRoomPatch({ tvQrOverlay: null });
+      refreshQrGridCards();
+      applyBuzzerButtonLocks(info);
+      if (toastOnClear && combo) {
+        Feud.showToast("🔔 Combo Buzzer connected — QR cleared from TV screen.");
+      }
+      return;
+    }
+
+    if ((ov.role === "buzzer1" && (b1 || combo)) || (ov.role === "buzzer2" && (b2 || combo))) {
+      pushRoomPatch({ tvQrOverlay: null });
+      refreshQrGridCards();
+      applyBuzzerButtonLocks(info);
+      if (toastOnClear) {
+        Feud.showToast("🔔 Buzzer connected — QR cleared from TV screen.");
+      }
+    }
+  }
+
   function selectQrForTv(qrRole) {
     if (isFileProtocol()) return;
     const currentTvRole = roomState && roomState.tvQrOverlay ? roomState.tvQrOverlay.role : null;
     const nextRole = !qrRole || qrRole === currentTvRole ? null : qrRole;
+    const bz = Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {};
+    if (nextRole && isQrRoleLocked(nextRole, bz)) {
+      applyBuzzerButtonLocks(bz);
+      return;
+    }
 
     if (activeRole === "host" && roomState) {
-      if (nextRole === "individual") {
+      if (nextRole) {
         const code = currentRoomCode || "SOLO";
-        pushRoomPatch({
-          tvQrOverlay: {
-            role: "individual",
-            url1: buildQrJoinUrl("buzzer1"),
-            url2: buildQrJoinUrl("buzzer2"),
-            roomCode: code
-          }
-        });
-      } else if (nextRole) {
-        const code = currentRoomCode || "SOLO";
-        pushRoomPatch({
-          tvQrOverlay: { role: nextRole, url: buildQrJoinUrl(nextRole), roomCode: code }
-        });
+        pushRoomPatch({ tvQrOverlay: buildTvQrOverlayPayload(nextRole, bz, code) });
       } else {
         pushRoomPatch({ tvQrOverlay: null });
       }
     }
     refreshQrGridCards();
-    applyBuzzerButtonLocks();
+    applyBuzzerButtonLocks(bz);
   }
 
   function updateQrRelayWarning(relayOk) {
@@ -1842,17 +1940,15 @@ window.Feud = window.Feud || {};
     }
 
     document.getElementById("qrModal")?.classList.remove("hidden");
-    if (!fileProto && initialTvRole && activeRole === "host" && roomState) {
+    const bz = Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {};
+    if (!fileProto && initialTvRole && activeRole === "host" && roomState && !isQrRoleLocked(initialTvRole, bz)) {
       pushRoomPatch({
-        tvQrOverlay: {
-          role: initialTvRole,
-          url: buildQrJoinUrl(initialTvRole),
-          roomCode: code
-        }
+        tvQrOverlay: buildTvQrOverlayPayload(initialTvRole, bz, code)
       });
     }
+    syncTvQrOverlayWithBuzzers(bz, false);
     refreshQrGridCards();
-    applyBuzzerButtonLocks();
+    applyBuzzerButtonLocks(bz);
   }
 
   function closeQrModal() {
@@ -4205,23 +4301,16 @@ window.Feud = window.Feud || {};
       }
       if (activeRole !== "host" || !roomState || !roomState.tvQrOverlay) return;
       const tvRole = roomState.tvQrOverlay.role;
-      if (tvRole === "individual" && (joinedRole === "buzzer1" || joinedRole === "buzzer2")) {
-        const bz = Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {};
-        if (bz.b1 && bz.b2) {
-          pushRoomPatch({ tvQrOverlay: null });
-          refreshQrGridCards();
-          applyBuzzerButtonLocks();
-          Feud.showToast("🔔 Both team buzzers connected — QR cleared from TV screen.");
-        } else {
-          refreshQrGridCards();
-          applyBuzzerButtonLocks();
-        }
-      } else if (!joinedRole || tvRole === joinedRole) {
+      if (joinedRole === "tv" && tvRole === "tv") {
         pushRoomPatch({ tvQrOverlay: null });
         refreshQrGridCards();
         applyBuzzerButtonLocks();
-        Feud.showToast("📱 Device connected — QR cleared from TV screen.");
+        Feud.showToast("📺 Remote TV connected — QR cleared from TV screen.");
+        return;
       }
+      syncTvQrOverlayWithBuzzers(null, true);
+      refreshQrGridCards();
+      applyBuzzerButtonLocks();
     });
     window.addEventListener("feud-tv-connected", () => {
       remoteTvConnected = true;
@@ -4247,6 +4336,7 @@ window.Feud = window.Feud || {};
         buzzerStatusPill.className = `top-btn host-devices-btn${
           count === 2 ? " is-ready" : count === 1 ? " is-partial" : ""
         }`;
+        syncTvQrOverlayWithBuzzers(bz, true);
         applyBuzzerButtonLocks(bz);
       }
       ["buzzerConnStatusPill", "comboConnStatusPill"].forEach((id) => {

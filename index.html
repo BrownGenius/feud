@@ -29,7 +29,7 @@
   <meta name="twitter:description" content="Free, zero-login Family Feud game show for your TV with live QR phone buzzers, sound effects, teleprompter, and 300+ built-in rounds." />
   <meta name="twitter:image" content="https://browngenius.github.io/feud/docs/screenshots/tv-board.png" />
   <meta name="twitter:image:alt" content="Party Feud 16:9 TV Display Board showing revealed survey answers and scores" />
-  <link rel="stylesheet" href="./css/styles.css?v=20261118e" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261118f" />
 </head>
 <body>
 
@@ -151,10 +151,18 @@
               <div class="qr-dual-half">
                 <span id="qrLabel_buzzer1" class="qr-dual-label t1">Team 1</span>
                 <img id="qrImg_buzzer1" alt="Team 1 Buzzer QR Code" class="qr-grid-img qr-grid-img-sm" />
+                <div id="qrConnected_buzzer1" class="qr-connected-panel qr-connected-sm hidden" aria-live="polite">
+                  <span class="qr-connected-icon">✅</span>
+                  <span class="qr-connected-text display-font">Connected!</span>
+                </div>
               </div>
               <div class="qr-dual-half">
                 <span id="qrLabel_buzzer2" class="qr-dual-label t2">Team 2</span>
                 <img id="qrImg_buzzer2" alt="Team 2 Buzzer QR Code" class="qr-grid-img qr-grid-img-sm" />
+                <div id="qrConnected_buzzer2" class="qr-connected-panel qr-connected-sm hidden" aria-live="polite">
+                  <span class="qr-connected-icon">✅</span>
+                  <span class="qr-connected-text display-font">Connected!</span>
+                </div>
               </div>
             </div>
             <span id="qrBadge_individual" class="qr-grid-status">Click to show both on TV</span>
@@ -162,6 +170,10 @@
           <button id="qrCard_buzzer_combo" type="button" class="qr-grid-card" onclick="selectQrForTv('buzzer_combo')">
             <span class="qr-grid-title display-font">🔔 Combo Buzzer (1 Shared Phone)</span>
             <img id="qrImg_buzzer_combo" alt="Combo Buzzer QR Code" class="qr-grid-img" style="width:124px; height:124px;" />
+            <div id="qrConnected_buzzer_combo" class="qr-connected-panel hidden" style="width:124px; height:124px;" aria-live="polite">
+              <span class="qr-connected-icon">✅</span>
+              <span class="qr-connected-text display-font">Connected!</span>
+            </div>
             <span id="qrUrl_buzzer_combo" class="qr-grid-url"></span>
             <span id="qrBadge_buzzer_combo" class="qr-grid-status">Click to show on TV</span>
           </button>
@@ -571,16 +583,24 @@
           <div id="tvQrUrlText" class="tv-qr-url"></div>
         </div>
         <div id="tvQrDualWrap" class="tv-qr-dual-wrap hidden">
-          <div class="tv-qr-dual-side t1">
+          <div id="tvQrSideT1" class="tv-qr-dual-side t1">
             <div id="tvQrT1Label" class="tv-qr-dual-title display-font">🔔 TEAM 1</div>
-            <div class="tv-qr-code-wrap">
+            <div id="tvQrCodeWrapT1" class="tv-qr-code-wrap">
               <img id="tvQrCodeImgT1" src="" alt="Team 1 Buzzer QR" width="220" height="220" />
             </div>
+            <div id="tvQrConnectedT1" class="tv-qr-connected-panel hidden" aria-live="polite">
+              <span class="tv-qr-connected-icon">✅</span>
+              <span class="tv-qr-connected-text display-font">Connected!</span>
+            </div>
           </div>
-          <div class="tv-qr-dual-side t2">
+          <div id="tvQrSideT2" class="tv-qr-dual-side t2">
             <div id="tvQrT2Label" class="tv-qr-dual-title display-font">🔔 TEAM 2</div>
-            <div class="tv-qr-code-wrap">
+            <div id="tvQrCodeWrapT2" class="tv-qr-code-wrap">
               <img id="tvQrCodeImgT2" src="" alt="Team 2 Buzzer QR" width="220" height="220" />
+            </div>
+            <div id="tvQrConnectedT2" class="tv-qr-connected-panel hidden" aria-live="polite">
+              <span class="tv-qr-connected-icon">✅</span>
+              <span class="tv-qr-connected-text display-font">Connected!</span>
             </div>
           </div>
         </div>
@@ -806,17 +826,17 @@
     </button>
   </section>
 
-  <footer id="appBuildBadge" class="app-build-badge">Build v20261118e</footer>
+  <footer id="appBuildBadge" class="app-build-badge">Build v20261118f</footer>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js" async></script>
-  <script src="./data/questions.js?v=20261118e"></script>
-  <script src="./js/audio.js?v=20261118e"></script>
-  <script src="./js/state.js?v=20261118e"></script>
-  <script src="./js/formats.js?v=20261118e"></script>
-  <script src="./js/decks.js?v=20261118e"></script>
-  <script src="./js/sync.js?v=20261118e"></script>
-  <script src="./js/views.js?v=20261118e"></script>
-  <script src="./js/app.js?v=20261118e"></script>
+  <script src="./data/questions.js?v=20261118f"></script>
+  <script src="./js/audio.js?v=20261118f"></script>
+  <script src="./js/state.js?v=20261118f"></script>
+  <script src="./js/formats.js?v=20261118f"></script>
+  <script src="./js/decks.js?v=20261118f"></script>
+  <script src="./js/sync.js?v=20261118f"></script>
+  <script src="./js/views.js?v=20261118f"></script>
+  <script src="./js/app.js?v=20261118f"></script>
 </body>
 </html>

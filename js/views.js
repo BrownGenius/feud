@@ -742,7 +742,19 @@ window.Feud = window.Feud || {};
     if (codeEl) codeEl.textContent = qr.roomCode || "";
 
     if (qr.role === "individual") {
-      if (roleEl) roleEl.textContent = "🔔 SCAN FOR INDIVIDUAL TEAM BUZZERS";
+      const t1Name = (roomState.team1Name || "TEAM 1").toUpperCase();
+      const t2Name = (roomState.team2Name || "TEAM 2").toUpperCase();
+      const b1Connected = Boolean(qr.b1Connected);
+      const b2Connected = Boolean(qr.b2Connected);
+
+      if (roleEl) {
+        roleEl.textContent =
+          b1Connected && !b2Connected
+            ? `🔔 SCAN FOR ${t2Name} BUZZER`
+            : b2Connected && !b1Connected
+            ? `🔔 SCAN FOR ${t1Name} BUZZER`
+            : "🔔 SCAN FOR INDIVIDUAL TEAM BUZZERS";
+      }
       if (singleWrap) singleWrap.classList.add("hidden");
       if (dualWrap) dualWrap.classList.remove("hidden");
 
@@ -750,8 +762,14 @@ window.Feud = window.Feud || {};
       const t2Label = document.getElementById("tvQrT2Label");
       const img1 = document.getElementById("tvQrCodeImgT1");
       const img2 = document.getElementById("tvQrCodeImgT2");
-      if (t1Label) t1Label.textContent = `🔔 ${(roomState.team1Name || "TEAM 1").toUpperCase()}`;
-      if (t2Label) t2Label.textContent = `🔔 ${(roomState.team2Name || "TEAM 2").toUpperCase()}`;
+      if (t1Label) t1Label.textContent = `🔔 ${t1Name}`;
+      if (t2Label) t2Label.textContent = `🔔 ${t2Name}`;
+      document.getElementById("tvQrSideT1")?.classList.toggle("is-connected", b1Connected);
+      document.getElementById("tvQrSideT2")?.classList.toggle("is-connected", b2Connected);
+      document.getElementById("tvQrCodeWrapT1")?.classList.toggle("hidden", b1Connected);
+      document.getElementById("tvQrConnectedT1")?.classList.toggle("hidden", !b1Connected);
+      document.getElementById("tvQrCodeWrapT2")?.classList.toggle("hidden", b2Connected);
+      document.getElementById("tvQrConnectedT2")?.classList.toggle("hidden", !b2Connected);
       if (img1 && qr.url1 && img1.dataset.qrUrl !== qr.url1) {
         img1.dataset.qrUrl = qr.url1;
         img1.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data=${encodeURIComponent(
