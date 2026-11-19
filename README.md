@@ -2,10 +2,14 @@
 
 Turn your TV, laptop, and phones into a real **Family Feud–style party game show** in seconds — no app installs, no accounts, and no setup headaches.
 
-Pick a ready-made question pack, cast or plug in a TV, hand phones to both teams as live buzzers (or share one phone in the middle for 1v1 **Combo Buzzer** mode), and host like a pro with a built-in teleprompter, game-show sound effects, and one-tap **Undo**.
+Pick from **370+ built-in survey rounds**, cast or plug in a TV, hand phones to both teams as live buzzers (or share one phone in the middle for 1v1 **Combo Buzzer** mode), and host like a pro with a built-in teleprompter, game-show sound effects, and one-tap **Undo**.
 
 [![Play Now](https://img.shields.io/badge/🎮_Play_Now-browngenius.github.io%2Ffeud-f59e0b?style=for-the-badge)](https://browngenius.github.io/feud)
 [![Question Review](https://img.shields.io/badge/🖨️_Review_Questions-review.html-1e293b?style=for-the-badge)](https://browngenius.github.io/feud/review.html)
+
+![Free & Open Source](https://img.shields.io/badge/Free_%26_Open_Source-MIT-22c55e?style=flat-square)
+![Zero Backend • Offline Ready](https://img.shields.io/badge/Zero_Backend-Offline_Ready-3b82f6?style=flat-square)
+![370+ Built-In Rounds](https://img.shields.io/badge/Built--In_Questions-370%2B_Rounds-a855f7?style=flat-square)
 
 ---
 
@@ -22,6 +26,47 @@ Pick a ready-made question pack, cast or plug in a TV, hand phones to both teams
 | Individual Team Buzzer (Phone) | Combo Buzzer (Shared 1v1 Phone) |
 | :---: | :---: |
 | ![Individual Team Buzzer](docs/screenshots/team-buzzer.png) | ![Combo Buzzer](docs/screenshots/combo-buzzer.png) |
+
+---
+
+## 🎴 Jump Right In — Ready-to-Play Question Packs
+
+Launch straight into any bundled question deck with one click — or open the printable **Review** sheet to preview rounds and mark favorites ahead of time:
+
+| Question Pack | Content | Play Live | Review Sheet |
+| :--- | :--- | :---: | :---: |
+| **🔥 Family Feud 2026** | 60 Rounds • 8 Fast Money Sets | [▶ Play](https://browngenius.github.io/feud/?deck=2026) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2026) |
+| **🌟 Family Feud 2026 (Family-Friendly)** | 60 Clean All-Ages Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=2026-family-friendly) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2026-family-friendly) |
+| **⭐ Family Feud 2025** | 60 Rounds • 8 Fast Money Sets | [▶ Play](https://browngenius.github.io/feud/?deck=2025) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2025) |
+| **🌟 Family Feud 2025 (Family-Friendly)** | 60 Clean All-Ages Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=2025-family-friendly) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2025-family-friendly) |
+| **🤖 2026 FRC Game & Rules** | 24 FIRST Robotics Competition Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=2026-frc-rules) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2026-frc-rules) |
+| **🦃 Desi Thanksgiving** | 37 Rounds • 5 Fast Money Sets | [▶ Play](https://browngenius.github.io/feud/?deck=desi-thanksgiving) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=desi-thanksgiving) |
+| **🪔 Gandhi Samaj 2026** | 43 Rounds • 6 Fast Money Sets | [▶ Play](https://browngenius.github.io/feud/?deck=gandhi-samaj-2026) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=gandhi-samaj-2026) |
+| **🪔 Gandhi Samaj 2026 (Meha Edition)** | 21 Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=gandhi-samaj-2026-meha-edition) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=gandhi-samaj-2026-meha-edition) |
+| **🎉 Starter Party Deck** | 6 Classic Party Rounds • Fast Money | [▶ Play](https://browngenius.github.io/feud/?deck=starter) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=starter) |
+
+---
+
+## 🎯 Great For…
+
+* **🏡 Family Game Nights & Holiday Parties:** Play right on the living-room TV in under a minute — grandma, kids, and guests just scan a QR code on any phone to buzz in.
+* **🏫 Classrooms & Review Days:** Zero student logins, zero accounts, and zero data collection. Works on school projectors, Chromebooks, and phones with custom spreadsheet review decks.
+* **💼 Office Team Building & Socials:** Turn an all-hands meeting room or Zoom screen-share into an energizing game show with built-in Host teleprompter cues.
+* **🤖 Robotics Teams & Clubs (`FRC`):** Includes a dedicated **24-round 2026 FRC Game & Rules** deck for kickoff meetings, rookie onboarding, and drive-team prep.
+* **🏕️ Offline Cabin & HDMI Parties:** Open `index.html` locally with Wi-Fi turned off and run Host + TV side-by-side over an HDMI cable.
+
+---
+
+## ⚖️ Why Party Feud vs. PowerPoint or Paid Apps?
+
+| Feature | 🎉 Party Feud | 📊 PowerPoint Templates | 💸 Paid / Ad-Supported Web Apps |
+| :--- | :---: | :---: | :---: |
+| **Cost & Accounts** | **100% Free, Open Source, Zero Logins** | Often paid + requires Office/PowerPoint | Subscriptions, limits, or ads |
+| **Live Phone Buzzers** | **QR Scan — Team 1, Team 2 & Shared Combo** | ❌ None (honor system / yelling) | ⚠️ Separate buzzer app or paid tier |
+| **Host Controls** | **Full Answer Key, Live Mini TV, Teleprompter & 25-Step Undo** | ❌ Clunky slide presenter view | ⚠️ Basic host toggles |
+| **TV Presentation & SFX** | **3D Flipping Tiles, Game-Show Audio, Big Red `X`, Winner Screen** | ⚠️ Static slides, manual point math | ✅ Varies |
+| **Custom Decks & No Repeats** | **370+ Built-In Rounds, AI/CSV/JSON Decks & Multi-Game Used Tracker** | ❌ Hard to edit slides | ⚠️ Locked or paywalled |
+| **Offline Mode** | **Works Offline Over HDMI (`file://`)** | ✅ Local file | ❌ Requires internet server |
 
 ---
 
@@ -65,18 +110,83 @@ Pick a ready-made question pack, cast or plug in a TV, hand phones to both teams
 
 ---
 
-## 🛠️ For Developers & Self-Hosting
+## ✍️ Build Your Own Deck in 2 Minutes (AI or Spreadsheet)
 
-### 🔌 Hybrid Zero-Config Sync Architecture (`js/sync.js`)
-Party Feud runs 100% statically with zero required backend or accounts:
-* **Trystero WebRTC P2P (`https://`):** Uses multi-relay Nostr `wss://` signaling on port `443` for the initial WebRTC handshake, then sends all room state and buzzes directly peer-to-peer over `RTCDataChannel`.
-* **Automatic MQTT-over-WSS Fallback (`http://` / non-secure contexts):** Automatically falls back to `wss://broker.emqx.io:8084/mqtt` (with `wss://test.mosquitto.org:8081/mqtt` fallback) when running on plain `http://` LAN servers where browsers restrict `crypto.subtle`, or if WebRTC P2P is blocked by strict NAT/firewalls. Strips `pin` and full `customDeck` payloads on MQTT broadcasts and uses MQTT Last Will + 2s/6.5s heartbeats for fast disconnect detection.
-* **`BroadcastChannel` + `localStorage`:** Instant zero-network sync for dual-window HDMI / `file://` play, plus `?room=CODE&role=...` URL state preservation on reload.
-* **Optional Firebase Firestore:** Drop a `window.FIREBASE_CONFIG` object in to enable cloud-persisted rooms.
+Want custom questions for a birthday, wedding shower, classroom quiz, or club night? Create your own pack in two minutes using AI or a spreadsheet:
+
+### Option A — Generate a Custom Deck with ChatGPT / Gemini / Claude
+Copy and paste this prompt into your favorite AI assistant (just swap out the topic and audience):
+
+```text
+Create a Party Feud JSON deck for [TOPIC / EVENT, e.g. "90s Movies & Pop Culture" or "AP Biology Review"] with 12 rounds (4 at multiplier 1, 4 at multiplier 2, 4 at multiplier 3) and 5 Fast Money questions.
+
+Follow this exact JSON schema and output raw JSON only:
+{
+  "gameTitle": "Party Feud",
+  "gameIcon": "🎉",
+  "deckName": "My Custom Deck (12 Rounds)",
+  "teamPresets": [
+    ["Team Alpha", "Team Omega"],
+    ["Team A", "Team B"]
+  ],
+  "rounds": [
+    {
+      "theme": "🎬 Category Emoji + Name",
+      "title": "Round 1",
+      "multiplier": 1,
+      "prompt": "Survey question prompt...",
+      "answers": [
+        { "text": "Top answer", "points": 40 },
+        { "text": "Second answer", "points": 25 },
+        { "text": "Third answer", "points": 18 },
+        { "text": "Fourth answer", "points": 11 },
+        { "text": "Fifth answer", "points": 6 }
+      ]
+    }
+  ],
+  "fastMoney": [
+    {
+      "prompt": "Quick 20-second survey question...",
+      "hint": "Top Answer (45), Second (30), Third (15), Fourth (10)"
+    }
+  ]
+}
+
+Rules:
+- Each round must have 4 to 8 concise answers ordered highest to lowest, with points totaling 100.
+- Use "multiplier": 1 for rounds 1-4, 2 for rounds 5-8, and 3 for rounds 9-12.
+```
+
+**Play your generated deck right away:**
+1. **Instant URL Load (No Fork Required):** Paste the JSON into a public [GitHub Gist](https://gist.github.com/), click **Raw**, copy the URL, and open:
+   `https://browngenius.github.io/feud/?deck=YOUR_RAW_GIST_URL`
+2. **Self-Host in Your Fork:** Save the `.json` file into your fork's `/decks/` folder on GitHub Pages — Party Feud automatically discovers new `.json` and `.csv` files in `/decks/` via the GitHub Contents API! (For offline `file://` play, also register it in [`decks/catalog.js`](./decks/catalog.js).)
+
+### Option B — Edit in Google Sheets or Excel
+* Download [`decks/template.csv`](./decks/template.csv) and fill in your questions, multipliers (`1` / `2` / `3`), answers, and points in Google Sheets or Excel.
+* Publish your Google Sheet to the web as **CSV** and launch it directly with `?deck=YOUR_PUBLISHED_CSV_URL`, or drop the `.csv` file into `/decks/` on your GitHub Pages fork.
+* Already have decks built for *Friendly-Feud* (`rounds[].ans` / `pnt` + `final_round`)? Those JSON files work automatically via URL or `/decks/` too!
+
+> **🤝 Contribute a Question Pack:** Made a great themed deck (Movies, Sports, Holiday Trivia, Classroom Review, Pop Culture)? **No JavaScript needed!** Open a Pull Request adding your `.json` or `.csv` file to `/decks/` (plus an optional entry in [`decks/catalog.js`](./decks/catalog.js)), or share it in a GitHub Issue so other hosts can play it too.
 
 ---
 
-### 🔄 Host Workflow State Machine (`roundPhase`)
+## 🛠️ For Developers & Self-Hosting
+
+<details>
+<summary><strong>🔌 Hybrid Zero-Config Sync Architecture (WebRTC P2P + MQTT + Offline)</strong></summary>
+
+Party Feud runs 100% statically with zero required backend or accounts (`js/sync.js`):
+
+* **Parallel Race on Remote Clients (`https://`):** Remote buzzers and remote TVs race **Trystero WebRTC P2P** (multi-relay Nostr `wss://` signaling on port `443`) and **MQTT-over-WSS** (`wss://broker.emqx.io:8084/mqtt`, with `wss://test.mosquitto.org:8081/mqtt` fallback) in parallel so phones connect in ~1–2 seconds even behind restrictive mobile NATs/firewalls, cleanly tearing down the slower transport once the first handshake succeeds.
+* **Automatic MQTT Fallback (`http://` / non-secure contexts):** Automatically uses MQTT-over-WSS when running on plain `http://` LAN servers where browsers restrict `crypto.subtle`. Strips `pin` and full `customDeck` payloads on MQTT broadcasts and uses MQTT Last Will + 2s/6.5s heartbeats for fast disconnect detection.
+* **`BroadcastChannel` + `localStorage`:** Instant zero-network sync for dual-window HDMI / `file://` play, plus `?room=CODE&role=...` URL state preservation on reload.
+* **Optional Firebase Firestore:** Drop a `window.FIREBASE_CONFIG` object in to enable cloud-persisted rooms.
+
+</details>
+
+<details>
+<summary><strong>🔄 Host Workflow State Machine & Phase Gating Table</strong></summary>
 
 ```mermaid
 stateDiagram-v2
@@ -127,9 +237,10 @@ stateDiagram-v2
 
 > **Host Shortcuts & Popovers:** Tap any Team Score Card, the Phase Stepper, or the `⏱️` Timer Pill directly to open contextual override popovers.
 
----
+</details>
 
-### 📊 Custom Question Decks (`/decks/`, JSON Schema & `review.html`)
+<details>
+<summary><strong>📊 Deck JSON Schema, Auto-Discovery & URL Parameters</strong></summary>
 
 A Party Feud Deck JSON file configures `gameTitle`, `gameIcon`, `deckName`, `teamPresets`, `rounds`, and `fastMoney`:
 
@@ -165,12 +276,13 @@ A Party Feud Deck JSON file configures `gameTitle`, `gameIcon`, `deckName`, `tea
 
 * **GitHub Pages Auto-Discovery:** Any `.json` or `.csv` file committed to `/decks/` is automatically discovered via the GitHub Contents API.
 * **Offline (`file://`):** Register bundled decks in [`decks/catalog.js`](./decks/catalog.js).
-* **Direct URL Loading:** `?deck=https://.../my-questions.json&title=Holiday+Party+Feud&icon=🎉`
+* **Direct URL Loading:** `?deck=2026-frc-rules` (bundled catalog slug) or `?deck=https://.../my-questions.json&title=Holiday+Party+Feud&icon=🎉` (CORS-accessible remote `.json`/`.csv`).
 * **Printable Review & `Used` Tracker:** Open [`review.html`](./review.html) (or `review.html?deck=desi-thanksgiving`) to inspect all rounds/Fast Money sets and toggle `Used` / `Unused` status in `localStorage`.
 
----
+</details>
 
-### 📁 Repository Structure
+<details>
+<summary><strong>📁 Repository Structure</strong></summary>
 
 ```text
 feud/
@@ -196,12 +308,15 @@ feud/
     ├── 2025-family-friendly.json           # Family Feud 2025 (Family-Friendly Edition)
     ├── 2026.json                           # Family Feud 2026 (60 Rounds • 8 Fast Money Sets)
     ├── 2026-family-friendly.json           # Family Feud 2026 (Family-Friendly Edition)
-    ├── desi-thanksgiving.json              # 37-Round + 25 Fast Money Desi Thanksgiving Party Pack
+    ├── 2026-frc-rules.json                 # 2026 FRC Game & Rules (24 Rounds)
+    ├── desi-thanksgiving.json              # 37-Round + 5 Fast Money Desi Thanksgiving Party Pack
     ├── gandhi-samaj-2026.json              # Gandhi Samaj 2026 (43 Rounds • 6 Fast Money Sets)
     ├── gandhi-samaj-2026-meha-edition.json # Gandhi Samaj 2026 (Meha Edition • 21 Rounds)
     ├── sample-friendly-feud.json           # Sample Friendly-Feud compatible JSON pack
     └── template.csv                        # Sample spreadsheet template for Google Sheets / Excel
 ```
+
+</details>
 
 ### 🌐 Deploying Your Own Copy on GitHub Pages
 1. Fork this repository on GitHub.
