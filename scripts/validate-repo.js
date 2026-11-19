@@ -34,7 +34,9 @@ const jsFiles = [
   "js/app.js",
   "sw.js",
   "scripts/generate-manifest.js",
-  "scripts/validate-repo.js"
+  "scripts/validate-repo.js",
+  "scripts/test-core.js",
+  "scripts/test-ui-e2e.js"
 ];
 
 jsFiles.forEach((rel) => {

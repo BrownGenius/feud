@@ -30,3 +30,9 @@ jobs:
 
       - name: Test manifest generator
         run: node scripts/generate-manifest.js
+
+      - name: Run core logic & state engine unit tests
+        run: node scripts/test-core.js
+
+      - name: Run headless browser E2E UI & gameplay smoke tests
+        run: node scripts/test-ui-e2e.js

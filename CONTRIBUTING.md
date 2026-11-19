@@ -31,8 +31,9 @@ Party Feud is a **100% static, zero-build vanilla HTML/CSS/JS** web app that wor
    * `index.html` (`<link rel="stylesheet">`, `#appBuildBadge`, and all `<script>` tags)
    * `review.html` (all `<script>` tags)
    * `sw.js` (`CACHE_NAME`)
-4. **Run the Validator Before Opening a PR:**
+4. **Run the Automated Test Suites Before Opening a PR:**
    ```bash
-   node scripts/validate-repo.js
+   node scripts/validate-repo.js   # Static JS syntax, deck schemas & cache-busting sync
+   node scripts/test-core.js       # Core state engine, formats, brackets & buzzer unit tests
+   node scripts/test-ui-e2e.js     # Headless Chrome/Edge E2E UI & multi-tab gameplay tests
    ```
-   This verifies JavaScript syntax across all files, checks every `decks/*.json` schema, and confirms all `?v=` cache-busting strings are in sync.

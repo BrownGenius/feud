@@ -306,7 +306,9 @@ feud/
 │   └── icon.svg                    # Vector PWA & favicon app icon
 ├── scripts/
 │   ├── generate-manifest.js        # Generates decks/manifest.json with metadata & category tags
-│   └── validate-repo.js            # Validates deck JSON schemas, JS syntax & cache-busting sync
+│   ├── validate-repo.js            # Validates deck JSON schemas, JS syntax & cache-busting sync
+│   ├── test-core.js                # Zero-dependency Node unit test suite for core game & deck logic
+│   └── test-ui-e2e.js              # Headless browser E2E UI & multi-tab gameplay smoke test suite
 ├── docs/
 │   └── screenshots/                # Gameplay demo GIF & screenshots embedded in README.md
 ├── js/
