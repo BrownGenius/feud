@@ -1,0 +1,407 @@
+{
+    "gameTitle": "Party Feud",
+    "gameIcon": "🎬",
+    "deckName": "Bollywood Music & Movies (12 Rounds)",
+    "teamPresets": [
+        [
+            "Team Shah Rukh",
+            "Team Salman"
+        ],
+        [
+            "Dharma",
+            "Yash Raj"
+        ]
+    ],
+    "rounds": [
+        {
+            "theme": "🌟 Superstars",
+            "title": "Round 1",
+            "multiplier": 1,
+            "prompt": "Name an actor with the last name Khan who ruled Bollywood in the 90s and 2000s.",
+            "answers": [
+                {
+                    "text": "Shah Rukh Khan",
+                    "points": 42
+                },
+                {
+                    "text": "Salman Khan",
+                    "points": 28
+                },
+                {
+                    "text": "Aamir Khan",
+                    "points": 18
+                },
+                {
+                    "text": "Saif Ali Khan",
+                    "points": 8
+                },
+                {
+                    "text": "Irrfan Khan",
+                    "points": 4
+                }
+            ]
+        },
+        {
+            "theme": "🎤 Playback Legends",
+            "title": "Round 2",
+            "multiplier": 1,
+            "prompt": "Name an iconic Bollywood playback singer.",
+            "answers": [
+                {
+                    "text": "Arijit Singh",
+                    "points": 34
+                },
+                {
+                    "text": "Lata Mangeshkar",
+                    "points": 25
+                },
+                {
+                    "text": "Kishore Kumar",
+                    "points": 18
+                },
+                {
+                    "text": "Shreya Ghoshal",
+                    "points": 12
+                },
+                {
+                    "text": "Sonu Nigam",
+                    "points": 7
+                },
+                {
+                    "text": "Mohammed Rafi",
+                    "points": 4
+                }
+            ]
+        },
+        {
+            "theme": "💃 Wedding Anthems",
+            "title": "Round 3",
+            "multiplier": 1,
+            "prompt": "Name a Bollywood song you are guaranteed to hear at an Indian wedding sangeet.",
+            "answers": [
+                {
+                    "text": "Badtameez Dil",
+                    "points": 32
+                },
+                {
+                    "text": "London Thumakda",
+                    "points": 24
+                },
+                {
+                    "text": "Kala Chashma",
+                    "points": 19
+                },
+                {
+                    "text": "Gallan Goodiyaan",
+                    "points": 13
+                },
+                {
+                    "text": "Mehndi Laga Ke Rakhna",
+                    "points": 7
+                },
+                {
+                    "text": "bole Chudiyan",
+                    "points": 5
+                }
+            ]
+        },
+        {
+            "theme": "🎞️ Classic Tropes",
+            "title": "Round 4",
+            "multiplier": 1,
+            "prompt": "Name a classic Bollywood movie cliché.",
+            "answers": [
+                {
+                    "text": "Running at the train station",
+                    "points": 35
+                },
+                {
+                    "text": "Dancing in the rain / Swiss Alps",
+                    "points": 25
+                },
+                {
+                    "text": "Disapproving parents",
+                    "points": 16
+                },
+                {
+                    "text": "Long-lost twin / separated at birth",
+                    "points": 11
+                },
+                {
+                    "text": "Overly dramatic mother",
+                    "points": 8
+                },
+                {
+                    "text": "Amnesia after an accident",
+                    "points": 5
+                }
+            ]
+        },
+        {
+            "theme": "🎹 Music Maestros",
+            "title": "Round 5",
+            "multiplier": 2,
+            "prompt": "Name a famous Bollywood music composer or duo.",
+            "answers": [
+                {
+                    "text": "A.R. Rahman",
+                    "points": 44
+                },
+                {
+                    "text": "Pritam",
+                    "points": 22
+                },
+                {
+                    "text": "Shankar-Ehsaan-Loy",
+                    "points": 14
+                },
+                {
+                    "text": "Vishal-Shekhar",
+                    "points": 11
+                },
+                {
+                    "text": "R.D. Burman",
+                    "points": 9
+                }
+            ]
+        },
+        {
+            "theme": "🏆 All-Time Blockbusters",
+            "title": "Round 6",
+            "multiplier": 2,
+            "prompt": "Name a Bollywood movie that everyone has seen at least once.",
+            "answers": [
+                {
+                    "text": "Dilwale Dulhania Le Jayenge",
+                    "points": 33
+                },
+                {
+                    "text": "3 Idiots",
+                    "points": 26
+                },
+                {
+                    "text": "Sholay",
+                    "points": 17
+                },
+                {
+                    "text": "Kabhi Khushi Kabhie Gham",
+                    "points": 13
+                },
+                {
+                    "text": "Kuch Kuch Hota Hai",
+                    "points": 7
+                },
+                {
+                    "text": "Lagaan",
+                    "points": 4
+                }
+            ]
+        },
+        {
+            "theme": "🗣️ Iconic Dialogues",
+            "title": "Round 7",
+            "multiplier": 2,
+            "prompt": "Name a famous Bollywood movie dialogue people quote all the time.",
+            "answers": [
+                {
+                    "text": "Kitne aadmi the? (Sholay)",
+                    "points": 30
+                },
+                {
+                    "text": "Mogambo khush hua (Mr. India)",
+                    "points": 24
+                },
+                {
+                    "text": "Mere paas maa hai (Deewaar)",
+                    "points": 18
+                },
+                {
+                    "text": "Bade bade deshon mein... (DDLJ)",
+                    "points": 14
+                },
+                {
+                    "text": "All is well (3 Idiots)",
+                    "points": 9
+                },
+                {
+                    "text": "Picture abhi baaki hai mere dost",
+                    "points": 5
+                }
+            ]
+        },
+        {
+            "theme": "👑 Leading Ladies",
+            "title": "Round 8",
+            "multiplier": 2,
+            "prompt": "Name an iconic Bollywood actress.",
+            "answers": [
+                {
+                    "text": "Deepika Padukone",
+                    "points": 30
+                },
+                {
+                    "text": "Kajol",
+                    "points": 23
+                },
+                {
+                    "text": "Madhuri Dixit",
+                    "points": 19
+                },
+                {
+                    "text": "Priyanka Chopra",
+                    "points": 14
+                },
+                {
+                    "text": "Alia Bhatt",
+                    "points": 9
+                },
+                {
+                    "text": "Sridevi",
+                    "points": 5
+                }
+            ]
+        },
+        {
+            "theme": "🕺 Signature Moves",
+            "title": "Round 9",
+            "multiplier": 3,
+            "prompt": "Name a Bollywood song known for its iconic dance step.",
+            "answers": [
+                {
+                    "text": "Chaiyya Chaiyya",
+                    "points": 31
+                },
+                {
+                    "text": "Ek Pal Ka Jeena",
+                    "points": 25
+                },
+                {
+                    "text": "Dola Re Dola",
+                    "points": 18
+                },
+                {
+                    "text": "Kajra Re",
+                    "points": 13
+                },
+                {
+                    "text": "Munni Badnaam Hui",
+                    "points": 8
+                },
+                {
+                    "text": "Sheila Ki Jawani",
+                    "points": 5
+                }
+            ]
+        },
+        {
+            "theme": "🎥 Visionary Directors",
+            "title": "Round 10",
+            "multiplier": 3,
+            "prompt": "Name a celebrated Bollywood film director.",
+            "answers": [
+                {
+                    "text": "Karan Johar",
+                    "points": 32
+                },
+                {
+                    "text": "Sanjay Leela Bhansali",
+                    "points": 26
+                },
+                {
+                    "text": "Yash Chopra",
+                    "points": 18
+                },
+                {
+                    "text": "Rajkumar Hirani",
+                    "points": 14
+                },
+                {
+                    "text": "Zoya Akhtar",
+                    "points": 6
+                },
+                {
+                    "text": "Anurag Kashyap",
+                    "points": 4
+                }
+            ]
+        },
+        {
+            "theme": "😈 Legendary Villains",
+            "title": "Round 11",
+            "multiplier": 3,
+            "prompt": "Name an unforgettable Bollywood movie villain.",
+            "answers": [
+                {
+                    "text": "Gabbar Singh (Sholay)",
+                    "points": 38
+                },
+                {
+                    "text": "Mogambo (Mr. India)",
+                    "points": 27
+                },
+                {
+                    "text": "Shakaal (Shaan)",
+                    "points": 15
+                },
+                {
+                    "text": "Kancha Cheena (Agneepath)",
+                    "points": 11
+                },
+                {
+                    "text": "Crime Master Gogo (Andaz Apna Apna)",
+                    "points": 9
+                }
+            ]
+        },
+        {
+            "theme": "💑 On-Screen Jodi",
+            "title": "Round 12",
+            "multiplier": 3,
+            "prompt": "Name the most beloved on-screen Bollywood couple.",
+            "answers": [
+                {
+                    "text": "Shah Rukh Khan & Kajol",
+                    "points": 45
+                },
+                {
+                    "text": "Ranbir Kapoor & Deepika Padukone",
+                    "points": 22
+                },
+                {
+                    "text": "Ranveer Singh & Deepika Padukone",
+                    "points": 14
+                },
+                {
+                    "text": "Amitabh Bachchan & Rekha",
+                    "points": 11
+                },
+                {
+                    "text": "Raj Kapoor & Nargis",
+                    "points": 8
+                }
+            ]
+        }
+    ],
+    "fastMoney": [
+        {
+            "prompt": "Name a musical instrument frequently heard in classic Bollywood songs.",
+            "hint": "Tabla (40), Sitar (28), Flute/Bansuri (18), Dholak (14)"
+        },
+        {
+            "prompt": "Name a foreign country where Bollywood movies love to shoot songs.",
+            "hint": "Switzerland (45), United Kingdom (25), USA (18), UAE/Dubai (12)"
+        },
+        {
+            "prompt": "Name a Bollywood actor famous for their dancing skills.",
+            "hint": "Hrithik Roshan (42), Govinda (26), Madhuri Dixit (20), Tiger Shroff (12)"
+        },
+        {
+            "prompt": "Name an item of clothing often worn by a Bollywood heroine in a romantic song.",
+            "hint": "Saree (48), Lehenga (24), Anarkali/Suit (16), Dupatta (12)"
+        },
+        {
+            "prompt": "Name a famous Bollywood film production house.",
+            "hint": "Yash Raj Films (40), Dharma Productions (32), Red Chillies (16), Rajshri (12)"
+        }
+    ]
+}

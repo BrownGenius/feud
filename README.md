@@ -45,6 +45,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 | **🌟 Family Feud 2025 (Family-Friendly)** | 60 Clean All-Ages Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=2025-family-friendly) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2025-family-friendly) |
 | **🤖 2026 FRC Game & Rules** | 24 FIRST Robotics Competition Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=2026-frc-rules) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2026-frc-rules) |
 | **🦃 Desi Thanksgiving** | 37 Rounds • 5 Fast Money Sets | [▶ Play](https://browngenius.github.io/feud/?deck=desi-thanksgiving) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=desi-thanksgiving) |
+| **🎬 Bollywood Music & Movies** | 12 Rounds • Fast Money | [▶ Play](https://browngenius.github.io/feud/?deck=bollywood-music-movies) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=bollywood-music-movies) |
 | **🎉 Starter Party Deck** | 6 Classic Party Rounds • Fast Money | [▶ Play](https://browngenius.github.io/feud/?deck=starter) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=starter) |
 
 ---
@@ -305,6 +306,7 @@ feud/
     ├── 2026.json                           # Family Feud 2026 (60 Rounds • 8 Fast Money Sets)
     ├── 2026-family-friendly.json           # Family Feud 2026 (Family-Friendly Edition)
     ├── 2026-frc-rules.json                 # 2026 FRC Game & Rules (24 Rounds)
+    ├── bollywood-music-movies.json         # Bollywood Music & Movies (12 Rounds • Fast Money)
     ├── desi-thanksgiving.json              # 37-Round + 5 Fast Money Desi Thanksgiving Party Pack
     └── sample-friendly-feud.json           # Sample Friendly-Feud compatible JSON pack
 ```
