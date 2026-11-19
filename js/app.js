@@ -652,18 +652,27 @@ window.Feud = window.Feud || {};
   let selectedTvSetupMode = null;
   let remoteTvConnected = false;
   let localTvWindowOpened = false;
+  let openedTvPopupWindow = null;
   let qrModalOpenedForTvSetup = false;
+
+  function isLocalTvPopupOpen() {
+    if (openedTvPopupWindow && openedTvPopupWindow.closed) {
+      openedTvPopupWindow = null;
+      localTvWindowOpened = false;
+    }
+    return Boolean(openedTvPopupWindow && !openedTvPopupWindow.closed);
+  }
 
   function getDefaultTvSetupMode() {
     if (isFileProtocol()) return "local";
-    return typeof window !== "undefined" && window.innerWidth >= 900 ? "local" : "none";
+    return typeof window !== "undefined" && window.innerWidth >= 900 ? "local" : "qr";
   }
 
   function getSelectedTvSetupMode() {
     if (!selectedTvSetupMode) {
       try {
         const saved = localStorage.getItem(TV_SETUP_MODE_KEY);
-        if (saved === "local" || saved === "qr" || saved === "none") {
+        if (saved === "local" || saved === "qr") {
           selectedTvSetupMode = saved;
         }
       } catch (e) {}
@@ -682,8 +691,8 @@ window.Feud = window.Feud || {};
     if (qrBtn) {
       qrBtn.disabled = isFileProtocol();
       qrBtn.title = isFileProtocol()
-        ? "Remote TV QR requires HTTP/HTTPS (use Local Window on file://)"
-        : "Show Remote TV QR code right after starting";
+        ? "Remote TV QR requires HTTP/HTTPS (use Pop-Out TV on file://)"
+        : "Show Remote TV QR code & link right after starting";
     }
     document.querySelectorAll("#tvModeChoiceGroup .tv-mode-btn").forEach((btn) => {
       btn.classList.toggle("is-selected", btn.dataset.tvMode === mode);
@@ -691,9 +700,9 @@ window.Feud = window.Feud || {};
   }
 
   function selectTvSetupMode(mode) {
-    if (mode !== "local" && mode !== "qr" && mode !== "none") return;
+    if (mode !== "local" && mode !== "qr") return;
     if (isFileProtocol() && mode === "qr") {
-      Feud.showToast("Remote TV QR requires HTTP/HTTPS — using Local Window.");
+      Feud.showToast("Remote TV QR requires HTTP/HTTPS — using Pop-Out TV.");
       mode = "local";
     }
     selectedTvSetupMode = mode;
@@ -853,6 +862,7 @@ window.Feud = window.Feud || {};
     const tvMode = getSelectedTvSetupMode();
     remoteTvConnected = false;
     localTvWindowOpened = false;
+    openedTvPopupWindow = null;
     qrModalOpenedForTvSetup = false;
 
     currentRoomCode = code;
@@ -862,19 +872,21 @@ window.Feud = window.Feud || {};
 
     // Open local TV window synchronously during the click gesture so browsers allow the popup
     if (tvMode === "local") {
-      localTvWindowOpened = openTvDisplayWindow(code);
+      openedTvPopupWindow = openTvDisplayWindow(code);
+      localTvWindowOpened = Boolean(openedTvPopupWindow);
     }
 
     enterRole("host", code);
     Feud.saveLastSession("host", code, pinVal);
     await Feud.startHostRoomSync(code, roomState);
+    updateHostDevicesPill();
 
     if (tvMode === "qr") {
       openQrModal(null, { forTvSetup: true });
-    } else if (tvMode === "local" && localTvWindowOpened) {
+    } else if (localTvWindowOpened) {
       Feud.showToast(`Room ${code} ready! 📺 TV window opened — drag it to your TV screen.`);
     } else {
-      Feud.showToast(`Room ${code} ready! Click "📱 Buzzers: 0/2" anytime to connect TV or phones.`);
+      Feud.showToast(`Room ${code} ready! Click "📺 TV: 0/1 • 📱 Buzzers: 0/2" to pair a TV.`);
     }
   }
 
@@ -981,15 +993,16 @@ window.Feud = window.Feud || {};
   }
 
   function openTvDisplayWindow(code) {
-    return Boolean(
-      openRoleWindow(code, "tv", "partyFeudTvDisplay", "popup=yes,width=1280,height=720")
-    );
+    return openRoleWindow(code, "tv", "partyFeudTvDisplay", "popup=yes,width=1280,height=720");
   }
 
   function reopenTvWindow() {
     if (!currentRoomCode || currentRoomCode === "SOLO") return;
-    localTvWindowOpened = openTvDisplayWindow(currentRoomCode);
+    const win = openTvDisplayWindow(currentRoomCode);
+    if (win) openedTvPopupWindow = win;
+    localTvWindowOpened = Boolean(win);
     updateQrTvStatusBadge();
+    updateHostDevicesPill();
   }
 
   async function joinTeamBuzzer(teamNum, opts) {
@@ -1277,6 +1290,7 @@ window.Feud = window.Feud || {};
     hostFmTimerInterval = null;
     remoteTvConnected = false;
     localTvWindowOpened = false;
+    openedTvPopupWindow = null;
     qrModalOpenedForTvSetup = false;
     activeRole = "lobby";
     try {
@@ -1717,22 +1731,88 @@ window.Feud = window.Feud || {};
     openQrModal(roomState && roomState.tvQrOverlay ? roomState.tvQrOverlay.role : null);
   }
 
+  function getShortJoinDisplayUrl() {
+    if (isFileProtocol()) return "";
+    return getQrBaseUrl()
+      .replace(/^https?:\/\//i, "")
+      .replace(/\/index\.html$/i, "")
+      .replace(/\/+$/, "");
+  }
+
   function buildQrJoinUrl(role) {
     const code = currentRoomCode || "SOLO";
     const baseUrl = getQrBaseUrl();
     return `${baseUrl}?room=${encodeURIComponent(code)}&role=${encodeURIComponent(role)}`;
   }
 
+  async function copyQrJoinUrl(role = "tv") {
+    const url = buildQrJoinUrl(role);
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url);
+        Feud.showToast("📋 Link copied! Paste it in any iPad, laptop, or TV browser.");
+        return;
+      }
+    } catch (e) {}
+    const el = document.getElementById(`qrUrl_${role}`);
+    if (el && window.getSelection) {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    Feud.showToast("Select and copy the highlighted link.");
+  }
+
+  function getTotalConnectedTvCount() {
+    const syncTv = Feud.getConnectedTvCount ? Feud.getConnectedTvCount() : 0;
+    const hasPopup = isLocalTvPopupOpen() ? 1 : 0;
+    return Math.max(syncTv, hasPopup);
+  }
+
+  function updateHostDevicesPill(bzOverride, tvCountOverride) {
+    const buzzerStatusPill = document.getElementById("hostBuzzerStatusPill");
+    if (!buzzerStatusPill) return;
+    const bz = bzOverride || (Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {});
+    const bzCount = (bz.t1 ? 1 : 0) + (bz.t2 ? 1 : 0);
+    const tvCount =
+      typeof tvCountOverride === "number"
+        ? Math.max(tvCountOverride, isLocalTvPopupOpen() ? 1 : 0)
+        : getTotalConnectedTvCount();
+    const tvText = tvCount > 1 ? `📺 TV: ${tvCount}` : `📺 TV: ${tvCount}/1`;
+    const bzText =
+      bzCount === 0
+        ? "📱 Buzzers: 0/2"
+        : `📱 ${bz.t1 ? "T1✓" : "T1–"} ${bz.t2 ? "T2✓" : "T2–"}`;
+    buzzerStatusPill.textContent = `${tvText} • ${bzText}`;
+    buzzerStatusPill.className = `top-btn host-devices-btn${
+      tvCount >= 1 && bzCount === 2
+        ? " is-ready"
+        : tvCount >= 1 || bzCount >= 1
+        ? " is-partial"
+        : ""
+    }`;
+  }
+
   function updateQrTvStatusBadge() {
     const tvBadge = document.getElementById("qrTvStatusBadge");
     if (!tvBadge) return;
-    if (remoteTvConnected) {
+    const hasRemote =
+      remoteTvConnected || Boolean(Feud.hasRemoteTvConnection && Feud.hasRemoteTvConnection());
+    const hasPopup = isLocalTvPopupOpen() || localTvWindowOpened;
+    const tvTotal = getTotalConnectedTvCount();
+    if (hasRemote && (tvTotal > 0 || !isLocalTvPopupOpen())) {
       tvBadge.textContent = "✅ Remote TV Connected";
       tvBadge.className = "pill-badge awake-ok";
-    } else if (localTvWindowOpened) {
+    } else if (hasPopup && tvTotal > 0) {
       tvBadge.textContent = "🖥️ Local TV Open";
       tvBadge.className = "pill-badge awake-ok";
+    } else if (tvTotal > 0) {
+      tvBadge.textContent = "✅ TV Connected";
+      tvBadge.className = "pill-badge awake-ok";
     } else {
+      remoteTvConnected = false;
       tvBadge.textContent = "Waiting for TV…";
       tvBadge.className = "pill-badge";
     }
@@ -1749,7 +1829,37 @@ window.Feud = window.Feud || {};
     if (t1Lbl && roomState) t1Lbl.textContent = roomState.team1Name || "Team 1";
     if (t2Lbl && roomState) t2Lbl.textContent = roomState.team2Name || "Team 2";
 
-    if (!isFileProtocol()) {
+    const code = currentRoomCode || "SOLO";
+    const fileProto = isFileProtocol();
+    const shortHost = getShortJoinDisplayUrl();
+    const tvManualBox = document.getElementById("qrTvManualBox");
+    if (tvManualBox) tvManualBox.classList.toggle("hidden", fileProto);
+    const shortHintEl = document.getElementById("qrTvShortHint");
+    if (shortHintEl && !fileProto) {
+      shortHintEl.innerHTML = "";
+      shortHintEl.appendChild(document.createTextNode("TV / iPad browser: go to "));
+      const sUrl = document.createElement("strong");
+      sUrl.textContent = shortHost;
+      shortHintEl.appendChild(sUrl);
+      shortHintEl.appendChild(document.createTextNode(" & enter code "));
+      const sCode = document.createElement("strong");
+      sCode.textContent = code;
+      shortHintEl.appendChild(sCode);
+    }
+    const indManualEl = document.getElementById("qrManualHint_individual");
+    if (indManualEl && !fileProto) {
+      indManualEl.innerHTML = "";
+      indManualEl.appendChild(document.createTextNode("Or open "));
+      const sUrl = document.createElement("strong");
+      sUrl.textContent = shortHost;
+      indManualEl.appendChild(sUrl);
+      indManualEl.appendChild(document.createTextNode(" • Code "));
+      const sCode = document.createElement("strong");
+      sCode.textContent = code;
+      indManualEl.appendChild(sCode);
+    }
+
+    if (!fileProto) {
       ["tv", "buzzer1", "buzzer2", "buzzer_combo"].forEach((r) => {
         const url = buildQrJoinUrl(r);
         const imgEl = document.getElementById(`qrImg_${r}`);
@@ -1782,12 +1892,14 @@ window.Feud = window.Feud || {};
 
   function buildTvQrOverlayPayload(qrRole, bz, code) {
     const info = bz || (Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {});
+    const shortUrl = getShortJoinDisplayUrl();
     if (qrRole === "individual") {
       return {
         role: "individual",
         url1: buildQrJoinUrl("buzzer1"),
         url2: buildQrJoinUrl("buzzer2"),
         roomCode: code,
+        shortUrl,
         b1Connected: Boolean(info.b1),
         b2Connected: Boolean(info.b2)
       };
@@ -1795,7 +1907,8 @@ window.Feud = window.Feud || {};
     return {
       role: qrRole,
       url: buildQrJoinUrl(qrRole),
-      roomCode: code
+      roomCode: code,
+      shortUrl
     };
   }
 
@@ -1967,7 +2080,8 @@ window.Feud = window.Feud || {};
     onUpdateFm: (idx, field, val) => hostUpdateFm(idx, field, val),
     onSelectFmChip: (idx, playerNum, ansText, pts) =>
       hostSelectFmChip(idx, playerNum, ansText, pts),
-    canUndo: () => undoStack.length > 0
+    canUndo: () => undoStack.length > 0,
+    getTvCount: () => getTotalConnectedTvCount()
   };
 
   function renderActiveView() {
@@ -4188,6 +4302,7 @@ window.Feud = window.Feud || {};
     confirmStartNextMatch,
     openQrModal,
     retryHostRelayConnection,
+    copyQrJoinUrl,
     selectQrForTv,
     selectTvSetupMode,
     applyQrLanHost,
@@ -4298,6 +4413,7 @@ window.Feud = window.Feud || {};
       if (joinedRole === "tv") {
         remoteTvConnected = true;
         updateQrTvStatusBadge();
+        updateHostDevicesPill();
       }
       if (activeRole !== "host" || !roomState || !roomState.tvQrOverlay) return;
       const tvRole = roomState.tvQrOverlay.role;
@@ -4313,31 +4429,24 @@ window.Feud = window.Feud || {};
       applyBuzzerButtonLocks();
     });
     window.addEventListener("feud-tv-connected", () => {
-      remoteTvConnected = true;
+      remoteTvConnected = Boolean(Feud.hasRemoteTvConnection && Feud.hasRemoteTvConnection());
       updateQrTvStatusBadge();
+      updateHostDevicesPill();
       const modal = document.getElementById("qrModal");
       if (modal && !modal.classList.contains("hidden")) {
         if (qrModalOpenedForTvSetup) {
           closeQrModal();
         }
-        Feud.showToast("📺 Remote TV connected!");
+        Feud.showToast("📺 TV display connected!");
       }
     });
     window.addEventListener("feud-peer-status", (e) => {
       const detail = (e && e.detail) || {};
-      const buzzerStatusPill = document.getElementById("hostBuzzerStatusPill");
-      if (buzzerStatusPill && detail.buzzers) {
-        const bz = detail.buzzers;
-        const count = (bz.t1 ? 1 : 0) + (bz.t2 ? 1 : 0);
-        buzzerStatusPill.textContent =
-          count === 0
-            ? "📱 Buzzers: 0/2"
-            : `📱 ${bz.t1 ? "T1✓" : "T1–"} • ${bz.t2 ? "T2✓" : "T2–"}`;
-        buzzerStatusPill.className = `top-btn host-devices-btn${
-          count === 2 ? " is-ready" : count === 1 ? " is-partial" : ""
-        }`;
-        syncTvQrOverlayWithBuzzers(bz, true);
-        applyBuzzerButtonLocks(bz);
+      if (detail.buzzers || typeof detail.tvCount === "number") {
+        updateHostDevicesPill(detail.buzzers, detail.tvCount);
+        updateQrTvStatusBadge();
+        syncTvQrOverlayWithBuzzers(detail.buzzers, true);
+        applyBuzzerButtonLocks(detail.buzzers);
       }
       ["buzzerConnStatusPill", "comboConnStatusPill"].forEach((id) => {
         const connPill = document.getElementById(id);
@@ -4366,6 +4475,10 @@ window.Feud = window.Feud || {};
     }
     window.addEventListener("focus", () => {
       if (activeRole === "lobby") refreshLobbyBuzzerLocks(true);
+      if (activeRole === "host" && openedTvPopupWindow && openedTvPopupWindow.closed) {
+        updateHostDevicesPill();
+        updateQrTvStatusBadge();
+      }
     });
     setInterval(() => {
       const lobbyEl = document.getElementById("lobbyView");
@@ -4375,6 +4488,9 @@ window.Feud = window.Feud || {};
           const curPop = getOpenedPopupBuzzers();
           applyBuzzerButtonLocks(curPop);
         }
+      } else if (activeRole === "host" && openedTvPopupWindow && openedTvPopupWindow.closed) {
+        updateHostDevicesPill();
+        updateQrTvStatusBadge();
       }
     }, 1500);
 

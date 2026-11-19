@@ -36,6 +36,7 @@ window.Feud = window.Feud || {};
   let activeMqttBrokerUrl = "";
   let hostConnections = new Map(); // peerId -> { peerId, role, clientId, lastSeenAt, open }
   let localBuzzerTabs = new Map();
+  let localTvTabs = new Map();
   let clientHostPeerId = null;
   let clientConnOpen = false;
   let broadcastChan = null;
@@ -133,6 +134,35 @@ window.Feud = window.Feud || {};
     return { t1: b1 || combo, t2: b2 || combo, b1, b2, combo };
   }
 
+  function hasRemoteTvConnection() {
+    let found = false;
+    hostConnections.forEach((entry) => {
+      if (entry && entry.open && entry.role === "tv") {
+        found = true;
+      }
+    });
+    return found;
+  }
+
+  function getConnectedTvCount() {
+    let count = 0;
+    hostConnections.forEach((entry) => {
+      if (entry && entry.open && entry.role === "tv") count += 1;
+    });
+    const now = Date.now();
+    for (const [cid, entry] of Array.from(localTvTabs.entries())) {
+      if (!entry || now - (entry.lastSeenAt || 0) > 12000) {
+        localTvTabs.delete(cid);
+        continue;
+      }
+      count += 1;
+    }
+    if (currentRole === "tv" && count === 0) {
+      count = 1;
+    }
+    return count;
+  }
+
   function getConnectedHostMqttCount() {
     let count = 0;
     hostMqttClients.forEach((entry) => {
@@ -171,6 +201,8 @@ window.Feud = window.Feud || {};
             ok: isLive,
             relayOk,
             mqttCount: getConnectedHostMqttCount(),
+            tvCount: getConnectedTvCount(),
+            hasRemoteTv: hasRemoteTvConnection(),
             buzzers: getConnectedBuzzerTeams()
           }
         })
@@ -395,6 +427,15 @@ window.Feud = window.Feud || {};
             }
             localBuzzerTabs.set(msg.clientId, { role: msg.role, lastSeenAt: Date.now() });
             updateHostPeerBadge();
+          } else if (msg.role === "tv") {
+            const wasPresent = localTvTabs.has(msg.clientId);
+            localTvTabs.set(msg.clientId, { lastSeenAt: Date.now() });
+            updateHostPeerBadge();
+            if (!wasPresent) {
+              try {
+                window.dispatchEvent(new CustomEvent("feud-tv-connected"));
+              } catch (e) {}
+            }
           }
           if (broadcastChan) {
             broadcastChan.postMessage({
@@ -440,6 +481,17 @@ window.Feud = window.Feud || {};
           pendingRoleCheck.role === msg.role
         ) {
           pendingRoleCheck.resolve(true);
+        } else if (msg.type === "TV_PRESENCE" && msg.clientId !== tabClientId) {
+          const prevTv = getConnectedTvCount();
+          localTvTabs.set(msg.clientId, { lastSeenAt: Date.now() });
+          const nextTv = getConnectedTvCount();
+          if (prevTv !== nextTv && isPrimaryHostPeer) {
+            updateHostPeerBadge();
+          }
+        } else if (msg.type === "TV_GOODBYE" && msg.clientId !== tabClientId) {
+          if (localTvTabs.delete(msg.clientId) && isPrimaryHostPeer) {
+            updateHostPeerBadge();
+          }
         } else if (msg.type === "BUZZER_PRESENCE" && msg.clientId !== tabClientId) {
           if (msg.role === "buzzer1" || msg.role === "buzzer2" || msg.role === "buzzer_combo") {
             const prev = getConnectedBuzzerTeams();
@@ -584,6 +636,12 @@ window.Feud = window.Feud || {};
       for (const [cid, entry] of Array.from(localBuzzerTabs.entries())) {
         if (!entry || now - (entry.lastSeenAt || 0) > 12000) {
           localBuzzerTabs.delete(cid);
+          changed = true;
+        }
+      }
+      for (const [cid, entry] of Array.from(localTvTabs.entries())) {
+        if (!entry || now - (entry.lastSeenAt || 0) > 12000) {
+          localTvTabs.delete(cid);
           changed = true;
         }
       }
@@ -1167,18 +1225,31 @@ window.Feud = window.Feud || {};
       }
       hasLocalBroadcastSync = Boolean(broadcastChan);
       lastLocalSyncAt = Date.now();
-      if (broadcastChan && (role === "buzzer1" || role === "buzzer2" || role === "buzzer_combo")) {
-        clearInterval(localPresenceTimer);
-        localPresenceTimer = setInterval(() => {
-          if (!broadcastChan) return;
-          try {
-            broadcastChan.postMessage({
-              type: "BUZZER_PRESENCE",
-              role,
-              clientId: tabClientId
-            });
-          } catch (e) {}
-        }, 4000);
+      if (broadcastChan) {
+        if (role === "buzzer1" || role === "buzzer2" || role === "buzzer_combo") {
+          clearInterval(localPresenceTimer);
+          localPresenceTimer = setInterval(() => {
+            if (!broadcastChan) return;
+            try {
+              broadcastChan.postMessage({
+                type: "BUZZER_PRESENCE",
+                role,
+                clientId: tabClientId
+              });
+            } catch (e) {}
+          }, 4000);
+        } else if (role === "tv") {
+          clearInterval(localPresenceTimer);
+          localPresenceTimer = setInterval(() => {
+            if (!broadcastChan) return;
+            try {
+              broadcastChan.postMessage({
+                type: "TV_PRESENCE",
+                clientId: tabClientId
+              });
+            } catch (e) {}
+          }, 4000);
+        }
       }
       notifyStatus(`Room: ${currentCode} • Live`, true);
       return { ok: true, state: stateToUse };
@@ -1208,24 +1279,41 @@ window.Feud = window.Feud || {};
       }
       hasLocalBroadcastSync = Boolean(broadcastChan);
       lastLocalSyncAt = Date.now();
-      if (broadcastChan && (role === "buzzer1" || role === "buzzer2" || role === "buzzer_combo")) {
+      if (broadcastChan) {
         try {
-          broadcastChan.postMessage({
-            type: "BUZZER_PRESENCE",
-            role,
-            clientId: tabClientId
-          });
-          clearInterval(localPresenceTimer);
-          localPresenceTimer = setInterval(() => {
-            if (!broadcastChan) return;
-            try {
-              broadcastChan.postMessage({
-                type: "BUZZER_PRESENCE",
-                role,
-                clientId: tabClientId
-              });
-            } catch (e) {}
-          }, 4000);
+          if (role === "buzzer1" || role === "buzzer2" || role === "buzzer_combo") {
+            broadcastChan.postMessage({
+              type: "BUZZER_PRESENCE",
+              role,
+              clientId: tabClientId
+            });
+            clearInterval(localPresenceTimer);
+            localPresenceTimer = setInterval(() => {
+              if (!broadcastChan) return;
+              try {
+                broadcastChan.postMessage({
+                  type: "BUZZER_PRESENCE",
+                  role,
+                  clientId: tabClientId
+                });
+              } catch (e) {}
+            }, 4000);
+          } else if (role === "tv") {
+            broadcastChan.postMessage({
+              type: "TV_PRESENCE",
+              clientId: tabClientId
+            });
+            clearInterval(localPresenceTimer);
+            localPresenceTimer = setInterval(() => {
+              if (!broadcastChan) return;
+              try {
+                broadcastChan.postMessage({
+                  type: "TV_PRESENCE",
+                  clientId: tabClientId
+                });
+              } catch (e) {}
+            }, 4000);
+          }
         } catch (e) {}
       }
       notifyStatus(`Room: ${currentCode} • Live`, true);
@@ -1875,12 +1963,18 @@ window.Feud = window.Feud || {};
             role: currentRole,
             clientId: tabClientId
           });
+        } else if (currentRole === "tv") {
+          broadcastChan.postMessage({
+            type: "TV_GOODBYE",
+            clientId: tabClientId
+          });
         }
         broadcastChan.close();
       } catch (e) {}
       broadcastChan = null;
     }
     localBuzzerTabs.clear();
+    localTvTabs.clear();
     hostConnections.clear();
     if (sendP2pAction && clientConnOpen && clientHostPeerId) {
       try {
@@ -1938,6 +2032,13 @@ window.Feud = window.Feud || {};
         broadcastChan.postMessage({
           type: "BUZZER_GOODBYE",
           role: currentRole,
+          clientId: tabClientId
+        });
+      } catch (e) {}
+    } else if (broadcastChan && currentRole === "tv") {
+      try {
+        broadcastChan.postMessage({
+          type: "TV_GOODBYE",
           clientId: tabClientId
         });
       } catch (e) {}
@@ -2080,6 +2181,8 @@ window.Feud = window.Feud || {};
   Object.assign(Feud, {
     initSyncCallbacks,
     getConnectedBuzzerTeams,
+    getConnectedTvCount,
+    hasRemoteTvConnection,
     getSyncDiagnostics,
     retryHostRelay,
     probeRoomBuzzers,

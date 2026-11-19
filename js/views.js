@@ -736,10 +736,25 @@ window.Feud = window.Feud || {};
     }
     const roleEl = document.getElementById("tvQrRoleLabel");
     const codeEl = document.getElementById("tvQrRoomCode");
+    const shortUrlWrap = document.getElementById("tvQrShortUrlWrap");
+    const shortUrlEl = document.getElementById("tvQrShortUrl");
     const singleWrap = document.getElementById("tvQrSingleWrap");
     const dualWrap = document.getElementById("tvQrDualWrap");
 
     if (codeEl) codeEl.textContent = qr.roomCode || "";
+    const rawShort =
+      qr.shortUrl ||
+      String(qr.url || qr.url1 || "")
+        .split("?")[0]
+        .replace(/^https?:\/\//i, "")
+        .replace(/\/index\.html$/i, "")
+        .replace(/\/+$/, "");
+    if (shortUrlEl && rawShort && !rawShort.startsWith("file:")) {
+      shortUrlEl.textContent = rawShort;
+      shortUrlWrap?.classList.remove("hidden");
+    } else {
+      shortUrlWrap?.classList.add("hidden");
+    }
 
     if (qr.role === "individual") {
       const t1Name = (roomState.team1Name || "TEAM 1").toUpperCase();
@@ -1129,13 +1144,25 @@ window.Feud = window.Feud || {};
     const buzzerStatusPill = document.getElementById("hostBuzzerStatusPill");
     if (buzzerStatusPill && Feud.getConnectedBuzzerTeams) {
       const bz = Feud.getConnectedBuzzerTeams();
-      const count = (bz.t1 ? 1 : 0) + (bz.t2 ? 1 : 0);
-      buzzerStatusPill.textContent =
-        count === 0
+      const bzCount = (bz.t1 ? 1 : 0) + (bz.t2 ? 1 : 0);
+      const tvCount =
+        handlers && typeof handlers.getTvCount === "function"
+          ? handlers.getTvCount()
+          : Feud.getConnectedTvCount
+          ? Feud.getConnectedTvCount()
+          : 0;
+      const tvText = tvCount > 1 ? `📺 TV: ${tvCount}` : `📺 TV: ${tvCount}/1`;
+      const bzText =
+        bzCount === 0
           ? "📱 Buzzers: 0/2"
-          : `📱 ${bz.t1 ? "T1✓" : "T1–"} • ${bz.t2 ? "T2✓" : "T2–"}`;
+          : `📱 ${bz.t1 ? "T1✓" : "T1–"} ${bz.t2 ? "T2✓" : "T2–"}`;
+      buzzerStatusPill.textContent = `${tvText} • ${bzText}`;
       buzzerStatusPill.className = `top-btn host-devices-btn${
-        count === 2 ? " is-ready" : count === 1 ? " is-partial" : ""
+        tvCount >= 1 && bzCount === 2
+          ? " is-ready"
+          : tvCount >= 1 || bzCount >= 1
+          ? " is-partial"
+          : ""
       }`;
     }
     const stripT1Name = document.getElementById("hostStripT1Name");

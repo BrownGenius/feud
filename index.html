@@ -29,7 +29,7 @@
   <meta name="twitter:description" content="Free, zero-login Family Feud game show for your TV with live QR phone buzzers, sound effects, teleprompter, and 300+ built-in rounds." />
   <meta name="twitter:image" content="https://browngenius.github.io/feud/docs/screenshots/tv-board.png" />
   <meta name="twitter:image:alt" content="Party Feud 16:9 TV Display Board showing revealed survey answers and scores" />
-  <link rel="stylesheet" href="./css/styles.css?v=20261118f" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261118g" />
 </head>
 <body>
 
@@ -124,8 +124,15 @@
             <span id="qrTvStatusBadge" class="pill-badge">Waiting for TV…</span>
           </div>
           <p style="font-size:12px; color:#cbd5e1; margin:0; line-height:1.4;">
-            Plug into a TV via HDMI and pop out a local window, or scan the QR on a smart TV / casting laptop.
+            Plug into a TV via HDMI and pop out a local window, or open the link below on any iPad / smart TV browser.
           </p>
+          <div id="qrTvManualBox" class="qr-tv-manual-box">
+            <div class="qr-tv-url-row">
+              <code id="qrUrl_tv" class="qr-tv-direct-url"></code>
+              <button type="button" class="top-btn" style="min-height:32px; padding:4px 10px; font-size:11px; flex-shrink:0;" onclick="copyQrJoinUrl('tv')">📋 Copy Link</button>
+            </div>
+            <div id="qrTvShortHint" class="qr-tv-short-hint"></div>
+          </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
             <button type="button" class="action-btn btn-blue display-font" style="width:auto; min-height:40px; padding:8px 16px; font-size:13px;" onclick="reopenTvWindow()">
               🖥️ Open Local TV Window
@@ -134,8 +141,7 @@
         </div>
         <div id="qrRemoteTvBox" class="qr-tv-strip-qr">
           <img id="qrImg_tv" alt="TV Display QR Code" class="qr-grid-img" style="width:124px; height:124px;" />
-          <span id="qrUrl_tv" class="qr-grid-url"></span>
-          <span class="qr-grid-status">Scan on Remote TV</span>
+          <span class="qr-grid-status">Scan on iPad / Phone</span>
         </div>
       </div>
 
@@ -165,6 +171,7 @@
                 </div>
               </div>
             </div>
+            <span id="qrManualHint_individual" class="qr-manual-hint"></span>
             <span id="qrBadge_individual" class="qr-grid-status">Click to show both on TV</span>
           </button>
           <button id="qrCard_buzzer_combo" type="button" class="qr-grid-card" onclick="selectQrForTv('buzzer_combo')">
@@ -344,9 +351,8 @@
             <div class="setup-step-box">
               <span class="field-label">📺 3. TV Display</span>
               <div id="tvModeChoiceGroup" class="tv-mode-group" role="radiogroup" aria-label="TV Display Mode">
-                <button type="button" class="tv-mode-btn" data-tv-mode="local" onclick="selectTvSetupMode('local')">🖥️ Local Window (HDMI)</button>
-                <button type="button" id="tvModeBtnQr" class="tv-mode-btn" data-tv-mode="qr" onclick="selectTvSetupMode('qr')">📱 Remote TV (QR)</button>
-                <button type="button" class="tv-mode-btn" data-tv-mode="none" onclick="selectTvSetupMode('none')">🎛️ Host Only</button>
+                <button type="button" class="tv-mode-btn" data-tv-mode="local" onclick="selectTvSetupMode('local')">🖥️ Pop-Out TV (HDMI)</button>
+                <button type="button" id="tvModeBtnQr" class="tv-mode-btn" data-tv-mode="qr" onclick="selectTvSetupMode('qr')">📱 Remote TV (QR / Link)</button>
               </div>
             </div>
 
@@ -605,7 +611,7 @@
           </div>
         </div>
         <div class="tv-qr-room-pill">
-          ROOM: <strong id="tvQrRoomCode" class="display-font">----</strong>
+          <span id="tvQrShortUrlWrap" class="hidden"><strong id="tvQrShortUrl" class="display-font"></strong> &nbsp;•&nbsp; </span>ROOM: <strong id="tvQrRoomCode" class="display-font">----</strong>
         </div>
       </div>
     </div>
@@ -621,7 +627,7 @@
         <div class="host-header-left">
           <button type="button" id="hostCompactRoundLabel" class="top-btn host-round-pill-btn" onclick="openHostPopover('round')" title="Tap to switch or swap round (while question is hidden)">Round 1 (1x)</button>
           <div class="flow-stepper host-clickable-stepper" id="hostFlowStepper" onclick="openHostPopover('phase')" title="Tap to override phase, active team, or strikes"></div>
-          <button type="button" id="hostBuzzerStatusPill" class="top-btn host-devices-btn" onclick="openQrModal()" title="Connect TV display or phone buzzers">📱 Buzzers: 0/2</button>
+          <button type="button" id="hostBuzzerStatusPill" class="top-btn host-devices-btn" onclick="openQrModal()" title="Connect TV display or phone buzzers">📺 TV: 0/1 • 📱 Buzzers: 0/2</button>
         </div>
         <div class="host-quick-timer-group">
           <button type="button" id="hostTurnTimerPill" class="turn-timer-pill display-font host-timer-pill-btn" onclick="openHostPopover('timer')" title="Tap to change timer duration or reset">
@@ -826,17 +832,17 @@
     </button>
   </section>
 
-  <footer id="appBuildBadge" class="app-build-badge">Build v20261118f</footer>
+  <footer id="appBuildBadge" class="app-build-badge">Build v20261118g</footer>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js" async></script>
-  <script src="./data/questions.js?v=20261118f"></script>
-  <script src="./js/audio.js?v=20261118f"></script>
-  <script src="./js/state.js?v=20261118f"></script>
-  <script src="./js/formats.js?v=20261118f"></script>
-  <script src="./js/decks.js?v=20261118f"></script>
-  <script src="./js/sync.js?v=20261118f"></script>
-  <script src="./js/views.js?v=20261118f"></script>
-  <script src="./js/app.js?v=20261118f"></script>
+  <script src="./data/questions.js?v=20261118g"></script>
+  <script src="./js/audio.js?v=20261118g"></script>
+  <script src="./js/state.js?v=20261118g"></script>
+  <script src="./js/formats.js?v=20261118g"></script>
+  <script src="./js/decks.js?v=20261118g"></script>
+  <script src="./js/sync.js?v=20261118g"></script>
+  <script src="./js/views.js?v=20261118g"></script>
+  <script src="./js/app.js?v=20261118g"></script>
 </body>
 </html>
