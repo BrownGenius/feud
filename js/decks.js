@@ -196,6 +196,7 @@ window.Feud = window.Feud || {};
         gameTitle: parsed.gameTitle || "Party Feud",
         gameIcon: parsed.gameIcon || "🎉",
         deckName: parsed.deckName || cleanName.replace(/\.json$/i, ""),
+        boardTheme: parsed.boardTheme || "",
         teamPresets: parsed.teamPresets || null,
         tags: Array.isArray(parsed.tags) ? parsed.tags : null,
         rounds: parsed.rounds,
@@ -846,6 +847,7 @@ window.Feud = window.Feud || {};
       gameTitle: deckObj.gameTitle || "Party Feud",
       gameIcon: deckObj.gameIcon || "🎉",
       deckName: deckObj.deckName || deckObj.name || "Shared Party Deck",
+      boardTheme: deckObj.boardTheme || "",
       teamPresets: Array.isArray(deckObj.teamPresets) ? deckObj.teamPresets : null,
       tags: Array.isArray(deckObj.tags) ? deckObj.tags : null,
       rounds: deckObj.rounds,
@@ -927,6 +929,7 @@ window.Feud = window.Feud || {};
               meta: {
                 deckName: d.deckName || d.id.replace(/\.json$/i, ""),
                 gameIcon: d.gameIcon || "🎉",
+                boardTheme: d.boardTheme || "",
                 roundsCount: Number(d.roundsCount) || 0,
                 fastMoneySets: Number(d.fastMoneySets) || 0,
                 tags: Array.isArray(d.tags) ? d.tags : null

@@ -43,7 +43,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 | **🌟 Family Feud 2026 (Family-Friendly)** | 60 Clean All-Ages Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=2026-family-friendly) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2026-family-friendly) |
 | **⭐ Family Feud 2025** | 60 Rounds • 8 Fast Money Sets | [▶ Play](https://browngenius.github.io/feud/?deck=2025) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2025) |
 | **🌟 Family Feud 2025 (Family-Friendly)** | 60 Clean All-Ages Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=2025-family-friendly) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2025-family-friendly) |
-| **🤖 2026 FRC Game & Rules** | 24 FIRST Robotics Competition Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=2026-frc-rules) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2026-frc-rules) |
+| **🤖 2026 FRC Game & Rules** | 24 FIRST Robotics Competition Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=2026-frc-rules&theme=frc) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2026-frc-rules) |
 | **🦃 Desi Thanksgiving** | 37 Rounds • 5 Fast Money Sets | [▶ Play](https://browngenius.github.io/feud/?deck=desi-thanksgiving) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=desi-thanksgiving) |
 | **🎬 Bollywood Music & Movies** | 12 Rounds • Fast Money | [▶ Play](https://browngenius.github.io/feud/?deck=bollywood-music-movies) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=bollywood-music-movies) |
 | **🎉 Starter Party Deck** | 6 Classic Party Rounds • Fast Money | [▶ Play](https://browngenius.github.io/feud/?deck=starter) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=starter) |
@@ -280,7 +280,7 @@ A Party Feud Deck JSON file configures `gameTitle`, `gameIcon`, `deckName`, `tea
 
 * **Static Manifest + Auto-Discovery:** Loads [`decks/manifest.json`](./decks/manifest.json) in a single static CDN request (auto-updated on push via `.github/workflows/update-deck-manifest.yml` / `node scripts/generate-manifest.js`), falling back to the GitHub Contents API or `./decks/` directory listing.
 * **Offline (`file://`) Folder Scan & Custom Deck Files:** Use **`📂 Scan Folder`** (`showDirectoryPicker` + IndexedDB handle persistence for 1-click **`🔄 Re-scan`**, with `<input webkitdirectory>` fallback) to scan your local `/decks` folder directly from disk, or **`📄 Load Deck File`** to load individual custom `.json` decks — cached across reloads and between [`index.html`](./index.html) and [`review.html`](./review.html).
-* **Direct & Compressed URL Loading:** `?deck=2026-frc-rules` (bundled `/decks` slug), `?deck=https://.../my-questions.json`, or `#deckData=z....` (deflate-compressed shareable custom deck URL).
+* **Direct & Compressed URL Loading:** `?deck=2026-frc-rules` (bundled `/decks` slug), `?theme=frc` (or `classic`, `holiday`, `classroom` visual board theme), `?deck=https://.../my-questions.json`, or `#deckData=z....` (deflate-compressed shareable custom deck URL). Decks can also specify a default `"boardTheme"` (`"classic"`, `"holiday"`, `"frc"`, or `"classroom"`).
 * **Printable Review & `Used` Tracker:** Open [`review.html`](./review.html) (or `review.html?deck=desi-thanksgiving`) to filter by category tag, inspect all rounds/Fast Money sets, scan local folders or load custom files, and toggle `Used` / `Unused` status in `localStorage`.
 
 </details>

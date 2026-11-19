@@ -65,6 +65,9 @@ window.Feud = window.Feud || {};
         gameTitle: data.gameTitle || data.title || "",
         gameIcon: data.gameIcon || data.icon || "",
         deckName: data.deckName || data.name || "",
+        boardTheme:
+          (Feud.normalizeBoardTheme && Feud.normalizeBoardTheme(data.boardTheme || data.theme)) ||
+          "",
         teamPresets: Array.isArray(data.teamPresets) ? data.teamPresets : null,
         tags: Array.isArray(data.tags) ? data.tags : null,
         rounds,
@@ -105,6 +108,9 @@ window.Feud = window.Feud || {};
         gameTitle: data.gameTitle || data.title || "",
         gameIcon: data.gameIcon || data.icon || "",
         deckName: data.deckName || data.name || "",
+        boardTheme:
+          (Feud.normalizeBoardTheme && Feud.normalizeBoardTheme(data.boardTheme || data.theme)) ||
+          "",
         teamPresets: Array.isArray(data.teamPresets) ? data.teamPresets : null,
         tags: Array.isArray(data.tags) ? data.tags : null,
         rounds,
@@ -132,6 +138,7 @@ window.Feud = window.Feud || {};
         gameIcon: (roomState && roomState.gameIcon) || "🎉",
         deckName:
           (roomState && roomState.customDeck && roomState.customDeck.name) || "Custom Party Deck",
+        boardTheme: (roomState && roomState.boardTheme) || "classic",
         teamPresets: Feud.getActiveTeamPresets(roomState),
         exportedAt: new Date().toISOString(),
         rounds: activeRounds,

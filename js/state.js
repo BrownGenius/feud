@@ -137,6 +137,31 @@ window.Feud.ROOM_WORDS = window.Feud.DEFAULT_DECK.roomWords;
   const STORAGE_LAST_SESSION_KEY = "party_feud_last_session_v1";
   const BOARD_THEME_KEY = "party_feud_board_theme_v1";
   const VALID_BOARD_THEMES = new Set(["classic", "holiday", "frc", "classroom"]);
+  const BOARD_THEME_ALIASES = {
+    default: "classic",
+    blue: "classic",
+    gold: "classic",
+    holidays: "holiday",
+    christmas: "holiday",
+    thanksgiving: "holiday",
+    xmas: "holiday",
+    robotics: "frc",
+    neon: "frc",
+    "frc-neon": "frc",
+    "frc-robotics": "frc",
+    "frc-robotics-neon": "frc",
+    school: "classroom",
+    teacher: "classroom",
+    clean: "classroom",
+    "classroom-clean": "classroom"
+  };
+
+  function normalizeBoardTheme(theme) {
+    const raw = String(theme || "").trim().toLowerCase();
+    if (!raw) return "";
+    if (VALID_BOARD_THEMES.has(raw)) return raw;
+    return BOARD_THEME_ALIASES[raw] || "";
+  }
 
   function loadSavedCustomRounds() {
     try {
@@ -216,17 +241,15 @@ window.Feud.ROOM_WORDS = window.Feud.DEFAULT_DECK.roomWords;
 
   function loadSavedBoardTheme() {
     try {
-      const val = String(localStorage.getItem(BOARD_THEME_KEY) || "classic").trim().toLowerCase();
-      return VALID_BOARD_THEMES.has(val) ? val : "classic";
+      const clean = normalizeBoardTheme(localStorage.getItem(BOARD_THEME_KEY));
+      return clean || "classic";
     } catch (e) {
       return "classic";
     }
   }
 
   function saveBoardTheme(theme) {
-    const clean = VALID_BOARD_THEMES.has(String(theme || "").trim().toLowerCase())
-      ? String(theme).trim().toLowerCase()
-      : "classic";
+    const clean = normalizeBoardTheme(theme) || "classic";
     try {
       localStorage.setItem(BOARD_THEME_KEY, clean);
     } catch (e) {}
@@ -1158,6 +1181,7 @@ window.Feud.ROOM_WORDS = window.Feud.DEFAULT_DECK.roomWords;
     saveGameTitle,
     loadSavedGameIcon,
     saveGameIcon,
+    normalizeBoardTheme,
     loadSavedBoardTheme,
     saveBoardTheme,
     createTournamentBracket,

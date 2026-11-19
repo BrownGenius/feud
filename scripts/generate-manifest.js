@@ -87,9 +87,10 @@ function buildManifest() {
 
     const deckName = String(data.deckName || data.name || "").trim() || prettyStem(fileName);
     const gameIcon = String(data.gameIcon || data.icon || "🎉").trim() || "🎉";
+    const boardTheme = String(data.boardTheme || "").trim().toLowerCase();
     const tags = inferDeckTags(fileName, deckName, data.tags);
 
-    decks.push({
+    const entry = {
       id: fileName,
       file: `./decks/${fileName}`,
       deckName,
@@ -97,7 +98,11 @@ function buildManifest() {
       roundsCount,
       fastMoneySets,
       tags
-    });
+    };
+    if (boardTheme) {
+      entry.boardTheme = boardTheme;
+    }
+    decks.push(entry);
   }
 
   decks.sort((a, b) => a.deckName.localeCompare(b.deckName));

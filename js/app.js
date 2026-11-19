@@ -679,6 +679,23 @@ window.Feud = window.Feud || {};
   }
 
   let currentCatalogDeckId = "";
+  let initialUrlThemeOverride = "";
+
+  function syncThemeQueryParam(theme) {
+    const clean = Feud.normalizeBoardTheme
+      ? Feud.normalizeBoardTheme(theme)
+      : String(theme || "").trim().toLowerCase();
+    try {
+      const url = new URL(window.location.href);
+      if (clean && clean !== "classic") {
+        url.searchParams.set("theme", clean);
+      } else {
+        url.searchParams.delete("theme");
+      }
+      url.searchParams.delete("boardTheme");
+      window.history.replaceState({}, "", url.toString());
+    } catch (e) {}
+  }
 
   function syncDeckQueryParam(deckId) {
     currentCatalogDeckId = deckId || "";
@@ -968,11 +985,13 @@ window.Feud = window.Feud || {};
   }
 
   async function onBoardThemeChange(theme) {
+    initialUrlThemeOverride = "";
     const clean = Feud.saveBoardTheme ? Feud.saveBoardTheme(theme) : theme || "classic";
     if (typeof document !== "undefined" && document.body) {
       document.body.dataset.theme = clean;
     }
     roomState.boardTheme = clean;
+    syncThemeQueryParam(clean);
     if (activeRole === "host" && currentRoomCode) {
       await pushRoomPatch({ boardTheme: clean });
     }
@@ -4318,6 +4337,7 @@ Rules:
           gameTitle: roomState.gameTitle || "Party Feud",
           gameIcon: roomState.gameIcon || "🎉",
           deckName: custom.name || "Shared Party Deck",
+          boardTheme: roomState.boardTheme || custom.boardTheme || "classic",
           teamPresets: custom.teamPresets || null,
           tags: custom.tags || null,
           rounds: custom.rounds || Feud.getSourceRoundsList(roomState),
@@ -4327,6 +4347,7 @@ Rules:
           gameTitle: (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameTitle) || "Party Feud",
           gameIcon: (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameIcon) || "🎉",
           deckName: (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) || "Starter Party Deck",
+          boardTheme: roomState.boardTheme || "classic",
           teamPresets: Feud.TEAM_PRESETS || null,
           rounds: Feud.DEFAULT_ROUNDS || [],
           fastMoney: Feud.FAST_MONEY_QUESTIONS || []
@@ -4471,8 +4492,11 @@ Rules:
       return;
     }
 
+    const deckTheme =
+      (Feud.normalizeBoardTheme && Feud.normalizeBoardTheme(parsed.boardTheme)) || "";
     const customDeck = {
       name: parsed.deckName || sourceLabel.replace(/\.json$/i, ""),
+      boardTheme: deckTheme || "",
       teamPresets: parsed.teamPresets || null,
       tags: Array.isArray(parsed.tags) ? parsed.tags : null,
       rounds: parsed.rounds,
@@ -4481,6 +4505,18 @@ Rules:
 
     const nextTitle = customDeck.name || parsed.gameTitle || "Party Feud";
     const nextIcon = parsed.gameIcon || "🎉";
+    const resolvedTheme = initialUrlThemeOverride
+      ? initialUrlThemeOverride
+      : deckTheme
+      ? Feud.saveBoardTheme
+        ? Feud.saveBoardTheme(deckTheme)
+        : deckTheme
+      : roomState.boardTheme || (Feud.loadSavedBoardTheme ? Feud.loadSavedBoardTheme() : "classic");
+    initialUrlThemeOverride = "";
+    if (typeof document !== "undefined" && document.body) {
+      document.body.dataset.theme = resolvedTheme;
+    }
+    syncThemeQueryParam(resolvedTheme);
     Feud.saveCustomDeck(customDeck);
     Feud.saveCustomRounds({});
     Feud.saveGameTitle(nextTitle);
@@ -4513,6 +4549,7 @@ Rules:
       enableFastMoney: nextEnableFm,
       gameTitle: nextTitle,
       gameIcon: nextIcon,
+      boardTheme: resolvedTheme,
       team1Name: t1,
       team2Name: t2,
       customDeck,
@@ -5263,6 +5300,11 @@ Rules:
     const params = new URLSearchParams(window.location.search);
     const urlTitle = (params.get("title") || "").trim();
     const urlIcon = (params.get("icon") || "").trim();
+    const rawUrlTheme = (params.get("theme") || params.get("boardTheme") || "").trim();
+    const urlTheme =
+      rawUrlTheme && Feud.normalizeBoardTheme
+        ? Feud.normalizeBoardTheme(rawUrlTheme)
+        : "";
     if (urlTitle) {
       roomState.gameTitle = urlTitle;
       Feud.saveGameTitle(urlTitle);
@@ -5271,7 +5313,17 @@ Rules:
       roomState.gameIcon = urlIcon;
       Feud.saveGameIcon(urlIcon);
     }
-    if (urlTitle || urlIcon) {
+    if (urlTheme) {
+      const savedTheme = Feud.saveBoardTheme ? Feud.saveBoardTheme(urlTheme) : urlTheme;
+      initialUrlThemeOverride = savedTheme;
+      roomState.boardTheme = savedTheme;
+      if (typeof document !== "undefined" && document.body) {
+        document.body.dataset.theme = savedTheme;
+      }
+      syncThemeQueryParam(savedTheme);
+      syncSetupModalInputsFromState();
+    }
+    if (urlTitle || urlIcon || urlTheme) {
       Feud.renderBranding(roomState);
     }
 

@@ -2,6 +2,7 @@
   "gameTitle": "Party Feud",
   "gameIcon": "🤖",
   "deckName": "2026 FRC Game & Rules (24 Rounds)",
+  "boardTheme": "frc",
   "teamPresets": [
     [
       "Red Alliance",

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-19T17:55:49.614Z",
+  "generatedAt": "2026-11-19T18:27:09.656Z",
   "decks": [
     {
       "id": "2026-frc-rules.json",
@@ -11,7 +11,8 @@
       "tags": [
         "family-friendly",
         "robotics"
-      ]
+      ],
+      "boardTheme": "frc"
     },
     {
       "id": "bollywood-music-movies.json",
