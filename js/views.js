@@ -64,6 +64,12 @@ window.Feud = window.Feud || {};
   }
 
   function renderBranding(roomState) {
+    if (typeof document !== "undefined" && document.body) {
+      const theme =
+        (roomState && roomState.boardTheme) ||
+        (Feud.loadSavedBoardTheme ? Feud.loadSavedBoardTheme() : "classic");
+      document.body.dataset.theme = theme || "classic";
+    }
     const title = (roomState && roomState.gameTitle) || "Party Feud";
     const icon = (roomState && roomState.gameIcon) || "🎉";
     const matchCount = Feud.getRoundCount(roomState);
@@ -235,21 +241,73 @@ window.Feud = window.Feud || {};
     });
   }
 
+  function renderTournamentBracketHtml(tournament) {
+    if (!tournament || !tournament.enabled || !Array.isArray(tournament.matches)) {
+      return "";
+    }
+    const curIdx = Number(tournament.currentMatchIdx) || 0;
+    const cardsHtml = tournament.matches
+      .map((m, idx) => {
+        const isActive = !tournament.champion && idx === curIdx;
+        const t1Label = escapeHtml(m.t1 || "TBD");
+        const t2Label = escapeHtml(m.t2 || "TBD");
+        const w = m.winner || "";
+        const t1Win = Boolean(w && m.t1 && w === m.t1);
+        const t2Win = Boolean(w && m.t2 && w === m.t2);
+        const s1Text = m.winner ? String(m.s1 || 0) : "";
+        const s2Text = m.winner ? String(m.s2 || 0) : "";
+        return `
+          <div class="bracket-match-card${isActive ? " active" : ""}">
+            <div class="bracket-match-title">
+              <span>${escapeHtml(m.label || `Match ${idx + 1}`)}</span>
+              <span>${w ? "✅" : isActive ? "▶ LIVE" : "⏳"}</span>
+            </div>
+            <div class="bracket-team-row${t1Win ? " winner" : ""}">
+              <span>${t1Label}</span>
+              <span>${s1Text}</span>
+            </div>
+            <div class="bracket-team-row${t2Win ? " winner" : ""}">
+              <span>${t2Label}</span>
+              <span>${s2Text}</span>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+    const banner = tournament.champion
+      ? `<div style="text-align:center; font-weight:900; color:#fde047; margin-bottom:8px; font-size:14px;">👑 Tournament Champion: ${escapeHtml(
+          tournament.champion
+        )}</div>`
+      : "";
+    return `${banner}<div class="tournament-bracket-grid">${cardsHtml}</div>`;
+  }
+
   function renderTvWinnerScreen(roomState) {
     const t1 = roomState.team1Name || "Team 1";
     const t2 = roomState.team2Name || "Team 2";
     const s1 = Number(roomState.team1Score) || 0;
     const s2 = Number(roomState.team2Score) || 0;
+    const t = roomState.tournament && roomState.tournament.enabled ? roomState.tournament : null;
+    const activeMatch = t && Array.isArray(t.matches) ? t.matches[t.currentMatchIdx || 0] : null;
+    const isChampFinal = Boolean(t && activeMatch && activeMatch.id === "final");
 
     const winTitle = document.getElementById("tvWinnerTitle");
     const winSub = document.getElementById("tvWinnerSubtitle");
     if (winTitle && winSub) {
       if (s1 > s2) {
-        winTitle.textContent = `👑 ${t1} Wins!`;
-        winSub.textContent = `Victory by ${s1 - s2} points!`;
+        winTitle.textContent = isChampFinal ? `🏆 ${t1} — Tournament Champions!` : `👑 ${t1} Wins!`;
+        winSub.textContent = isChampFinal
+          ? `Won the Championship Final by ${s1 - s2} points!`
+          : t
+          ? `${t1} advances (${s1} – ${s2})!`
+          : `Victory by ${s1 - s2} points!`;
       } else if (s2 > s1) {
-        winTitle.textContent = `👑 ${t2} Wins!`;
-        winSub.textContent = `Victory by ${s2 - s1} points!`;
+        winTitle.textContent = isChampFinal ? `🏆 ${t2} — Tournament Champions!` : `👑 ${t2} Wins!`;
+        winSub.textContent = isChampFinal
+          ? `Won the Championship Final by ${s2 - s1} points!`
+          : t
+          ? `${t2} advances (${s2} – ${s1})!`
+          : `Victory by ${s2 - s1} points!`;
       } else {
         winTitle.textContent = "⚡ It's a Tie Match!";
         winSub.textContent = "Play the Sudden-Death Tie-Breaker round to crown a champion!";
@@ -264,6 +322,22 @@ window.Feud = window.Feud || {};
     if (v1) v1.textContent = String(s1);
     if (n2) n2.textContent = t2;
     if (v2) v2.textContent = String(s2);
+
+    const bracketStrip = document.getElementById("tvWinnerBracketStrip");
+    if (bracketStrip) {
+      if (t) {
+        let preview = t;
+        if (s1 !== s2 && Feud.recordTournamentMatchResult) {
+          const winnerName = s1 > s2 ? t1 : t2;
+          preview = Feud.recordTournamentMatchResult(t, winnerName, s1, s2);
+        }
+        bracketStrip.innerHTML = renderTournamentBracketHtml(preview);
+        bracketStrip.classList.remove("hidden");
+      } else {
+        bracketStrip.innerHTML = "";
+        bracketStrip.classList.add("hidden");
+      }
+    }
   }
 
   function getTeamLabel(roomState, teamNum) {
@@ -1141,6 +1215,22 @@ window.Feud = window.Feud || {};
     if (undoBtn) {
       undoBtn.disabled = !(handlers && typeof handlers.canUndo === "function" && handlers.canUndo());
     }
+    const demoBanner = document.getElementById("hostDemoBanner");
+    if (demoBanner) {
+      demoBanner.classList.toggle("hidden", !(roomState && roomState.isDemoMode));
+    }
+    const tournPill = document.getElementById("hostTournamentPill");
+    if (tournPill) {
+      const t = roomState && roomState.tournament && roomState.tournament.enabled ? roomState.tournament : null;
+      tournPill.classList.toggle("hidden", !t);
+      if (t) {
+        const idx = Number(t.currentMatchIdx) || 0;
+        const m = t.matches && t.matches[idx];
+        tournPill.textContent = t.champion
+          ? `👑 ${t.champion}`
+          : `🏆 ${(m && m.label) || "Bracket"} (${idx + 1}/${t.matches.length})`;
+      }
+    }
     const buzzerStatusPill = document.getElementById("hostBuzzerStatusPill");
     if (buzzerStatusPill && Feud.getConnectedBuzzerTeams) {
       const bz = Feud.getConnectedBuzzerTeams();
@@ -1678,6 +1768,7 @@ window.Feud = window.Feud || {};
     renderTvView,
     renderHostView,
     renderBuzzerView,
-    renderComboBuzzerView
+    renderComboBuzzerView,
+    renderTournamentBracketHtml
   });
 })(window.Feud);

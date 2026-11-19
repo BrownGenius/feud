@@ -50,9 +50,80 @@ window.Feud = window.Feud || {};
     const lower = clean.toLowerCase();
     return (
       lower === "catalog.js" ||
+      lower === "manifest.json" ||
       lower === "package.json" ||
       lower === "package-lock.json"
     );
+  }
+
+  const DECK_TAG_DEFINITIONS = [
+    { id: "all", label: "📚 All Decks" },
+    { id: "family-friendly", label: "👨‍👩‍👧‍👦 Family-Friendly" },
+    { id: "classic", label: "🎉 Classic / General" },
+    { id: "holidays", label: "🦃 Holidays" },
+    { id: "movies-music", label: "🎬 Movies & Music" },
+    { id: "robotics", label: "🤖 Robotics / FRC" },
+    { id: "custom", label: "✨ Custom" }
+  ];
+
+  function inferDeckTags(id, deckName, explicitTags) {
+    if (Array.isArray(explicitTags) && explicitTags.length > 0) {
+      return Array.from(
+        new Set(
+          explicitTags
+            .map((t) => String(t || "").trim().toLowerCase())
+            .filter(Boolean)
+        )
+      );
+    }
+    const haystack = `${id || ""} ${deckName || ""}`;
+    const tags = new Set();
+    const isFrc = /frc|robotics|stem/i.test(haystack);
+
+    if (/family-friendly|starter|frc|bollywood|desi/i.test(haystack)) {
+      tags.add("family-friendly");
+    }
+    if (isFrc) {
+      tags.add("robotics");
+    }
+    if (/thanksgiving|christmas|holiday|halloween|diwali/i.test(haystack)) {
+      tags.add("holidays");
+    }
+    if (/bollywood|movie|music/i.test(haystack)) {
+      tags.add("movies-music");
+    }
+    if (/2025|2026|starter|friendly-feud/i.test(haystack) && !isFrc) {
+      tags.add("classic");
+    }
+    if (tags.size === 0) {
+      tags.add("classic");
+    }
+    return Array.from(tags);
+  }
+
+  function getDeckTags(item) {
+    if (!item) return [];
+    if (item.builtin === "starter") {
+      return ["family-friendly", "classic"];
+    }
+    const explicit =
+      (item.data && Array.isArray(item.data.tags) && item.data.tags.length > 0
+        ? item.data.tags
+        : null) ||
+      (item.meta && Array.isArray(item.meta.tags) && item.meta.tags.length > 0
+        ? item.meta.tags
+        : null);
+    const deckName =
+      (item.data && item.data.deckName) ||
+      (item.meta && item.meta.deckName) ||
+      item.label ||
+      item.id ||
+      "";
+    const tags = new Set(inferDeckTags(item.id, deckName, explicit));
+    if (item.source === "custom-file") {
+      tags.add("custom");
+    }
+    return Array.from(tags);
   }
 
   function formatFilenameFallbackLabel(fileName) {
@@ -126,6 +197,7 @@ window.Feud = window.Feud || {};
         gameIcon: parsed.gameIcon || "🎉",
         deckName: parsed.deckName || cleanName.replace(/\.json$/i, ""),
         teamPresets: parsed.teamPresets || null,
+        tags: Array.isArray(parsed.tags) ? parsed.tags : null,
         rounds: parsed.rounds,
         fastMoney: Array.isArray(parsed.fastMoney) ? parsed.fastMoney : []
       }
@@ -134,7 +206,12 @@ window.Feud = window.Feud || {};
 
   function getSortKey(entry) {
     if (!entry) return "";
-    const rawName = (entry.data && entry.data.deckName) || entry.label || entry.id || "";
+    const rawName =
+      (entry.data && entry.data.deckName) ||
+      (entry.meta && entry.meta.deckName) ||
+      entry.label ||
+      entry.id ||
+      "";
     return String(rawName).toLowerCase();
   }
 
@@ -183,6 +260,16 @@ window.Feud = window.Feud || {};
     catalog.length = 0;
     catalog.push(starter, ...others);
     recomputeCounts();
+
+    const shouldPersist =
+      !options.skipSave &&
+      (Boolean(replaceSource) ||
+        (newEntries || []).some(
+          (e) => e && e.data && (e.source === "custom-file" || e.source === "local-folder")
+        ));
+    if (shouldPersist) {
+      saveCacheAsync();
+    }
     return catalog;
   }
 
@@ -220,7 +307,7 @@ window.Feud = window.Feud || {};
         data: e.data
       }));
     if (restored.length > 0) {
-      upsertCatalogEntries(restored, { replaceSource: "local-folder" });
+      upsertCatalogEntries(restored, { replaceSource: "local-folder", skipSave: true });
       return true;
     }
     return false;
@@ -722,11 +809,139 @@ window.Feud = window.Feud || {};
     }
   }
 
+  function uint8ToBase64Url(bytes) {
+    let bin = "";
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function base64UrlToUint8(str) {
+    const clean = String(str || "").replace(/-/g, "+").replace(/_/g, "/");
+    const pad = clean.length % 4 ? "=".repeat(4 - (clean.length % 4)) : "";
+    const bin = atob(clean + pad);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) {
+      out[i] = bin.charCodeAt(i);
+    }
+    return out;
+  }
+
+  async function transformStreamBytes(bytes, streamInstance) {
+    const writer = streamInstance.writable.getWriter();
+    writer.write(bytes);
+    writer.close();
+    const res = new Response(streamInstance.readable);
+    const buf = await res.arrayBuffer();
+    return new Uint8Array(buf);
+  }
+
+  async function encodeDeckForUrlHash(deckObj) {
+    if (!deckObj || !Array.isArray(deckObj.rounds) || deckObj.rounds.length === 0) {
+      return "";
+    }
+    const payload = {
+      gameTitle: deckObj.gameTitle || "Party Feud",
+      gameIcon: deckObj.gameIcon || "🎉",
+      deckName: deckObj.deckName || deckObj.name || "Shared Party Deck",
+      teamPresets: Array.isArray(deckObj.teamPresets) ? deckObj.teamPresets : null,
+      tags: Array.isArray(deckObj.tags) ? deckObj.tags : null,
+      rounds: deckObj.rounds,
+      fastMoney: Array.isArray(deckObj.fastMoney) ? deckObj.fastMoney : []
+    };
+    const jsonBytes = new TextEncoder().encode(JSON.stringify(payload));
+    if (typeof CompressionStream === "function" && typeof Response === "function") {
+      try {
+        const compressed = await transformStreamBytes(jsonBytes, new CompressionStream("deflate-raw"));
+        return `z.${uint8ToBase64Url(compressed)}`;
+      } catch (e) {}
+    }
+    return `u.${uint8ToBase64Url(jsonBytes)}`;
+  }
+
+  async function decodeDeckFromUrlHash(hashStr) {
+    try {
+      let raw = String(hashStr || "").trim();
+      if (!raw) return null;
+      if (raw.startsWith("#")) raw = raw.slice(1);
+      const match = raw.match(/(?:^|&)deckData=([^&]+)/);
+      const token = match ? decodeURIComponent(match[1]) : raw.replace(/^deckData=/, "");
+      if (!token) return null;
+
+      let jsonText = "";
+      if (token.startsWith("z.")) {
+        if (typeof DecompressionStream !== "function" || typeof Response !== "function") {
+          return null;
+        }
+        const compBytes = base64UrlToUint8(token.slice(2));
+        const plainBytes = await transformStreamBytes(compBytes, new DecompressionStream("deflate-raw"));
+        jsonText = new TextDecoder().decode(plainBytes);
+      } else if (token.startsWith("u.")) {
+        const plainBytes = base64UrlToUint8(token.slice(2));
+        jsonText = new TextDecoder().decode(plainBytes);
+      } else {
+        const plainBytes = base64UrlToUint8(token);
+        jsonText = new TextDecoder().decode(plainBytes);
+      }
+
+      const parsed = parseDeckFileContent("shared-deck.json", jsonText);
+      if (!parsed || parsed.kind !== "deck") return null;
+      const slugBase = String(parsed.data.deckName || "shared-deck")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      const deckId = `${slugBase || "shared-deck"}.json`;
+      return {
+        id: deckId,
+        label: `${parsed.data.gameIcon || "🔗"} ${parsed.data.deckName}`,
+        file: null,
+        source: "custom-file",
+        data: parsed.data
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
   async function discoverRemoteDecksOverHttp() {
     if (typeof window === "undefined" || typeof fetch !== "function") return;
     const protocol = (window.location && window.location.protocol) || "";
     if (protocol !== "http:" && protocol !== "https:") return;
 
+    // 1. Primary path: static decks/manifest.json (1 CDN request, zero API rate limits)
+    try {
+      const mRes = await fetch("./decks/manifest.json");
+      if (mRes.ok) {
+        const manifest = await mRes.json();
+        if (manifest && Array.isArray(manifest.decks) && manifest.decks.length > 0) {
+          const manifestEntries = manifest.decks
+            .filter((d) => d && d.id && !isIgnoredDeckFileName(d.id))
+            .map((d) => ({
+              id: d.id,
+              label: formatFilenameFallbackLabel(d.id),
+              file: d.file || `./decks/${d.id}`,
+              data: null,
+              source: "remote",
+              meta: {
+                deckName: d.deckName || d.id.replace(/\.json$/i, ""),
+                gameIcon: d.gameIcon || "🎉",
+                roundsCount: Number(d.roundsCount) || 0,
+                fastMoneySets: Number(d.fastMoneySets) || 0,
+                tags: Array.isArray(d.tags) ? d.tags : null
+              }
+            }));
+          if (manifestEntries.length > 0) {
+            upsertCatalogEntries(manifestEntries);
+            dispatchDecksUpdated();
+            return;
+          }
+        }
+      }
+    } catch (e) {}
+
+    // 2. Fallback: GitHub Contents API (*.github.io) or HTTP directory index HTML
     const host = (window.location && window.location.hostname) || "";
     let discoveredNames = [];
 
@@ -827,11 +1042,15 @@ window.Feud = window.Feud || {};
   }
 
   Object.assign(Feud, {
+    DECK_TAG_DEFINITIONS,
     getDeckCatalog,
     isIgnoredDeckFileName,
+    getDeckTags,
     formatFilenameFallbackLabel,
     parseDeckFileContent,
     upsertCatalogEntries,
+    encodeDeckForUrlHash,
+    decodeDeckFromUrlHash,
     canUseDirectoryPicker,
     canUseFilePicker,
     getLocalDecksFolderState,

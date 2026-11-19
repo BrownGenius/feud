@@ -20,8 +20,10 @@ window.Feud = window.Feud || {};
   let lastBeSpecificSeq = 0;
   let lastTimeUpSeq = 0;
   let lastZeroPtsSeq = 0;
+  let lastTestBuzzSeq = 0;
   let lastRevealedCount = 0;
   let lastBuzzerWinner = 0;
+  let lastRemoteTimerRem = null;
   let hostFmTimerInterval = null;
   let hostTurnTimerInterval = null;
   let presetIdx = 0;
@@ -132,8 +134,11 @@ window.Feud = window.Feud || {};
     lastBeSpecificSeq = state.beSpecificSeq || 0;
     lastTimeUpSeq = state.timeUpSeq || 0;
     lastZeroPtsSeq = state.zeroPtsSeq || 0;
+    lastTestBuzzSeq = state.testBuzzSeq || 0;
     lastRevealedCount = Array.isArray(state.revealed) ? state.revealed.length : 0;
     lastBuzzerWinner = state.buzzerWinner || 0;
+    lastRemoteTimerRem =
+      typeof state.turnTimerRemaining === "number" ? state.turnTimerRemaining : null;
   }
 
   Feud.initSyncCallbacks({
@@ -210,6 +215,48 @@ window.Feud = window.Feud || {};
         }
       }
 
+      if (incoming.testBuzzSeq && incoming.testBuzzSeq !== lastTestBuzzSeq) {
+        lastTestBuzzSeq = incoming.testBuzzSeq;
+        if (
+          activeRole === "buzzer1" ||
+          activeRole === "buzzer2" ||
+          activeRole === "buzzer_combo"
+        ) {
+          const team = activeRole === "buzzer2" ? 2 : 1;
+          Feud.playFaceOffTone(team);
+          if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+          [
+            document.getElementById("giantBuzzerBtn"),
+            document.getElementById("comboBtnTeam1"),
+            document.getElementById("comboBtnTeam2")
+          ].forEach((el) => {
+            if (!el) return;
+            el.classList.remove("test-ping-flash");
+            void el.offsetWidth;
+            el.classList.add("test-ping-flash");
+          });
+          Feud.showToast("🔔 Buzzer Test OK — Connected to Host!");
+        }
+      }
+
+      const incomingRem =
+        typeof incoming.turnTimerRemaining === "number" ? incoming.turnTimerRemaining : null;
+      if (
+        incoming.turnTimerRunning &&
+        incomingRem !== null &&
+        incomingRem !== lastRemoteTimerRem &&
+        incomingRem >= 1 &&
+        incomingRem <= 3 &&
+        activeRole === "tv"
+      ) {
+        if (Feud.playTensionTick) {
+          Feud.playTensionTick(incomingRem);
+        } else {
+          Feud.playTick(true);
+        }
+      }
+      lastRemoteTimerRem = incomingRem;
+
       const newRevLen = Array.isArray(incoming.revealed) ? incoming.revealed.length : 0;
       const roundChanged = incoming.roundIdx !== roomState.roundIdx;
       if (!roundChanged && newRevLen > lastRevealedCount && activeRole === "tv") {
@@ -233,6 +280,14 @@ window.Feud = window.Feud || {};
       if (incoming.buzzerWinner && incoming.buzzerWinner !== lastBuzzerWinner) {
         if (activeRole === "tv" || activeRole === "host" || activeRole === "solo") {
           Feud.playFaceOffTone(incoming.buzzerWinner);
+        }
+        if (navigator.vibrate) {
+          if (activeRole === "buzzer_combo") {
+            navigator.vibrate([80, 40, 80]);
+          } else if (activeRole === "buzzer1" || activeRole === "buzzer2") {
+            const myTeam = activeRole === "buzzer1" ? 1 : 2;
+            navigator.vibrate(incoming.buzzerWinner === myTeam ? [80, 40, 80] : 30);
+          }
         }
         if (activeRole === "host" && incoming.turnTimerRunning) {
           startLocalTurnTimerLoop();
@@ -259,7 +314,7 @@ window.Feud = window.Feud || {};
       patch = { ...patch, buzzerArmedTeam: 0 };
     }
     let markedUsed = null;
-    if (patch && patch.questionRevealed === true) {
+    if (!roomState.isDemoMode && patch && patch.questionRevealed === true) {
       const nextState = { ...roomState, ...patch };
       markedUsed = Feud.markCurrentRoundUsed ? Feud.markCurrentRoundUsed(nextState) : null;
       if (markedUsed) {
@@ -297,53 +352,139 @@ window.Feud = window.Feud || {};
     return Feud.DECK_CATALOG;
   }
 
-  function populateDeckCatalogSelect() {
-    const sel = document.getElementById("deckManagerSelect");
-    if (!sel) return;
+  let activeDeckTagFilter = "all";
+  let activeDeckSearchQuery = "";
 
-    const catalog = getCatalogList();
-    const activeDeckName =
-      roomState.customDeck && roomState.customDeck.name ? roomState.customDeck.name : null;
-
-    sel.innerHTML = "";
-    let matched = false;
-
-    catalog.forEach((item) => {
-      const opt = document.createElement("option");
-      opt.value = item.id;
-      opt.textContent = Feud.formatDeckOptionLabel
-        ? Feud.formatDeckOptionLabel(item)
-        : item.label;
-      if (
-        (!activeDeckName && item.builtin === "starter") ||
+  function isCatalogItemSelected(item, activeDeckName) {
+    return Boolean(
+      (!activeDeckName && item.builtin === "starter") ||
         (currentCatalogDeckId && item.id === currentCatalogDeckId) ||
         (activeDeckName &&
           item.data &&
           item.data.deckName &&
           item.data.deckName === activeDeckName) ||
+        (activeDeckName &&
+          item.meta &&
+          item.meta.deckName &&
+          item.meta.deckName === activeDeckName) ||
         (activeDeckName && item.id.replace(/\.json$/i, "") === activeDeckName)
-      ) {
+    );
+  }
+
+  function renderDeckTagPills() {
+    const wrap = document.getElementById("deckTagPills");
+    if (!wrap) return;
+    const catalog = getCatalogList();
+    const defs =
+      Array.isArray(Feud.DECK_TAG_DEFINITIONS) && Feud.DECK_TAG_DEFINITIONS.length > 0
+        ? Feud.DECK_TAG_DEFINITIONS
+        : [{ id: "all", label: "📚 All Decks" }];
+
+    wrap.textContent = "";
+    defs.forEach((def) => {
+      const count =
+        def.id === "all"
+          ? catalog.length
+          : catalog.filter((item) => Feud.getDeckTags && Feud.getDeckTags(item).includes(def.id))
+              .length;
+      if (def.id !== "all" && count === 0) return;
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `deck-tag-pill${activeDeckTagFilter === def.id ? " active" : ""}`;
+      btn.textContent = `${def.label} (${count})`;
+      btn.onclick = () => selectDeckTagFilter(def.id);
+      wrap.appendChild(btn);
+    });
+  }
+
+  function selectDeckTagFilter(tagId) {
+    activeDeckTagFilter = tagId || "all";
+    populateDeckCatalogSelect();
+  }
+
+  function onDeckFilterInput(query) {
+    activeDeckSearchQuery = String(query || "").trim().toLowerCase();
+    populateDeckCatalogSelect();
+  }
+
+  function populateDeckCatalogSelect() {
+    const sel = document.getElementById("deckManagerSelect");
+    if (!sel) return;
+
+    renderDeckTagPills();
+    const catalog = getCatalogList();
+    const activeDeckName =
+      roomState.customDeck && roomState.customDeck.name ? roomState.customDeck.name : null;
+
+    const filtered = catalog.filter((item) => {
+      if (activeDeckTagFilter && activeDeckTagFilter !== "all") {
+        const tags = Feud.getDeckTags ? Feud.getDeckTags(item) : [];
+        if (!tags.includes(activeDeckTagFilter)) return false;
+      }
+      if (activeDeckSearchQuery) {
+        const haystack = [
+          item.id,
+          item.label,
+          item.data && item.data.deckName,
+          item.meta && item.meta.deckName
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(activeDeckSearchQuery)) return false;
+      }
+      return true;
+    });
+
+    sel.innerHTML = "";
+    let matched = false;
+
+    if (filtered.length === 0) {
+      const emptyOpt = document.createElement("option");
+      emptyOpt.value = "";
+      emptyOpt.disabled = true;
+      emptyOpt.textContent = "No decks match filter";
+      sel.appendChild(emptyOpt);
+    }
+
+    filtered.forEach((item) => {
+      const opt = document.createElement("option");
+      opt.value = item.id;
+      opt.textContent = Feud.formatDeckOptionLabel
+        ? Feud.formatDeckOptionLabel(item)
+        : item.label;
+      if (isCatalogItemSelected(item, activeDeckName)) {
         opt.selected = true;
         matched = true;
       }
       sel.appendChild(opt);
     });
 
-    if (activeDeckName && !matched) {
+    if (activeDeckName && !matched && filtered.length > 0) {
       const customOpt = document.createElement("option");
       customOpt.value = "__custom__";
-      customOpt.textContent = `📂 Custom: ${activeDeckName} (${
+      customOpt.textContent = `📂 Active: ${activeDeckName} (${
         Feud.getSourceRoundsList(roomState).length
       } Rds)`;
       customOpt.selected = true;
       sel.appendChild(customOpt);
+    } else if (!activeDeckName && !matched && filtered.length > 0) {
+      const starterOpt = document.createElement("option");
+      starterOpt.value = "__custom__";
+      starterOpt.textContent = `🎉 Active: Starter Party Deck`;
+      starterOpt.selected = true;
+      sel.appendChild(starterOpt);
     }
 
-    const selectedVal = sel.value || "starter";
+    const activeEntry = catalog.find((item) => isCatalogItemSelected(item, activeDeckName));
+    const selectedVal = activeEntry
+      ? activeEntry.id
+      : sel.value && sel.value !== "__custom__"
+      ? sel.value
+      : "starter";
     const deckSlug =
-      selectedVal === "__custom__"
-        ? ""
-        : String(selectedVal).replace(/\.json$/i, "");
+      selectedVal === "__custom__" ? "" : String(selectedVal).replace(/\.json$/i, "");
     const reviewHref = deckSlug
       ? `./review.html?deck=${encodeURIComponent(deckSlug)}&from=setup`
       : "./review.html?from=setup";
@@ -607,6 +748,7 @@ window.Feud = window.Feud || {};
     const timerSel = document.getElementById("setupTurnTimerSelect");
     const rdsSel = document.getElementById("setupRoundsPerMatchSelect");
     const orderSel = document.getElementById("setupRoundOrderSelect");
+    const themeSel = document.getElementById("setupBoardThemeSelect");
     const fmCheck = document.getElementById("setupEnableFastMoneyCheckbox");
     const fmLabel = document.getElementById("setupFastMoneyLabel");
     const fmHint = document.getElementById("setupFastMoneyHint");
@@ -621,6 +763,10 @@ window.Feud = window.Feud || {};
     if (timerSel) timerSel.value = String(roomState.turnTimerDuration || 10);
     if (rdsSel) rdsSel.value = String(roomState.roundsPerMatch ?? 4);
     if (orderSel) orderSel.value = roomState.roundOrder || "sequential";
+    if (themeSel) {
+      themeSel.value =
+        roomState.boardTheme || (Feud.loadSavedBoardTheme ? Feud.loadSavedBoardTheme() : "classic");
+    }
     const hasFm = Feud.hasFastMoneyRounds ? Feud.hasFastMoneyRounds(roomState) : true;
     if (fmCheck) {
       fmCheck.disabled = !hasFm;
@@ -637,6 +783,7 @@ window.Feud = window.Feud || {};
     if (pinIn && lobbyPin && lobbyPin.value.trim()) {
       pinIn.value = lobbyPin.value.trim();
     }
+    syncTournamentFormatAvailability();
     syncDeckManagerBrandingInputs();
     Feud.renderBranding(roomState);
   }
@@ -766,6 +913,98 @@ window.Feud = window.Feud || {};
     }
   }
 
+  function syncTournamentFormatAvailability() {
+    const formatSel = document.getElementById("setupMatchFormatSelect");
+    if (!formatSel) return;
+
+    const rdsSel = document.getElementById("setupRoundsPerMatchSelect");
+    const rdsPerMatch = parseInt(
+      rdsSel ? rdsSel.value : String(roomState.roundsPerMatch ?? 4),
+      10
+    );
+    const deckRegRounds = Feud.getDeckRegularRoundCount
+      ? Feud.getDeckRegularRoundCount(roomState)
+      : Feud.getSourceRoundsList(roomState).length;
+
+    const need3 = rdsPerMatch > 0 ? 2 * rdsPerMatch : deckRegRounds * 2;
+    const need4 = rdsPerMatch > 0 ? 3 * rdsPerMatch : deckRegRounds * 3;
+    const can3Team = rdsPerMatch > 0 && deckRegRounds >= need3;
+    const can4Team = rdsPerMatch > 0 && deckRegRounds >= need4;
+
+    const opt3 = formatSel.querySelector('option[value="3"]');
+    const opt4 = formatSel.querySelector('option[value="4"]');
+    if (opt3) {
+      opt3.disabled = !can3Team;
+      opt3.textContent = can3Team
+        ? `🏆 3-Team Mini Bracket (${need3} Rds)`
+        : rdsPerMatch > 0
+        ? `🏆 3-Team Mini Bracket (Needs ${need3} Rds)`
+        : "🏆 3-Team Mini Bracket (Requires Fixed Rounds)";
+    }
+    if (opt4) {
+      opt4.disabled = !can4Team;
+      opt4.textContent = can4Team
+        ? `🏆 4-Team Tournament (${need4} Rds)`
+        : rdsPerMatch > 0
+        ? `🏆 4-Team Tournament (Needs ${need4} Rds)`
+        : "🏆 4-Team Tournament (Requires Fixed Rounds)";
+    }
+
+    const curVal = parseInt(formatSel.value || "2", 10) || 2;
+    if (curVal === 4 && !can4Team) {
+      formatSel.value = can3Team ? "3" : "2";
+    } else if (curVal === 3 && !can3Team) {
+      formatSel.value = "2";
+    }
+    onSetupMatchFormatChange(formatSel.value);
+  }
+
+  function onSetupMatchFormatChange(sizeVal) {
+    const size = parseInt(sizeVal, 10) || 2;
+    const wrap = document.getElementById("setupTournamentTeamsWrap");
+    const wrap4 = document.getElementById("setupTeam4Wrap");
+    if (wrap) wrap.classList.toggle("hidden", size < 3);
+    if (wrap4) wrap4.classList.toggle("hidden", size < 4);
+
+    const presets = Feud.getActiveTeamPresets ? Feud.getActiveTeamPresets(roomState) : [];
+    const t3In = document.getElementById("setupTeam3Input");
+    const t4In = document.getElementById("setupTeam4Input");
+    if (t3In && !t3In.value.trim()) {
+      t3In.value = (presets[1] && presets[1][0]) || "Team Gamma";
+    }
+    if (t4In && !t4In.value.trim()) {
+      t4In.value = (presets[1] && presets[1][1]) || "Team Nova";
+    }
+  }
+
+  async function onBoardThemeChange(theme) {
+    const clean = Feud.saveBoardTheme ? Feud.saveBoardTheme(theme) : theme || "classic";
+    if (typeof document !== "undefined" && document.body) {
+      document.body.dataset.theme = clean;
+    }
+    roomState.boardTheme = clean;
+    if (activeRole === "host" && currentRoomCode) {
+      await pushRoomPatch({ boardTheme: clean });
+    }
+    const labels = {
+      classic: "🎭 Classic Blue & Gold",
+      holiday: "🎄 Holiday Red & Green",
+      frc: "🤖 FRC Robotics Neon",
+      classroom: "🏫 Classroom Clean"
+    };
+    Feud.showToast(`🎨 Theme set to ${labels[clean] || clean}`);
+  }
+
+  async function cycleBoardTheme() {
+    const order = ["classic", "holiday", "frc", "classroom"];
+    const cur = roomState.boardTheme || (Feud.loadSavedBoardTheme ? Feud.loadSavedBoardTheme() : "classic");
+    const idx = order.indexOf(cur);
+    const next = order[(idx + 1) % order.length];
+    const sel = document.getElementById("setupBoardThemeSelect");
+    if (sel) sel.value = next;
+    await onBoardThemeChange(next);
+  }
+
   async function confirmStartNewGame(mode) {
     Feud.unlockAudio();
     clearUndoStack();
@@ -778,14 +1017,49 @@ window.Feud = window.Feud || {};
       roomState.gameTitle ||
       (roomState.customDeck && roomState.customDeck.name) ||
       "Party Feud";
-    const t1Val = (document.getElementById("setupTeam1Input")?.value || "").trim() || "Team 1";
-    const t2Val = (document.getElementById("setupTeam2Input")?.value || "").trim() || "Team 2";
-    const timerDur =
-      parseInt(document.getElementById("setupTurnTimerSelect")?.value || "10", 10) || 10;
+    const rawT1 = (document.getElementById("setupTeam1Input")?.value || "").trim() || "Team 1";
+    const rawT2 = (document.getElementById("setupTeam2Input")?.value || "").trim() || "Team 2";
+    const rawT3 = (document.getElementById("setupTeam3Input")?.value || "").trim() || "Team 3";
+    const rawT4 = (document.getElementById("setupTeam4Input")?.value || "").trim() || "Team 4";
     const roundsPerMatch = parseInt(
       document.getElementById("setupRoundsPerMatchSelect")?.value ?? "4",
       10
     );
+    const deckRegRounds = Feud.getDeckRegularRoundCount
+      ? Feud.getDeckRegularRoundCount(roomState)
+      : Feud.getSourceRoundsList(roomState).length;
+    const rawFormatSize = parseInt(
+      document.getElementById("setupMatchFormatSelect")?.value || "2",
+      10
+    );
+    const formatSize =
+      rawFormatSize === 4 && roundsPerMatch > 0 && deckRegRounds >= 3 * roundsPerMatch
+        ? 4
+        : (rawFormatSize === 3 || rawFormatSize === 4) &&
+          roundsPerMatch > 0 &&
+          deckRegRounds >= 2 * roundsPerMatch
+        ? 3
+        : 2;
+    const tournament =
+      formatSize === 3 || formatSize === 4
+        ? Feud.createTournamentBracket(
+            formatSize === 3 ? [rawT1, rawT2, rawT3] : [rawT1, rawT2, rawT3, rawT4]
+          )
+        : null;
+    const activeTournMatch =
+      tournament && Feud.getActiveTournamentMatch ? Feud.getActiveTournamentMatch(tournament) : null;
+    const t1Val = activeTournMatch ? activeTournMatch.t1 : rawT1;
+    const t2Val = activeTournMatch ? activeTournMatch.t2 : rawT2;
+
+    const timerDur =
+      parseInt(document.getElementById("setupTurnTimerSelect")?.value || "10", 10) || 10;
+    const boardTheme = Feud.saveBoardTheme
+      ? Feud.saveBoardTheme(
+          document.getElementById("setupBoardThemeSelect")?.value ||
+            roomState.boardTheme ||
+            "classic"
+        )
+      : "classic";
     const roundOrder =
       document.getElementById("setupRoundOrderSelect")?.value || "sequential";
     const hasFm = Feud.hasFastMoneyRounds ? Feud.hasFastMoneyRounds(roomState) : true;
@@ -819,6 +1093,9 @@ window.Feud = window.Feud || {};
       ...fresh,
       gameIcon: iconVal,
       gameTitle: titleVal,
+      boardTheme,
+      isDemoMode: false,
+      tournament,
       team1Name: t1Val,
       team2Name: t2Val,
       team1Score: 0,
@@ -883,11 +1160,89 @@ window.Feud = window.Feud || {};
 
     if (tvMode === "qr") {
       openQrModal(null, { forTvSetup: true });
+    } else if (tournament && activeTournMatch) {
+      Feud.showToast(`🏆 Tournament ${activeTournMatch.label}: ${t1Val} vs. ${t2Val}!`);
     } else if (localTvWindowOpened) {
       Feud.showToast(`Room ${code} ready! 📺 TV window opened — drag it to your TV screen.`);
     } else {
       Feud.showToast(`Room ${code} ready! Click "📺 TV: 0/1 • 📱 Buzzers: 0/2" to pair a TV.`);
     }
+  }
+
+  function startInstantDemoMode() {
+    Feud.unlockAudio();
+    if (Feud.playIntroJingle) Feud.playIntroJingle();
+    clearUndoStack();
+    stopLocalTurnTimerInterval();
+    clearInterval(hostFmTimerInterval);
+    hostFmTimerInterval = null;
+
+    const starterRounds = Array.isArray(Feud.DEFAULT_ROUNDS) ? Feud.DEFAULT_ROUNDS : [];
+    const starterTitle =
+      (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) || "Starter Party Deck";
+    const starterIcon = (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameIcon) || "🎉";
+    const fresh = Feud.createDefaultRoomState("1234");
+    const demoRounds = starterRounds.map((r, i) => ({ ...r, sourceIdx: i }));
+
+    roomState = {
+      ...fresh,
+      gameTitle: starterTitle,
+      gameIcon: starterIcon,
+      boardTheme: Feud.loadSavedBoardTheme ? Feud.loadSavedBoardTheme() : "classic",
+      customDeck: null,
+      matchRounds: demoRounds.length > 0 ? demoRounds : fresh.matchRounds,
+      matchSourceIndices: demoRounds.map((_, i) => i),
+      isDemoMode: true,
+      tournament: null,
+      stage: "main",
+      roundIdx: 0,
+      roundPhase: "faceoff-buzz",
+      questionRevealed: true,
+      buzzerWinner: 0,
+      controllingTeam: 0,
+      faceoffFirstTeam: 0,
+      revealed: [],
+      pot: 0,
+      strikes: 0,
+      team1Name: "Team Alpha",
+      team2Name: "Team Omega",
+      team1Score: 0,
+      team2Score: 0,
+      turnTimerRemaining: 10,
+      turnTimerRunning: false
+    };
+    currentRoomCode = "DEMO";
+    syncSequenceCounters(roomState);
+    enterRole("host", "DEMO");
+    Feud.showToast("🎬 Demo Mode! Click a simulated buzz or tap an answer to preview the live TV!");
+  }
+
+  async function demoSimulateBuzz(teamNum) {
+    Feud.unlockAudio();
+    const cleanTeam = teamNum === 2 ? 2 : 1;
+    if (roomState.roundPhase === "round-over") {
+      await hostResetRound();
+    }
+    if (!roomState.questionRevealed || roomState.roundPhase === "faceoff-ready" || roomState.buzzerWinner) {
+      await pushRoomPatch({
+        questionRevealed: true,
+        roundPhase: "faceoff-buzz",
+        buzzerWinner: 0,
+        controllingTeam: 0,
+        faceoffFirstTeam: 0
+      });
+    }
+    await hostManualBuzz(cleanTeam);
+  }
+
+  async function exitDemoToSetup() {
+    stopLocalTurnTimerInterval();
+    roomState = Feud.createDefaultRoomState("1234");
+    roomState.isDemoMode = false;
+    currentRoomCode = "";
+    syncSequenceCounters(roomState);
+    await leaveToLobby({ force: true });
+    document.getElementById("lobbyHostCard")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   async function createHostRoom() {
@@ -1353,18 +1708,42 @@ window.Feud = window.Feud || {};
     return "Team Challengers";
   }
 
+  function openTournamentModal() {
+    const body = document.getElementById("tournamentBracketBody");
+    if (body) {
+      if (roomState.tournament && Feud.renderTournamentBracketHtml) {
+        body.innerHTML = Feud.renderTournamentBracketHtml(roomState.tournament);
+      } else {
+        body.textContent = "Tournament mode is not active for this room.";
+      }
+    }
+    document.getElementById("tournamentBracketModal")?.classList.remove("hidden");
+  }
+
+  function closeTournamentModal() {
+    document.getElementById("tournamentBracketModal")?.classList.add("hidden");
+  }
+
   function populateAndShowNextMatchModal() {
     const info = getWinningTeamInfo();
     const stats = Feud.getDeckPlayStats(roomState);
+    const t = roomState.tournament && roomState.tournament.enabled ? roomState.tournament : null;
 
     const banner = document.getElementById("nextMatchWinnerBanner");
     const sub = document.getElementById("nextMatchScoreSub");
     const remBadge = document.getElementById("nextMatchRemainingBadge");
+    const tournBox = document.getElementById("nextMatchTournamentBox");
+    const contenderBox = document.getElementById("nextMatchContenderBox");
+    const startBtn = document.getElementById("nextMatchStartBtn");
 
     if (banner) {
-      banner.textContent = info.isTie
-        ? `⚡ Tie Game (${info.winScore} – ${info.loseScore})!`
-        : `🏆 ${info.winnerName} Wins!`;
+      if (info.isTie) {
+        banner.textContent = `⚡ Tie Game (${info.winScore} – ${info.loseScore})!`;
+      } else if (t && t.champion) {
+        banner.textContent = `🏆 Tournament Champion: ${t.champion}!`;
+      } else {
+        banner.textContent = `🏆 ${info.winnerName} Wins!`;
+      }
     }
     if (sub) {
       sub.textContent = `${roomState.team1Name}: ${roomState.team1Score} pts  •  ${roomState.team2Name}: ${roomState.team2Score} pts`;
@@ -1373,7 +1752,47 @@ window.Feud = window.Feud || {};
       remBadge.textContent = `📊 ${stats.remainingRoundsCount} of ${stats.totalRounds} Deck Rounds Still Unused`;
     }
 
-    setNextMatchContenderMode("winner-stays");
+    if (t && tournBox && contenderBox) {
+      contenderBox.classList.add("hidden");
+      tournBox.classList.remove("hidden");
+      tournBox.innerHTML = Feud.renderTournamentBracketHtml
+        ? Feud.renderTournamentBracketHtml(t)
+        : "";
+
+      const l1 = document.getElementById("nextMatchT1Label");
+      const l2 = document.getElementById("nextMatchT2Label");
+      const in1 = document.getElementById("nextMatchTeam1Input");
+      const in2 = document.getElementById("nextMatchTeam2Input");
+      const btnSuggest = document.getElementById("btnSuggestChallengerPreset");
+      if (btnSuggest) btnSuggest.classList.add("hidden");
+
+      if (t.champion) {
+        const firstMatch = t.matches && t.matches[0];
+        if (l1) l1.textContent = "🏆 Rematch Bracket Team 1";
+        if (l2) l2.textContent = "🏆 Rematch Bracket Team 2";
+        if (in1) in1.value = (firstMatch && firstMatch.t1) || t.teams[0] || "Team 1";
+        if (in2) in2.value = (firstMatch && firstMatch.t2) || t.teams[1] || "Team 2";
+        if (startBtn) startBtn.textContent = "🏆 Start New Tournament!";
+      } else {
+        const nextMatch = Feud.getActiveTournamentMatch ? Feud.getActiveTournamentMatch(t) : null;
+        if (l1) l1.textContent = `🔵 ${(nextMatch && nextMatch.label) || "Next Match"} — Team 1`;
+        if (l2) l2.textContent = `🔴 ${(nextMatch && nextMatch.label) || "Next Match"} — Team 2`;
+        if (in1) in1.value = (nextMatch && nextMatch.t1) || "TBD";
+        if (in2) in2.value = (nextMatch && nextMatch.t2) || "TBD";
+        if (startBtn) {
+          startBtn.textContent = `🏆 Start ${(nextMatch && nextMatch.label) || "Next Match"}!`;
+        }
+      }
+    } else {
+      if (tournBox) {
+        tournBox.innerHTML = "";
+        tournBox.classList.add("hidden");
+      }
+      if (contenderBox) contenderBox.classList.remove("hidden");
+      if (startBtn) startBtn.textContent = "🚀 Deal Next Unplayed Rounds & Start Match!";
+      setNextMatchContenderMode("winner-stays");
+    }
+
     document.getElementById("nextMatchModal")?.classList.remove("hidden");
   }
 
@@ -1382,7 +1801,18 @@ window.Feud = window.Feud || {};
     stopLocalTurnTimerInterval();
     const nextFanfare = (roomState.fanfareSeq || 0) + 1;
     Feud.playFanfare();
-    await pushRoomPatch({ stage: "winner", turnTimerRunning: false, fanfareSeq: nextFanfare });
+    const patch = { stage: "winner", turnTimerRunning: false, fanfareSeq: nextFanfare };
+
+    if (roomState.tournament && roomState.tournament.enabled) {
+      const s1 = Number(roomState.team1Score) || 0;
+      const s2 = Number(roomState.team2Score) || 0;
+      if (s1 !== s2 && Feud.recordTournamentMatchResult) {
+        const winName = s1 > s2 ? roomState.team1Name : roomState.team2Name;
+        patch.tournament = Feud.recordTournamentMatchResult(roomState.tournament, winName, s1, s2);
+      }
+    }
+
+    await pushRoomPatch(patch);
     populateAndShowNextMatchModal();
   }
 
@@ -1476,10 +1906,15 @@ window.Feud = window.Feud || {};
     });
 
     const dur = Number(roomState.turnTimerDuration) || 10;
+    let nextTournament = roomState.tournament || null;
+    if (nextTournament && nextTournament.enabled && nextTournament.champion && Feud.createTournamentBracket) {
+      nextTournament = Feud.createTournamentBracket(nextTournament.teams);
+    }
 
     closeNextMatchModal();
     await pushRoomPatch({
       stage: "main",
+      tournament: nextTournament,
       matchNumber: slice.matchNumber,
       matchRounds: slice.matchRounds,
       matchSourceIndices: slice.matchSourceIndices,
@@ -2117,8 +2552,11 @@ window.Feud = window.Feud || {};
       const currentRem = Number(roomState.turnTimerRemaining) || 0;
       const next = Math.max(0, currentRem - 1);
       if (next > 0) {
-        if (next <= 5) {
-          Feud.playTick(next <= 3);
+        if (next <= 3) {
+          if (Feud.playTensionTick) Feud.playTensionTick(next);
+          else Feud.playTick(true);
+        } else if (next <= 5) {
+          Feud.playTick(false);
         }
         await pushRoomPatch({ turnTimerRemaining: next, turnTimerRunning: true });
       } else {
@@ -2413,7 +2851,7 @@ window.Feud = window.Feud || {};
     // Local first-tap guard (the Host re-validates authoritatively in sync.js#buildBuzzPatch)
     if (Feud.buildBuzzPatch && !Feud.buildBuzzPatch(roomState, myTeam)) return;
     Feud.playFaceOffTone(myTeam);
-    if (navigator.vibrate) navigator.vibrate(120);
+    if (navigator.vibrate) navigator.vibrate(40);
     await Feud.syncSendTeamBuzz(myTeam);
   }
 
@@ -2427,8 +2865,32 @@ window.Feud = window.Feud || {};
     const cleanTeam = teamNum === 2 ? 2 : 1;
     if (Feud.buildBuzzPatch && !Feud.buildBuzzPatch(roomState, cleanTeam)) return;
     Feud.playFaceOffTone(cleanTeam);
-    if (navigator.vibrate) navigator.vibrate(120);
+    if (navigator.vibrate) navigator.vibrate(40);
     await Feud.syncSendTeamBuzz(cleanTeam);
+  }
+
+  async function hostSendTestBuzz() {
+    Feud.unlockAudio();
+    const nextSeq = (roomState.testBuzzSeq || 0) + 1;
+    Feud.playFaceOffTone(1);
+    const statusEl = document.getElementById("qrTestBuzzStatus");
+    if (statusEl) {
+      statusEl.textContent = "✅ Test ping sent! Connected phones should chime & vibrate.";
+      statusEl.style.color = "#86efac";
+    }
+    await pushRoomPatch({ testBuzzSeq: nextSeq });
+    Feud.showToast("🔔 Sent test ping to connected phone buzzers!");
+  }
+
+  async function sendBuzzerTestPing() {
+    Feud.unlockAudio();
+    const team = activeRole === "buzzer2" ? 2 : 1;
+    Feud.playFaceOffTone(team);
+    if (navigator.vibrate) navigator.vibrate(40);
+    if (Feud.syncSendTestBuzz) {
+      await Feud.syncSendTestBuzz(team, activeRole);
+    }
+    Feud.showToast("🔔 Test ping sent to Host!");
   }
 
   async function hostToggleAnswer(slotIdx) {
@@ -3656,6 +4118,232 @@ window.Feud = window.Feud || {};
     Feud.showToast("Restored default question & answers for this round.");
   }
 
+  function openAiDeckBuilderModal() {
+    document.getElementById("aiDeckBuilderModal")?.classList.remove("hidden");
+    validateAiBuilderJson();
+  }
+
+  function closeAiDeckBuilderModal() {
+    document.getElementById("aiDeckBuilderModal")?.classList.add("hidden");
+  }
+
+  function buildAiDeckPromptText() {
+    const topic =
+      (document.getElementById("aiBuilderTopicInput")?.value || "").trim() ||
+      "Fun Family Game Night";
+    const rounds = parseInt(
+      document.getElementById("aiBuilderRoundsSelect")?.value || "12",
+      10
+    ) || 12;
+    const style =
+      (document.getElementById("aiBuilderStyleSelect")?.value || "").trim() ||
+      "Family-Friendly";
+    const includeFm = Boolean(document.getElementById("aiBuilderIncludeFmCheck")?.checked);
+    const n1 = Math.max(2, Math.round(rounds / 2));
+    const n2 = Math.max(1, Math.round(rounds / 4));
+    const n3 = Math.max(1, rounds - n1 - n2);
+
+    const fmSchema = includeFm
+      ? `,\n  "fastMoney": [\n    {\n      "prompt": "Short rapid-fire question",\n      "hint": "Top1 (45), Top2 (28), Top3 (15), Top4 (8), Top5 (4)"\n    }\n  ]`
+      : `,\n  "fastMoney": []`;
+
+    return `Create a ${rounds}-round Family Feud-style question deck about "${topic}" (audience style: ${style}).
+Respond ONLY with valid raw JSON (no markdown explanation) matching this exact schema:
+{
+  "gameTitle": "Party Feud",
+  "gameIcon": "🎉",
+  "deckName": "${topic} (${rounds} Rounds)",
+  "tags": ["custom"],
+  "teamPresets": [["Team Alpha", "Team Omega"], ["Team Blue", "Team Red"]],
+  "rounds": [
+    {
+      "theme": "Category Emoji + Name",
+      "title": "Round 1",
+      "multiplier": 1,
+      "prompt": "Name something people associate with...",
+      "answers": [
+        { "text": "Most common answer", "points": 38 },
+        { "text": "Second answer", "points": 26 },
+        { "text": "Third answer", "points": 18 },
+        { "text": "Fourth answer", "points": 11 },
+        { "text": "Fifth answer", "points": 7 }
+      ]
+    }
+  ]${fmSchema}
+}
+Rules:
+- Each round MUST have 4 to 6 concise, distinct answers ordered highest to lowest, with answer points totaling EXACTLY 100.
+- Use multiplier 1 for ${n1} rounds, multiplier 2 for ${n2} rounds, and multiplier 3 for ${n3} rounds (total ${rounds} rounds).${
+      includeFm ? "\n- Include 5 concise Fast Money questions in fastMoney (whose top 5 hints sum to 100)." : ""
+    }`;
+  }
+
+  async function copyAiDeckPrompt() {
+    const prompt = buildAiDeckPromptText();
+    try {
+      await navigator.clipboard.writeText(prompt);
+      Feud.showToast("📋 AI Deck Prompt copied! Paste it into Gemini, ChatGPT, or Claude.");
+    } catch (e) {
+      window.prompt("Copy this AI prompt:", prompt);
+    }
+  }
+
+  function parseAiBuilderDraft() {
+    const raw = (document.getElementById("aiBuilderJsonInput")?.value || "").trim();
+    if (!raw) return null;
+    const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+    const parsed = Feud.parseFeudJson(stripped);
+    if (!parsed || parsed.kind !== "deck" || !Array.isArray(parsed.rounds) || parsed.rounds.length === 0) {
+      throw new Error("JSON must contain a non-empty 'rounds' array with valid answers.");
+    }
+    const topicFallback =
+      (document.getElementById("aiBuilderTopicInput")?.value || "").trim() || "AI Custom Deck";
+    return {
+      gameTitle: parsed.gameTitle || "Party Feud",
+      gameIcon: parsed.gameIcon || "✨",
+      deckName: parsed.deckName || topicFallback,
+      teamPresets: parsed.teamPresets || null,
+      tags: Array.isArray(parsed.tags) && parsed.tags.length > 0 ? parsed.tags : ["custom"],
+      rounds: parsed.rounds,
+      fastMoney: Array.isArray(parsed.fastMoney) ? parsed.fastMoney : []
+    };
+  }
+
+  function validateAiBuilderJson() {
+    const statusEl = document.getElementById("aiBuilderValidationStatus");
+    const raw = (document.getElementById("aiBuilderJsonInput")?.value || "").trim();
+    if (!raw) {
+      if (statusEl) {
+        statusEl.className = "ai-builder-status";
+        statusEl.textContent = "Paste generated JSON above to validate rounds, answers, and points.";
+      }
+      return null;
+    }
+    try {
+      const draft = parseAiBuilderDraft();
+      const fmCount = Array.isArray(draft.fastMoney) ? draft.fastMoney.length : 0;
+      if (statusEl) {
+        statusEl.className = "ai-builder-status ok";
+        statusEl.textContent = `✅ Valid "${draft.deckName}" — ${draft.rounds.length} rounds${
+          fmCount > 0 ? ` + ${Math.floor(fmCount / 5) || 1} Fast Money set` : ""
+        }!`;
+      }
+      return draft;
+    } catch (err) {
+      if (statusEl) {
+        statusEl.className = "ai-builder-status err";
+        statusEl.textContent = `❌ ${err && err.message ? err.message : "Invalid JSON format"}`;
+      }
+      return null;
+    }
+  }
+
+  function makeSlugDeckId(deckName) {
+    const clean = String(deckName || "custom-deck")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return `${clean || "custom-deck"}.json`;
+  }
+
+  async function applyAiBuilderDeck() {
+    const draft = validateAiBuilderJson();
+    if (!draft) {
+      Feud.showToast("Paste valid deck JSON first.");
+      return null;
+    }
+    const deckId = makeSlugDeckId(draft.deckName);
+    if (Feud.upsertCatalogEntries) {
+      Feud.upsertCatalogEntries([
+        {
+          id: deckId,
+          label: `${draft.gameIcon || "✨"} ${draft.deckName}`,
+          file: null,
+          source: "custom-file",
+          data: draft
+        }
+      ]);
+    }
+    closeAiDeckBuilderModal();
+    await onSelectCatalogDeck(deckId);
+    Feud.showToast(`✨ Loaded AI Deck "${draft.deckName}" (${draft.rounds.length} rounds)!`);
+    return deckId;
+  }
+
+  async function reviewAiBuilderDeck() {
+    const deckId = await applyAiBuilderDeck();
+    if (!deckId) return;
+    const cleanSlug = String(deckId).replace(/\.json$/i, "");
+    const reviewUrl = `./review.html?deck=${encodeURIComponent(cleanSlug)}&from=setup`;
+    window.open(reviewUrl, "_blank", "noopener");
+  }
+
+  function downloadAiBuilderDeckJson() {
+    const draft = validateAiBuilderJson();
+    if (!draft) {
+      Feud.showToast("Paste valid deck JSON before downloading.");
+      return;
+    }
+    const blob = new Blob([JSON.stringify(draft, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = makeSlugDeckId(draft.deckName);
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  async function copyShareUrlForDeckObj(deckObj) {
+    if (!Feud.encodeDeckForUrlHash) {
+      Feud.showToast("Deck sharing helper unavailable.");
+      return;
+    }
+    const token = await Feud.encodeDeckForUrlHash(deckObj);
+    if (!token) {
+      Feud.showToast("Could not encode deck into URL.");
+      return;
+    }
+    const base = window.location.href.split("#")[0].split("?")[0];
+    const shareUrl = `${base}#deckData=${token}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      Feud.showToast(`🔗 Shareable deck link copied (${shareUrl.length} chars)!`);
+    } catch (e) {
+      window.prompt("Copy this shareable Party Feud deck link:", shareUrl);
+    }
+  }
+
+  async function copyShareableDeckLink() {
+    const draft = validateAiBuilderJson();
+    if (!draft) {
+      Feud.showToast("Paste valid deck JSON first to generate a share link.");
+      return;
+    }
+    await copyShareUrlForDeckObj(draft);
+  }
+
+  async function copyActiveDeckShareLink() {
+    const custom = roomState.customDeck;
+    const deckObj = custom
+      ? {
+          gameTitle: roomState.gameTitle || "Party Feud",
+          gameIcon: roomState.gameIcon || "🎉",
+          deckName: custom.name || "Shared Party Deck",
+          teamPresets: custom.teamPresets || null,
+          tags: custom.tags || null,
+          rounds: custom.rounds || Feud.getSourceRoundsList(roomState),
+          fastMoney: custom.fastMoney || []
+        }
+      : {
+          gameTitle: (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameTitle) || "Party Feud",
+          gameIcon: (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameIcon) || "🎉",
+          deckName: (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) || "Starter Party Deck",
+          teamPresets: Feud.TEAM_PRESETS || null,
+          rounds: Feud.DEFAULT_ROUNDS || [],
+          fastMoney: Feud.FAST_MONEY_QUESTIONS || []
+        };
+    await copyShareUrlForDeckObj(deckObj);
+  }
+
   function openDeckManagerModal() {
     openNewGameModal("host");
   }
@@ -3796,6 +4484,7 @@ window.Feud = window.Feud || {};
     const customDeck = {
       name: parsed.deckName || sourceLabel.replace(/\.json$/i, ""),
       teamPresets: parsed.teamPresets || null,
+      tags: Array.isArray(parsed.tags) ? parsed.tags : null,
       rounds: parsed.rounds,
       fastMoney: parsed.fastMoney || null
     };
@@ -4283,6 +4972,8 @@ window.Feud = window.Feud || {};
     toggleFullScreen,
     leaveToLobby,
     onSelectCatalogDeck,
+    selectDeckTagFilter,
+    onDeckFilterInput,
     scanLocalDecksFolder,
     rescanSavedDecksFolder,
     onLocalDecksFolderInputChange,
@@ -4292,14 +4983,34 @@ window.Feud = window.Feud || {};
     openNewGameModal,
     closeNewGameModal,
     cycleSetupTeamPresets,
+    syncTournamentFormatAvailability,
+    onSetupMatchFormatChange,
+    onBoardThemeChange,
+    cycleBoardTheme,
     loadBuiltInDeck,
     confirmStartNewGame,
+    startInstantDemoMode,
+    demoSimulateBuzz,
+    exitDemoToSetup,
+    openTournamentModal,
+    closeTournamentModal,
+    openAiDeckBuilderModal,
+    closeAiDeckBuilderModal,
+    copyAiDeckPrompt,
+    validateAiBuilderJson,
+    applyAiBuilderDeck,
+    reviewAiBuilderDeck,
+    downloadAiBuilderDeckJson,
+    copyShareableDeckLink,
+    copyActiveDeckShareLink,
     openNextMatchModal,
     closeNextMatchModal,
     returnToBoardFromWinnerModal,
     setNextMatchContenderMode,
     cycleNextMatchChallengerPreset,
     confirmStartNextMatch,
+    hostSendTestBuzz,
+    sendBuzzerTestPing,
     openQrModal,
     retryHostRelayConnection,
     copyQrJoinUrl,
@@ -4383,6 +5094,31 @@ window.Feud = window.Feud || {};
 
   function initOnLoad() {
     requestWakeLock();
+    if (typeof document !== "undefined" && document.body) {
+      document.body.dataset.theme =
+        (roomState && roomState.boardTheme) ||
+        (Feud.loadSavedBoardTheme ? Feud.loadSavedBoardTheme() : "classic");
+    }
+    if (
+      typeof navigator !== "undefined" &&
+      "serviceWorker" in navigator &&
+      (window.location.protocol === "https:" || isLoopbackHost())
+    ) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+    window.addEventListener("feud-test-buzz", (e) => {
+      if (activeRole !== "host" && activeRole !== "solo") return;
+      const d = (e && e.detail) || {};
+      const teamNum = Number(d.team) === 2 ? 2 : 1;
+      const teamName = getTeamNameByNum(teamNum);
+      if (Feud.playFaceOffTone) Feud.playFaceOffTone(teamNum);
+      const statusEl = document.getElementById("qrTestBuzzStatus");
+      if (statusEl) {
+        statusEl.textContent = `✅ ${teamName} buzzer test received!`;
+        statusEl.style.color = "#86efac";
+      }
+      Feud.showToast(`✅ ${teamName} Buzzer Test Received!`);
+    });
     const buildBadge = document.getElementById("appBuildBadge");
     if (buildBadge) {
       const appScript = document.querySelector('script[src*="js/app.js"]');
@@ -4551,7 +5287,18 @@ window.Feud = window.Feud || {};
     }
 
     const urlDeck = (params.get("deck") || "").trim();
-    if (urlDeck) {
+    const hashStr = window.location.hash || "";
+    if (hashStr.includes("deckData=") && Feud.decodeDeckFromUrlHash) {
+      Feud.decodeDeckFromUrlHash(hashStr).then((decodedEntry) => {
+        if (decodedEntry && decodedEntry.data) {
+          if (Feud.upsertCatalogEntries) {
+            Feud.upsertCatalogEntries([decodedEntry]);
+          }
+          onSelectCatalogDeck(decodedEntry.id);
+          Feud.showToast(`🔗 Loaded shared deck "${decodedEntry.data.deckName}"!`);
+        }
+      });
+    } else if (urlDeck) {
       const catalog = getCatalogList();
       const cleanUrlDeck = urlDeck.replace(/^\.?\/?decks\//i, "");
       const normUrlDeck = cleanUrlDeck.replace(/\.json$/i, "").toLowerCase();

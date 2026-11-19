@@ -29,7 +29,9 @@
   <meta name="twitter:description" content="Free, zero-login Family Feud game show for your TV with live QR phone buzzers, sound effects, teleprompter, and 300+ built-in rounds." />
   <meta name="twitter:image" content="https://browngenius.github.io/feud/docs/screenshots/tv-board.png" />
   <meta name="twitter:image:alt" content="Party Feud 16:9 TV Display Board showing revealed survey answers and scores" />
-  <link rel="stylesheet" href="./css/styles.css?v=20261118g" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261119c" />
 </head>
 <body>
 
@@ -63,7 +65,9 @@
         </div>
       </div>
 
-      <div class="setup-step-box">
+      <div id="nextMatchTournamentBox" class="setup-step-box hidden"></div>
+
+      <div id="nextMatchContenderBox" class="setup-step-box">
         <span class="field-label">👑 1. Choose Contender Mode</span>
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px;">
           <button id="btnModeWinnerStays" type="button" class="top-btn gold" onclick="setNextMatchContenderMode('winner-stays')">
@@ -98,7 +102,7 @@
       <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; margin-top:4px;">
         <button type="button" class="top-btn" onclick="returnToBoardFromWinnerModal()">👁️ Return to Board (Reveal Answers)</button>
         <button type="button" class="top-btn" onclick="closeNextMatchModal()">Keep Viewing Winner Screen</button>
-        <button type="button" class="action-btn btn-gold display-font" style="width:auto; min-height:46px; font-size:13px;" onclick="confirmStartNextMatch()">
+        <button id="nextMatchStartBtn" type="button" class="action-btn btn-gold display-font" style="width:auto; min-height:46px; font-size:13px;" onclick="confirmStartNextMatch()">
           🚀 Deal Next Unplayed Rounds &amp; Start Match!
         </button>
       </div>
@@ -185,6 +189,10 @@
             <span id="qrBadge_buzzer_combo" class="qr-grid-status">Click to show on TV</span>
           </button>
         </div>
+        <div id="qrTestBuzzBar" class="qr-test-buzz-bar">
+          <button type="button" class="top-btn gold" style="min-height:32px; font-size:11px;" onclick="hostSendTestBuzz()">🔔 Ping Connected Buzzers</button>
+          <span id="qrTestBuzzStatus" style="font-size:11px; color:#cbd5e1;">Tap to test sound &amp; vibration on phones</span>
+        </div>
       </div>
 
       <div id="qrRelayWarnBanner" class="hidden" style="font-size:12px; color:#fef08a; line-height:1.45; text-align:left; background:rgba(120,53,15,0.65); border:1.5px solid #fbbf24; border-radius:12px; padding:10px 12px; width:100%;">
@@ -261,6 +269,85 @@
     </div>
   </div>
 
+  <!-- AI CUSTOM DECK BUILDER & SHAREABLE LINK MODAL (#3) -->
+  <div id="aiDeckBuilderModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" onclick="if(event.target===this)closeAiDeckBuilderModal()">
+    <div class="modal-card" style="max-width:680px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <h3 class="brand-title display-font">✨ AI Custom Deck Builder</h3>
+        <button type="button" class="top-btn" onclick="closeAiDeckBuilderModal()">✕ Close</button>
+      </div>
+      <p style="font-size:12px; color:#fde68a; line-height:1.45;">
+        Enter any topic, copy the ready-to-use AI prompt (works in Gemini, ChatGPT, or Claude), paste the JSON below, and launch or share your custom deck via URL!
+      </p>
+
+      <div class="setup-step-box">
+        <span class="field-label">1. Describe Your Custom Deck</span>
+        <div class="buzzer-split-btns">
+          <div>
+            <label class="field-label" for="aiBuilderTopicInput" style="font-size:10px;">Topic / Event Theme</label>
+            <input id="aiBuilderTopicInput" class="fm-txt" style="width:100%; margin-top:4px; font-size:13px; text-transform:none;" type="text" placeholder="e.g., 90s Movies, AP Biology, Sarah's Bridal Shower" />
+          </div>
+          <div>
+            <label class="field-label" for="aiBuilderRoundsSelect" style="font-size:10px;">Number of Rounds</label>
+            <select id="aiBuilderRoundsSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;">
+              <option value="8">8 Rounds (2 Games)</option>
+              <option value="12" selected>12 Rounds (3 Games)</option>
+              <option value="16">16 Rounds (4 Games)</option>
+              <option value="20">20 Rounds (5 Games)</option>
+            </select>
+          </div>
+        </div>
+        <div class="buzzer-split-btns">
+          <div>
+            <label class="field-label" for="aiBuilderStyleSelect" style="font-size:10px;">Audience Style</label>
+            <select id="aiBuilderStyleSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;">
+              <option value="Family-Friendly" selected>👨‍👩‍👧‍👦 Family-Friendly (All Ages)</option>
+              <option value="Party / Funny">🎉 Adults / Party Night</option>
+              <option value="Classroom / Trivia">🏫 Classroom / Educational Review</option>
+            </select>
+          </div>
+          <div style="display:flex; align-items:flex-end;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:800; color:#fef08a; cursor:pointer; padding-bottom:6px;">
+              <input id="aiBuilderIncludeFmCheck" type="checkbox" checked style="width:17px; height:17px; accent-color:#fbbf24;" />
+              Include Fast Money (5 Bonus Questions)
+            </label>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="action-btn btn-gold display-font" style="width:auto; min-height:40px; padding:8px 16px; font-size:12.5px;" onclick="copyAiDeckPrompt()">
+            📋 Copy AI Prompt
+          </button>
+        </div>
+      </div>
+
+      <div class="setup-step-box">
+        <label class="field-label" for="aiBuilderJsonInput">2. Paste Generated Deck JSON</label>
+        <textarea id="aiBuilderJsonInput" class="ai-builder-textarea" placeholder='Paste JSON here: { "deckName": "...", "rounds": [ ... ] }' oninput="validateAiBuilderJson()"></textarea>
+        <div id="aiBuilderValidationStatus" class="ai-builder-status">Paste generated JSON above to validate rounds, answers, and points.</div>
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end;">
+        <button type="button" class="top-btn" onclick="copyShareableDeckLink()">🔗 Copy Share Link (#deckData)</button>
+        <button type="button" class="top-btn" onclick="downloadAiBuilderDeckJson()">💾 Download .json</button>
+        <button type="button" class="top-btn gold" onclick="reviewAiBuilderDeck()">🖨️ Load &amp; Review</button>
+        <button type="button" class="action-btn btn-gold display-font" style="width:auto; min-height:42px; padding:8px 18px; font-size:13px;" onclick="applyAiBuilderDeck()">
+          🚀 Load &amp; Play Deck
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOURNAMENT BRACKET MODAL (#8) -->
+  <div id="tournamentBracketModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" onclick="if(event.target===this)closeTournamentModal()">
+    <div class="modal-card" style="max-width:660px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <h3 class="brand-title display-font">🏆 Tournament Bracket</h3>
+        <button type="button" class="top-btn" onclick="closeTournamentModal()">✕ Close</button>
+      </div>
+      <div id="tournamentBracketBody" style="width:100%;"></div>
+    </div>
+  </div>
+
   <!-- TOP NAVIGATION & STATUS BAR -->
   <header class="top-bar">
     <div class="brand-cluster">
@@ -291,6 +378,9 @@
       <p class="hero-desc">
         Start a live game in seconds — cast or plug into a TV, and let players buzz in with any phone.
       </p>
+      <div class="demo-cta-row">
+        <button id="btnTryInstantDemo" type="button" class="top-btn gold demo-cta-btn" onclick="startInstantDemoMode()">▶ Try 10-Second Interactive Demo</button>
+      </div>
     </section>
 
     <div class="lobby-grid-2">
@@ -309,17 +399,23 @@
                 <span class="field-label">📚 1. Question Deck</span>
                 <span id="setupDeckUsageBadge" class="pill-badge awake-ok" style="min-height:24px; font-size:10px;">📊 All Rounds Unused</span>
               </div>
+              <div class="deck-filter-bar">
+                <input id="deckSearchInput" type="search" class="fm-txt deck-search-input" placeholder="🔍 Search decks by name or topic…" oninput="onDeckFilterInput(this.value)" />
+                <div id="deckTagPills" class="deck-tag-pills"></div>
+              </div>
               <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-width:0;">
                 <select id="deckManagerSelect" class="fm-txt" style="flex:1 1 180px; min-width:0; max-width:100%; font-size:13px; text-transform:none;" onchange="onSelectCatalogDeck(this.value)"></select>
                 <a href="./review.html?from=setup" target="_blank" rel="opener" class="top-btn gold review-deck-link" style="text-decoration:none; display:inline-flex; align-items:center;">🖨️ Review</a>
+                <button type="button" class="top-btn" onclick="openAiDeckBuilderModal()" title="Create a custom deck with AI or share a deck link">✨ AI Deck</button>
               </div>
               <details id="setupDeckToolsDetails" class="setup-deck-tools">
-                <summary>📂 Custom Deck / Local Folder / Reset Used</summary>
+                <summary>📂 Custom Deck / Share Link / Local Folder / Reset Used</summary>
                 <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
                   <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
                     <button id="btnScanDecksFolder" type="button" class="top-btn" style="min-height:32px; font-size:11px;" onclick="scanLocalDecksFolder()" title="Scan your local decks/ folder to discover .json decks offline">📂 Scan Folder</button>
                     <button id="btnRescanDecksFolder" type="button" class="top-btn hidden" style="min-height:32px; font-size:11px;" onclick="rescanSavedDecksFolder()" title="Re-read decks from your previously linked local folder">🔄 Re-scan</button>
                     <button id="btnLoadCustomDeckFile" type="button" class="top-btn" style="min-height:32px; font-size:11px;" onclick="openCustomDeckFilePicker()" title="Load one or more custom .json deck files">📄 Load Deck File</button>
+                    <button type="button" class="top-btn" style="min-height:32px; font-size:11px;" onclick="copyActiveDeckShareLink()" title="Copy a direct #deckData shareable link for the current deck">🔗 Share Deck Link</button>
                     <button type="button" class="top-btn" style="min-height:32px; font-size:11px;" onclick="resetCurrentDeckHistory()" title="Mark all rounds in this deck as unplayed">↺ Reset Used</button>
                     <input id="localDecksFolderInput" type="file" webkitdirectory multiple accept=".json" class="hidden" onchange="onLocalDecksFolderInputChange(event)" />
                     <input id="customDeckFileInput" type="file" multiple accept=".json" class="hidden" onchange="onCustomDeckFileInputChange(event)" />
@@ -329,11 +425,18 @@
               </details>
             </div>
 
-            <!-- 2. Team Names -->
+            <!-- 2. Team Names & Format -->
             <div class="setup-step-box">
               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-                <span class="field-label">👥 2. Team Names</span>
-                <button type="button" class="top-btn" style="min-height:28px; padding:4px 10px; font-size:11px;" onclick="cycleSetupTeamPresets()">🎲 Swap Names</button>
+                <span class="field-label">👥 2. Teams &amp; Match Format</span>
+                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                  <select id="setupMatchFormatSelect" class="fm-txt" style="width:auto; min-height:28px; padding:3px 8px; font-size:11px; text-transform:none;" onchange="onSetupMatchFormatChange(this.value)">
+                    <option value="2" selected>2 Teams (Classic)</option>
+                    <option value="3">🏆 3-Team Mini Bracket</option>
+                    <option value="4">🏆 4-Team Tournament</option>
+                  </select>
+                  <button type="button" class="top-btn" style="min-height:28px; padding:4px 10px; font-size:11px;" onclick="cycleSetupTeamPresets()">🎲 Swap Names</button>
+                </div>
               </div>
               <div class="buzzer-split-btns">
                 <div>
@@ -343,6 +446,16 @@
                 <div>
                   <label class="field-label" for="setupTeam2Input" style="font-size:10px; color:#fca5a5;">Team 2 (Red)</label>
                   <input id="setupTeam2Input" class="host-team-input team-2-input" style="margin-top:4px;" type="text" placeholder="Team 2" value="Team Omega" />
+                </div>
+              </div>
+              <div id="setupTournamentTeamsWrap" class="buzzer-split-btns hidden" style="margin-top:4px;">
+                <div>
+                  <label class="field-label" for="setupTeam3Input" style="font-size:10px; color:#fde047;">Team 3 (Tournament)</label>
+                  <input id="setupTeam3Input" class="host-team-input" style="margin-top:4px;" type="text" placeholder="Team 3" value="Team Gamma" />
+                </div>
+                <div id="setupTeam4Wrap">
+                  <label class="field-label" for="setupTeam4Input" style="font-size:10px; color:#86efac;">Team 4 (Tournament)</label>
+                  <input id="setupTeam4Input" class="host-team-input" style="margin-top:4px;" type="text" placeholder="Team 4" value="Team Nova" />
                 </div>
               </div>
             </div>
@@ -356,14 +469,23 @@
               </div>
             </div>
 
-            <!-- Collapsible Game Rules, Timer & PIN -->
+            <!-- Collapsible Game Rules, Theme, Timer & PIN -->
             <details class="setup-step-box">
-              <summary style="cursor:pointer; font-size:12px; font-weight:800; color:#fde68a;">⚙️ Game Rules, Timer &amp; PIN Options</summary>
+              <summary style="cursor:pointer; font-size:12px; font-weight:800; color:#fde68a;">⚙️ Game Rules, Theme, Timer &amp; PIN Options</summary>
               <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
+                <div>
+                  <label class="field-label" for="setupBoardThemeSelect" style="font-size:10px;">🎨 Visual Board Theme</label>
+                  <select id="setupBoardThemeSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;" onchange="onBoardThemeChange(this.value)">
+                    <option value="classic" selected>🎭 Classic Blue &amp; Gold</option>
+                    <option value="holiday">🎄 Holiday Red &amp; Green</option>
+                    <option value="frc">🤖 FRC Robotics Neon</option>
+                    <option value="classroom">🏫 Classroom Clean</option>
+                  </select>
+                </div>
                 <div class="buzzer-split-btns">
                   <div>
                     <label class="field-label" for="setupRoundsPerMatchSelect" style="font-size:10px;">Rounds Per Game</label>
-                    <select id="setupRoundsPerMatchSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;">
+                    <select id="setupRoundsPerMatchSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;" onchange="syncTournamentFormatAvailability()">
                       <option value="3">3 Rounds (1x, 2x, 3x)</option>
                       <option value="4" selected>4 Rounds (Standard: 1x, 1x, 2x, 3x)</option>
                       <option value="5">5 Rounds (1x, 1x, 2x, 2x, 3x)</option>
@@ -576,6 +698,7 @@
           <div id="tvWinT2Score" class="display-font" style="font-size:44px; color:#fff; margin-top:6px;">0</div>
         </div>
       </div>
+      <div id="tvWinnerBracketStrip" class="tv-winner-bracket-strip hidden"></div>
     </div>
 
     <!-- LIVE QR JOIN OVERLAY ON TV (CONTROLLED BY HOST) -->
@@ -621,12 +744,24 @@
        VIEW 3: HOST REMOTE CONTROL MODE (SEES ALL ANSWERS + CONTROLS TV)
        ===================================================================== -->
   <section id="hostView" class="stage-wrap hidden" data-mobile-tab="board">
+    <div id="hostDemoBanner" class="marquee-panel host-demo-banner hidden">
+      <div style="font-size:12.5px; font-weight:800; color:#fef08a;">
+        🎬 <strong>Interactive Demo Mode</strong> — Click answers on the left or simulate buzzes to preview the live TV board!
+      </div>
+      <div class="host-demo-banner-actions">
+        <button type="button" class="top-btn" style="min-height:30px; font-size:11px;" onclick="demoSimulateBuzz(1)">🔔 Simulate Team 1 Buzz</button>
+        <button type="button" class="top-btn" style="min-height:30px; font-size:11px;" onclick="demoSimulateBuzz(2)">🔔 Simulate Team 2 Buzz</button>
+        <button type="button" class="top-btn" style="min-height:30px; font-size:11px;" onclick="Feud.playIntroJingle && Feud.playIntroJingle()">🎵 Intro</button>
+        <button type="button" class="top-btn gold" style="min-height:30px; font-size:11px;" onclick="exitDemoToSetup()">🚀 Start Real Game</button>
+      </div>
+    </div>
     <!-- 1. SLIM HEADER + GUIDED CONTROLS & TELEPROMPTER SCRIPT -->
     <div id="hostFlowCoachCard" class="marquee-panel flow-coach-card">
       <div class="flow-coach-top">
         <div class="host-header-left">
           <button type="button" id="hostCompactRoundLabel" class="top-btn host-round-pill-btn" onclick="openHostPopover('round')" title="Tap to switch or swap round (while question is hidden)">Round 1 (1x)</button>
           <div class="flow-stepper host-clickable-stepper" id="hostFlowStepper" onclick="openHostPopover('phase')" title="Tap to override phase, active team, or strikes"></div>
+          <button type="button" id="hostTournamentPill" class="top-btn gold hidden" onclick="openTournamentModal()" title="View live tournament bracket">🏆 Bracket</button>
           <button type="button" id="hostBuzzerStatusPill" class="top-btn host-devices-btn" onclick="openQrModal()" title="Connect TV display or phone buzzers">📺 TV: 0/1 • 📱 Buzzers: 0/2</button>
         </div>
         <div class="host-quick-timer-group">
@@ -650,6 +785,8 @@
               <button type="button" class="top-btn" onclick="hostResetRound(); closeHostMoreMenu()">↺ Reset Round</button>
               <button type="button" class="top-btn" onclick="openEditRoundModal(); closeHostMoreMenu()">✏️ Edit Round</button>
               <button type="button" class="top-btn" onclick="openNewGameModal('host'); closeHostMoreMenu()">🆕 New Game / Switch Deck</button>
+              <button type="button" class="top-btn" onclick="cycleBoardTheme(); closeHostMoreMenu()" title="Cycle Classic / Holiday / FRC / Classroom board theme">🎨 Switch Theme</button>
+              <button type="button" class="top-btn" onclick="Feud.playIntroJingle && Feud.playIntroJingle(); closeHostMoreMenu()" title="Play upbeat game show intro stinger">🎵 Intro Jingle</button>
               <button type="button" id="hostTabWinner" class="top-btn gold" onclick="openNextMatchModal(); closeHostMoreMenu()">🏁 End Match</button>
               <button id="hostMenuMuteBtn" type="button" class="top-btn host-more-mobile-only" onclick="toggleMute(); closeHostMoreMenu()">🔊 Sound</button>
               <button type="button" class="top-btn host-more-mobile-only" onclick="leaveToLobby(); closeHostMoreMenu()">🏠 Lobby</button>
@@ -744,6 +881,7 @@
       <div class="combo-middle-controls">
         <span id="buzzerConnStatusPill" class="pill-badge awake-ok" style="font-size:10px;">🟢 Connected</span>
         <span id="buzzerTimerPill" class="turn-timer-pill display-font hidden" style="font-size:12px; padding:2px 9px;">⏱️ 10s</span>
+        <button type="button" class="top-btn" style="min-height:28px; padding:3px 9px; font-size:11px;" onclick="sendBuzzerTestPing()" title="Send a test ping to Host">🔔 Test</button>
         <button type="button" class="top-btn" style="min-height:28px; padding:3px 9px; font-size:11px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button>
         <button
           id="buzzerExitHoldBtn"
@@ -799,6 +937,7 @@
       <div class="combo-middle-controls">
         <span id="comboConnStatusPill" class="pill-badge awake-ok" style="font-size:12px;" title="Connected">🟢</span>
         <span id="comboTimerPill" class="turn-timer-pill display-font hidden" style="font-size:12px; padding:2px 9px;">⏱️ 10s</span>
+        <button type="button" class="top-btn" style="min-height:28px; padding:3px 9px; font-size:11px;" onclick="sendBuzzerTestPing()" title="Send a test ping to Host">🔔 Test</button>
         <button type="button" class="top-btn" style="min-height:28px; padding:3px 9px; font-size:12px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button>
         <button
           id="comboExitHoldBtn"
@@ -832,17 +971,17 @@
     </button>
   </section>
 
-  <footer id="appBuildBadge" class="app-build-badge">Build v20261118g</footer>
+  <footer id="appBuildBadge" class="app-build-badge">Build v20261119c</footer>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js" async></script>
-  <script src="./data/questions.js?v=20261118g"></script>
-  <script src="./js/audio.js?v=20261118g"></script>
-  <script src="./js/state.js?v=20261118g"></script>
-  <script src="./js/formats.js?v=20261118g"></script>
-  <script src="./js/decks.js?v=20261118g"></script>
-  <script src="./js/sync.js?v=20261118g"></script>
-  <script src="./js/views.js?v=20261118g"></script>
-  <script src="./js/app.js?v=20261118g"></script>
+  <script src="./data/questions.js?v=20261119c"></script>
+  <script src="./js/audio.js?v=20261119c"></script>
+  <script src="./js/state.js?v=20261119c"></script>
+  <script src="./js/formats.js?v=20261119c"></script>
+  <script src="./js/decks.js?v=20261119c"></script>
+  <script src="./js/sync.js?v=20261119c"></script>
+  <script src="./js/views.js?v=20261119c"></script>
+  <script src="./js/app.js?v=20261119c"></script>
 </body>
 </html>

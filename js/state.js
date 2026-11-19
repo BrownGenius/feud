@@ -15,6 +15,8 @@ window.Feud = window.Feud || {};
   const STORAGE_PLAYED_HISTORY_KEY = "party_feud_played_history_v1";
   const STORAGE_ROOM_PREFIX = "party_feud_room_state_";
   const STORAGE_LAST_SESSION_KEY = "party_feud_last_session_v1";
+  const BOARD_THEME_KEY = "party_feud_board_theme_v1";
+  const VALID_BOARD_THEMES = new Set(["classic", "holiday", "frc", "classroom"]);
 
   function loadSavedCustomRounds() {
     try {
@@ -92,6 +94,25 @@ window.Feud = window.Feud || {};
     } catch (e) {}
   }
 
+  function loadSavedBoardTheme() {
+    try {
+      const val = String(localStorage.getItem(BOARD_THEME_KEY) || "classic").trim().toLowerCase();
+      return VALID_BOARD_THEMES.has(val) ? val : "classic";
+    } catch (e) {
+      return "classic";
+    }
+  }
+
+  function saveBoardTheme(theme) {
+    const clean = VALID_BOARD_THEMES.has(String(theme || "").trim().toLowerCase())
+      ? String(theme).trim().toLowerCase()
+      : "classic";
+    try {
+      localStorage.setItem(BOARD_THEME_KEY, clean);
+    } catch (e) {}
+    return clean;
+  }
+
   // =====================================================================
   // MULTI-GAME PLAYED HISTORY TRACKER (ENSURES ROUNDS DON'T REPEAT)
   // =====================================================================
@@ -141,6 +162,19 @@ window.Feud = window.Feud || {};
       return fmSets > 0
         ? `${icon}${base} • ${rCount} Rounds • ${fmSets} Fast Money`
         : `${icon}${base} • ${rCount} Rounds`;
+    }
+    if (item.meta) {
+      const m = item.meta;
+      const base = m.deckName || item.id.replace(/\.json$/i, "");
+      const icon = m.gameIcon ? `${m.gameIcon} ` : "";
+      const rCount = Number(m.roundsCount) || 0;
+      const fmSets = Number(m.fastMoneySets) || 0;
+      if (rCount > 0) {
+        return fmSets > 0
+          ? `${icon}${base} • ${rCount} Rounds • ${fmSets} Fast Money`
+          : `${icon}${base} • ${rCount} Rounds`;
+      }
+      return `${icon}${base}`;
     }
     return item.label || item.id || "";
   }
@@ -335,26 +369,31 @@ window.Feud = window.Feud || {};
         );
 
         let available = levelPool.filter((idx) => !playedSet.has(idx));
-        // If all rounds of this multiplier level have been played, reset played history for this level
-        // (while still excluding rounds already picked for the current match)
-        if (available.length === 0 && levelPool.length > 0) {
-          levelPool.forEach((idx) => playedSet.delete(idx));
-          available = levelPool.slice();
-        }
-
         if (roundOrder === "shuffle-by-level" && available.length > 1) {
           available = shuffleArray(available);
         }
 
         let pickedIdx = available.length > 0 ? available[0] : undefined;
 
-        // Fallback if a custom deck doesn't have enough rounds tagged with this specific multiplier
+        // Fallback if this multiplier level has no unplayed rounds left:
+        // first use any unplayed regular round from another level before repeating any played round!
         if (pickedIdx === undefined) {
           let fallbackPool = poolIndices.filter(
             (idx) => !pickedInThisMatch.has(idx) && !playedSet.has(idx)
           );
           if (fallbackPool.length === 0) {
-            fallbackPool = poolIndices.filter((idx) => !pickedInThisMatch.has(idx));
+            // Entire regular deck has been played: reset played history (excluding rounds already in this match)
+            poolIndices.forEach((idx) => {
+              if (!pickedInThisMatch.has(idx)) playedSet.delete(idx);
+            });
+            let refreshedLevel = levelPool.filter((idx) => !pickedInThisMatch.has(idx));
+            if (roundOrder === "shuffle-by-level" && refreshedLevel.length > 1) {
+              refreshedLevel = shuffleArray(refreshedLevel);
+            }
+            fallbackPool =
+              refreshedLevel.length > 0
+                ? refreshedLevel
+                : poolIndices.filter((idx) => !pickedInThisMatch.has(idx));
           }
           if (roundOrder !== "sequential" && fallbackPool.length > 1) {
             fallbackPool = shuffleArray(fallbackPool);
@@ -670,11 +709,14 @@ window.Feud = window.Feud || {};
       pin: String(pin || "1234"),
       gameTitle: loadSavedGameTitle(),
       gameIcon: loadSavedGameIcon(),
+      boardTheme: loadSavedBoardTheme(),
       stage: "main", // 'main' | 'fast' | 'winner'
       enableFastMoney: false,
       roundsPerMatch: 4,
       roundOrder: "sequential",
       matchNumber: 1,
+      tournament: null,
+      isDemoMode: false,
       matchRounds: null,
       matchSourceIndices: null,
       usedRoundIndices: [],
@@ -707,6 +749,7 @@ window.Feud = window.Feud || {};
       fanfareSeq: 0,
       dupBuzzSeq: 0,
       beSpecificSeq: 0,
+      testBuzzSeq: 0,
       buzzerWinner: 0,
       tvQrOverlay: null,
       customDeck: customDeck,
@@ -742,6 +785,12 @@ window.Feud = window.Feud || {};
     const list = getBaseRoundsList(roomState);
     const regCount = list.filter((r) => !isTieBreakerRound(r)).length;
     return regCount > 0 ? regCount : list.length;
+  }
+
+  function getDeckRegularRoundCount(roomState) {
+    const sourceRounds = getSourceRoundsList(roomState);
+    const regCount = sourceRounds.filter((r) => !isTieBreakerRound(r)).length;
+    return regCount > 0 ? regCount : sourceRounds.length;
   }
 
   function isTieBreakerUnlocked(roomState) {
@@ -863,6 +912,117 @@ window.Feud = window.Feud || {};
     }
   }
 
+  function createTournamentBracket(teamNames) {
+    const clean = (Array.isArray(teamNames) ? teamNames : [])
+      .map((n, idx) => String(n || "").trim() || `Team ${idx + 1}`)
+      .slice(0, 4);
+    if (clean.length < 3) return null;
+
+    if (clean.length === 3) {
+      return {
+        enabled: true,
+        size: 3,
+        teams: clean,
+        matches: [
+          {
+            id: "sf1",
+            label: "Semifinal",
+            t1: clean[0],
+            t2: clean[1],
+            winner: null,
+            s1: 0,
+            s2: 0
+          },
+          {
+            id: "final",
+            label: "Championship Final",
+            t1: null,
+            t2: clean[2],
+            winner: null,
+            s1: 0,
+            s2: 0
+          }
+        ],
+        currentMatchIdx: 0,
+        champion: null
+      };
+    }
+
+    return {
+      enabled: true,
+      size: 4,
+      teams: clean,
+      matches: [
+        {
+          id: "sf1",
+          label: "Semifinal 1",
+          t1: clean[0],
+          t2: clean[1],
+          winner: null,
+          s1: 0,
+          s2: 0
+        },
+        {
+          id: "sf2",
+          label: "Semifinal 2",
+          t1: clean[2],
+          t2: clean[3],
+          winner: null,
+          s1: 0,
+          s2: 0
+        },
+        {
+          id: "final",
+          label: "Championship Final",
+          t1: null,
+          t2: null,
+          winner: null,
+          s1: 0,
+          s2: 0
+        }
+      ],
+      currentMatchIdx: 0,
+      champion: null
+    };
+  }
+
+  function getActiveTournamentMatch(tournament) {
+    if (!tournament || !tournament.enabled || !Array.isArray(tournament.matches)) return null;
+    const idx = Number(tournament.currentMatchIdx) || 0;
+    return tournament.matches[idx] || null;
+  }
+
+  function recordTournamentMatchResult(tournament, winnerName, s1, s2) {
+    if (!tournament || !tournament.enabled || !Array.isArray(tournament.matches)) return tournament;
+    const next = {
+      ...tournament,
+      teams: Array.isArray(tournament.teams) ? [...tournament.teams] : [],
+      matches: tournament.matches.map((m) => ({ ...m }))
+    };
+    const curIdx = Number(next.currentMatchIdx) || 0;
+    const curMatch = next.matches[curIdx];
+    if (!curMatch || curMatch.winner) return next;
+
+    const cleanWinner = String(winnerName || curMatch.t1 || "Winner").trim();
+    curMatch.winner = cleanWinner;
+    curMatch.s1 = Number(s1) || 0;
+    curMatch.s2 = Number(s2) || 0;
+
+    const finalMatch = next.matches.find((m) => m.id === "final");
+    if (curMatch.id === "sf1" && finalMatch) {
+      finalMatch.t1 = cleanWinner;
+    } else if (curMatch.id === "sf2" && finalMatch) {
+      finalMatch.t2 = cleanWinner;
+    }
+
+    if (curMatch.id === "final" || curIdx >= next.matches.length - 1) {
+      next.champion = cleanWinner;
+    } else {
+      next.currentMatchIdx = curIdx + 1;
+    }
+    return next;
+  }
+
   function clearLastSession() {
     try {
       localStorage.removeItem(STORAGE_LAST_SESSION_KEY);
@@ -878,6 +1038,11 @@ window.Feud = window.Feud || {};
     saveGameTitle,
     loadSavedGameIcon,
     saveGameIcon,
+    loadSavedBoardTheme,
+    saveBoardTheme,
+    createTournamentBracket,
+    getActiveTournamentMatch,
+    recordTournamentMatchResult,
     getDeckKey,
     formatDeckOptionLabel,
     getSourceRoundsList,
@@ -897,6 +1062,7 @@ window.Feud = window.Feud || {};
     getBaseRoundsList,
     isTieBreakerRound,
     getRegularRoundCount,
+    getDeckRegularRoundCount,
     isTieBreakerUnlocked,
     getRoundCount,
     getRoundData,

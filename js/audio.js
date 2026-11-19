@@ -292,6 +292,74 @@ window.Feud = window.Feud || {};
     } catch (e) {}
   }
 
+  function playTensionTick(secondsLeft = 3) {
+    if (isMuted) return;
+    try {
+      const ctx = unlockAudio();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const s = Math.max(1, Math.min(3, Number(secondsLeft) || 3));
+      const freq = s === 1 ? 1318.5 : s === 2 ? 1108.7 : 932.3;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.72, now + 0.09);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.24, now + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0008, now + 0.11);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.12);
+
+      // Subtle low studio pulse underneath
+      const sub = ctx.createOscillator();
+      const subGain = ctx.createGain();
+      sub.type = "sine";
+      sub.frequency.setValueAtTime(s === 1 ? 196 : 164.8, now);
+      subGain.gain.setValueAtTime(0.14, now);
+      subGain.gain.exponentialRampToValueAtTime(0.0008, now + 0.09);
+      sub.connect(subGain);
+      subGain.connect(ctx.destination);
+      sub.start(now);
+      sub.stop(now + 0.1);
+    } catch (e) {}
+  }
+
+  function playIntroJingle() {
+    if (isMuted) return;
+    try {
+      const ctx = unlockAudio();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      // Upbeat ~1.2s TV game-show brass-synth intro stinger
+      const notes = [
+        { freq: 392.0, start: 0.0, dur: 0.14, gain: 0.18 },
+        { freq: 523.25, start: 0.11, dur: 0.14, gain: 0.2 },
+        { freq: 659.25, start: 0.22, dur: 0.14, gain: 0.22 },
+        { freq: 783.99, start: 0.34, dur: 0.2, gain: 0.24 },
+        { freq: 659.25, start: 0.56, dur: 0.14, gain: 0.2 },
+        { freq: 1046.5, start: 0.72, dur: 0.48, gain: 0.28 }
+      ];
+      notes.forEach((n) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const t0 = now + n.start;
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(n.freq, t0);
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.linearRampToValueAtTime(n.gain, t0 + 0.014);
+        gain.gain.exponentialRampToValueAtTime(0.0008, t0 + n.dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + n.dur + 0.02);
+      });
+    } catch (e) {}
+  }
+
   Object.assign(Feud, {
     unlockAudio,
     isAudioMuted,
@@ -302,6 +370,8 @@ window.Feud = window.Feud || {};
     playFaceOffTone,
     playFanfare,
     playTick,
+    playTensionTick,
+    playIntroJingle,
     playBeSpecificBuzz,
     playTimeUpBell
   });

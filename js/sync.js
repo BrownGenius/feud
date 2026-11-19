@@ -381,6 +381,8 @@ window.Feud = window.Feud || {};
           if (onRemoteStateCallback) onRemoteStateCallback(msg.state);
         } else if (msg.type === "BUZZ" && (currentRole === "host" || currentRole === "solo")) {
           handleIncomingBuzzOnHost(msg.team);
+        } else if (msg.type === "TEST_BUZZ" && (currentRole === "host" || currentRole === "solo")) {
+          handleIncomingTestBuzzOnHost(Number(msg.team), msg.role);
         } else if (
           msg.type === "REQUEST_STATE" &&
           (currentRole === "host" || isPrimaryHostPeer)
@@ -838,6 +840,8 @@ window.Feud = window.Feud || {};
                 }
               } else if (msg.type === "BUZZ") {
                 handleIncomingBuzzOnHost(Number(msg.team));
+              } else if (msg.type === "TEST_BUZZ") {
+                handleIncomingTestBuzzOnHost(Number(msg.team), msg.role);
               } else if (msg.type === "HOST_PATCH" && msg.patch && st) {
                 const merged = { ...st, ...msg.patch, updatedAt: Date.now() };
                 Feud.saveRoomStateToStorage(currentCode, merged);
@@ -966,6 +970,8 @@ window.Feud = window.Feud || {};
       }
     } else if (msg.type === "BUZZ") {
       handleIncomingBuzzOnHost(Number(msg.team));
+    } else if (msg.type === "TEST_BUZZ") {
+      handleIncomingTestBuzzOnHost(Number(msg.team), msg.role);
     } else if (msg.type === "HOST_PATCH" && msg.patch && st) {
       const merged = { ...st, ...msg.patch, updatedAt: Date.now() };
       Feud.saveRoomStateToStorage(currentCode, merged);
@@ -1131,6 +1137,16 @@ window.Feud = window.Feud || {};
         .updateDoc(getFirestoreRoomRef(currentCode), { ...patch, updatedAt: Date.now() })
         .catch(() => {});
     }
+  }
+
+  function handleIncomingTestBuzzOnHost(teamNum, role) {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("feud-test-buzz", {
+          detail: { team: Number(teamNum) || 0, role: String(role || "") }
+        })
+      );
+    } catch (e) {}
   }
 
   function broadcastFromHostToPeers(fullState) {
@@ -1911,6 +1927,36 @@ window.Feud = window.Feud || {};
     }
   }
 
+  async function syncSendTestBuzz(teamNum, role) {
+    if (!currentCode) return;
+    const payload = { type: "TEST_BUZZ", team: Number(teamNum) || 0, role: String(role || "") };
+
+    if (broadcastChan) {
+      try {
+        broadcastChan.postMessage(payload);
+      } catch (e) {}
+    }
+
+    if (sendP2pAction && clientConnOpen && clientHostPeerId) {
+      try {
+        sendP2pAction(payload, clientHostPeerId);
+      } catch (e) {}
+    } else if (mqttClient && mqttConnected && currentCode) {
+      try {
+        mqttClient.publish(
+          `party-feud/v1/${currentCode}/host`,
+          JSON.stringify({ senderId: tabClientId, msg: payload })
+        );
+      } catch (e) {}
+    } else {
+      reconnectNowIfDead();
+    }
+
+    if (isPrimaryHostPeer || currentRole === "solo") {
+      handleIncomingTestBuzzOnHost(payload.team, payload.role);
+    }
+  }
+
   function subscribeFirestoreRoom(code) {
     if (unsubscribeFirestore) {
       unsubscribeFirestore();
@@ -2190,6 +2236,7 @@ window.Feud = window.Feud || {};
     joinExistingRoomSync,
     syncPushPatch,
     syncSendTeamBuzz,
+    syncSendTestBuzz,
     buildBuzzPatch,
     cleanupSync
   });

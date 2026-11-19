@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Party Feud — Printable Question &amp; Answer Review Sheet</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
   <style>
     :root {
       --ink: #0f172a;
@@ -492,6 +494,11 @@
         <a href="./index.html" id="btnBackToGame" class="toolbar-btn secondary" onclick="if(window.opener && !window.opener.closed){window.opener.focus(); window.close(); return false;} const from=new URLSearchParams(window.location.search).get('from'); if(from==='setup'){window.location.href='./index.html?returnTo=setup'; return false;} if(window.history.length > 1 && document.referrer){window.history.back(); return false;}">◀ Back to Game</a>
 
         <div>
+          <label class="toolbar-label" for="reviewDeckTagFilter">Category:</label>
+          <select id="reviewDeckTagFilter" class="toolbar-select" title="Filter decks by category"></select>
+        </div>
+
+        <div>
           <label class="toolbar-label" for="reviewDeckSelect">Deck:</label>
           <select id="reviewDeckSelect" class="toolbar-select"></select>
         </div>
@@ -559,13 +566,14 @@
     <main id="reviewContentRoot"></main>
   </div>
 
-  <script src="./data/questions.js?v=20261118c"></script>
-  <script src="./js/state.js?v=20261118c"></script>
-  <script src="./js/formats.js?v=20261118c"></script>
-  <script src="./js/decks.js?v=20261118c"></script>
+  <script src="./data/questions.js?v=20261119c"></script>
+  <script src="./js/state.js?v=20261119c"></script>
+  <script src="./js/formats.js?v=20261119c"></script>
+  <script src="./js/decks.js?v=20261119c"></script>
   <script>
     (function () {
       const Feud = window.Feud || {};
+      const tagFilterSelect = document.getElementById("reviewDeckTagFilter");
       const deckSelect = document.getElementById("reviewDeckSelect");
       const levelSelect = document.getElementById("reviewLevelFilter");
       const searchInput = document.getElementById("reviewSearchInput");
@@ -612,12 +620,18 @@
         const clean = String(rawParam).trim();
         const slug = toDeckSlug(clean).toLowerCase();
         return (
-          catalog.find(
-            (item) =>
-              item.id.toLowerCase() === clean.toLowerCase() ||
-              toDeckSlug(item.id).toLowerCase() === slug ||
-              (item.file && item.file.toLowerCase() === clean.toLowerCase())
-          ) || null
+          catalog.find((item) => {
+            if (item.id.toLowerCase() === clean.toLowerCase()) return true;
+            if (toDeckSlug(item.id).toLowerCase() === slug) return true;
+            if (item.file && item.file.toLowerCase() === clean.toLowerCase()) return true;
+            const dName = (item.data && item.data.deckName) || (item.meta && item.meta.deckName) || "";
+            if (dName && toDeckSlug(dName).toLowerCase() === slug) return true;
+            const slugifiedName = dName
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-+|-+$/g, "");
+            return Boolean(slugifiedName && slugifiedName === slug);
+          }) || null
         );
       }
 
@@ -661,17 +675,91 @@
         }
       }
 
+      function buildTagFilterOptions(catalog) {
+        if (!tagFilterSelect) return;
+        const curVal = tagFilterSelect.value || "all";
+        const defs =
+          Array.isArray(Feud.DECK_TAG_DEFINITIONS) && Feud.DECK_TAG_DEFINITIONS.length > 0
+            ? Feud.DECK_TAG_DEFINITIONS
+            : [{ id: "all", label: "📚 All Decks" }];
+        tagFilterSelect.innerHTML = "";
+        defs.forEach((def) => {
+          const count =
+            def.id === "all"
+              ? catalog.length
+              : catalog.filter((item) => Feud.getDeckTags && Feud.getDeckTags(item).includes(def.id))
+                  .length;
+          if (def.id !== "all" && count === 0) return;
+          const opt = document.createElement("option");
+          opt.value = def.id;
+          opt.textContent = `${def.label} (${count})`;
+          if (def.id === curVal) opt.selected = true;
+          tagFilterSelect.appendChild(opt);
+        });
+      }
+
+      function ensureSavedCustomDeckInCatalog() {
+        const savedCustom = Feud.loadSavedCustomDeck ? Feud.loadSavedCustomDeck() : null;
+        if (!savedCustom || !Array.isArray(savedCustom.rounds) || savedCustom.rounds.length === 0) {
+          return null;
+        }
+        const catalog = Feud.getDeckCatalog ? Feud.getDeckCatalog() : Feud.DECK_CATALOG || [];
+        const savedSlug = String(savedCustom.name || "custom-deck")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+        const deckId = `${savedSlug || "custom-deck"}.json`;
+        const existing = catalog.find(
+          (c) =>
+            c &&
+            c.data &&
+            (c.id.toLowerCase() === deckId.toLowerCase() ||
+              (c.data.deckName && c.data.deckName === savedCustom.name))
+        );
+        if (!existing && Feud.upsertCatalogEntries) {
+          Feud.upsertCatalogEntries([
+            {
+              id: deckId,
+              label: `${Feud.loadSavedGameIcon ? Feud.loadSavedGameIcon() : "✨"} ${
+                savedCustom.name || "Custom Deck"
+              }`,
+              file: null,
+              source: "custom-file",
+              data: {
+                gameTitle: Feud.loadSavedGameTitle ? Feud.loadSavedGameTitle() : "Party Feud",
+                gameIcon: Feud.loadSavedGameIcon ? Feud.loadSavedGameIcon() : "✨",
+                deckName: savedCustom.name || "Custom Deck",
+                teamPresets: savedCustom.teamPresets || null,
+                tags: Array.isArray(savedCustom.tags) ? savedCustom.tags : ["custom"],
+                rounds: savedCustom.rounds,
+                fastMoney: Array.isArray(savedCustom.fastMoney) ? savedCustom.fastMoney : []
+              }
+            }
+          ]);
+        }
+        return savedCustom;
+      }
+
       function buildCatalogOptions(preserveSelection = false) {
         const prevVal = preserveSelection ? deckSelect.value : "";
+        const savedCustom = ensureSavedCustomDeckInCatalog();
         const catalog = Feud.getDeckCatalog
           ? Feud.getDeckCatalog().slice()
           : Array.isArray(Feud.DECK_CATALOG)
           ? Feud.DECK_CATALOG.slice()
           : [];
-        const savedCustom = Feud.loadSavedCustomDeck ? Feud.loadSavedCustomDeck() : null;
+        buildTagFilterOptions(catalog);
+        const activeTag = (tagFilterSelect && tagFilterSelect.value) || "all";
+        const filteredCatalog =
+          activeTag === "all"
+            ? catalog
+            : catalog.filter(
+                (item) => Feud.getDeckTags && Feud.getDeckTags(item).includes(activeTag)
+              );
+        const listToShow = filteredCatalog.length > 0 ? filteredCatalog : catalog;
         deckSelect.innerHTML = "";
 
-        catalog.forEach((item) => {
+        listToShow.forEach((item) => {
           const opt = document.createElement("option");
           opt.value = item.id;
           let labelText = Feud.formatDeckOptionLabel
@@ -681,11 +769,17 @@
             const dName =
               item.builtin === "starter"
                 ? (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) || "Starter Party Deck"
-                : (item.data && item.data.deckName) || item.id;
+                : (item.data && item.data.deckName) ||
+                  (item.meta && item.meta.deckName) ||
+                  item.id;
             const dRounds =
               item.builtin === "starter"
                 ? Feud.DEFAULT_ROUNDS || []
-                : (item.data && item.data.rounds) || [];
+                : item.data && Array.isArray(item.data.rounds)
+                ? item.data.rounds
+                : item.meta && Number(item.meta.roundsCount) > 0
+                ? new Array(Number(item.meta.roundsCount)).fill({})
+                : [];
             if (item.builtin === "starter" || dRounds.length > 0) {
               const st = Feud.getDeckPlayStats({ customDeck: { name: dName, rounds: dRounds } });
               labelText +=
@@ -817,7 +911,12 @@
           }
         }
 
-        const catalog = Array.isArray(Feud.DECK_CATALOG) ? Feud.DECK_CATALOG : [];
+        ensureSavedCustomDeckInCatalog();
+        const catalog = Feud.getDeckCatalog
+          ? Feud.getDeckCatalog()
+          : Array.isArray(Feud.DECK_CATALOG)
+          ? Feud.DECK_CATALOG
+          : [];
         const entry = findCatalogMatch(val, catalog);
 
         if (entry && entry.builtin === "starter") {
@@ -1424,6 +1523,13 @@
         });
       }
 
+      if (tagFilterSelect) {
+        tagFilterSelect.addEventListener("change", () => {
+          buildCatalogOptions(false);
+          loadSelectedDeck(deckSelect.value, true, false);
+        });
+      }
+
       window.addEventListener("feud-decks-updated", () => {
         buildCatalogOptions(true);
         updateReviewFolderButtons();
@@ -1431,7 +1537,21 @@
 
       buildCatalogOptions(false);
       updateReviewFolderButtons();
-      loadSelectedDeck(deckSelect.value, true);
+      const reviewHash = window.location.hash || "";
+      if (reviewHash.includes("deckData=") && Feud.decodeDeckFromUrlHash) {
+        Feud.decodeDeckFromUrlHash(reviewHash).then((decoded) => {
+          if (decoded && decoded.data) {
+            if (Feud.upsertCatalogEntries) Feud.upsertCatalogEntries([decoded]);
+            buildCatalogOptions(false);
+            deckSelect.value = decoded.id;
+            loadSelectedDeck(decoded.id, false, false);
+          } else {
+            loadSelectedDeck(deckSelect.value, true);
+          }
+        });
+      } else {
+        loadSelectedDeck(deckSelect.value, true);
+      }
       if (Feud.discoverAvailableDecks) {
         Feud.discoverAvailableDecks();
       }

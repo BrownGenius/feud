@@ -1,0 +1,19 @@
+{
+  "name": "Party Feud — Live TV Game Show",
+  "short_name": "Party Feud",
+  "description": "Free open-source Family Feud-style TV game show with QR phone buzzers, host teleprompter, custom decks, and offline play.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#140812",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

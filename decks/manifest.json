@@ -1,0 +1,98 @@
+{
+  "generatedAt": "2026-11-19T16:15:44.545Z",
+  "decks": [
+    {
+      "id": "2026-frc-rules.json",
+      "file": "./decks/2026-frc-rules.json",
+      "deckName": "2026 FRC Game & Rules (24 Rounds)",
+      "gameIcon": "🤖",
+      "roundsCount": 24,
+      "fastMoneySets": 0,
+      "tags": [
+        "family-friendly",
+        "robotics"
+      ]
+    },
+    {
+      "id": "bollywood-music-movies.json",
+      "file": "./decks/bollywood-music-movies.json",
+      "deckName": "Bollywood Music & Movies (12 Rounds)",
+      "gameIcon": "🎬",
+      "roundsCount": 12,
+      "fastMoneySets": 1,
+      "tags": [
+        "family-friendly",
+        "movies-music"
+      ]
+    },
+    {
+      "id": "desi-thanksgiving.json",
+      "file": "./decks/desi-thanksgiving.json",
+      "deckName": "Desi Thanksgiving (37 Rounds)",
+      "gameIcon": "🦃",
+      "roundsCount": 37,
+      "fastMoneySets": 5,
+      "tags": [
+        "family-friendly",
+        "holidays"
+      ]
+    },
+    {
+      "id": "2025.json",
+      "file": "./decks/2025.json",
+      "deckName": "Family Feud 2025",
+      "gameIcon": "⭐",
+      "roundsCount": 60,
+      "fastMoneySets": 8,
+      "tags": [
+        "classic"
+      ]
+    },
+    {
+      "id": "2025-family-friendly.json",
+      "file": "./decks/2025-family-friendly.json",
+      "deckName": "Family Feud 2025 (Family-Friendly Edition)",
+      "gameIcon": "🌟",
+      "roundsCount": 60,
+      "fastMoneySets": 8,
+      "tags": [
+        "family-friendly",
+        "classic"
+      ]
+    },
+    {
+      "id": "2026.json",
+      "file": "./decks/2026.json",
+      "deckName": "Family Feud 2026",
+      "gameIcon": "🔥",
+      "roundsCount": 60,
+      "fastMoneySets": 8,
+      "tags": [
+        "classic"
+      ]
+    },
+    {
+      "id": "2026-family-friendly.json",
+      "file": "./decks/2026-family-friendly.json",
+      "deckName": "Family Feud 2026 (Family-Friendly Edition)",
+      "gameIcon": "🌟",
+      "roundsCount": 60,
+      "fastMoneySets": 8,
+      "tags": [
+        "family-friendly",
+        "classic"
+      ]
+    },
+    {
+      "id": "sample-friendly-feud.json",
+      "file": "./decks/sample-friendly-feud.json",
+      "deckName": "Sample Friendly Feud",
+      "gameIcon": "🎉",
+      "roundsCount": 2,
+      "fastMoneySets": 0,
+      "tags": [
+        "classic"
+      ]
+    }
+  ]
+}

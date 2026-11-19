@@ -66,6 +66,7 @@ window.Feud = window.Feud || {};
         gameIcon: data.gameIcon || data.icon || "",
         deckName: data.deckName || data.name || "",
         teamPresets: Array.isArray(data.teamPresets) ? data.teamPresets : null,
+        tags: Array.isArray(data.tags) ? data.tags : null,
         rounds,
         fastMoney
       };
@@ -105,6 +106,7 @@ window.Feud = window.Feud || {};
         gameIcon: data.gameIcon || data.icon || "",
         deckName: data.deckName || data.name || "",
         teamPresets: Array.isArray(data.teamPresets) ? data.teamPresets : null,
+        tags: Array.isArray(data.tags) ? data.tags : null,
         rounds,
         fastMoney
       };
