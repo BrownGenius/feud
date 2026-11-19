@@ -52,7 +52,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 ## 🎯 Great For…
 
 * **🏡 Family Game Nights & Holiday Parties:** Play right on the living-room TV in under a minute — grandma, kids, and guests just scan a QR code on any phone to buzz in.
-* **🏫 Classrooms & Review Days:** Zero student logins, zero accounts, and zero data collection. Works on school projectors, Chromebooks, and phones with custom spreadsheet review decks.
+* **🏫 Classrooms & Review Days:** Zero student logins, zero accounts, and zero data collection. Works on school projectors, Chromebooks, and phones with custom AI-generated JSON review decks.
 * **💼 Office Team Building & Socials:** Turn an all-hands meeting room or Zoom screen-share into an energizing game show with built-in Host teleprompter cues.
 * **🤖 Robotics Teams & Clubs (`FRC`):** Includes a dedicated **24-round 2026 FRC Game & Rules** deck for kickoff meetings, rookie onboarding, and drive-team prep.
 * **🏕️ Offline Cabin & HDMI Parties:** Open `index.html` locally with Wi-Fi turned off and run Host + TV side-by-side over an HDMI cable.
@@ -67,7 +67,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 | **Live Phone Buzzers** | **QR Scan — Team 1, Team 2 & Shared Combo** | ❌ None (honor system / yelling) | ⚠️ Separate buzzer app or paid tier |
 | **Host Controls** | **Full Answer Key, Live Mini TV, Teleprompter & 25-Step Undo** | ❌ Clunky slide presenter view | ⚠️ Basic host toggles |
 | **TV Presentation & SFX** | **3D Flipping Tiles, Game-Show Audio, Big Red `X`, Winner Screen** | ⚠️ Static slides, manual point math | ✅ Varies |
-| **Custom Decks & No Repeats** | **300+ Built-In Rounds, AI/CSV/JSON Decks & Multi-Game Used Tracker** | ❌ Hard to edit slides | ⚠️ Locked or paywalled |
+| **Custom Decks & No Repeats** | **300+ Built-In Rounds, AI-Generated & Custom JSON Decks & Multi-Game Used Tracker** | ❌ Hard to edit slides | ⚠️ Locked or paywalled |
 | **Offline Mode** | **Works Offline Over HDMI (`file://`)** | ✅ Local file | ❌ Requires internet server |
 
 ---
@@ -112,11 +112,11 @@ Launch straight into any bundled question deck with one click — or open the pr
 
 ---
 
-## ✍️ Build Your Own Deck in 2 Minutes (AI or Spreadsheet)
+## ✍️ Build Your Own Deck in 2 Minutes (with AI or JSON)
 
-Want custom questions for a birthday, wedding shower, classroom quiz, or club night? Create your own pack in two minutes using AI or a spreadsheet:
+Want custom questions for a birthday, wedding shower, classroom quiz, or club night? Generate a ready-to-play JSON pack in seconds with AI:
 
-### Option A — Generate a Custom Deck with ChatGPT / Gemini / Claude
+### Generate a Custom JSON Deck with ChatGPT / Gemini / Claude
 Copy and paste this prompt into your favorite AI assistant (just swap out the topic and audience):
 
 ```text
@@ -160,16 +160,13 @@ Rules:
 ```
 
 **Play your generated deck right away:**
-1. **Instant URL Load (No Fork Required):** Paste the JSON into a public [GitHub Gist](https://gist.github.com/), click **Raw**, copy the URL, and open:
+1. **Load Directly from Disk (`📄 Load Deck File` or `📂 Scan Folder`):** Save the JSON as a `.json` file and click **`📄 Load Deck File`** (or **`📂 Scan Folder`**) inside **New Game Setup** or **Review** — works both online and 100% offline over `file://`.
+2. **Instant URL Load (No Fork Required):** Paste the JSON into a public [GitHub Gist](https://gist.github.com/), click **Raw**, copy the URL, and open:
    `https://browngenius.github.io/feud/?deck=YOUR_RAW_GIST_URL`
-2. **Self-Host in Your Fork:** Save the `.json` file into your fork's `/decks/` folder on GitHub Pages — Party Feud automatically discovers new `.json` and `.csv` files in `/decks/` via the GitHub Contents API! (For offline `file://` play, click **`📂 Scan Folder`** or **`📄 Load Deck File`** in New Game Setup or Review to scan your local `/decks` folder directly from disk.)
+3. **Self-Host in Your Fork:** Save the `.json` file into your fork's `/decks/` folder on GitHub Pages — Party Feud automatically discovers new `.json` files in `/decks/` via the GitHub Contents API (or directory listing on local HTTP servers)!
+* Already have decks built for *Friendly-Feud* (`rounds[].ans` / `pnt` + `final_round`)? Those `.json` files work automatically everywhere too!
 
-### Option B — Edit in Google Sheets or Excel
-* Download [`decks/template.csv`](./decks/template.csv) and fill in your questions, multipliers (`1` / `2` / `3`), answers, and points in Google Sheets or Excel.
-* Publish your Google Sheet to the web as **CSV** and launch it directly with `?deck=YOUR_PUBLISHED_CSV_URL`, or drop the `.csv` file into `/decks/` on your GitHub Pages fork.
-* Already have decks built for *Friendly-Feud* (`rounds[].ans` / `pnt` + `final_round`)? Those JSON files work automatically via URL, `/decks/`, **`📂 Scan Folder`**, or **`📄 Load Deck File`** too!
-
-> **🤝 Contribute a Question Pack:** Made a great themed deck (Movies, Sports, Holiday Trivia, Classroom Review, Pop Culture)? **No JavaScript needed!** Open a Pull Request adding your `.json` or `.csv` file to `/decks/`, or share it in a GitHub Issue so other hosts can play it too.
+> **🤝 Contribute a Question Pack:** Made a great themed deck (Movies, Sports, Holiday Trivia, Classroom Review, Pop Culture)? **No JavaScript needed!** Open a Pull Request adding your `.json` file to `/decks/`, or share it in a GitHub Issue so other hosts can play it too.
 
 ---
 
@@ -276,9 +273,9 @@ A Party Feud Deck JSON file configures `gameTitle`, `gameIcon`, `deckName`, `tea
 }
 ```
 
-* **GitHub Pages & HTTP Auto-Discovery:** Any `.json` or `.csv` file committed to `/decks/` is automatically discovered via the GitHub Contents API (on `*.github.io`) or `./decks/` directory listing (on local HTTP dev servers).
-* **Offline (`file://`) Folder Scan & Custom Deck Files:** Use **`📂 Scan Folder`** (`showDirectoryPicker` + IndexedDB handle persistence for 1-click **`🔄 Re-scan`**, with `<input webkitdirectory>` fallback) to scan your local `/decks` folder directly from disk, or **`📄 Load Deck File`** to load individual custom `.json`/`.csv` decks — cached across reloads and between [`index.html`](./index.html) and [`review.html`](./review.html).
-* **Direct URL Loading:** `?deck=2026-frc-rules` (bundled `/decks` slug) or `?deck=https://.../my-questions.json&title=Holiday+Party+Feud&icon=🎉` (CORS-accessible remote `.json`/`.csv`).
+* **GitHub Pages & HTTP Auto-Discovery:** Any `.json` file committed to `/decks/` is automatically discovered via the GitHub Contents API (on `*.github.io`) or `./decks/` directory listing (on local HTTP dev servers).
+* **Offline (`file://`) Folder Scan & Custom Deck Files:** Use **`📂 Scan Folder`** (`showDirectoryPicker` + IndexedDB handle persistence for 1-click **`🔄 Re-scan`**, with `<input webkitdirectory>` fallback) to scan your local `/decks` folder directly from disk, or **`📄 Load Deck File`** to load individual custom `.json` decks — cached across reloads and between [`index.html`](./index.html) and [`review.html`](./review.html).
+* **Direct URL Loading:** `?deck=2026-frc-rules` (bundled `/decks` slug) or `?deck=https://.../my-questions.json&title=Holiday+Party+Feud&icon=🎉` (CORS-accessible remote `.json`).
 * **Printable Review & `Used` Tracker:** Open [`review.html`](./review.html) (or `review.html?deck=desi-thanksgiving`) to inspect all rounds/Fast Money sets, scan local folders or load custom files, and toggle `Used` / `Unused` status in `localStorage`.
 
 </details>
@@ -301,7 +298,7 @@ feud/
 │   ├── app.js                      # Controller, keyboard shortcuts & modal handlers
 │   ├── state.js                    # State management, multi-game slicer & localStorage
 │   ├── sync.js                     # Trystero WebRTC P2P + MQTT-WSS + BroadcastChannel + Firebase sync
-│   ├── formats.js                  # Universal CSV, Friendly-Feud JSON & Deck parser/exporter
+│   ├── formats.js                  # Universal Party Feud & Friendly-Feud JSON parser/exporter
 │   ├── decks.js                    # Local folder scanner (File System Access API), custom file loader & auto-discovery
 │   ├── views.js                    # DOM renderers for TV Display, Host Remote, and Buzzers
 │   └── audio.js                    # Web Audio API synthesizer (no external MP3 dependencies)
@@ -312,8 +309,7 @@ feud/
     ├── 2026-family-friendly.json           # Family Feud 2026 (Family-Friendly Edition)
     ├── 2026-frc-rules.json                 # 2026 FRC Game & Rules (24 Rounds)
     ├── desi-thanksgiving.json              # 37-Round + 5 Fast Money Desi Thanksgiving Party Pack
-    ├── sample-friendly-feud.json           # Sample Friendly-Feud compatible JSON pack
-    └── template.csv                        # Sample spreadsheet template for Google Sheets / Excel
+    └── sample-friendly-feud.json           # Sample Friendly-Feud compatible JSON pack
 ```
 
 </details>

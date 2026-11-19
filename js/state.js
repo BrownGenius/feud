@@ -1,6 +1,6 @@
 // =====================================================================
 // STATE MANAGEMENT, MATCH SLICER & LOCALSTORAGE PERSISTENCE (js/state.js)
-// Persists custom survey questions, imported CSV/JSON decks,
+// Persists custom survey questions, imported JSON decks,
 // multi-game played-round history (so 4-5 games at one party never repeat
 // questions or Fast Money sets), custom Game Title & Icon, and room state.
 // =====================================================================
@@ -134,7 +134,7 @@ window.Feud = window.Feud || {};
     }
     if (item.data) {
       const d = item.data;
-      const base = d.deckName || item.id.replace(/\.(json|csv)$/i, "");
+      const base = d.deckName || item.id.replace(/\.json$/i, "");
       const icon = d.gameIcon ? `${d.gameIcon} ` : "";
       const rCount = Array.isArray(d.rounds) ? d.rounds.length : 0;
       const fmSets = Array.isArray(d.fastMoney) ? Math.floor(d.fastMoney.length / 5) : 0;

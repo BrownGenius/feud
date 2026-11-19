@@ -320,7 +320,7 @@ window.Feud = window.Feud || {};
           item.data &&
           item.data.deckName &&
           item.data.deckName === activeDeckName) ||
-        (activeDeckName && item.id.replace(/\.(json|csv)$/i, "") === activeDeckName)
+        (activeDeckName && item.id.replace(/\.json$/i, "") === activeDeckName)
       ) {
         opt.selected = true;
         matched = true;
@@ -342,7 +342,7 @@ window.Feud = window.Feud || {};
     const deckSlug =
       selectedVal === "__custom__"
         ? ""
-        : String(selectedVal).replace(/\.(json|csv)$/i, "");
+        : String(selectedVal).replace(/\.json$/i, "");
     const reviewHref = deckSlug
       ? `./review.html?deck=${encodeURIComponent(deckSlug)}&from=setup`
       : "./review.html?from=setup";
@@ -383,11 +383,11 @@ window.Feud = window.Feud || {};
         statusEl.style.color = "#86efac";
       } else if (window.location.protocol === "file:") {
         statusEl.textContent =
-          'Offline tip: Click "📂 Scan Folder" and pick your local decks/ folder (or "📄 Load Deck File") to add .json / .csv decks.';
+          'Offline tip: Click "📂 Scan Folder" and pick your local decks/ folder (or "📄 Load Deck File") to add .json decks.';
         statusEl.style.color = "#fde68a";
       } else {
         statusEl.textContent =
-          'Scan your local decks/ folder or click "📄 Load Deck File" to add custom .json / .csv decks.';
+          'Scan your local decks/ folder or click "📄 Load Deck File" to add custom .json decks.';
         statusEl.style.color = "#cbd5e1";
       }
     }
@@ -414,7 +414,7 @@ window.Feud = window.Feud || {};
       if (res.count > 0) {
         Feud.showToast(`📂 Loaded ${res.count} deck(s) from ${res.folderName}/!`);
       } else {
-        Feud.showToast(`No valid .json or .csv decks found in ${res.folderName || "selected folder"}.`);
+        Feud.showToast(`No valid .json decks found in ${res.folderName || "selected folder"}.`);
       }
     } catch (err) {
       Feud.showToast(`❌ Could not scan folder: ${err && err.message ? err.message : "Error"}`);
@@ -460,7 +460,7 @@ window.Feud = window.Feud || {};
       if (res.count > 0) {
         Feud.showToast(`📂 Loaded ${res.count} deck(s) from ${res.folderName}/!`);
       } else {
-        Feud.showToast("No valid .json or .csv Feud decks found in that folder.");
+        Feud.showToast("No valid .json Feud decks found in that folder.");
       }
     } catch (err) {
       Feud.showToast(`❌ Could not scan folder: ${err && err.message ? err.message : "Error"}`);
@@ -538,7 +538,7 @@ window.Feud = window.Feud || {};
 
   function syncDeckQueryParam(deckId) {
     currentCatalogDeckId = deckId || "";
-    const clean = String(deckId || "").trim().replace(/\.(json|csv)$/i, "");
+    const clean = String(deckId || "").trim().replace(/\.json$/i, "");
     try {
       const url = new URL(window.location.href);
       if (clean && clean !== "__custom__") {
@@ -574,7 +574,7 @@ window.Feud = window.Feud || {};
     if (entry.data) {
       // Instant load from cached local scan, custom file, or hydrated metadata
       const jsonText = JSON.stringify(entry.data);
-      await applyImportedDeckText(jsonText, entry.id, false, false);
+      await applyImportedDeckText(jsonText, entry.id, false);
       syncSetupModalInputsFromState();
       return;
     }
@@ -3311,7 +3311,7 @@ window.Feud = window.Feud || {};
   }
 
   // =====================================================================
-  // 9. EDIT ROUND MODAL + UNIVERSAL DECK MANAGER (CSV / FRIENDLY-FEUD JSON)
+  // 9. EDIT ROUND MODAL + UNIVERSAL DECK MANAGER (JSON)
   // =====================================================================
   function openEditRoundModal() {
     const round = Feud.getRoundData(roomState, roomState.roundIdx);
@@ -3426,13 +3426,12 @@ window.Feud = window.Feud || {};
     const file = event.target.files && event.target.files[0];
     if (!file) return;
     const fileName = file.name || "Custom Deck";
-    const isCsv = /\.csv$/i.test(fileName);
 
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
         const content = String(e.target.result || "");
-        await applyImportedDeckText(content, fileName, isCsv, true);
+        await applyImportedDeckText(content, fileName, true);
         event.target.value = "";
       } catch (err) {
         Feud.showToast(`❌ Import failed: ${err.message || "Invalid file format"}`);
@@ -3445,7 +3444,7 @@ window.Feud = window.Feud || {};
     const urlIn = document.getElementById("deckRemoteUrlInput");
     const url = urlIn ? urlIn.value.trim() : "";
     if (!url) {
-      Feud.showToast("Paste a URL to a .csv or .json deck file first.");
+      Feud.showToast("Paste a URL to a .json deck file first.");
       return;
     }
     await fetchAndApplyRemoteDeck(url, true);
@@ -3455,18 +3454,18 @@ window.Feud = window.Feud || {};
     try {
       const cleanInput = String(url || "").trim();
       const fileName = cleanInput.split("/").pop().split("?")[0];
-      const normStem = fileName.replace(/\.(json|csv)$/i, "").toLowerCase();
+      const normStem = fileName.replace(/\.json$/i, "").toLowerCase();
       const catalog = getCatalogList();
       const bundled = catalog.find(
         (c) =>
           c.data &&
           (c.id.toLowerCase() === fileName.toLowerCase() ||
-            c.id.replace(/\.(json|csv)$/i, "").toLowerCase() === normStem ||
+            c.id.replace(/\.json$/i, "").toLowerCase() === normStem ||
             c.file === cleanInput)
       );
       if (bundled && bundled.data) {
         syncDeckQueryParam(bundled.id);
-        await applyImportedDeckText(JSON.stringify(bundled.data), bundled.id, false, closeModals);
+        await applyImportedDeckText(JSON.stringify(bundled.data), bundled.id, closeModals);
         syncSetupModalInputsFromState();
         return;
       }
@@ -3496,9 +3495,6 @@ window.Feud = window.Feud || {};
         throw new Error(lastStatus || "Deck not found");
       }
 
-      const isCsv =
-        /\.csv($|\?)/i.test(loadedUrl) ||
-        (!loadedText.trim().startsWith("{") && !loadedText.trim().startsWith("["));
       const label = loadedUrl.split("/").pop().split("?")[0] || fileName || "Remote Deck";
 
       if (Feud.parseDeckFileContent && Feud.upsertCatalogEntries) {
@@ -3520,15 +3516,15 @@ window.Feud = window.Feud || {};
         }
       }
 
-      await applyImportedDeckText(loadedText, label, isCsv, closeModals);
+      await applyImportedDeckText(loadedText, label, closeModals);
       syncSetupModalInputsFromState();
     } catch (err) {
       Feud.showToast(`❌ Could not load deck: ${err.message}`);
     }
   }
 
-  async function applyImportedDeckText(content, sourceLabel, isCsv, closeModals = true) {
-    const parsed = isCsv ? Feud.parseFeudCsv(content) : Feud.parseFeudJson(content);
+  async function applyImportedDeckText(content, sourceLabel, closeModals = true) {
+    const parsed = Feud.parseFeudJson(content);
 
     if (parsed.kind === "overrides") {
       const merged = { ...(roomState.customRounds || {}), ...parsed.customRounds };
@@ -3545,7 +3541,7 @@ window.Feud = window.Feud || {};
     }
 
     const customDeck = {
-      name: parsed.deckName || sourceLabel.replace(/\.(json|csv)$/i, ""),
+      name: parsed.deckName || sourceLabel.replace(/\.json$/i, ""),
       teamPresets: parsed.teamPresets || null,
       rounds: parsed.rounds,
       fastMoney: parsed.fastMoney || null
@@ -3681,14 +3677,6 @@ window.Feud = window.Feud || {};
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
-  }
-
-  function downloadDeckAsCsv() {
-    const rounds = Feud.getAllEffectiveRounds(roomState);
-    const fm = Feud.getSourceFastMoneyList(roomState);
-    const csv = Feud.exportToCsv(rounds, fm);
-    triggerFileDownload("party-feud-deck.csv", csv, "text/csv;charset=utf-8;");
-    Feud.showToast("📥 Downloaded CSV Spreadsheet (Google Sheets / Excel ready)!");
   }
 
   function downloadDeckAsFriendlyFeudJson() {
@@ -4084,7 +4072,6 @@ window.Feud = window.Feud || {};
     importDeckFile,
     loadDeckFromUrlInput,
     restoreDefaultDeck,
-    downloadDeckAsCsv,
     downloadDeckAsFriendlyFeudJson,
     downloadDeckAsNativeJson,
     pressTeamBuzzer,
@@ -4304,11 +4291,11 @@ window.Feud = window.Feud || {};
     if (urlDeck) {
       const catalog = getCatalogList();
       const cleanUrlDeck = urlDeck.replace(/^\.?\/?decks\//i, "");
-      const normUrlDeck = cleanUrlDeck.replace(/\.(json|csv)$/i, "").toLowerCase();
+      const normUrlDeck = cleanUrlDeck.replace(/\.json$/i, "").toLowerCase();
       const catMatch = catalog.find(
         (c) =>
           c.id.toLowerCase() === cleanUrlDeck.toLowerCase() ||
-          c.id.replace(/\.(json|csv)$/i, "").toLowerCase() === normUrlDeck
+          c.id.replace(/\.json$/i, "").toLowerCase() === normUrlDeck
       );
       if (catMatch) {
         onSelectCatalogDeck(catMatch.id);

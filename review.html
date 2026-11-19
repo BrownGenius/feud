@@ -497,11 +497,11 @@
         </div>
 
         <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-          <button id="btnReviewScanFolder" type="button" class="toolbar-btn secondary" title="Scan your local decks/ folder to load .json and .csv decks offline">📂 Scan Folder</button>
+          <button id="btnReviewScanFolder" type="button" class="toolbar-btn secondary" title="Scan your local decks/ folder to load .json decks offline">📂 Scan Folder</button>
           <button id="btnReviewRescanFolder" type="button" class="toolbar-btn secondary" style="display:none;" title="Re-read decks from your previously linked folder">🔄 Re-scan</button>
-          <button id="btnReviewLoadFile" type="button" class="toolbar-btn secondary" title="Load a custom .json or .csv deck file">📄 Load File</button>
-          <input id="reviewFolderInput" type="file" webkitdirectory multiple accept=".json,.csv" style="display:none;" />
-          <input id="reviewFileInput" type="file" multiple accept=".json,.csv" style="display:none;" />
+          <button id="btnReviewLoadFile" type="button" class="toolbar-btn secondary" title="Load a custom .json deck file">📄 Load File</button>
+          <input id="reviewFolderInput" type="file" webkitdirectory multiple accept=".json" style="display:none;" />
+          <input id="reviewFileInput" type="file" multiple accept=".json" style="display:none;" />
         </div>
 
         <div>
@@ -559,10 +559,10 @@
     <main id="reviewContentRoot"></main>
   </div>
 
-  <script src="./data/questions.js?v=20261118b"></script>
-  <script src="./js/state.js?v=20261118b"></script>
-  <script src="./js/formats.js?v=20261118b"></script>
-  <script src="./js/decks.js?v=20261118b"></script>
+  <script src="./data/questions.js?v=20261118c"></script>
+  <script src="./js/state.js?v=20261118c"></script>
+  <script src="./js/formats.js?v=20261118c"></script>
+  <script src="./js/decks.js?v=20261118c"></script>
   <script>
     (function () {
       const Feud = window.Feud || {};
@@ -604,7 +604,7 @@
         return String(id || "")
           .trim()
           .replace(/^\.?\/?decks\//i, "")
-          .replace(/\.(json|csv)$/i, "");
+          .replace(/\.json$/i, "");
       }
 
       function findCatalogMatch(rawParam, catalog) {
@@ -859,10 +859,10 @@
             candidateUrls.push(...Feud.resolveDeckCandidateUrls(val));
           } else if (/^https?:\/\//i.test(val) || val.startsWith("./") || val.startsWith("/")) {
             candidateUrls.push(val);
-          } else if (/\.(json|csv)$/i.test(val)) {
+          } else if (/\.json$/i.test(val)) {
             candidateUrls.push(`./decks/${val}`);
           } else {
-            candidateUrls.push(`./decks/${val}.json`, `./decks/${val}.csv`);
+            candidateUrls.push(`./decks/${val}.json`);
           }
         }
 
@@ -871,10 +871,7 @@
             const res = await fetch(fetchUrl);
             if (!res.ok) continue;
             const txt = await res.text();
-            const isCsv =
-              /\.csv($|\?)/i.test(fetchUrl) ||
-              (!txt.trim().startsWith("{") && !txt.trim().startsWith("["));
-            const parsed = isCsv ? Feud.parseFeudCsv(txt) : Feud.parseFeudJson(txt);
+            const parsed = Feud.parseFeudJson(txt);
             activeDeck = {
               gameTitle: parsed.gameTitle || "Party Feud",
               gameIcon: parsed.gameIcon || "🎉",
@@ -1356,7 +1353,7 @@
             buildCatalogOptions(true);
             updateReviewFolderButtons();
             if (res.count === 0) {
-              alert(`No valid .json or .csv decks found in ${res.folderName || "that folder"}.`);
+              alert(`No valid .json decks found in ${res.folderName || "that folder"}.`);
             }
           } catch (err) {
             alert(`Could not scan folder: ${err && err.message ? err.message : "Error"}`);
@@ -1391,7 +1388,7 @@
           buildCatalogOptions(true);
           updateReviewFolderButtons();
           if (res.count === 0) {
-            alert("No valid .json or .csv Feud decks found in that folder.");
+            alert("No valid .json Feud decks found in that folder.");
           }
         });
       }

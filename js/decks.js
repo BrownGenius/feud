@@ -46,11 +46,10 @@ window.Feud = window.Feud || {};
     const clean = String(name || "").trim();
     if (!clean) return true;
     if (clean.startsWith(".")) return true;
-    if (!/\.(json|csv)$/i.test(clean)) return true;
+    if (!/\.json$/i.test(clean)) return true;
     const lower = clean.toLowerCase();
     return (
       lower === "catalog.js" ||
-      lower === "template.csv" ||
       lower === "package.json" ||
       lower === "package-lock.json"
     );
@@ -58,7 +57,7 @@ window.Feud = window.Feud || {};
 
   function formatFilenameFallbackLabel(fileName) {
     const stem = String(fileName || "")
-      .replace(/\.(json|csv)$/i, "")
+      .replace(/\.json$/i, "")
       .replace(/[-_]+/g, " ")
       .trim();
     const pretty = stem.replace(/\b\w/g, (ch) => ch.toUpperCase());
@@ -103,9 +102,7 @@ window.Feud = window.Feud || {};
     const trimmed = cleanText.trim();
     if (!trimmed) return null;
 
-    const isCsv =
-      /\.csv$/i.test(cleanName) || (!trimmed.startsWith("{") && !trimmed.startsWith("["));
-    const parsed = isCsv ? Feud.parseFeudCsv(cleanText) : Feud.parseFeudJson(cleanText);
+    const parsed = Feud.parseFeudJson(cleanText);
     if (!parsed) return null;
 
     if (parsed.kind === "overrides") {
@@ -127,7 +124,7 @@ window.Feud = window.Feud || {};
       data: {
         gameTitle: parsed.gameTitle || "Party Feud",
         gameIcon: parsed.gameIcon || "🎉",
-        deckName: parsed.deckName || cleanName.replace(/\.(json|csv)$/i, ""),
+        deckName: parsed.deckName || cleanName.replace(/\.json$/i, ""),
         teamPresets: parsed.teamPresets || null,
         rounds: parsed.rounds,
         fastMoney: Array.isArray(parsed.fastMoney) ? parsed.fastMoney : []
@@ -638,10 +635,9 @@ window.Feud = window.Feud || {};
         multiple: true,
         types: [
           {
-            description: "Party Feud Decks (.json, .csv)",
+            description: "Party Feud Decks (.json)",
             accept: {
-              "application/json": [".json"],
-              "text/csv": [".csv"]
+              "application/json": [".json"]
             }
           }
         ]
@@ -812,10 +808,10 @@ window.Feud = window.Feud || {};
     if (/^https?:\/\//i.test(clean) || clean.startsWith("./") || clean.startsWith("/")) {
       return [clean];
     }
-    if (/\.(json|csv)$/i.test(clean)) {
+    if (/\.json$/i.test(clean)) {
       return [`./decks/${clean}`, clean];
     }
-    return [`./decks/${clean}.json`, `./decks/${clean}.csv`];
+    return [`./decks/${clean}.json`];
   }
 
   loadCacheSync();

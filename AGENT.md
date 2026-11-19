@@ -32,10 +32,10 @@ This document summarizes the architecture, priorities, coding style, and develop
 | `js/state.js` | Default `roomState` schema, multi-game unplayed round slicer, `localStorage` persistence, deck/round helpers |
 | `js/sync.js` | Hybrid sync (`Trystero` WebRTC P2P + MQTT-over-WSS fallback + `BroadcastChannel` + `localStorage` + optional Firebase), `buildBuzzPatch()`, buzzer locking/probing |
 | `js/views.js` | Pure DOM renderers for TV Display, Host Remote, Team Buzzers, Combo Buzzer, and TV QR overlay |
-| `js/formats.js` | JSON / CSV deck parser & exporter (supports Friendly-Feud JSON and custom schemas) |
+| `js/formats.js` | JSON deck parser & exporter (supports native Party Feud JSON, Friendly-Feud JSON, and legacy override schemas) |
 | `js/audio.js` | Web Audio API sound synthesizer (no external audio file dependencies) |
 | `data/questions.js` | Built-in fallback starter deck |
-| `js/decks.js` | Local folder scanner (File System Access API + `webkitdirectory` fallback + IndexedDB/`localStorage` cache), custom `.json`/`.csv` file loader, and HTTP/GitHub Pages deck auto-discovery |
+| `js/decks.js` | Local folder scanner (File System Access API + `webkitdirectory` fallback + IndexedDB/`localStorage` cache), custom `.json` file loader, and HTTP/GitHub Pages deck auto-discovery |
 
 ---
 
