@@ -11,6 +11,10 @@ Pick from **370+ built-in survey rounds**, cast or plug in a TV, hand phones to 
 ![Zero Backend • Offline Ready](https://img.shields.io/badge/Zero_Backend-Offline_Ready-3b82f6?style=flat-square)
 ![370+ Built-In Rounds](https://img.shields.io/badge/Built--In_Questions-370%2B_Rounds-a855f7?style=flat-square)
 
+<p align="center">
+  <img src="docs/screenshots/demo.gif" alt="Party Feud live demo: Phone QR buzzer syncing in real time to 16:9 TV board with 3D flipping answer tiles, giant red X strike overlay, and Match Champion celebration" width="880" />
+</p>
+
 ---
 
 ## 📸 See It in Action
@@ -294,7 +298,7 @@ feud/
 ├── data/
 │   └── questions.js                # Generic default starter deck & configuration
 ├── docs/
-│   └── screenshots/                # Gameplay screenshots embedded in README.md
+│   └── screenshots/                # Gameplay demo GIF & screenshots embedded in README.md
 ├── js/
 │   ├── app.js                      # Controller, keyboard shortcuts & modal handlers
 │   ├── state.js                    # State management, multi-game slicer & localStorage
