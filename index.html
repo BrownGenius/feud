@@ -29,7 +29,7 @@
   <meta name="twitter:description" content="Free, zero-login Family Feud game show for your TV with live QR phone buzzers, sound effects, teleprompter, and 370+ built-in rounds." />
   <meta name="twitter:image" content="https://browngenius.github.io/feud/docs/screenshots/tv-board.png" />
   <meta name="twitter:image:alt" content="Party Feud 16:9 TV Display Board showing revealed survey answers and scores" />
-  <link rel="stylesheet" href="./css/styles.css?v=20261116dn" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261118b" />
 </head>
 <body>
 
@@ -44,7 +44,7 @@
         <button class="top-btn" onclick="closeNewGameModal()">✕ Close</button>
       </div>
       <p style="font-size:12px; color:#fde68a; line-height:1.45;">
-        Choose your question deck from <code>/decks</code> (or upload a file), set rounds per match, enter your team names, and configure timers!
+        Choose a question deck, scan your local <code>/decks</code> folder, or load custom <code>.json</code>/<code>.csv</code> deck files, then set rounds, team names, and timers!
       </p>
 
       <!-- Step 1: Active Question Deck & Multi-Game Usage -->
@@ -60,6 +60,14 @@
           <select id="deckManagerSelect" class="fm-txt" style="flex:1; min-width:190px; font-size:13px; text-transform:none;" onchange="onSelectCatalogDeck(this.value)"></select>
           <a href="./review.html?from=setup" target="_blank" rel="opener" class="top-btn gold review-deck-link" style="text-decoration:none; display:inline-flex; align-items:center;">🖨️ Review</a>
         </div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+          <button id="btnScanDecksFolder" type="button" class="top-btn" style="min-height:32px; font-size:11px;" onclick="scanLocalDecksFolder()" title="Scan your local decks/ folder to discover .json and .csv decks offline">📂 Scan Folder</button>
+          <button id="btnRescanDecksFolder" type="button" class="top-btn hidden" style="min-height:32px; font-size:11px;" onclick="rescanSavedDecksFolder()" title="Re-read decks from your previously linked local folder">🔄 Re-scan</button>
+          <button id="btnLoadCustomDeckFile" type="button" class="top-btn" style="min-height:32px; font-size:11px;" onclick="openCustomDeckFilePicker()" title="Load one or more custom .json or .csv deck files">📄 Load Deck File</button>
+          <input id="localDecksFolderInput" type="file" webkitdirectory multiple accept=".json,.csv" class="hidden" onchange="onLocalDecksFolderInputChange(event)" />
+          <input id="customDeckFileInput" type="file" multiple accept=".json,.csv" class="hidden" onchange="onCustomDeckFileInputChange(event)" />
+        </div>
+        <div id="localDecksFolderStatus" style="font-size:11px; color:#cbd5e1; line-height:1.35;"></div>
       </div>
 
       <!-- Step 2: Team Names -->
@@ -826,17 +834,17 @@
     </button>
   </section>
 
-  <footer id="appBuildBadge" class="app-build-badge">Build v20261116dn</footer>
+  <footer id="appBuildBadge" class="app-build-badge">Build v20261118b</footer>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js" async></script>
-  <script src="./data/questions.js?v=20261116dn"></script>
-  <script src="./decks/catalog.js?v=20261116dn"></script>
-  <script src="./js/audio.js?v=20261116dn"></script>
-  <script src="./js/state.js?v=20261116dn"></script>
-  <script src="./js/formats.js?v=20261116dn"></script>
-  <script src="./js/sync.js?v=20261116dn"></script>
-  <script src="./js/views.js?v=20261116dn"></script>
-  <script src="./js/app.js?v=20261116dn"></script>
+  <script src="./data/questions.js?v=20261118b"></script>
+  <script src="./js/audio.js?v=20261118b"></script>
+  <script src="./js/state.js?v=20261118b"></script>
+  <script src="./js/formats.js?v=20261118b"></script>
+  <script src="./js/decks.js?v=20261118b"></script>
+  <script src="./js/sync.js?v=20261118b"></script>
+  <script src="./js/views.js?v=20261118b"></script>
+  <script src="./js/app.js?v=20261118b"></script>
 </body>
 </html>

@@ -35,7 +35,7 @@ This document summarizes the architecture, priorities, coding style, and develop
 | `js/formats.js` | JSON / CSV deck parser & exporter (supports Friendly-Feud JSON and custom schemas) |
 | `js/audio.js` | Web Audio API sound synthesizer (no external audio file dependencies) |
 | `data/questions.js` | Built-in fallback starter deck |
-| `decks/catalog.js` | Offline-compatible registry of bundled decks under `decks/` |
+| `js/decks.js` | Local folder scanner (File System Access API + `webkitdirectory` fallback + IndexedDB/`localStorage` cache), custom `.json`/`.csv` file loader, and HTTP/GitHub Pages deck auto-discovery |
 
 ---
 

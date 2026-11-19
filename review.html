@@ -496,6 +496,14 @@
           <select id="reviewDeckSelect" class="toolbar-select"></select>
         </div>
 
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+          <button id="btnReviewScanFolder" type="button" class="toolbar-btn secondary" title="Scan your local decks/ folder to load .json and .csv decks offline">📂 Scan Folder</button>
+          <button id="btnReviewRescanFolder" type="button" class="toolbar-btn secondary" style="display:none;" title="Re-read decks from your previously linked folder">🔄 Re-scan</button>
+          <button id="btnReviewLoadFile" type="button" class="toolbar-btn secondary" title="Load a custom .json or .csv deck file">📄 Load File</button>
+          <input id="reviewFolderInput" type="file" webkitdirectory multiple accept=".json,.csv" style="display:none;" />
+          <input id="reviewFileInput" type="file" multiple accept=".json,.csv" style="display:none;" />
+        </div>
+
         <div>
           <label class="toolbar-label" for="reviewLevelFilter">Level:</label>
           <select id="reviewLevelFilter" class="toolbar-select">
@@ -551,17 +559,21 @@
     <main id="reviewContentRoot"></main>
   </div>
 
-  <script src="./data/questions.js?v=20261116dh"></script>
-  <script src="./decks/catalog.js?v=20261116dh"></script>
-  <script src="./js/state.js?v=20261116dh"></script>
-  <script src="./js/formats.js?v=20261116dh"></script>
+  <script src="./data/questions.js?v=20261118b"></script>
+  <script src="./js/state.js?v=20261118b"></script>
+  <script src="./js/formats.js?v=20261118b"></script>
+  <script src="./js/decks.js?v=20261118b"></script>
   <script>
     (function () {
       const Feud = window.Feud || {};
       const deckSelect = document.getElementById("reviewDeckSelect");
       const levelSelect = document.getElementById("reviewLevelFilter");
       const searchInput = document.getElementById("reviewSearchInput");
+      const folderInput = document.getElementById("reviewFolderInput");
       const fileInput = document.getElementById("reviewFileInput");
+      const btnScanFolder = document.getElementById("btnReviewScanFolder");
+      const btnRescanFolder = document.getElementById("btnReviewRescanFolder");
+      const btnLoadFile = document.getElementById("btnReviewLoadFile");
       const rootEl = document.getElementById("reviewContentRoot");
       const titleEl = document.getElementById("reviewDocTitle");
       const subEl = document.getElementById("reviewDocSub");
@@ -637,8 +649,25 @@
         } catch (e) {}
       }
 
-      function buildCatalogOptions() {
-        const catalog = Array.isArray(Feud.DECK_CATALOG) ? Feud.DECK_CATALOG.slice() : [];
+      function updateReviewFolderButtons() {
+        const info = Feud.getLocalDecksFolderState
+          ? Feud.getLocalDecksFolderState()
+          : { hasSavedHandle: false };
+        if (btnRescanFolder) {
+          btnRescanFolder.style.display = info.hasSavedHandle ? "inline-flex" : "none";
+        }
+        if (btnScanFolder) {
+          btnScanFolder.textContent = info.hasSavedHandle ? "📂 Change Folder" : "📂 Scan Folder";
+        }
+      }
+
+      function buildCatalogOptions(preserveSelection = false) {
+        const prevVal = preserveSelection ? deckSelect.value : "";
+        const catalog = Feud.getDeckCatalog
+          ? Feud.getDeckCatalog().slice()
+          : Array.isArray(Feud.DECK_CATALOG)
+          ? Feud.DECK_CATALOG.slice()
+          : [];
         const savedCustom = Feud.loadSavedCustomDeck ? Feud.loadSavedCustomDeck() : null;
         deckSelect.innerHTML = "";
 
@@ -657,9 +686,11 @@
               item.builtin === "starter"
                 ? Feud.DEFAULT_ROUNDS || []
                 : (item.data && item.data.rounds) || [];
-            const st = Feud.getDeckPlayStats({ customDeck: { name: dName, rounds: dRounds } });
-            labelText +=
-              st.usedRoundsCount > 0 ? ` (${st.usedRoundsCount} Used)` : " (All Unused)";
+            if (item.builtin === "starter" || dRounds.length > 0) {
+              const st = Feud.getDeckPlayStats({ customDeck: { name: dName, rounds: dRounds } });
+              labelText +=
+                st.usedRoundsCount > 0 ? ` (${st.usedRoundsCount} Used)` : " (All Unused)";
+            }
           }
           opt.textContent = labelText;
           deckSelect.appendChild(opt);
@@ -677,6 +708,24 @@
             opt.textContent = `⭐ Saved Custom Deck: ${savedCustom.name || "Custom Deck"} (${savedCustom.rounds.length} Rounds)`;
             deckSelect.prepend(opt);
           }
+        }
+
+        if (preserveSelection && prevVal) {
+          const matchedPrev = findCatalogMatch(prevVal, catalog);
+          if (matchedPrev) {
+            deckSelect.value = matchedPrev.id;
+            return null;
+          }
+          if (Array.from(deckSelect.options).some((o) => o.value === prevVal)) {
+            deckSelect.value = prevVal;
+            return null;
+          }
+          const customOpt = document.createElement("option");
+          customOpt.value = prevVal;
+          customOpt.textContent = `📄 Deck: ${toDeckSlug(prevVal)}`;
+          deckSelect.prepend(customOpt);
+          deckSelect.value = prevVal;
+          return null;
         }
 
         const params = new URLSearchParams(window.location.search);
@@ -806,7 +855,9 @@
         if (entry && entry.file) {
           candidateUrls.push(entry.file);
         } else if (val) {
-          if (/^https?:\/\//i.test(val) || val.startsWith("./") || val.startsWith("/")) {
+          if (Feud.resolveDeckCandidateUrls) {
+            candidateUrls.push(...Feud.resolveDeckCandidateUrls(val));
+          } else if (/^https?:\/\//i.test(val) || val.startsWith("./") || val.startsWith("/")) {
             candidateUrls.push(val);
           } else if (/\.(json|csv)$/i.test(val)) {
             candidateUrls.push(`./decks/${val}`);
@@ -828,9 +879,11 @@
               gameTitle: parsed.gameTitle || "Party Feud",
               gameIcon: parsed.gameIcon || "🎉",
               deckName: parsed.deckName || toDeckSlug(val),
+              teamPresets: parsed.teamPresets || null,
               rounds: parsed.rounds || [],
               fastMoney: parsed.fastMoney || []
             };
+            if (persistSelection) persistActiveDeckToGameStorage(false);
             if (updateUrl) syncUrlToSelection();
             renderReviewSheet();
             return;
@@ -1273,8 +1326,118 @@
         }
       });
 
-      buildCatalogOptions();
+      async function handleReviewCustomFileResult(res) {
+        if (!res) return;
+        if (Array.isArray(res.entries) && res.entries.length > 0) {
+          buildCatalogOptions(true);
+          updateReviewFolderButtons();
+          deckSelect.value = res.entries[0].id;
+          await loadSelectedDeck(res.entries[0].id, true, true);
+          return;
+        }
+        if (Array.isArray(res.errors) && res.errors.length > 0) {
+          alert(`Could not load deck file: ${res.errors[0].message || "Invalid format"}`);
+        }
+      }
+
+      if (btnScanFolder) {
+        btnScanFolder.addEventListener("click", async () => {
+          if (!Feud.canUseDirectoryPicker || !Feud.canUseDirectoryPicker()) {
+            if (folderInput) folderInput.click();
+            return;
+          }
+          try {
+            const res = await Feud.scanLocalDecksWithDirectoryPicker();
+            if (!res || res.cancelled) return;
+            if (res.fallbackRequired) {
+              if (folderInput) folderInput.click();
+              return;
+            }
+            buildCatalogOptions(true);
+            updateReviewFolderButtons();
+            if (res.count === 0) {
+              alert(`No valid .json or .csv decks found in ${res.folderName || "that folder"}.`);
+            }
+          } catch (err) {
+            alert(`Could not scan folder: ${err && err.message ? err.message : "Error"}`);
+          }
+        });
+      }
+
+      if (btnRescanFolder) {
+        btnRescanFolder.addEventListener("click", async () => {
+          if (!Feud.rescanSavedDecksFolder) return;
+          const res = await Feud.rescanSavedDecksFolder();
+          if (res.missingHandle) {
+            if (btnScanFolder) btnScanFolder.click();
+            return;
+          }
+          if (res.denied) {
+            alert("Permission needed to re-read your folder. Click 📂 Change Folder to pick it again.");
+            return;
+          }
+          buildCatalogOptions(true);
+          updateReviewFolderButtons();
+          await loadSelectedDeck(deckSelect.value, false, false);
+        });
+      }
+
+      if (folderInput) {
+        folderInput.addEventListener("change", async (e) => {
+          const files = e.target.files;
+          if (!files || files.length === 0) return;
+          const res = await Feud.ingestLocalFolderFiles(files);
+          e.target.value = "";
+          buildCatalogOptions(true);
+          updateReviewFolderButtons();
+          if (res.count === 0) {
+            alert("No valid .json or .csv Feud decks found in that folder.");
+          }
+        });
+      }
+
+      if (btnLoadFile) {
+        btnLoadFile.addEventListener("click", () => {
+          if (!Feud.canUseFilePicker || !Feud.canUseFilePicker()) {
+            if (fileInput) fileInput.click();
+            return;
+          }
+          Feud.pickCustomDeckFilesWithPicker()
+            .then((res) => {
+              if (!res || res.cancelled) return;
+              if (res.fallbackRequired) {
+                if (fileInput) fileInput.click();
+                return;
+              }
+              return handleReviewCustomFileResult(res);
+            })
+            .catch((err) => {
+              alert(`Could not load file: ${err && err.message ? err.message : "Error"}`);
+            });
+        });
+      }
+
+      if (fileInput) {
+        fileInput.addEventListener("change", async (e) => {
+          const files = e.target.files;
+          if (!files || files.length === 0) return;
+          const res = await Feud.ingestCustomDeckFiles(files);
+          e.target.value = "";
+          await handleReviewCustomFileResult(res);
+        });
+      }
+
+      window.addEventListener("feud-decks-updated", () => {
+        buildCatalogOptions(true);
+        updateReviewFolderButtons();
+      });
+
+      buildCatalogOptions(false);
+      updateReviewFolderButtons();
       loadSelectedDeck(deckSelect.value, true);
+      if (Feud.discoverAvailableDecks) {
+        Feud.discoverAvailableDecks();
+      }
     })();
   </script>
 </body>

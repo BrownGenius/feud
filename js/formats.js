@@ -12,7 +12,10 @@ window.Feud = window.Feud || {};
 
 (function (Feud) {
   function parseFeudJson(jsonText) {
-    const data = typeof jsonText === "string" ? JSON.parse(jsonText) : jsonText;
+    const data =
+      typeof jsonText === "string"
+        ? JSON.parse(jsonText.replace(/^\uFEFF/, ""))
+        : jsonText;
     if (!data || typeof data !== "object") {
       throw new Error("Invalid JSON content.");
     }
@@ -123,7 +126,7 @@ window.Feud = window.Feud || {};
   }
 
   function parseFeudCsv(csvText) {
-    const rows = parseCsvRows(csvText);
+    const rows = parseCsvRows(String(csvText || "").replace(/^\uFEFF/, ""));
     if (rows.length < 2) {
       throw new Error("CSV must contain a header row and at least 1 data row.");
     }

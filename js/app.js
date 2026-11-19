@@ -277,9 +277,12 @@ window.Feud = window.Feud || {};
   }
 
   // =====================================================================
-  // 3. DYNAMIC /decks CATALOG & GITHUB PAGES AUTO-DISCOVERY
+  // 3. DYNAMIC /decks CATALOG, LOCAL FOLDER SCAN & AUTO-DISCOVERY
   // =====================================================================
   function getCatalogList() {
+    if (Feud.getDeckCatalog) {
+      return Feud.getDeckCatalog();
+    }
     if (!Array.isArray(Feud.DECK_CATALOG)) {
       Feud.DECK_CATALOG = [
         {
@@ -348,41 +351,187 @@ window.Feud = window.Feud || {};
     });
   }
 
-  async function discoverGitHubDecksFolder() {
+  function updateLocalDecksFolderUi() {
+    const scanBtn = document.getElementById("btnScanDecksFolder");
+    const rescanBtn = document.getElementById("btnRescanDecksFolder");
+    const statusEl = document.getElementById("localDecksFolderStatus");
+    if (!scanBtn && !rescanBtn && !statusEl) return;
+
+    const info = Feud.getLocalDecksFolderState
+      ? Feud.getLocalDecksFolderState()
+      : { hasSavedHandle: false, savedDirName: "", lastFolderName: "", localDeckCount: 0, customFileCount: 0 };
+
+    if (rescanBtn) {
+      rescanBtn.classList.toggle("hidden", !info.hasSavedHandle);
+    }
+    if (scanBtn) {
+      scanBtn.textContent = info.hasSavedHandle ? "📂 Change Folder" : "📂 Scan Folder";
+    }
+    if (statusEl) {
+      const parts = [];
+      if (info.hasSavedHandle && info.savedDirName) {
+        parts.push(`✅ Linked folder: ${info.savedDirName}/ (${info.localDeckCount} deck${info.localDeckCount === 1 ? "" : "s"})`);
+      } else if (info.localDeckCount > 0) {
+        const fromName = info.lastFolderName ? ` from ${info.lastFolderName}/` : "";
+        parts.push(`✅ ${info.localDeckCount} local deck${info.localDeckCount === 1 ? "" : "s"} cached${fromName}`);
+      }
+      if (info.customFileCount > 0) {
+        parts.push(`${info.customFileCount} custom file${info.customFileCount === 1 ? "" : "s"}`);
+      }
+      if (parts.length > 0) {
+        statusEl.textContent = parts.join(" • ");
+        statusEl.style.color = "#86efac";
+      } else if (window.location.protocol === "file:") {
+        statusEl.textContent =
+          'Offline tip: Click "📂 Scan Folder" and pick your local decks/ folder (or "📄 Load Deck File") to add .json / .csv decks.';
+        statusEl.style.color = "#fde68a";
+      } else {
+        statusEl.textContent =
+          'Scan your local decks/ folder or click "📄 Load Deck File" to add custom .json / .csv decks.';
+        statusEl.style.color = "#cbd5e1";
+      }
+    }
+  }
+
+  async function scanLocalDecksFolder() {
+    const canPicker = Feud.canUseDirectoryPicker && Feud.canUseDirectoryPicker();
+    if (!canPicker) {
+      const fallbackIn = document.getElementById("localDecksFolderInput");
+      if (fallbackIn) fallbackIn.click();
+      return;
+    }
+
     try {
-      const host = window.location.hostname || "";
-      if (!host.endsWith(".github.io")) return;
-      const owner = host.split(".")[0];
-      const pathParts = window.location.pathname.split("/").filter(Boolean);
-      const repo = pathParts[0];
-      if (!owner || !repo) return;
-
-      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/decks`;
-      const res = await fetch(apiUrl);
-      if (!res.ok) return;
-      const files = await res.json();
-      if (!Array.isArray(files)) return;
-
-      const catalog = getCatalogList();
-      const knownIds = new Set(catalog.map((c) => c.id.toLowerCase()));
-
-      files.forEach((f) => {
-        if (!f || !f.name) return;
-        if (!/\.(json|csv)$/i.test(f.name)) return;
-        if (/^catalog\.js$/i.test(f.name)) return;
-        if (knownIds.has(f.name.toLowerCase())) return;
-
-        catalog.push({
-          id: f.name,
-          label: `📄 ${f.name.replace(/\.(json|csv)$/i, "")} (${f.name})`,
-          file: `./decks/${f.name}`,
-          data: null
-        });
-        knownIds.add(f.name.toLowerCase());
-      });
-
+      const res = await Feud.scanLocalDecksWithDirectoryPicker();
+      if (!res || res.cancelled) return;
+      if (res.fallbackRequired) {
+        const fallbackIn = document.getElementById("localDecksFolderInput");
+        if (fallbackIn) fallbackIn.click();
+        return;
+      }
       populateDeckCatalogSelect();
-    } catch (e) {}
+      updateLocalDecksFolderUi();
+      if (res.count > 0) {
+        Feud.showToast(`📂 Loaded ${res.count} deck(s) from ${res.folderName}/!`);
+      } else {
+        Feud.showToast(`No valid .json or .csv decks found in ${res.folderName || "selected folder"}.`);
+      }
+    } catch (err) {
+      Feud.showToast(`❌ Could not scan folder: ${err && err.message ? err.message : "Error"}`);
+    }
+  }
+
+  async function rescanSavedDecksFolder() {
+    if (!Feud.rescanSavedDecksFolder) return;
+    try {
+      const res = await Feud.rescanSavedDecksFolder();
+      if (res.missingHandle) {
+        await scanLocalDecksFolder();
+        return;
+      }
+      if (res.denied) {
+        Feud.showToast("Permission needed to re-read your decks folder. Click 📂 Change Folder to pick it again.");
+        return;
+      }
+      populateDeckCatalogSelect();
+      updateLocalDecksFolderUi();
+      if (currentCatalogDeckId && Array.isArray(res.entries)) {
+        const refreshed = res.entries.find(
+          (e) => e.id.toLowerCase() === String(currentCatalogDeckId).toLowerCase()
+        );
+        if (refreshed) {
+          await onSelectCatalogDeck(refreshed.id);
+        }
+      }
+      Feud.showToast(`🔄 Refreshed ${res.count} deck(s) from ${res.folderName}/!`);
+    } catch (err) {
+      Feud.showToast(`❌ Re-scan failed: ${err && err.message ? err.message : "Error"}`);
+    }
+  }
+
+  async function onLocalDecksFolderInputChange(event) {
+    const input = event && event.target;
+    const files = input && input.files;
+    if (!files || files.length === 0) return;
+    try {
+      const res = await Feud.ingestLocalFolderFiles(files);
+      populateDeckCatalogSelect();
+      updateLocalDecksFolderUi();
+      if (res.count > 0) {
+        Feud.showToast(`📂 Loaded ${res.count} deck(s) from ${res.folderName}/!`);
+      } else {
+        Feud.showToast("No valid .json or .csv Feud decks found in that folder.");
+      }
+    } catch (err) {
+      Feud.showToast(`❌ Could not scan folder: ${err && err.message ? err.message : "Error"}`);
+    } finally {
+      if (input) input.value = "";
+    }
+  }
+
+  async function handleIngestedCustomDeckResult(res) {
+    if (!res) return;
+    if (Array.isArray(res.overrides) && res.overrides.length > 0) {
+      let merged = { ...(roomState.customRounds || {}) };
+      res.overrides.forEach((ov) => {
+        merged = { ...merged, ...ov.customRounds };
+      });
+      Feud.saveCustomRounds(merged);
+      await pushRoomPatch({ customRounds: merged, revealed: [], pot: 0 });
+      Feud.populateRoundDropdowns(roomState);
+      syncSetupModalInputsFromState();
+      Feud.showToast("✅ Imported custom poll overrides!");
+    }
+
+    if (Array.isArray(res.entries) && res.entries.length > 0) {
+      populateDeckCatalogSelect();
+      updateLocalDecksFolderUi();
+      await onSelectCatalogDeck(res.entries[0].id);
+      if (res.entries.length > 1) {
+        Feud.showToast(`📄 Added ${res.entries.length} custom decks & selected "${res.entries[0].data.deckName}"!`);
+      }
+      return;
+    }
+
+    if ((!res.overrides || res.overrides.length === 0) && Array.isArray(res.errors) && res.errors.length > 0) {
+      Feud.showToast(`❌ Import failed: ${res.errors[0].message || "Invalid file format"}`);
+    }
+  }
+
+  function openCustomDeckFilePicker() {
+    const canPicker = Feud.canUseFilePicker && Feud.canUseFilePicker();
+    if (!canPicker) {
+      const fallbackIn = document.getElementById("customDeckFileInput");
+      if (fallbackIn) fallbackIn.click();
+      return;
+    }
+    Feud.pickCustomDeckFilesWithPicker()
+      .then((res) => {
+        if (!res || res.cancelled) return;
+        if (res.fallbackRequired) {
+          const fallbackIn = document.getElementById("customDeckFileInput");
+          if (fallbackIn) fallbackIn.click();
+          return;
+        }
+        return handleIngestedCustomDeckResult(res);
+      })
+      .catch((err) => {
+        Feud.showToast(`❌ Could not load file: ${err && err.message ? err.message : "Error"}`);
+      });
+  }
+
+  async function onCustomDeckFileInputChange(event) {
+    const input = event && event.target;
+    const files = input && input.files;
+    if (!files || files.length === 0) return;
+    try {
+      const res = await Feud.ingestCustomDeckFiles(files);
+      await handleIngestedCustomDeckResult(res);
+    } catch (err) {
+      Feud.showToast(`❌ Import failed: ${err && err.message ? err.message : "Invalid file format"}`);
+    } finally {
+      if (input) input.value = "";
+    }
   }
 
   let currentCatalogDeckId = "";
@@ -423,7 +572,7 @@ window.Feud = window.Feud || {};
     }
 
     if (entry.data) {
-      // Instant offline load from bundled decks/catalog.js (works over file://!)
+      // Instant load from cached local scan, custom file, or hydrated metadata
       const jsonText = JSON.stringify(entry.data);
       await applyImportedDeckText(jsonText, entry.id, false, false);
       syncSetupModalInputsFromState();
@@ -447,6 +596,7 @@ window.Feud = window.Feud || {};
   // =====================================================================
   function syncSetupModalInputsFromState() {
     populateDeckCatalogSelect();
+    updateLocalDecksFolderUi();
     const iconIn = document.getElementById("setupGameIconInput");
     const titleIn = document.getElementById("setupGameTitleInput");
     const t1In = document.getElementById("setupTeam1Input");
@@ -3303,26 +3453,75 @@ window.Feud = window.Feud || {};
 
   async function fetchAndApplyRemoteDeck(url, closeModals = true) {
     try {
-      // Check if this URL matches a bundled deck in decks/catalog.js first!
-      const fileName = url.split("/").pop().split("?")[0];
+      const cleanInput = String(url || "").trim();
+      const fileName = cleanInput.split("/").pop().split("?")[0];
+      const normStem = fileName.replace(/\.(json|csv)$/i, "").toLowerCase();
       const catalog = getCatalogList();
       const bundled = catalog.find(
-        (c) => c.data && (c.id.toLowerCase() === fileName.toLowerCase() || c.file === url)
+        (c) =>
+          c.data &&
+          (c.id.toLowerCase() === fileName.toLowerCase() ||
+            c.id.replace(/\.(json|csv)$/i, "").toLowerCase() === normStem ||
+            c.file === cleanInput)
       );
       if (bundled && bundled.data) {
+        syncDeckQueryParam(bundled.id);
         await applyImportedDeckText(JSON.stringify(bundled.data), bundled.id, false, closeModals);
+        syncSetupModalInputsFromState();
         return;
       }
 
+      const candidateUrls = Feud.resolveDeckCandidateUrls
+        ? Feud.resolveDeckCandidateUrls(cleanInput)
+        : [cleanInput];
+
       Feud.showToast("⏳ Loading question deck…");
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const text = await res.text();
+      let loadedText = "";
+      let loadedUrl = "";
+      let lastStatus = "";
+      for (const candidate of candidateUrls) {
+        try {
+          const res = await fetch(candidate);
+          if (res.ok) {
+            loadedText = await res.text();
+            loadedUrl = candidate;
+            break;
+          }
+          lastStatus = `HTTP ${res.status}`;
+        } catch (fetchErr) {
+          lastStatus = fetchErr && fetchErr.message ? fetchErr.message : "Network error";
+        }
+      }
+      if (!loadedText) {
+        throw new Error(lastStatus || "Deck not found");
+      }
+
       const isCsv =
-        /\.csv($|\?)/i.test(url) ||
-        (!text.trim().startsWith("{") && !text.trim().startsWith("["));
-      const label = fileName || "Remote Deck";
-      await applyImportedDeckText(text, label, isCsv, closeModals);
+        /\.csv($|\?)/i.test(loadedUrl) ||
+        (!loadedText.trim().startsWith("{") && !loadedText.trim().startsWith("["));
+      const label = loadedUrl.split("/").pop().split("?")[0] || fileName || "Remote Deck";
+
+      if (Feud.parseDeckFileContent && Feud.upsertCatalogEntries) {
+        const parsedEntry = Feud.parseDeckFileContent(label, loadedText);
+        if (parsedEntry && parsedEntry.kind === "deck") {
+          const isLocalRel = /^\.?\/?decks\//i.test(loadedUrl);
+          Feud.upsertCatalogEntries([
+            {
+              id: parsedEntry.id,
+              label: Feud.formatFilenameFallbackLabel
+                ? Feud.formatFilenameFallbackLabel(parsedEntry.id)
+                : parsedEntry.id,
+              file: isLocalRel ? parsedEntry.file : loadedUrl,
+              source: "remote",
+              data: parsedEntry.data
+            }
+          ]);
+          syncDeckQueryParam(parsedEntry.id);
+        }
+      }
+
+      await applyImportedDeckText(loadedText, label, isCsv, closeModals);
+      syncSetupModalInputsFromState();
     } catch (err) {
       Feud.showToast(`❌ Could not load deck: ${err.message}`);
     }
@@ -3843,6 +4042,11 @@ window.Feud = window.Feud || {};
     toggleFullScreen,
     leaveToLobby,
     onSelectCatalogDeck,
+    scanLocalDecksFolder,
+    rescanSavedDecksFolder,
+    onLocalDecksFolderInputChange,
+    openCustomDeckFilePicker,
+    onCustomDeckFileInputChange,
     resetCurrentDeckHistory,
     openNewGameModal,
     closeNewGameModal,
@@ -3948,7 +4152,14 @@ window.Feud = window.Feud || {};
       }
     }
     populateDeckCatalogSelect();
-    discoverGitHubDecksFolder();
+    updateLocalDecksFolderUi();
+    window.addEventListener("feud-decks-updated", () => {
+      populateDeckCatalogSelect();
+      updateLocalDecksFolderUi();
+    });
+    if (Feud.discoverAvailableDecks) {
+      Feud.discoverAvailableDecks();
+    }
     try {
       const savedScriptPref = localStorage.getItem("feud_host_script_collapsed");
       const defaultCollapsed =
@@ -4092,16 +4303,17 @@ window.Feud = window.Feud || {};
     const urlDeck = (params.get("deck") || "").trim();
     if (urlDeck) {
       const catalog = getCatalogList();
-      const normUrlDeck = urlDeck.replace(/\.json$/i, "").toLowerCase();
+      const cleanUrlDeck = urlDeck.replace(/^\.?\/?decks\//i, "");
+      const normUrlDeck = cleanUrlDeck.replace(/\.(json|csv)$/i, "").toLowerCase();
       const catMatch = catalog.find(
         (c) =>
-          c.id.toLowerCase() === urlDeck.toLowerCase() ||
-          c.id.replace(/\.json$/i, "").toLowerCase() === normUrlDeck
+          c.id.toLowerCase() === cleanUrlDeck.toLowerCase() ||
+          c.id.replace(/\.(json|csv)$/i, "").toLowerCase() === normUrlDeck
       );
       if (catMatch) {
         onSelectCatalogDeck(catMatch.id);
       } else {
-        fetchAndApplyRemoteDeck(urlDeck, true);
+        fetchAndApplyRemoteDeck(urlDeck, false);
       }
     }
 
