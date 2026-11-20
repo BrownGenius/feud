@@ -107,6 +107,16 @@ function buildManifest() {
 
   decks.sort((a, b) => a.deckName.localeCompare(b.deckName));
 
+  // Avoid spurious timestamp-only diffs when the deck list hasn't changed
+  if (fs.existsSync(MANIFEST_PATH)) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf8"));
+      if (existing && JSON.stringify(existing.decks) === JSON.stringify(decks)) {
+        return existing;
+      }
+    } catch (e) {}
+  }
+
   const payload = {
     generatedAt: new Date().toISOString(),
     decks

@@ -33,7 +33,7 @@
       "prompt": "Name a reason an FRC robot fails its initial inspection at competition.",
       "answers": [
         {
-          "text": "Over the 125 lb weight limit",
+          "text": "Over the 115 lb weight limit",
           "points": 36
         },
         {
@@ -62,26 +62,26 @@
       "theme": "🟥 Penalties & Cards (G-Rules)",
       "title": "Round 2",
       "multiplier": 1,
-      "prompt": "Name a rule violation that will earn your alliance an immediate Yellow or Red Card.",
+      "prompt": "Name a rule violation that can earn your team a Yellow or Red Card.",
       "answers": [
         {
-          "text": "Entering field before green lights / field safe",
+          "text": "Entering field before green lights (G102, repeat)",
           "points": 35
         },
         {
-          "text": "Damaging contact inside opponent frame perimeter",
+          "text": "Damaging contact inside opponent Robot Perimeter (G416)",
           "points": 26
         },
         {
-          "text": "Pinning opponent >3 seconds after referee countdown",
+          "text": "Banging on the Driver Station glass (G202, repeat)",
           "points": 18
         },
         {
-          "text": "Deliberately tipping or flipping another robot",
+          "text": "Deliberately tipping or entangling a robot (G417)",
           "points": 12
         },
         {
-          "text": "Egregious conduct or referee disrespect (G201)",
+          "text": "Egregious conduct or referee disrespect (G211)",
           "points": 9
         }
       ]
@@ -137,7 +137,7 @@
           "points": 17
         },
         {
-          "text": "Pre-load the game piece properly",
+          "text": "Pre-load up to 8 Fuel properly",
           "points": 12
         },
         {
@@ -157,7 +157,7 @@
           "points": 42
         },
         {
-          "text": "Operator / Co-Pilot",
+          "text": "Second Driver / Operator",
           "points": 26
         },
         {
@@ -289,7 +289,7 @@
           "points": 20
         },
         {
-          "text": "Cargo / Giant Balls",
+          "text": "Cargo (2019 & 2022 balls)",
           "points": 14
         },
         {
@@ -345,19 +345,19 @@
           "points": 36
         },
         {
-          "text": "Entering opponent protected zone",
+          "text": "Touching opponent on its Tower in Endgame (G420)",
           "points": 24
         },
         {
-          "text": "Extending outside bumper / frame limit",
+          "text": "Expanding past the 12 in / 30 in limits",
           "points": 16
         },
         {
-          "text": "Holding more than 1 game piece",
+          "text": "Catching Fuel out of the Hub (G408)",
           "points": 12
         },
         {
-          "text": "Contacting opponent during Endgame",
+          "text": "Damaging or tipping an opponent robot",
           "points": 7
         },
         {
@@ -373,11 +373,11 @@
       "prompt": "Name a specific robot measurement or limit inspectors check on the scale and sizing box.",
       "answers": [
         {
-          "text": "125 lb max robot weight",
+          "text": "115 lb max weight (no bumpers/battery)",
           "points": 38
         },
         {
-          "text": "Frame perimeter size limit",
+          "text": "110 in Robot Perimeter limit",
           "points": 24
         },
         {
@@ -385,7 +385,7 @@
           "points": 16
         },
         {
-          "text": "Max starting / extended height",
+          "text": "30 in max robot height",
           "points": 11
         },
         {
@@ -430,14 +430,14 @@
       "theme": "🤖 Autonomous Mode",
       "title": "Round 14",
       "multiplier": 2,
-      "prompt": "Name something a robot attempts to do during the 15-second Autonomous period.",
+      "prompt": "Name something a robot attempts to do during the 20-second Autonomous period.",
       "answers": [
         {
           "text": "Score a pre-loaded game piece",
           "points": 42
         },
         {
-          "text": "Leave starting zone / Mobility taxi points",
+          "text": "Climb Tower Level 1 (15 pts)",
           "points": 27
         },
         {
@@ -445,7 +445,7 @@
           "points": 15
         },
         {
-          "text": "Disrupt or block opposing alliance paths",
+          "text": "Grab Fuel from the alliance Depot",
           "points": 9
         },
         {
@@ -461,15 +461,15 @@
       "prompt": "Name a part of the robot that must strictly follow Game Manual construction rules.",
       "answers": [
         {
-          "text": "Bumpers (Height zone, backing, pool noodles)",
+          "text": "Bumpers (Height zone, backing, solid pool noodles)",
           "points": 44
         },
         {
-          "text": "Frame Perimeter / Starting sizing envelope",
+          "text": "Robot Perimeter / Starting size (110 in, 30 in tall)",
           "points": 25
         },
         {
-          "text": "Maximum extension outside frame perimeter",
+          "text": "Max 12 in extension outside Robot Perimeter",
           "points": 15
         },
         {
@@ -553,11 +553,11 @@
           "points": 34
         },
         {
-          "text": "Autonomous leave & scoring bonus",
+          "text": "Traversal RP (Tower climb points)",
           "points": 26
         },
         {
-          "text": "Coopertition / alliance bonus RP",
+          "text": "Energized / Supercharged RP (Fuel in Hub)",
           "points": 16
         },
         {
@@ -565,7 +565,7 @@
           "points": 12
         },
         {
-          "text": "High-tier Teleop scoring",
+          "text": "Scoring Fuel in an active Hub",
           "points": 7
         },
         {
@@ -609,15 +609,15 @@
       "prompt": "Name something an FRC Human Player is responsible for during a match.",
       "answers": [
         {
-          "text": "Feeding / introducing game pieces into play",
+          "text": "Feeding Fuel to robots through the Outpost",
           "points": 45
         },
         {
-          "text": "Throwing / tossing game pieces into scoring targets",
+          "text": "Throwing Fuel over the Alliance Wall",
           "points": 25
         },
         {
-          "text": "Triggering endgame activation or substation buttons",
+          "text": "Storing Fuel in the Chute & Corral",
           "points": 14
         },
         {
@@ -625,7 +625,7 @@
           "points": 10
         },
         {
-          "text": "Staying behind the starting line / boundary",
+          "text": "Not reaching past the Chute / Corral tape lines",
           "points": 6
         }
       ]
@@ -641,7 +641,7 @@
           "points": 42
         },
         {
-          "text": "Alliance called a timeout coupon",
+          "text": "Playoff alliance using its guaranteed turnaround time",
           "points": 24
         },
         {
@@ -733,7 +733,7 @@
           "points": 16
         },
         {
-          "text": "Pool noodles (for bumpers)",
+          "text": "Solid pool noodles (for bumpers)",
           "points": 11
         },
         {
