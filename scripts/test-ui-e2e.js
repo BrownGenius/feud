@@ -122,8 +122,11 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function fetchJson(url) {
-  const res = await fetch(url);
+async function fetchJson(url, method = "GET") {
+  const res = await fetch(url, {
+    method,
+    signal: typeof AbortSignal !== "undefined" && AbortSignal.timeout ? AbortSignal.timeout(2000) : undefined
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   return res.json();
 }
@@ -150,23 +153,33 @@ async function launchHeadlessBrowser(browserBin) {
     "--no-first-run",
     "--no-default-browser-check",
     "--disable-background-networking",
+    "--disable-component-update",
+    "--disable-default-apps",
     "--disable-sync",
     "--disable-extensions",
     "--disable-popup-blocking",
     "--mute-audio",
     "--window-size=1440,900",
+    "--remote-debugging-address=127.0.0.1",
     `--remote-debugging-port=${debugPort}`,
     `--user-data-dir=${userDataDir}`,
     "about:blank"
   ];
 
+  const spawnEnv = { ...process.env };
   if (process.platform === "linux") {
     args.unshift("--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage");
+    if (!spawnEnv.DBUS_SESSION_BUS_ADDRESS || !/^(unix|tcp):/.test(spawnEnv.DBUS_SESSION_BUS_ADDRESS)) {
+      spawnEnv.DBUS_SESSION_BUS_ADDRESS = "/dev/null";
+    }
   }
 
   let stderrBuf = "";
   let exitedCode = null;
-  const proc = spawn(browserBin, args, { stdio: ["ignore", "ignore", "pipe"] });
+  const proc = spawn(browserBin, args, {
+    stdio: ["ignore", "ignore", "pipe"],
+    env: spawnEnv
+  });
   if (proc.stderr) {
     proc.stderr.on("data", (chunk) => {
       if (stderrBuf.length < 4096) stderrBuf += chunk.toString();
@@ -177,7 +190,7 @@ async function launchHeadlessBrowser(browserBin) {
   });
 
   let targets = null;
-  const deadline = Date.now() + 25000;
+  const deadline = Date.now() + 30000;
   while (Date.now() < deadline) {
     if (exitedCode !== null) {
       throw new Error(
@@ -187,8 +200,14 @@ async function launchHeadlessBrowser(browserBin) {
     try {
       targets = await fetchJson(`http://127.0.0.1:${debugPort}/json/list`);
       if (Array.isArray(targets) && targets.length > 0) break;
+      // Fallback: if DevTools is listening but no page target was created yet, open about:blank
+      const created = await fetchJson(`http://127.0.0.1:${debugPort}/json/new?about:blank`, "PUT").catch(() => null);
+      if (created && created.webSocketDebuggerUrl) {
+        targets = [created];
+        break;
+      }
     } catch (e) {}
-    await sleep(150);
+    await sleep(200);
   }
 
   if (!targets || targets.length === 0) {
