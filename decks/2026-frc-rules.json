@@ -381,7 +381,7 @@
           "points": 16
         },
         {
-          "text": "30 in max robot height",
+          "text": "30 in starting / max extension height",
           "points": 11
         },
         {
@@ -461,7 +461,7 @@
           "points": 44
         },
         {
-          "text": "Robot Perimeter / Starting size (110 in, 30 in tall)",
+          "text": "110 in perimeter & 30 in height limit",
           "points": 25
         },
         {
@@ -739,5 +739,26 @@
       ]
     }
   ],
-  "fastMoney": []
+  "fastMoney": [
+    {
+      "prompt": "Name a tool every FRC pit needs on competition day.",
+      "hint": "Allen / hex keys (40), Zip ties (25), Multimeter (16), Cordless drill (11), Gaffers tape (8)"
+    },
+    {
+      "prompt": "Name something that can make an FRC robot fail inspection.",
+      "hint": "Overweight >115 lb (38), Frame perimeter / sizing box (26), Bumper rules (18), Sharp edges (10), Missing breaker / radio config (8)"
+    },
+    {
+      "prompt": "Name a penalty or foul you never want to see called on your alliance.",
+      "hint": "Pinning foul (5-second count) (35), Damaging contact / G416 (26), Yellow / Red Card (18), Tower touch in Endgame (12), Disabled / E-Stop (9)"
+    },
+    {
+      "prompt": "Name a way a robot scores points in 2026 FRC REBUILT.",
+      "hint": "Fuel in Hub (44), Tower Climb Level 3 (24), Auto Tower Level 1 (15), Tower Climb Level 2 (10), Penalty / Foul points (7)"
+    },
+    {
+      "prompt": "Name one of the 4 official FRC Drive Team roles at the field.",
+      "hint": "Driver (42), Drive Coach (28), Human Player (18), Technician (12)"
+    }
+  ]
 }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-19T18:27:09.656Z",
+  "generatedAt": "2026-11-20T16:59:28.173Z",
   "decks": [
     {
       "id": "2026-frc-rules.json",
@@ -7,7 +7,7 @@
       "deckName": "2026 FRC Game & Rules (24 Rounds)",
       "gameIcon": "🤖",
       "roundsCount": 24,
-      "fastMoneySets": 0,
+      "fastMoneySets": 1,
       "tags": [
         "family-friendly",
         "robotics"
