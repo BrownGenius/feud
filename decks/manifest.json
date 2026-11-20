@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T16:59:28.173Z",
+  "generatedAt": "2026-11-20T22:29:19.501Z",
   "decks": [
     {
       "id": "2026-frc-rules.json",
@@ -24,7 +24,8 @@
       "tags": [
         "family-friendly",
         "movies-music"
-      ]
+      ],
+      "boardTheme": "marigold"
     },
     {
       "id": "desi-thanksgiving.json",
@@ -36,7 +37,8 @@
       "tags": [
         "family-friendly",
         "holidays"
-      ]
+      ],
+      "boardTheme": "harvest"
     },
     {
       "id": "2025.json",
