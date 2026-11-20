@@ -161,13 +161,29 @@ async function launchHeadlessBrowser(browserBin) {
   ];
 
   if (process.platform === "linux") {
-    args.unshift("--no-sandbox", "--disable-dev-shm-usage");
+    args.unshift("--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage");
   }
 
-  const proc = spawn(browserBin, args, { stdio: "ignore" });
+  let stderrBuf = "";
+  let exitedCode = null;
+  const proc = spawn(browserBin, args, { stdio: ["ignore", "ignore", "pipe"] });
+  if (proc.stderr) {
+    proc.stderr.on("data", (chunk) => {
+      if (stderrBuf.length < 4096) stderrBuf += chunk.toString();
+    });
+  }
+  proc.on("exit", (code) => {
+    exitedCode = code;
+  });
 
   let targets = null;
-  for (let i = 0; i < 60; i++) {
+  const deadline = Date.now() + 25000;
+  while (Date.now() < deadline) {
+    if (exitedCode !== null) {
+      throw new Error(
+        `Headless browser exited early (code ${exitedCode}). stderr:\n${stderrBuf.trim()}`
+      );
+    }
     try {
       targets = await fetchJson(`http://127.0.0.1:${debugPort}/json/list`);
       if (Array.isArray(targets) && targets.length > 0) break;
@@ -179,7 +195,9 @@ async function launchHeadlessBrowser(browserBin) {
     try {
       proc.kill();
     } catch (e) {}
-    throw new Error("Timed out waiting for headless browser DevTools endpoint.");
+    throw new Error(
+      `Timed out waiting for headless browser DevTools endpoint. stderr:\n${stderrBuf.trim()}`
+    );
   }
 
   const pageTarget = targets.find((t) => t.type === "page") || targets[0];
