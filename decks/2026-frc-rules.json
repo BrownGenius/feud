@@ -65,23 +65,23 @@
       "prompt": "Name a rule violation that can earn your team a Yellow or Red Card.",
       "answers": [
         {
-          "text": "Entering field before green lights (G102, repeat)",
+          "text": "Entering field before green lights (repeat)",
           "points": 35
         },
         {
-          "text": "Damaging contact inside opponent Robot Perimeter (G416)",
+          "text": "Damaging contact inside opponent Robot Perimeter",
           "points": 26
         },
         {
-          "text": "Banging on the Driver Station glass (G202, repeat)",
+          "text": "Banging on the Driver Station glass (repeat)",
           "points": 18
         },
         {
-          "text": "Deliberately tipping or entangling a robot (G417)",
+          "text": "Deliberately tipping or entangling a robot",
           "points": 12
         },
         {
-          "text": "Egregious conduct or referee disrespect (G211)",
+          "text": "Egregious conduct or referee disrespect",
           "points": 9
         }
       ]
@@ -125,7 +125,7 @@
       "prompt": "Name something the drive team must check or do right before the match starts.",
       "answers": [
         {
-          "text": "Turn on main 120A robot breaker",
+          "text": "Check / turn on main 120A robot breaker & battery",
           "points": 37
         },
         {
@@ -137,7 +137,7 @@
           "points": 17
         },
         {
-          "text": "Pre-load up to 8 Fuel properly",
+          "text": "Pre-load starting Fuel properly",
           "points": 12
         },
         {
@@ -150,27 +150,23 @@
       "theme": "🎮 Drive Team Roles",
       "title": "Round 5",
       "multiplier": 1,
-      "prompt": "Name an official FRC drive team role or station person on the field.",
+      "prompt": "Name one of the 4 official FRC Drive Team roles allowed at the field.",
       "answers": [
         {
           "text": "Driver",
           "points": 42
         },
         {
-          "text": "Second Driver / Operator",
-          "points": 26
-        },
-        {
           "text": "Drive Coach",
-          "points": 18
+          "points": 28
         },
         {
           "text": "Human Player",
-          "points": 9
+          "points": 18
         },
         {
           "text": "Technician",
-          "points": 5
+          "points": 12
         }
       ]
     },
@@ -289,11 +285,11 @@
           "points": 20
         },
         {
-          "text": "Cargo (2019 & 2022 balls)",
+          "text": "Cargo (Rapid React / Deep Space)",
           "points": 14
         },
         {
-          "text": "Power Cells / Fuel",
+          "text": "Power Cells (Infinite Recharge)",
           "points": 7
         },
         {
@@ -341,11 +337,11 @@
       "prompt": "Name a rule violation that triggers a referee foul or countdown on the field.",
       "answers": [
         {
-          "text": "Pinning an opponent (>3 seconds)",
+          "text": "Pinning an opponent (5-second count)",
           "points": 36
         },
         {
-          "text": "Touching opponent on its Tower in Endgame (G420)",
+          "text": "Touching opponent on its Tower in Endgame",
           "points": 24
         },
         {
@@ -353,7 +349,7 @@
           "points": 16
         },
         {
-          "text": "Catching Fuel out of the Hub (G408)",
+          "text": "Catching Fuel out of the Hub",
           "points": 12
         },
         {
@@ -373,7 +369,7 @@
       "prompt": "Name a specific robot measurement or limit inspectors check on the scale and sizing box.",
       "answers": [
         {
-          "text": "115 lb max weight (no bumpers/battery)",
+          "text": "115 lb max robot weight (R103)",
           "points": 38
         },
         {
@@ -437,7 +433,7 @@
           "points": 42
         },
         {
-          "text": "Climb Tower Level 1 (15 pts)",
+          "text": "Climb Tower Level 1 in Auto",
           "points": 27
         },
         {
