@@ -3,7 +3,7 @@
 // Enables PWA installation & offline app shell caching over HTTPS / localhost.
 // =====================================================================
 
-const CACHE_NAME = "party-feud-v20261119e";
+const CACHE_NAME = "party-feud-v20261120a";
 
 const APP_SHELL = [
   "./",

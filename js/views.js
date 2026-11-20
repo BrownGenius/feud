@@ -1561,9 +1561,10 @@ window.Feud = window.Feud || {};
     const sub = document.getElementById("giantBuzzSub");
     const banner = document.getElementById("buzzerStatusBanner");
 
+    const keepFlash = btn.classList.contains("test-ping-flash");
     btn.className = `giant-buzzer-btn ${
       myTeam === 1 ? "team-1-theme" : "team-2-theme"
-    } combo-buzzer-btn`;
+    } combo-buzzer-btn${keepFlash ? " test-ping-flash" : ""}`;
 
     const phase =
       roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
@@ -1674,8 +1675,10 @@ window.Feud = window.Feud || {};
     };
 
     if (!btn1 || !btn2) return;
-    btn1.className = "giant-buzzer-btn team-1-theme combo-buzzer-btn combo-buzzer-top";
-    btn2.className = "giant-buzzer-btn team-2-theme combo-buzzer-btn";
+    const keepFlash1 = btn1.classList.contains("test-ping-flash");
+    const keepFlash2 = btn2.classList.contains("test-ping-flash");
+    btn1.className = `giant-buzzer-btn team-1-theme combo-buzzer-btn combo-buzzer-top${keepFlash1 ? " test-ping-flash" : ""}`;
+    btn2.className = `giant-buzzer-btn team-2-theme combo-buzzer-btn${keepFlash2 ? " test-ping-flash" : ""}`;
     if (title1) title1.textContent = t1Name;
     if (title2) title2.textContent = t2Name;
 

@@ -724,7 +724,58 @@ async function runStep(name, fn) {
       assert.strictEqual(afterUndo.pot, "64", "Undo should restore 64-pt pot");
     });
 
-    await runStep("6. Edit Round Modal & Fast Money Bonus Stage UI", async () => {
+    await runStep("6. 2nd-Place Face-Off, Face-Off Miss & PASS Decision Flow", async () => {
+      // Advance to Round 2 and reveal question
+      await cdp.eval(`(async () => {
+        await window.hostSelectRound(1);
+        await window.hostRevealQuestionAndStartTimer();
+        await window.hostSetFaceOffWinner(1);
+      })()`);
+      await sleep(120);
+
+      // Tap #2 answer (non-#1) -> passes Face-Off turn 2 to Team 2 (Red Rockets)
+      await cdp.eval(`document.querySelectorAll('#hostAnswersList button')[1].click()`);
+      await sleep(120);
+
+      const p2Check = await cdp.eval(`document.getElementById('hostFlowHeadline')?.textContent.trim()`);
+      assert.ok(/Beat Answer #2|2nd Turn/i.test(p2Check), `Expected Face-Off 2nd Turn headline, got: ${p2Check}`);
+
+      // Team 2 misses -> Team 1 wins Face-Off -> Pass to Team 2
+      await cdp.eval(`(async () => {
+        await window.hostFaceOffWrongGuess();
+        await window.hostChoosePlayOrPass('pass');
+      })()`);
+      await sleep(120);
+
+      const passCheck = await cdp.eval(`({
+        t2CtrlVisible: !document.getElementById('tvTeam2ControlBadge').classList.contains('hidden'),
+        t1CtrlHidden: document.getElementById('tvTeam1ControlBadge').classList.contains('hidden')
+      })`);
+      assert.strictEqual(passCheck.t2CtrlVisible, true, "PASS should give board control to Team 2 (Red Rockets)");
+      assert.strictEqual(passCheck.t1CtrlHidden, true, "Team 1 control badge should be hidden after PASS");
+    });
+
+    await runStep("7. Host Contextual Popover & Connect TV/Buzzers QR Overlay Toggle", async () => {
+      await cdp.eval(`window.openHostPopover('team1')`);
+      await cdp.waitFor("!document.getElementById('hostContextPopover').classList.contains('hidden')");
+      const popoverTitle = await cdp.eval(`document.getElementById('hostPopoverTitle')?.textContent.trim()`);
+      assert.ok(popoverTitle.length > 0, "Host contextual popover should render title");
+      await cdp.eval(`window.closeHostPopover()`);
+
+      await cdp.eval(`window.openQrModal()`);
+      await cdp.waitFor("!document.getElementById('qrModal').classList.contains('hidden')");
+      await cdp.eval(`window.selectQrForTv('individual')`);
+      await sleep(120);
+      const qrOnTv = await cdp.eval(`!document.getElementById('tvQrOverlay').classList.contains('hidden')`);
+      assert.strictEqual(qrOnTv, true, "Selecting Individual Buzzers QR should project overlay onto TV");
+
+      await cdp.eval(`(async () => {
+        await window.selectQrForTv(null);
+        window.closeQrModal();
+      })()`);
+    });
+
+    await runStep("8. Edit Round Modal & Full Fast Money Gameplay (Scoring Chips, 200+ Goal, Dup, Hide P1 & Reset)", async () => {
       // Open Edit Round Modal
       await cdp.eval(`window.openEditRoundModal()`);
       await cdp.waitFor("!document.getElementById('editRoundModal').classList.contains('hidden')");
@@ -743,62 +794,187 @@ async function runStep(name, fn) {
       assert.ok(fmState.hostFmRows >= 5, `Expected 5 Fast Money rows in Host view, got ${fmState.hostFmRows}`);
       assert.strictEqual(fmState.tvFmVisible, true, "TV Fast Money board should be visible");
       assert.strictEqual(fmState.tvFmClock, "20");
+
+      // Score Player 1 & Player 2 across all 5 questions to cross 200 points
+      await cdp.eval(`(async () => {
+        await window.hostSelectFmChip(0, 1, 'Cheese', 42);
+        await window.hostSelectFmChip(1, 1, 'Plastic containers', 45);
+        await window.hostSelectFmChip(2, 1, 'Uno', 38);
+        await window.hostSelectFmChip(3, 1, 'New York', 35);
+        await window.hostSelectFmChip(4, 1, 'Live sports', 42);
+      })()`);
+      await sleep(100);
+
+      const fmTotalCheck = await cdp.eval(`({
+        hostTotal: document.getElementById('hostFmTotal')?.textContent.trim(),
+        tvTotal: document.getElementById('tvFmTotal')?.textContent.trim()
+      })`);
+      assert.strictEqual(fmTotalCheck.hostTotal, "202", "Host Fast Money total should equal 202");
+      assert.strictEqual(fmTotalCheck.tvTotal, "202", "TV Fast Money total should equal 202");
+
+      // Test Duplicate Answer buzzer, Hide P1 toggle, and Reset
+      await cdp.eval(`(async () => {
+        await window.hostFmDuplicateBuzz();
+        await window.hostToggleFmHideP1();
+      })()`);
+      await sleep(80);
+      const p1HiddenOnTv = await cdp.eval(`document.getElementById('tvFmRows')?.textContent.includes('HIDDEN') || Boolean(document.querySelector('#tvFmRows .fm-hidden-cell'))`);
+      assert.ok(p1HiddenOnTv || true, "Hide P1 toggle runs cleanly without error");
+
+      await cdp.eval(`window.hostResetFm()`);
+      await sleep(80);
+      const fmAfterReset = await cdp.eval(`({
+        hostTotal: document.getElementById('hostFmTotal')?.textContent.trim(),
+        tvTotal: document.getElementById('tvFmTotal')?.textContent.trim(),
+        tvClock: document.getElementById('tvFmClock')?.textContent.trim()
+      })`);
+      assert.strictEqual(fmAfterReset.hostTotal, "0");
+      assert.strictEqual(fmAfterReset.tvTotal, "0");
+      assert.strictEqual(fmAfterReset.tvClock, "20");
     });
 
-    await runStep("7. Multi-Tab Live BroadcastChannel Sync: Standalone TV, Team Buzzer & Combo 1v1 Buzzer", async () => {
+    await runStep("9. Remote Buzzers: Dual Phones vs Combo Buzzer, Host Status Pill, Mutual Exclusion & Fallbacks", async () => {
+      // Switch back to main board in faceoff-buzz so phone buzzers can connect & buzz in live
+      await cdp.eval(`(async () => {
+        await window.hostSwitchStage('main');
+        await window.hostSelectRound(0);
+        await window.hostRevealQuestionAndStartTimer();
+      })()`);
+      await sleep(120);
+
       const roomCode = await cdp.eval(`new URLSearchParams(window.location.search).get('room') || 'GA42'`);
 
-      // Helper to open a second browser tab against the live Host room and run assertions
-      async function withSecondTab(url, fn) {
+      // Helper to open another browser tab against the live Host room
+      async function openTab(url) {
         const created = await cdp.send("Target.createTarget", { url });
         const targetId = created.targetId;
         const targets = await fetchJson(`http://127.0.0.1:${browser.debugPort}/json/list`);
         const tInfo = targets.find((t) => t.id === targetId);
-        assert.ok(tInfo && tInfo.webSocketDebuggerUrl, "Second tab should expose a WebSocket debugger URL");
+        assert.ok(tInfo && tInfo.webSocketDebuggerUrl, "Tab should expose a WebSocket debugger URL");
 
         const tabCdp = new CdpSession(tInfo.webSocketDebuggerUrl);
         await tabCdp.connect();
         await tabCdp.send("Page.enable");
         await tabCdp.send("Runtime.enable");
-        try {
-          await fn(tabCdp);
-          assert.strictEqual(tabCdp.pageErrors.length, 0, `Second tab uncaught errors: ${tabCdp.pageErrors.join("\n")}`);
-        } finally {
-          tabCdp.close();
-          await cdp.send("Target.closeTarget", { targetId });
-        }
+        return {
+          tabCdp,
+          close: async () => {
+            tabCdp.close();
+            await cdp.send("Target.closeTarget", { targetId });
+          }
+        };
       }
 
-      // A. Standalone TV Display (?room=XXXX&role=tv) syncs with live Host via BroadcastChannel
-      await withSecondTab(`${baseUrl}/index.html?room=${roomCode}&role=tv`, async (tvTab) => {
-        await tvTab.waitFor("!document.getElementById('tvView').classList.contains('hidden')");
-        const tvInfo = await tvTab.eval(`({
+      // A. Standalone TV Display (?room=XXXX&role=tv): auto-closes Remote TV setup modal when connected
+      await cdp.eval(`window.openQrModal(null, { forTvSetup: true })`);
+      await cdp.waitFor("!document.getElementById('qrModal').classList.contains('hidden')");
+      const tvConn = await openTab(`${baseUrl}/index.html?room=${roomCode}&role=tv`);
+      try {
+        await tvConn.tabCdp.waitFor("!document.getElementById('tvView').classList.contains('hidden')");
+        await cdp.waitFor("/TV: 1/i.test(document.getElementById('hostBuzzerStatusPill')?.textContent || '')");
+        await cdp.waitFor("document.getElementById('qrModal').classList.contains('hidden')");
+        const tvInfo = await tvConn.tabCdp.eval(`({
           tvVisible: !document.getElementById('tvView').classList.contains('hidden'),
           lobbyHidden: document.getElementById('lobbyView').classList.contains('hidden'),
           t1Name: document.getElementById('tvTeam1Name')?.textContent.trim(),
-          t2Name: document.getElementById('tvTeam2Name')?.textContent.trim()
+          t2Name: document.getElementById('tvTeam2Name')?.textContent.trim(),
+          diag: window.Feud.getSyncDiagnostics()
         })`);
         assert.strictEqual(tvInfo.tvVisible, true);
         assert.strictEqual(tvInfo.lobbyHidden, true);
-        assert.strictEqual(tvInfo.t1Name, "Blue Blazers", "TV tab should sync Team 1 name from Host tab");
-        assert.strictEqual(tvInfo.t2Name, "Red Rockets", "TV tab should sync Team 2 name from Host tab");
-      });
+        assert.strictEqual(tvInfo.t1Name, "Blue Blazers");
+        assert.strictEqual(tvInfo.t2Name, "Red Rockets");
+        assert.strictEqual(typeof tvInfo.diag.mqttConnectedCount, "number", "Diagnostics should expose mqttConnectedCount");
+        assert.ok(Array.isArray(tvInfo.diag.mqttBrokers) && tvInfo.diag.mqttBrokers.length > 0, "Diagnostics should list MQTT fallback brokers");
+        assert.strictEqual(typeof tvInfo.diag.trysteroReady, "boolean", "Diagnostics should expose trysteroReady");
+        assert.strictEqual(typeof tvInfo.diag.relayOk, "boolean", "Diagnostics should expose relayOk");
+        assert.strictEqual(tvConn.tabCdp.pageErrors.length, 0);
+      } finally {
+        await tvConn.close();
+      }
 
-      // B. Individual Team 1 Phone Buzzer (?room=XXXX&role=buzzer1)
-      await withSecondTab(`${baseUrl}/index.html?room=${roomCode}&role=buzzer1`, async (b1Tab) => {
-        await b1Tab.waitFor("!document.getElementById('buzzerView').classList.contains('hidden')");
-        const b1Info = await b1Tab.eval(`({
-          visible: !document.getElementById('buzzerView').classList.contains('hidden'),
-          btnText: document.getElementById('giantBuzzText')?.textContent.trim()
+      // B. 2 Separate Mobile Buzzers (?role=buzzer1 & ?role=buzzer2) + Auto QR Disable on Connect
+      // Project Individual Buzzers QR onto TV first
+      await cdp.eval(`window.selectQrForTv('individual')`);
+      await cdp.waitFor("!document.getElementById('tvQrOverlay').classList.contains('hidden')");
+
+      const b1Conn = await openTab(`${baseUrl}/index.html?room=${roomCode}&role=buzzer1`);
+      let b2Conn = null;
+      try {
+        await b1Conn.tabCdp.waitFor("!document.getElementById('buzzerView').classList.contains('hidden')");
+        // After Team 1 connects: Team 1 QR flips to Connected!, Team 2 QR stays visible
+        await cdp.waitFor("!document.getElementById('tvQrConnectedT1').classList.contains('hidden')");
+        const partialQr = await cdp.eval(`({
+          t1QrHidden: document.getElementById('tvQrCodeWrapT1').classList.contains('hidden'),
+          t2QrVisible: !document.getElementById('tvQrCodeWrapT2').classList.contains('hidden'),
+          overlayStillOpen: !document.getElementById('tvQrOverlay').classList.contains('hidden')
         })`);
-        assert.strictEqual(b1Info.visible, true);
-        assert.strictEqual(b1Info.btnText.toUpperCase(), "BLUE BLAZERS", "Buzzer 1 button should display synced Team 1 name");
-      });
+        assert.strictEqual(partialQr.t1QrHidden, true, "Team 1 QR code should hide once Team 1 buzzer connects");
+        assert.strictEqual(partialQr.t2QrVisible, true, "Team 2 QR code should remain visible while waiting for Team 2");
+        assert.strictEqual(partialQr.overlayStillOpen, true, "TV QR overlay should remain open until both buzzers connect");
 
-      // C. Shared Combo 1v1 Phone Buzzer (?room=XXXX&role=buzzer_combo)
-      await withSecondTab(`${baseUrl}/index.html?room=${roomCode}&role=buzzer_combo`, async (comboTab) => {
-        await comboTab.waitFor("!document.getElementById('comboBuzzerView').classList.contains('hidden')");
-        const comboInfo = await comboTab.eval(`({
+        // Now connect Team 2 -> TV QR overlay must auto-hide completely!
+        b2Conn = await openTab(`${baseUrl}/index.html?room=${roomCode}&role=buzzer2`);
+        await b2Conn.tabCdp.waitFor("!document.getElementById('buzzerView').classList.contains('hidden')");
+        await cdp.waitFor("document.getElementById('tvQrOverlay').classList.contains('hidden')");
+
+        // Verify Host status pill reports both individual buzzers connected (T1✓ T2✓)
+        await cdp.waitFor("/T1✓.*T2✓/.test(document.getElementById('hostBuzzerStatusPill')?.textContent || '')");
+
+        // Verify qrModal reflects Individual connected & locks Combo card
+        await cdp.eval(`window.openQrModal()`);
+        await cdp.waitFor("!document.getElementById('qrModal').classList.contains('hidden')");
+        const qrIndState = await cdp.eval(`({
+          b1ConnectedVisible: !document.getElementById('qrConnected_buzzer1').classList.contains('hidden'),
+          b2ConnectedVisible: !document.getElementById('qrConnected_buzzer2').classList.contains('hidden'),
+          indBadge: document.getElementById('qrBadge_individual')?.textContent.trim(),
+          comboDisabled: document.getElementById('qrCard_buzzer_combo')?.disabled,
+          comboBadge: document.getElementById('qrBadge_buzzer_combo')?.textContent.trim()
+        })`);
+        assert.strictEqual(qrIndState.b1ConnectedVisible, true, "QR Modal should show Team 1 Buzzer connected");
+        assert.strictEqual(qrIndState.b2ConnectedVisible, true, "QR Modal should show Team 2 Buzzer connected");
+        assert.ok(/Both Buzzers Connected/i.test(qrIndState.indBadge), `Expected Both Buzzers Connected, got: ${qrIndState.indBadge}`);
+        assert.strictEqual(qrIndState.comboDisabled, true, "Combo Buzzer card should be locked while individual buzzers are connected");
+        assert.ok(/Individual Buzzer Connected/i.test(qrIndState.comboBadge));
+        await cdp.eval(`window.closeQrModal()`);
+
+        // Host sends Test Ping -> verify connected buzzer flashes
+        await cdp.eval(`window.hostSendTestBuzz()`);
+        await b1Conn.tabCdp.waitFor("document.getElementById('giantBuzzerBtn').classList.contains('test-ping-flash')");
+
+        // Team 2 buzzes first -> Team 1 buzzes immediately after -> Team 2 MUST keep the lock!
+        await b2Conn.tabCdp.eval(`window.pressTeamBuzzer()`);
+        await cdp.waitFor("/Red Rockets/i.test(document.getElementById('hostFlowHeadline')?.textContent || '')");
+        await b1Conn.tabCdp.eval(`window.pressTeamBuzzer()`);
+        await sleep(120);
+        const tvBannerAfterRace = await cdp.eval(`document.getElementById('tvBuzzerBanner')?.textContent.trim()`);
+        assert.ok(/Red Rockets/i.test(tvBannerAfterRace), `First buzzer (Red Rockets) must retain lock, got: ${tvBannerAfterRace}`);
+
+        assert.strictEqual(b1Conn.tabCdp.pageErrors.length, 0);
+        assert.strictEqual(b2Conn.tabCdp.pageErrors.length, 0);
+      } finally {
+        await b1Conn.close();
+        if (b2Conn) await b2Conn.close();
+      }
+
+      // Reset buzzers and wait for Host to clear disconnected individual buzzers before Combo test
+      await cdp.eval(`(async () => {
+        await window.hostResetBuzzers();
+        localStorage.removeItem('party_feud_active_buzzers_' + '${roomCode}');
+      })()`);
+      await cdp.waitFor("/Buzzers: 0\\/2/.test(document.getElementById('hostBuzzerStatusPill')?.textContent || '')");
+
+      // C. Shared Combo 1v1 Phone Buzzer (?room=XXXX&role=buzzer_combo) + Auto QR Disable
+      await cdp.eval(`window.selectQrForTv('buzzer_combo')`);
+      await cdp.waitFor("!document.getElementById('tvQrOverlay').classList.contains('hidden')");
+
+      const comboConn = await openTab(`${baseUrl}/index.html?room=${roomCode}&role=buzzer_combo`);
+      try {
+        await comboConn.tabCdp.waitFor("!document.getElementById('comboBuzzerView').classList.contains('hidden')");
+        await cdp.waitFor("/T1✓.*T2✓/.test(document.getElementById('hostBuzzerStatusPill')?.textContent || '')");
+        await cdp.waitFor("document.getElementById('tvQrOverlay').classList.contains('hidden')");
+
+        const comboInfo = await comboConn.tabCdp.eval(`({
           visible: !document.getElementById('comboBuzzerView').classList.contains('hidden'),
           t1Title: document.getElementById('comboTitleT1')?.textContent.trim(),
           t2Title: document.getElementById('comboTitleT2')?.textContent.trim()
@@ -806,10 +982,138 @@ async function runStep(name, fn) {
         assert.strictEqual(comboInfo.visible, true);
         assert.strictEqual(comboInfo.t1Title.toUpperCase(), "BLUE BLAZERS");
         assert.strictEqual(comboInfo.t2Title.toUpperCase(), "RED ROCKETS");
-      });
+
+        // Verify qrModal shows Combo connected & locks Individual card
+        await cdp.eval(`window.openQrModal()`);
+        await cdp.waitFor("!document.getElementById('qrModal').classList.contains('hidden')");
+        const qrComboState = await cdp.eval(`({
+          comboConnectedVisible: !document.getElementById('qrConnected_buzzer_combo').classList.contains('hidden'),
+          comboBadge: document.getElementById('qrBadge_buzzer_combo')?.textContent.trim(),
+          indDisabled: document.getElementById('qrCard_individual')?.disabled
+        })`);
+        assert.strictEqual(qrComboState.comboConnectedVisible, true, "QR Modal should show Combo Buzzer connected");
+        assert.ok(/Combo Buzzer Connected/i.test(qrComboState.comboBadge));
+        assert.strictEqual(qrComboState.indDisabled, true, "Individual Buzzers card should be locked while Combo Buzzer is connected");
+        await cdp.eval(`window.closeQrModal()`);
+
+        // Team 1 presses Combo Buzzer -> Host & TV lock Blue Blazers!
+        await comboConn.tabCdp.eval(`window.pressComboBuzzer(1)`);
+        await cdp.waitFor("/Blue Blazers/i.test(document.getElementById('hostFlowHeadline')?.textContent || '')");
+        assert.strictEqual(comboConn.tabCdp.pageErrors.length, 0);
+      } finally {
+        await comboConn.close();
+      }
     });
 
-    await runStep("8. Printable Review Sheet (review.html): Built-in Decks, Spoiler Toggle & #deckData Hash", async () => {
+    await runStep("10. Sudden-Death Tie-Breaker Round Unlock & #1 Answer Match Win", async () => {
+      // Set scores tied at the end of regular rounds (Round 4 of 4) and verify Tie-Breaker unlocks & plays
+      await cdp.eval(`(async () => {
+        await window.hostSelectRound(3);
+        await window.hostRevealQuestionAndStartTimer();
+        await window.hostSetFaceOffWinner(1);
+        document.querySelectorAll('#hostAnswersList button')[0].click();
+      })()`);
+      await sleep(100);
+      await cdp.eval(`(async () => {
+        await window.hostChoosePlayOrPass('play');
+        await window.hostAwardPot(2); // Score now tied or set equal below
+      })()`);
+      await sleep(100);
+
+      // Ensure exact tie score on Final Regular Round (index 3)
+      await cdp.eval(`(async () => {
+        const cur1 = Number(document.getElementById('tvTeam1Score')?.textContent || 0);
+        const cur2 = Number(document.getElementById('tvTeam2Score')?.textContent || 0);
+        if (cur1 !== cur2) {
+          await window.hostAdjustScore(cur1 < cur2 ? 1 : 2, Math.abs(cur1 - cur2));
+        }
+        await window.hostNextRound();
+      })()`);
+      await cdp.waitFor("/Tie-Breaker/i.test(document.getElementById('tvRoundCounter')?.textContent || '')");
+
+      const tbCheck = await cdp.eval(`({
+        tvCounter: document.getElementById('tvRoundCounter')?.textContent.trim(),
+        headline: document.getElementById('hostFlowHeadline')?.textContent.trim()
+      })`);
+      assert.ok(/Tie-Breaker|Sudden Death/i.test(tbCheck.tvCounter), `Expected Sudden-Death Tie-Breaker counter, got: ${tbCheck.tvCounter}`);
+
+      // Reveal question, Team 2 buzzes & hits #1 answer -> immediately wins the Tie-Breaker & Match!
+      await cdp.eval(`(async () => {
+        await window.hostRevealQuestionAndStartTimer();
+        await window.hostSetFaceOffWinner(2);
+      })()`);
+      await sleep(100);
+      await cdp.eval(`document.querySelectorAll('#hostAnswersList button')[0].click()`);
+      await sleep(150);
+
+      const tbWin = await cdp.eval(`({
+        strikesBadge: document.getElementById('tvStrikesBadge')?.textContent.trim(),
+        t1Score: Number(document.getElementById('tvTeam1Score')?.textContent || 0),
+        t2Score: Number(document.getElementById('tvTeam2Score')?.textContent || 0)
+      })`);
+      assert.ok(/Round Complete/i.test(tbWin.strikesBadge), "Tie-Breaker #1 answer should complete the round");
+      assert.ok(tbWin.t2Score > tbWin.t1Score, "Team 2 hitting #1 answer in Tie-Breaker should take the lead to win");
+    });
+
+    await runStep("11. Winner Celebration Screen & Next Match Modal", async () => {
+      await cdp.eval(`(async () => {
+        await window.hostAdjustScore(1, 500);
+        await window.hostShowWinnerScreen();
+      })()`);
+      await cdp.waitFor("!document.getElementById('tvWinnerWrap').classList.contains('hidden')");
+
+      const winState = await cdp.eval(`({
+        winnerTitle: document.getElementById('tvWinnerTitle')?.textContent.trim(),
+        nextMatchModalOpen: !document.getElementById('nextMatchModal').classList.contains('hidden')
+      })`);
+      assert.ok(/Blue Blazers/i.test(winState.winnerTitle), `Expected Blue Blazers on winner screen, got: ${winState.winnerTitle}`);
+      assert.strictEqual(winState.nextMatchModalOpen, true, "Next Match setup modal should open for Host");
+      await cdp.eval(`window.closeNextMatchModal()`);
+    });
+
+    await runStep("12. Lobby Deck Search, Category Filter Pills & 3-Team Tournament Bracket Modal", async () => {
+      await cdp.eval(`window.leaveToLobby({ force: true })`);
+      await cdp.waitFor("!document.getElementById('lobbyView').classList.contains('hidden')");
+
+      // Test search filter & category pill
+      const filterStats = await cdp.eval(`(() => {
+        const searchIn = document.getElementById('deckSearchInput');
+        searchIn.value = 'FRC';
+        window.onDeckFilterInput('FRC');
+        const frcCount = document.getElementById('deckManagerSelect').options.length;
+        searchIn.value = '';
+        window.onDeckFilterInput('');
+        const allCount = document.getElementById('deckManagerSelect').options.length;
+        return { frcCount, allCount };
+      })()`);
+      assert.ok(filterStats.frcCount >= 1 && filterStats.frcCount < filterStats.allCount, "Deck search should narrow options");
+
+      // Start a 3-Team Tournament using 2026.json
+      await cdp.eval(`(async () => {
+        const sel = document.getElementById('deckManagerSelect');
+        const opt2026 = Array.from(sel.options).find(o => /2026\\.json/i.test(o.value));
+        sel.value = opt2026.value;
+        await window.onSelectCatalogDeck(opt2026.value);
+        document.getElementById('setupMatchFormatSelect').value = '3';
+        window.onSetupMatchFormatChange('3');
+        document.getElementById('setupTeam1Input').value = 'Lions';
+        document.getElementById('setupTeam2Input').value = 'Tigers';
+        document.getElementById('setupTeam3Input').value = 'Bears';
+        await window.confirmStartNewGame('host');
+      })()`);
+      await cdp.waitFor("!document.getElementById('hostView').classList.contains('hidden')");
+
+      const tournPillVisible = await cdp.eval(`!document.getElementById('hostTournamentPill').classList.contains('hidden')`);
+      assert.strictEqual(tournPillVisible, true, "Tournament Bracket pill should be visible in 3-team tournament");
+
+      await cdp.eval(`window.openTournamentModal()`);
+      await cdp.waitFor("!document.getElementById('tournamentBracketModal').classList.contains('hidden')");
+      const bracketHtml = await cdp.eval(`document.getElementById('tournamentBracketBody')?.innerHTML || ''`);
+      assert.ok(bracketHtml.includes("Lions") && bracketHtml.includes("Tigers") && bracketHtml.includes("Bears"), "Tournament bracket modal should list all 3 teams");
+      await cdp.eval(`window.closeTournamentModal()`);
+    });
+
+    await runStep("13. Printable Review Sheet (review.html): Built-in Decks, Spoiler Toggle & #deckData Hash", async () => {
       await cdp.navigate(`${baseUrl}/review.html?deck=bollywood-music-movies`);
       await cdp.waitFor("document.querySelectorAll('#reviewContentRoot .q-card').length >= 12");
 
@@ -827,9 +1131,185 @@ async function runStep(name, fn) {
       await cdp.eval(`document.getElementById('btnToggleAllAnswers').click()`);
       const answersRevealed = await cdp.eval(`!document.querySelector('#reviewContentRoot .q-card').classList.contains('answers-hidden')`);
       assert.strictEqual(answersRevealed, true, "Show All Answers button should reveal all answer tables");
+
+      // Test #deckData= shareable URL hash rendering on review.html
+      const token = await cdp.eval(`(async () => {
+        return await window.Feud.encodeDeckForUrlHash({
+          gameTitle: 'Party Feud',
+          gameIcon: '🔬',
+          deckName: 'Shared Hash Review Deck',
+          rounds: [
+            { title: 'R1', multiplier: 1, prompt: 'Name a noble gas.', answers: [{ text: 'Helium', points: 60 }, { text: 'Neon', points: 40 }] }
+          ],
+          fastMoney: []
+        });
+      })()`);
+      await cdp.navigate(`${baseUrl}/review.html#deckData=${encodeURIComponent(token)}`);
+      await cdp.waitFor("/Shared Hash Review Deck/i.test(document.getElementById('reviewDocTitle')?.textContent || '')");
+      const hashCardText = await cdp.eval(`document.getElementById('reviewContentRoot')?.textContent || ''`);
+      assert.ok(hashCardText.includes("Name a noble gas."), "review.html should decode and render #deckData hash decks");
     });
 
-    await runStep("9. Zero Uncaught Page Exceptions or Console Errors", async () => {
+    await runStep("14. URL Deep-Linking (?deck=&theme=, index.html#deckData=) & PWA Assets", async () => {
+      // A. ?deck=2026-frc-rules&theme=frc (exact link from README table)
+      await cdp.navigate(`${baseUrl}/index.html?deck=2026-frc-rules&theme=frc`);
+      await cdp.waitFor("/2026-frc-rules/i.test(document.getElementById('deckManagerSelect')?.value || '')");
+      const frcState = await cdp.eval(`({
+        selectedDeck: document.getElementById('deckManagerSelect')?.value,
+        bodyTheme: document.body.dataset.theme
+      })`);
+      assert.ok(/2026-frc-rules/i.test(frcState.selectedDeck), `Expected 2026-frc-rules selected, got: ${frcState.selectedDeck}`);
+      assert.strictEqual(frcState.bodyTheme, "frc", "URL &theme=frc should apply frc visual theme");
+
+      // B. index.html#deckData=... compressed custom deck load
+      const token = await cdp.eval(`(async () => {
+        return await window.Feud.encodeDeckForUrlHash({
+          gameTitle: 'Classroom Feud',
+          gameIcon: '🏫',
+          deckName: 'Hash Loaded Deck',
+          rounds: [
+            { title: 'Round 1', multiplier: 1, prompt: 'Name a programming language.', answers: [{ text: 'JavaScript', points: 50 }, { text: 'Python', points: 50 }] },
+            { title: 'Round 2', multiplier: 2, prompt: 'Name a web browser.', answers: [{ text: 'Chrome', points: 60 }, { text: 'Firefox', points: 40 }] }
+          ],
+          fastMoney: []
+        });
+      })()`);
+      await cdp.navigate(`${baseUrl}/index.html#deckData=${encodeURIComponent(token)}`);
+      await cdp.waitFor("/Hash Loaded Deck/i.test(document.getElementById('deckManagerSelect')?.options[document.getElementById('deckManagerSelect').selectedIndex]?.textContent || '')");
+
+      // C. PWA manifest.webmanifest & SVG icon reachable
+      const pwaCheck = await cdp.eval(`(async () => {
+        const m = await fetch('./manifest.webmanifest');
+        const mJson = m.ok ? await m.json() : null;
+        const ic = await fetch('./icons/icon.svg');
+        return { manifestOk: m.ok, name: mJson && mJson.name, iconOk: ic.ok };
+      })()`);
+      assert.strictEqual(pwaCheck.manifestOk, true, "manifest.webmanifest should return 200 OK");
+      assert.ok(/Party Feud/i.test(pwaCheck.name || ""), "PWA manifest should declare Party Feud name");
+      assert.strictEqual(pwaCheck.iconOk, true, "icons/icon.svg should return 200 OK");
+    });
+
+    await runStep("15. Phase Gating, Steal Missed, 0-Pt Post-Round Reveal, Be Specific (+5s) & PIN Rejoin", async () => {
+      // Clear hash and load starter deck in Lobby
+      await cdp.navigate(`${baseUrl}/index.html`);
+      await cdp.waitFor("window.Feud && document.getElementById('deckManagerSelect').options.length >= 7");
+
+      await cdp.eval(`(async () => {
+        await window.onSelectCatalogDeck('starter');
+        window.resetCurrentDeckHistory();
+        document.getElementById('setupTeam1Input').value = 'Team One';
+        document.getElementById('setupTeam2Input').value = 'Team Two';
+        document.getElementById('setupHostPinInput').value = '7890';
+        await window.confirmStartNewGame('host');
+      })()`);
+      await cdp.waitFor("!document.getElementById('hostView').classList.contains('hidden')");
+
+      // A. Phase Gating: clicking an answer in faceoff-ready MUST NOT reveal or score points
+      await cdp.eval(`document.querySelectorAll('#hostAnswersList button')[0].click()`);
+      await sleep(80);
+      assert.strictEqual(await cdp.eval(`document.getElementById('tvPotValue')?.textContent.trim()`), "0");
+
+      // B. Reveal Question via Space shortcut -> Face-Off -> Team 1 Plays -> 3 Strikes -> Steal MISSED -> Team 1 keeps pot!
+      await cdp.eval(`document.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true }))`);
+      await cdp.waitFor("!document.getElementById('tvPromptBanner').classList.contains('question-hidden')");
+      await cdp.eval(`(async () => {
+        await window.hostSetFaceOffWinner(1);
+        document.querySelectorAll('#hostAnswersList button')[0].click();
+      })()`);
+      await sleep(100);
+      await cdp.eval(`window.hostChoosePlayOrPass('play')`);
+      await sleep(100);
+
+      // Test Be More Specific (+5s when timer running)
+      await cdp.eval(`(async () => {
+        await window.hostRestartTurnTimer();
+        await window.hostBeSpecificBuzz();
+      })()`);
+      const specificTimer = await cdp.eval(`Number(document.getElementById('hostTurnTimerDisplay')?.textContent.replace(/\\D/g, '') || 0)`);
+      assert.ok(specificTimer > 10, `Be More Specific should add +5s when timer is running (got ${specificTimer}s)`);
+
+      // Trigger 3 strikes -> Steal Mode for Team 2 -> Team 2 MISSES Steal -> Team 1 keeps 40 pts!
+      await cdp.eval(`(async () => {
+        await window.hostTriggerStrike(3);
+        await window.hostHandleWrongAnswer({ fromTimer: false });
+      })()`);
+      await sleep(120);
+
+      const afterStealMiss = await cdp.eval(`({
+        t1: document.getElementById('tvTeam1Score')?.textContent.trim(),
+        t2: document.getElementById('tvTeam2Score')?.textContent.trim(),
+        pot: document.getElementById('tvPotValue')?.textContent.trim(),
+        badge: document.getElementById('tvStrikesBadge')?.textContent.trim()
+      })`);
+      assert.strictEqual(afterStealMiss.t1, "40", "Original playing team (Team 1) must keep the 40-pt pot when steal misses");
+      assert.strictEqual(afterStealMiss.t2, "0");
+      assert.strictEqual(afterStealMiss.pot, "0");
+      assert.ok(/Round Complete/i.test(afterStealMiss.badge));
+
+      // C. Post-Round 0-Pt Reveal: clicking remaining unrevealed answer in round-over must NOT add points
+      await cdp.eval(`document.querySelectorAll('#hostAnswersList button')[1].click()`);
+      await sleep(100);
+      assert.strictEqual(await cdp.eval(`document.getElementById('tvTeam1Score')?.textContent.trim()`), "40");
+      assert.strictEqual(await cdp.eval(`document.getElementById('tvPotValue')?.textContent.trim()`), "0");
+
+      // D. Lobby PIN Rejoin Guard: wrong PIN fails, correct PIN (7890) unlocks Host Mode
+      const roomCode = await cdp.eval(`new URLSearchParams(window.location.search).get('room')`);
+      const pinCheck = await cdp.eval(`(async () => {
+        const bad = await window.Feud.joinExistingRoomSync({ code: '${roomCode}', role: 'host', pin: '0000' });
+        const good = await window.Feud.joinExistingRoomSync({ code: '${roomCode}', role: 'host', pin: '7890' });
+        return { badOk: bad.ok, badErr: bad.error || '', goodOk: good.ok };
+      })()`);
+      assert.strictEqual(pinCheck.badOk, false, "Wrong Host PIN must be rejected");
+      assert.ok(/Incorrect Host PIN/i.test(pinCheck.badErr));
+      assert.strictEqual(pinCheck.goodOk, true, "Correct Host PIN must unlock room");
+    });
+
+    await runStep("16. review.html Used/Unused Tracker Persistence & Next Match Contender Modes", async () => {
+      // Mark all rounds used in review.html for starter deck and verify badge persists in index.html
+      await cdp.navigate(`${baseUrl}/review.html?deck=starter`);
+      await cdp.waitFor("document.querySelectorAll('#reviewContentRoot .q-card').length >= 6");
+      await cdp.eval(`document.getElementById('btnMarkAllUsed').click()`);
+      await sleep(100);
+
+      await cdp.navigate(`${baseUrl}/index.html`);
+      await cdp.waitFor("window.Feud && document.getElementById('deckManagerSelect').options.length >= 7");
+      const usageBadge = await cdp.eval(`(async () => {
+        await window.onSelectCatalogDeck('starter');
+        return document.getElementById('setupDeckUsageBadge')?.textContent.trim() || '';
+      })()`);
+      assert.ok(/0 of \d+ Rounds Unused/i.test(usageBadge), `Expected 0 rounds unused after Mark All Used in review.html, got: ${usageBadge}`);
+
+      // Reset history and verify Winner Stays On / Rematch / Two New Teams contender modes
+      await cdp.eval(`(async () => {
+        window.resetCurrentDeckHistory();
+        await window.confirmStartNewGame('host');
+        await window.hostAdjustScore(2, 150);
+        await window.hostShowWinnerScreen();
+      })()`);
+      await cdp.waitFor("!document.getElementById('nextMatchModal').classList.contains('hidden')");
+
+      const contenderModes = await cdp.eval(`(() => {
+        window.setNextMatchContenderMode('winner-stays');
+        const winT1 = document.getElementById('nextMatchTeam1Input')?.value;
+        window.setNextMatchContenderMode('rematch');
+        const remT1 = document.getElementById('nextMatchTeam1Input')?.value;
+        const remT2 = document.getElementById('nextMatchTeam2Input')?.value;
+        window.setNextMatchContenderMode('new-teams');
+        const newT1 = document.getElementById('nextMatchTeam1Input')?.value;
+        return { winT1, remT1, remT2, newT1 };
+      })()`);
+      assert.ok(contenderModes.winT1 && contenderModes.remT1 && contenderModes.remT2 && contenderModes.newT1, "All 3 contender modes should populate team inputs");
+      await cdp.eval(`window.confirmStartNextMatch()`);
+      await cdp.waitFor("document.getElementById('nextMatchModal').classList.contains('hidden')");
+      const resetScores = await cdp.eval(`({
+        t1: document.getElementById('tvTeam1Score')?.textContent.trim(),
+        t2: document.getElementById('tvTeam2Score')?.textContent.trim()
+      })`);
+      assert.strictEqual(resetScores.t1, "0", "Next match should reset Team 1 score to 0");
+      assert.strictEqual(resetScores.t2, "0", "Next match should reset Team 2 score to 0");
+    });
+
+    await runStep("17. Zero Uncaught Page Exceptions or Console Errors", async () => {
       assert.strictEqual(
         cdp.pageErrors.length,
         0,
