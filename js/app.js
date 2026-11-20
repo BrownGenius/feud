@@ -995,17 +995,15 @@ window.Feud = window.Feud || {};
     if (activeRole === "host" && currentRoomCode) {
       await pushRoomPatch({ boardTheme: clean });
     }
-    const labels = {
-      classic: "🎭 Classic Blue & Gold",
-      holiday: "🎄 Holiday Red & Green",
-      frc: "🤖 FRC Robotics Neon",
-      classroom: "🏫 Classroom Clean"
-    };
-    Feud.showToast(`🎨 Theme set to ${labels[clean] || clean}`);
+    const catalog = Array.isArray(Feud.BOARD_THEME_CATALOG) ? Feud.BOARD_THEME_CATALOG : [];
+    const matched = catalog.find((t) => t.id === clean);
+    Feud.showToast(`🎨 Theme set to ${(matched && matched.label) || clean}`);
   }
 
   async function cycleBoardTheme() {
-    const order = ["classic", "holiday", "frc", "classroom"];
+    const order = Array.isArray(Feud.BOARD_THEME_CATALOG)
+      ? Feud.BOARD_THEME_CATALOG.map((t) => t.id)
+      : ["classic", "holiday", "frc", "classroom"];
     const cur = roomState.boardTheme || (Feud.loadSavedBoardTheme ? Feud.loadSavedBoardTheme() : "classic");
     const idx = order.indexOf(cur);
     const next = order[(idx + 1) % order.length];

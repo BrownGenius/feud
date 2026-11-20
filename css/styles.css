@@ -3788,6 +3788,286 @@ body[data-theme="classroom"] .tile-pts-box {
   border-left-color: #bae6fd;
 }
 
+body[data-theme="midnight"] {
+  --bg-dark: #09090b;
+  --bg-radial: #27272a;
+  --panel-bg: #18181b;
+  --gold: #facc15;
+  --gold-deep: #ca8a04;
+  --gold-pale: #fef9c3;
+  --blue-tile-top: #3f3f46;
+  --blue-tile-bot: #18181b;
+  --blue-border: #fde047;
+  --slate-dark: #09090b;
+}
+
+body[data-theme="midnight"] .marquee-panel,
+body[data-theme="midnight"] .role-card {
+  background: linear-gradient(155deg, #27272a 0%, #09090b 100%);
+}
+
+body[data-theme="midnight"] .feud-tile.hidden-state {
+  background: linear-gradient(180deg, #3f3f46 0%, #27272a 50%, #18181b 100%);
+  border-color: #fde047;
+}
+
+body[data-theme="midnight"] .tile-num-badge {
+  background: radial-gradient(circle, #eab308 0%, #854d0e 100%);
+  border-color: #fef08a;
+}
+
+body[data-theme="sunset"] {
+  --bg-dark: #1e0a3c;
+  --bg-radial: #7c2d12;
+  --panel-bg: #2e1065;
+  --gold: #fbbf24;
+  --gold-deep: #db2777;
+  --gold-pale: #fde68a;
+  --blue-tile-top: #db2777;
+  --blue-tile-bot: #701a75;
+  --blue-border: #f9a8d4;
+  --slate-dark: #17072b;
+}
+
+body[data-theme="sunset"] .marquee-panel,
+body[data-theme="sunset"] .role-card {
+  background: linear-gradient(155deg, #4c1d95 0%, #3b0764 55%, #7c2d12 100%);
+}
+
+body[data-theme="sunset"] .feud-tile.hidden-state {
+  background: linear-gradient(180deg, #ec4899 0%, #be185d 50%, #701a75 100%);
+  border-color: #fbcfe8;
+}
+
+body[data-theme="sunset"] .tile-num-badge {
+  background: radial-gradient(circle, #f97316 0%, #9a3412 100%);
+  border-color: #fde68a;
+}
+
+body[data-theme="harvest"] {
+  --bg-dark: #1c0f06;
+  --bg-radial: #7c2d12;
+  --panel-bg: #2a160a;
+  --gold: #f59e0b;
+  --gold-deep: #b45309;
+  --gold-pale: #fef3c7;
+  --blue-tile-top: #c2410c;
+  --blue-tile-bot: #7c2d12;
+  --blue-border: #fdba74;
+  --slate-dark: #1c0f06;
+}
+
+body[data-theme="harvest"] .marquee-panel,
+body[data-theme="harvest"] .role-card {
+  background: linear-gradient(155deg, #451a03 0%, #271105 100%);
+}
+
+body[data-theme="harvest"] .feud-tile.hidden-state {
+  background: linear-gradient(180deg, #d97706 0%, #b45309 50%, #78350f 100%);
+  border-color: #fed7aa;
+}
+
+body[data-theme="harvest"] .tile-num-badge {
+  background: radial-gradient(circle, #dc2626 0%, #7f1d1d 100%);
+  border-color: #fde68a;
+}
+
+body[data-theme="winter"] {
+  --bg-dark: #061826;
+  --bg-radial: #0c4a6e;
+  --panel-bg: #0b253a;
+  --gold: #7dd3fc;
+  --gold-deep: #0284c7;
+  --gold-pale: #e0f2fe;
+  --blue-tile-top: #0284c7;
+  --blue-tile-bot: #075985;
+  --blue-border: #bae6fd;
+  --slate-dark: #061826;
+}
+
+body[data-theme="winter"] .marquee-panel,
+body[data-theme="winter"] .role-card {
+  background: linear-gradient(155deg, #0c4a6e 0%, #082f49 100%);
+}
+
+body[data-theme="winter"] .feud-tile.hidden-state {
+  background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 50%, #075985 100%);
+  border-color: #e0f2fe;
+}
+
+body[data-theme="winter"] .tile-num-badge {
+  background: radial-gradient(circle, #38bdf8 0%, #0369a1 100%);
+  border-color: #f0f9ff;
+}
+
+body[data-theme="spooky"] {
+  --bg-dark: #11071f;
+  --bg-radial: #4c1d95;
+  --panel-bg: #1e0b36;
+  --gold: #fb923c;
+  --gold-deep: #ea580c;
+  --gold-pale: #ffedd5;
+  --blue-tile-top: #7e22ce;
+  --blue-tile-bot: #4c1d95;
+  --blue-border: #fdba74;
+  --slate-dark: #11071f;
+}
+
+body[data-theme="spooky"] .marquee-panel,
+body[data-theme="spooky"] .role-card {
+  background: linear-gradient(155deg, #3b0764 0%, #17062b 100%);
+}
+
+body[data-theme="spooky"] .feud-tile.hidden-state {
+  background: linear-gradient(180deg, #ea580c 0%, #c2410c 50%, #7c2d12 100%);
+  border-color: #fed7aa;
+}
+
+body[data-theme="spooky"] .tile-num-badge {
+  background: radial-gradient(circle, #9333ea 0%, #4c1d95 100%);
+  border-color: #fdba74;
+}
+
+body[data-theme="patriotic"] {
+  --bg-dark: #071330;
+  --bg-radial: #7f1d1d;
+  --panel-bg: #0f204a;
+  --gold: #f8fafc;
+  --gold-deep: #b91c1c;
+  --gold-pale: #e2e8f0;
+  --blue-tile-top: #1d4ed8;
+  --blue-tile-bot: #1e3a8a;
+  --blue-border: #fca5a5;
+  --slate-dark: #071330;
+}
+
+body[data-theme="patriotic"] .marquee-panel,
+body[data-theme="patriotic"] .role-card {
+  background: linear-gradient(155deg, #1e3a8a 0%, #0f172a 60%, #7f1d1d 100%);
+}
+
+body[data-theme="patriotic"] .feud-tile.hidden-state {
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 50%, #1e3a8a 100%);
+  border-color: #f8fafc;
+}
+
+body[data-theme="patriotic"] .tile-num-badge {
+  background: radial-gradient(circle, #dc2626 0%, #991b1b 100%);
+  border-color: #f8fafc;
+}
+
+body[data-theme="marigold"] {
+  --bg-dark: #250821;
+  --bg-radial: #831843;
+  --panel-bg: #3b0d35;
+  --gold: #fbbf24;
+  --gold-deep: #d97706;
+  --gold-pale: #fef08a;
+  --blue-tile-top: #d97706;
+  --blue-tile-bot: #92400e;
+  --blue-border: #fde047;
+  --slate-dark: #250821;
+}
+
+body[data-theme="marigold"] .marquee-panel,
+body[data-theme="marigold"] .role-card {
+  background: linear-gradient(155deg, #500724 0%, #3b0764 100%);
+}
+
+body[data-theme="marigold"] .feud-tile.hidden-state {
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 50%, #92400e 100%);
+  border-color: #fef08a;
+}
+
+body[data-theme="marigold"] .tile-num-badge {
+  background: radial-gradient(circle, #db2777 0%, #831843 100%);
+  border-color: #fde047;
+}
+
+body[data-theme="crimson-gold"] {
+  --bg-dark: #260508;
+  --bg-radial: #991b1b;
+  --panel-bg: #3d090f;
+  --gold: #fde047;
+  --gold-deep: #ca8a04;
+  --gold-pale: #fef9c3;
+  --blue-tile-top: #b91c1c;
+  --blue-tile-bot: #7f1d1d;
+  --blue-border: #fde047;
+  --slate-dark: #260508;
+}
+
+body[data-theme="crimson-gold"] .marquee-panel,
+body[data-theme="crimson-gold"] .role-card {
+  background: linear-gradient(155deg, #7f1d1d 0%, #450a0a 100%);
+}
+
+body[data-theme="crimson-gold"] .feud-tile.hidden-state {
+  background: linear-gradient(180deg, #dc2626 0%, #b91c1c 50%, #7f1d1d 100%);
+  border-color: #fde047;
+}
+
+body[data-theme="crimson-gold"] .tile-num-badge {
+  background: radial-gradient(circle, #eab308 0%, #854d0e 100%);
+  border-color: #fef9c3;
+}
+
+body[data-theme="emerald"] {
+  --bg-dark: #031c10;
+  --bg-radial: #065f46;
+  --panel-bg: #052e1b;
+  --gold: #fde047;
+  --gold-deep: #ca8a04;
+  --gold-pale: #fef9c3;
+  --blue-tile-top: #059669;
+  --blue-tile-bot: #064e3b;
+  --blue-border: #6ee7b7;
+  --slate-dark: #031c10;
+}
+
+body[data-theme="emerald"] .marquee-panel,
+body[data-theme="emerald"] .role-card {
+  background: linear-gradient(155deg, #065f46 0%, #022c22 100%);
+}
+
+body[data-theme="emerald"] .feud-tile.hidden-state {
+  background: linear-gradient(180deg, #10b981 0%, #059669 50%, #064e3b 100%);
+  border-color: #a7f3d0;
+}
+
+body[data-theme="emerald"] .tile-num-badge {
+  background: radial-gradient(circle, #eab308 0%, #854d0e 100%);
+  border-color: #fef9c3;
+}
+
+body[data-theme="rose"] {
+  --bg-dark: #250816;
+  --bg-radial: #831843;
+  --panel-bg: #3b0d24;
+  --gold: #fbcfe8;
+  --gold-deep: #be185d;
+  --gold-pale: #fdf2f8;
+  --blue-tile-top: #be185d;
+  --blue-tile-bot: #831843;
+  --blue-border: #f9a8d4;
+  --slate-dark: #250816;
+}
+
+body[data-theme="rose"] .marquee-panel,
+body[data-theme="rose"] .role-card {
+  background: linear-gradient(155deg, #500724 0%, #2d0718 100%);
+}
+
+body[data-theme="rose"] .feud-tile.hidden-state {
+  background: linear-gradient(180deg, #e11d48 0%, #be185d 50%, #881337 100%);
+  border-color: #fbcfe8;
+}
+
+body[data-theme="rose"] .tile-num-badge {
+  background: radial-gradient(circle, #f43f5e 0%, #9f1239 100%);
+  border-color: #fce7f3;
+}
+
 /* =====================================================================
    INSTANT DEMO, DECK TAG FILTERING, AI BUILDER, BUZZ TEST & TOURNAMENT
    ===================================================================== */

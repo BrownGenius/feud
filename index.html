@@ -31,7 +31,7 @@
   <meta name="twitter:image:alt" content="Party Feud 16:9 TV Display Board showing revealed survey answers and scores" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
-  <link rel="stylesheet" href="./css/styles.css?v=20261120a" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261120b" />
 </head>
 <body>
 
@@ -476,10 +476,24 @@
                 <div>
                   <label class="field-label" for="setupBoardThemeSelect" style="font-size:10px;">🎨 Visual Board Theme</label>
                   <select id="setupBoardThemeSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;" onchange="onBoardThemeChange(this.value)">
-                    <option value="classic" selected>🎭 Classic Blue &amp; Gold</option>
-                    <option value="holiday">🎄 Holiday Red &amp; Green</option>
-                    <option value="frc">🤖 FRC Robotics Neon</option>
-                    <option value="classroom">🏫 Classroom Clean</option>
+                    <optgroup label="🎭 Classic &amp; Party Vibes">
+                      <option value="classic" selected>🎭 Classic Blue &amp; Gold</option>
+                      <option value="classroom">🏫 Classroom Clean</option>
+                      <option value="frc">🤖 Cyber Neon (FRC)</option>
+                      <option value="midnight">🥂 Black Tie &amp; Champagne (NYE / Formal)</option>
+                      <option value="sunset">🌅 Retro Sunset (80s / Summer)</option>
+                    </optgroup>
+                    <optgroup label="🌍 Seasons &amp; Celebrations">
+                      <option value="holiday">🎄 Evergreen &amp; Crimson (Christmas / Winter)</option>
+                      <option value="winter">❄️ Winter Frost (Snow / Hanukkah)</option>
+                      <option value="harvest">🍂 Autumn Harvest (Thanksgiving / Fall)</option>
+                      <option value="spooky">🎃 Midnight &amp; Pumpkin (Halloween)</option>
+                      <option value="patriotic">🎆 Red, White &amp; Royal (July 4th / USA)</option>
+                      <option value="marigold">🪔 Saffron &amp; Royal Plum (Diwali / Bollywood)</option>
+                      <option value="crimson-gold">🧧 Imperial Red &amp; Gold (Lunar New Year)</option>
+                      <option value="emerald">🍀 Emerald &amp; Gold (St. Patrick's / Spring)</option>
+                      <option value="rose">🌹 Velvet Rose (Valentine's / Bridal)</option>
+                    </optgroup>
                   </select>
                 </div>
                 <div class="buzzer-split-btns">
@@ -971,16 +985,16 @@
     </button>
   </section>
 
-  <footer id="appBuildBadge" class="app-build-badge">Build v20261120a</footer>
+  <footer id="appBuildBadge" class="app-build-badge">Build v20261120b</footer>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js" async></script>
-  <script src="./js/audio.js?v=20261120a"></script>
-  <script src="./js/state.js?v=20261120a"></script>
-  <script src="./js/formats.js?v=20261120a"></script>
-  <script src="./js/decks.js?v=20261120a"></script>
-  <script src="./js/sync.js?v=20261120a"></script>
-  <script src="./js/views.js?v=20261120a"></script>
-  <script src="./js/app.js?v=20261120a"></script>
+  <script src="./js/audio.js?v=20261120b"></script>
+  <script src="./js/state.js?v=20261120b"></script>
+  <script src="./js/formats.js?v=20261120b"></script>
+  <script src="./js/decks.js?v=20261120b"></script>
+  <script src="./js/sync.js?v=20261120b"></script>
+  <script src="./js/views.js?v=20261120b"></script>
+  <script src="./js/app.js?v=20261120b"></script>
 </body>
 </html>

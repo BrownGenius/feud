@@ -397,6 +397,20 @@ async function runTest(name, fn) {
     assert.ok(html.includes("Question &amp; Answer Key"));
   });
 
+  await runTest("10. Board Theme Catalog & Holiday Alias Normalization", () => {
+    assert.ok(Array.isArray(Feud.BOARD_THEME_CATALOG) && Feud.BOARD_THEME_CATALOG.length === 14);
+    assert.strictEqual(Feud.normalizeBoardTheme("thanksgiving"), "harvest");
+    assert.strictEqual(Feud.normalizeBoardTheme("christmas"), "holiday");
+    assert.strictEqual(Feud.normalizeBoardTheme("halloween"), "spooky");
+    assert.strictEqual(Feud.normalizeBoardTheme("july4th"), "patriotic");
+    assert.strictEqual(Feud.normalizeBoardTheme("diwali"), "marigold");
+    assert.strictEqual(Feud.normalizeBoardTheme("lunar"), "crimson-gold");
+    assert.strictEqual(Feud.normalizeBoardTheme("stpatricks"), "emerald");
+    assert.strictEqual(Feud.normalizeBoardTheme("valentine"), "rose");
+    assert.strictEqual(Feud.saveBoardTheme("thanksgiving"), "harvest");
+    assert.strictEqual(Feud.loadSavedBoardTheme(), "harvest");
+  });
+
   console.log(`\n=============================================================`);
   if (failed > 0) {
     console.error(`❌ Core Logic Test Suite Failed: ${failed} failed, ${passed} passed.`);
