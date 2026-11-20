@@ -186,6 +186,122 @@ async function launchHeadlessBrowser(browserBin) {
   return { proc, debugPort, userDataDir, webSocketDebuggerUrl: pageTarget.webSocketDebuggerUrl };
 }
 
+function createCdpWebSocket(wsUrl) {
+  if (typeof WebSocket === "function") {
+    return new WebSocket(wsUrl);
+  }
+  // Fallback RFC-6455 client for Node < 22 where global WebSocket isn't enabled by default
+  const net = require("net");
+  const crypto = require("crypto");
+  const EventEmitter = require("events");
+  const parsed = new URL(wsUrl);
+  const emitter = new EventEmitter();
+  let buf = Buffer.alloc(0);
+  let upgraded = false;
+
+  const sock = net.connect(
+    Number(parsed.port) || 80,
+    parsed.hostname || "127.0.0.1",
+    () => {
+      const key = crypto.randomBytes(16).toString("base64");
+      sock.write(
+        [
+          `GET ${parsed.pathname}${parsed.search} HTTP/1.1`,
+          `Host: ${parsed.host}`,
+          "Upgrade: websocket",
+          "Connection: Upgrade",
+          `Sec-WebSocket-Key: ${key}`,
+          "Sec-WebSocket-Version: 13",
+          "\r\n"
+        ].join("\r\n")
+      );
+    }
+  );
+
+  sock.on("data", (chunk) => {
+    buf = Buffer.concat([buf, chunk]);
+    if (!upgraded) {
+      const hdrEnd = buf.indexOf("\r\n\r\n");
+      if (hdrEnd === -1) return;
+      upgraded = true;
+      buf = buf.subarray(hdrEnd + 4);
+      emitter.emit("open");
+    }
+    while (buf.length >= 2) {
+      const b0 = buf[0];
+      const b1 = buf[1];
+      const opcode = b0 & 0x0f;
+      let len = b1 & 0x7f;
+      let offset = 2;
+      if (len === 126) {
+        if (buf.length < 4) return;
+        len = buf.readUInt16BE(2);
+        offset = 4;
+      } else if (len === 127) {
+        if (buf.length < 10) return;
+        len = Number(buf.readBigUInt64BE(2));
+        offset = 10;
+      }
+      if (buf.length < offset + len) return;
+      const payload = buf.subarray(offset, offset + len);
+      buf = buf.subarray(offset + len);
+      if (opcode === 0x8) {
+        sock.end();
+        return;
+      }
+      if (opcode === 0x9) {
+        // Pong
+        const pong = Buffer.alloc(2 + payload.length);
+        pong[0] = 0x8a;
+        pong[1] = 0x80 | payload.length;
+        // Masked empty/small pong handled if needed
+        continue;
+      }
+      if (opcode === 0x1 || opcode === 0x0) {
+        emitter.emit("message", { data: payload.toString("utf8") });
+      }
+    }
+  });
+  sock.on("error", (err) => emitter.emit("error", err));
+
+  return {
+    addEventListener: (evt, fn) => emitter.on(evt, fn),
+    send: (text) => {
+      const payload = Buffer.from(String(text), "utf8");
+      const mask = crypto.randomBytes(4);
+      let header;
+      if (payload.length < 126) {
+        header = Buffer.alloc(6);
+        header[0] = 0x81;
+        header[1] = 0x80 | payload.length;
+        mask.copy(header, 2);
+      } else if (payload.length < 65536) {
+        header = Buffer.alloc(8);
+        header[0] = 0x81;
+        header[1] = 0x80 | 126;
+        header.writeUInt16BE(payload.length, 2);
+        mask.copy(header, 4);
+      } else {
+        header = Buffer.alloc(14);
+        header[0] = 0x81;
+        header[1] = 0x80 | 127;
+        header.writeBigUInt64BE(BigInt(payload.length), 2);
+        mask.copy(header, 10);
+      }
+      const masked = Buffer.alloc(payload.length);
+      for (let i = 0; i < payload.length; i++) {
+        masked[i] = payload[i] ^ mask[i % 4];
+      }
+      sock.write(Buffer.concat([header, masked]));
+    },
+    close: () => {
+      try {
+        sock.end();
+      } catch (e) {}
+    }
+  };
+}
+
 class CdpSession {
   constructor(wsUrl) {
     this.wsUrl = wsUrl;
@@ -198,7 +314,7 @@ class CdpSession {
 
   connect() {
     return new Promise((resolve, reject) => {
-      const ws = new WebSocket(this.wsUrl);
+      const ws = createCdpWebSocket(this.wsUrl);
       this.ws = ws;
 
       ws.addEventListener("open", () => resolve());
