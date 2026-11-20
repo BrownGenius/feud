@@ -94,14 +94,14 @@
       "theme": "🦃 Desi Thanksgiving & Hospitality",
       "title": "Round 7",
       "multiplier": 1,
-      "prompt": "Name a dish that MUST be on the table for a proper Desi Thanksgiving—because turkey alone isn't cutting it.",
+      "prompt": "Name a traditional American Thanksgiving dish that tastes way better when you add Indian spices or chutneys.",
       "answers": [
-        { "text": "Biryani / Pulao", "points": 36 },
-        { "text": "Tandoori / Masala Turkey", "points": 24 },
-        { "text": "Samosas / Pakoras", "points": 16 },
-        { "text": "Dal Makhani / Tarka Dal", "points": 10 },
-        { "text": "Naan / Roti", "points": 8 },
-        { "text": "Gulab Jamun / Rasmalai", "points": 6 }
+        { "text": "Mashed potatoes", "points": 35 },
+        { "text": "Roast turkey", "points": 26 },
+        { "text": "Mac & cheese", "points": 16 },
+        { "text": "Corn / Roasted veggies", "points": 11 },
+        { "text": "Stuffing", "points": 7 },
+        { "text": "Cranberry sauce", "points": 5 }
       ]
     },
     {
@@ -161,13 +161,14 @@
       "theme": "🦃 Desi Thanksgiving & Hospitality",
       "title": "Round 12",
       "multiplier": 3,
-      "prompt": "Name a spice or ingredient every Indian kitchen runs out of right before a big holiday party.",
+      "prompt": "Name the most creative way a Desi family uses up leftover Thanksgiving turkey.",
       "answers": [
-        { "text": "Fresh Cilantro / Dhaniya", "points": 35 },
-        { "text": "Garam Masala / Cumin (Jeera)", "points": 26 },
-        { "text": "Ginger-Garlic Paste", "points": 17 },
-        { "text": "Milk / Heavy Cream / Paneer", "points": 13 },
-        { "text": "Green Chilies / Onions", "points": 9 }
+        { "text": "Turkey biryani / pulao", "points": 38 },
+        { "text": "Turkey curry / masala", "points": 26 },
+        { "text": "Turkey sandwiches with mint chutney", "points": 16 },
+        { "text": "Turkey samosas / puffs", "points": 10 },
+        { "text": "Giving it away in yogurt tubs", "points": 6 },
+        { "text": "Turkey soup", "points": 4 }
       ]
     },
     {
@@ -363,13 +364,14 @@
       "theme": "💃 Weddings, Sangeets & Big Parties",
       "title": "Round 27",
       "multiplier": 2,
-      "prompt": "Name a complaint heard after a huge Indian wedding or party.",
+      "prompt": "Name something that always happens when the whole family tries to take ONE nice Thanksgiving group photo.",
       "answers": [
-        { "text": "\"Food ran out / Catering too spicy or cold\"", "points": 38 },
-        { "text": "\"Started 2 hours late (Indian Standard Time)\"", "points": 26 },
-        { "text": "\"DJ music was way too loud to talk!\"", "points": 16 },
-        { "text": "\"Speeches / performances went on forever\"", "points": 12 },
-        { "text": "\"Parking nightmare / Not enough seating\"", "points": 8 }
+        { "text": "\"Wait, take one more!\"", "points": 36 },
+        { "text": "Someone's eyes are closed", "points": 25 },
+        { "text": "Mom/Auntie fixing someone's hair or collar", "points": 16 },
+        { "text": "Kids making goofy faces", "points": 11 },
+        { "text": "Someone's phone / timer goes off", "points": 7 },
+        { "text": "Uncle giving a thumbs-up", "points": 5 }
       ]
     },
     {
@@ -493,8 +495,8 @@
   ],
   "fastMoney": [
     {
-      "prompt": "Name a spice every Indian kitchen runs out of right before a big party.",
-      "hint": "Garam Masala (35), Cumin/Jeera (28), Cardamom/Elaichi (18), Turmeric/Haldi (12), Cilantro (7)"
+      "prompt": "Name a chore kids try to dodge after Thanksgiving dinner.",
+      "hint": "Washing dishes (40), Clearing the table (24), Packing leftovers (16), Taking out trash (12), Vacuuming (8)"
     },
     {
       "prompt": "Name something an Indian mom saves and reuses instead of throwing away.",
@@ -581,8 +583,8 @@
       "hint": "Potatoes / Aloo (38), Cauliflower / Gobi (24), Spinach / Palak (16), Peas / Matar (12), Bottle Gourd / Lauki (10)"
     },
     {
-      "prompt": "Name an excuse people give for showing up an hour late to a Desi party.",
-      "hint": "Traffic was terrible (40), Getting ready / ironing saree (24), Kids took forever (16), Making dish / chai at home (12), Parking (8)"
+      "prompt": "Name something you say you're thankful for when everyone goes around the table.",
+      "hint": "Family (42), Health (26), Good food (16), Friends (10), Vacation / No school (6)"
     },
     {
       "prompt": "Name something an Indian dad does to save money on the utility bill.",
