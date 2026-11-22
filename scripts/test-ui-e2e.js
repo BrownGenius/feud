@@ -1364,7 +1364,7 @@ async function runStep(name, fn) {
 
       const diagText = await cdp.eval(`document.getElementById('bugDiagnosticsPreview')?.textContent || ''`);
       assert.ok(diagText.includes("Diagnostics (Auto-Captured)"), "Diagnostics preview should populate automatically");
-      assert.ok(diagText.includes("v20261122b"), "Diagnostics should include current build version");
+      assert.ok(diagText.includes("v20261122f"), "Diagnostics should include current build version");
 
       // Type a matching summary and verify auto-grouping surfaces #101 in Similar Open Issues
       await cdp.eval(`(() => {

@@ -31,7 +31,7 @@
   <meta name="twitter:image:alt" content="Party Feud 16:9 TV Display Board showing revealed survey answers and scores" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
-  <link rel="stylesheet" href="./css/styles.css?v=20261122b" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261122f" />
 </head>
 <body>
 
@@ -1028,7 +1028,10 @@
       <div id="bugTopIssuesBox" class="setup-step-box">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
           <span class="field-label">🔥 Top Open Issues &amp; Feature Requests</span>
-          <a href="https://github.com/BrownGenius/feud/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc" target="_blank" rel="noopener" style="font-size:11px; color:#93c5fd; font-weight:700;">View All on GitHub ↗</a>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" class="top-btn" style="min-height:24px; padding:2px 8px; font-size:10.5px;" onclick="refreshBugReportIssues()" title="Refresh open issues from GitHub">🔄 Refresh</button>
+            <a href="https://github.com/BrownGenius/feud/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc" target="_blank" rel="noopener" style="font-size:11px; color:#93c5fd; font-weight:700;">View All on GitHub ↗</a>
+          </div>
         </div>
         <div id="bugTopIssuesList" class="bug-issues-list">
           <div style="font-size:11.5px; color:#94a3b8;">Loading open issues…</div>
@@ -1052,19 +1055,19 @@
   </div>
 
   <footer class="app-footer-bar">
-    <span id="appBuildBadge" class="app-build-badge">Build v20261122b</span>
+    <span id="appBuildBadge" class="app-build-badge">Build v20261122f</span>
     <button id="btnOpenBugReportFooter" type="button" class="top-btn" style="min-height:26px; padding:2px 10px; font-size:11px;" onclick="openBugReportModal()">🐛 Report Bug / Vote</button>
   </footer>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js" async></script>
-  <script src="./js/audio.js?v=20261122b"></script>
-  <script src="./js/state.js?v=20261122b"></script>
-  <script src="./js/formats.js?v=20261122b"></script>
-  <script src="./js/decks.js?v=20261122b"></script>
-  <script src="./js/sync.js?v=20261122b"></script>
-  <script src="./js/feedback.js?v=20261122b"></script>
-  <script src="./js/views.js?v=20261122b"></script>
-  <script src="./js/app.js?v=20261122b"></script>
+  <script src="./js/audio.js?v=20261122f"></script>
+  <script src="./js/state.js?v=20261122f"></script>
+  <script src="./js/formats.js?v=20261122f"></script>
+  <script src="./js/decks.js?v=20261122f"></script>
+  <script src="./js/sync.js?v=20261122f"></script>
+  <script src="./js/feedback.js?v=20261122f"></script>
+  <script src="./js/views.js?v=20261122f"></script>
+  <script src="./js/app.js?v=20261122f"></script>
 </body>
 </html>

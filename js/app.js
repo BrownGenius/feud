@@ -4179,6 +4179,14 @@ window.Feud = window.Feud || {};
     }
   }
 
+  async function refreshBugReportIssues() {
+    if (Feud.fetchOpenIssues) {
+      cachedBugIssues = await Feud.fetchOpenIssues(true);
+      renderBugModalIssues();
+      Feud.showToast(`🔄 Loaded ${cachedBugIssues.length} open issue(s).`);
+    }
+  }
+
   function closeBugReportModal() {
     document.getElementById("bugReportModal")?.classList.add("hidden");
   }
@@ -4211,16 +4219,32 @@ window.Feud = window.Feud || {};
     }
 
     if (Feud.submitReportToEndpoint) {
-      const res = await Feud.submitReportToEndpoint(payload);
-      if (res.ok) {
+      const btn = document.getElementById("btnSubmitBugDirect");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "⏳ Submitting…";
+      }
+      let res = null;
+      try {
+        res = await Feud.submitReportToEndpoint(payload);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "🚀 Submit Bug Report";
+        }
+      }
+      if (res && res.ok) {
         Feud.showToast(`✅ Submitted as Issue #${res.issueNumber}!`);
         document.getElementById("bugTitleInput").value = "";
         document.getElementById("bugDescInput").value = "";
         closeBugReportModal();
         return;
       }
-      if (!res.unconfigured) {
-        Feud.showToast(`⚠️ Direct submit failed (${res.error}) — opening GitHub Issue instead.`);
+      if (res && !res.unconfigured) {
+        Feud.showToast(
+          `⚠️ Direct submit failed (${res.error || "network error"}). Try Email Report or Copy Diagnostics!`
+        );
+        return;
       }
     }
     openBugReportOnGitHub();
@@ -5268,6 +5292,7 @@ Rules:
     openEditRoundModal,
     closeEditRoundModal,
     openBugReportModal,
+    refreshBugReportIssues,
     closeBugReportModal,
     onBugReportInputChange,
     submitBugReport,

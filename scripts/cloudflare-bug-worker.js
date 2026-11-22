@@ -13,14 +13,14 @@
 //     (or configure FEEDBACK_CONFIG.reportEndpoint in js/feedback.js).
 // =====================================================================
 
-const ALLOWED_ORIGINS = new Set([
-  "https://browngenius.github.io",
-  "http://localhost:8080",
-  "http://127.0.0.1:8080"
-]);
+function isAllowedOrigin(origin) {
+  if (!origin) return false;
+  if (origin === "https://browngenius.github.io") return true;
+  return /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+}
 
 function corsHeaders(origin) {
-  const allowOrigin = ALLOWED_ORIGINS.has(origin) ? origin : "https://browngenius.github.io";
+  const allowOrigin = isAllowedOrigin(origin) ? origin : "https://browngenius.github.io";
   return {
     "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Methods": "POST, OPTIONS",

@@ -13,13 +13,14 @@ window.Feud = window.Feud || {};
   const REPO_SLUG = "BrownGenius/feud";
   const ISSUES_CACHE_KEY = "party_feud_open_issues_cache_v1";
   const VOTED_ISSUES_KEY = "party_feud_voted_issues_v1";
-  const CACHE_TTL_MS = 5 * 60 * 1000;
+  const CACHE_TTL_MS = 30 * 1000;
   const MAX_RECENT_ERRORS = 10;
 
   const FEEDBACK_CONFIG = {
     repoSlug: REPO_SLUG,
     reportEndpoint:
-      (typeof window !== "undefined" && window.FEUD_REPORT_ENDPOINT) || "party-feud-bugs.nilesh-agarwalla-s-account.workers.dev",
+      (typeof window !== "undefined" && window.FEUD_REPORT_ENDPOINT) ||
+      "https://party-feud-bugs.nilesh-agarwalla-s-account.workers.dev",
     fallbackEmail:
       (typeof window !== "undefined" && window.FEUD_BUG_EMAIL) || ""
   };
@@ -149,21 +150,11 @@ window.Feud = window.Feud || {};
   }
 
   function mapRoleToTemplateOption(role) {
-    if (role === "host") return "Host Remote";
-    if (role === "tv" || role === "solo") return "TV Display";
-    if (role === "buzzer1" || role === "buzzer2" || role === "buzzer_combo") {
-      return "Player Buzzer (Phone)";
-    }
-    return "Lobby / Setup";
-  }
-
-  function mapDiagnosticsToConnectionOption(diag) {
-    if (!diag) return "Online (browngenius.github.io)";
-    if (diag.protocol === "file:") return "Offline / HDMI (file://)";
-    if (/localhost|127\.0\.0\.1/.test((typeof location !== "undefined" && location.hostname) || "")) {
-      return "Local HTTP Server";
-    }
-    return "Online (browngenius.github.io)";
+    if (role === "host") return "Host Remote Control";
+    if (role === "tv" || role === "solo") return "TV Display Board";
+    if (role === "buzzer1" || role === "buzzer2") return "Individual Team Buzzer (Phone)";
+    if (role === "buzzer_combo") return "Combo Buzzer (Shared Phone / Tablet)";
+    return "Lobby / New Game Setup";
   }
 
   function buildGitHubIssueUrl({ title, category, description, diag }) {
@@ -174,12 +165,17 @@ window.Feud = window.Feud || {};
       formatDiagnosticsMarkdown(diag)
     ].join("\n");
 
+    const envSummary = diag
+      ? `${diag.protocol || ""} • Online: ${diag.online} • ${diag.viewport || ""}`.trim()
+      : "";
+
     const params = new URLSearchParams({
       template: "bug-report.yml",
       title: cleanTitle,
       role: mapRoleToTemplateOption(diag && diag.role),
-      connection: mapDiagnosticsToConnectionOption(diag),
-      details: bodyText
+      "build-version": (diag && diag.build) || getBuildVersion(),
+      environment: envSummary,
+      steps: bodyText
     });
 
     return `https://github.com/${FEEDBACK_CONFIG.repoSlug}/issues/new?${params.toString()}`;
@@ -299,9 +295,12 @@ window.Feud = window.Feud || {};
     }
 
     try {
-      const url = `https://api.github.com/repos/${FEEDBACK_CONFIG.repoSlug}/issues?state=open&per_page=30`;
+      const url = `https://api.github.com/repos/${FEEDBACK_CONFIG.repoSlug}/issues?state=open&per_page=30${
+        forceRefresh ? `&_t=${Date.now()}` : ""
+      }`;
       const res = await fetch(url, {
-        headers: { Accept: "application/vnd.github+json" }
+        headers: { Accept: "application/vnd.github+json" },
+        cache: forceRefresh ? "no-store" : "default"
       });
       if (!res.ok) return [];
       const list = await res.json();
@@ -318,29 +317,39 @@ window.Feud = window.Feud || {};
     }
   }
 
+  function normalizeEndpointUrl(raw) {
+    const clean = String(raw || "").trim().replace(/\/+$/, "");
+    if (!clean) return "";
+    return /^https?:\/\//i.test(clean) ? clean : `https://${clean}`;
+  }
+
   async function submitReportToEndpoint(payload, endpointOverride) {
-    const endpoint = String(endpointOverride || FEEDBACK_CONFIG.reportEndpoint || "").trim();
+    const endpoint = normalizeEndpointUrl(endpointOverride || FEEDBACK_CONFIG.reportEndpoint);
     if (!endpoint) {
       return { ok: false, unconfigured: true };
     }
-    const res = await fetch(`${endpoint.replace(/\/+$/, "")}/report`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      return { ok: false, error: data.error || `HTTP ${res.status}` };
-    }
     try {
-      sessionStorage.removeItem(ISSUES_CACHE_KEY);
-    } catch (e) {}
-    return {
-      ok: true,
-      issueNumber: data.issueNumber,
-      url: data.url,
-      duplicateOf: data.duplicateOf || null
-    };
+      const res = await fetch(`${endpoint}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { ok: false, error: data.error || `HTTP ${res.status}` };
+      }
+      try {
+        sessionStorage.removeItem(ISSUES_CACHE_KEY);
+      } catch (e) {}
+      return {
+        ok: true,
+        issueNumber: data.issueNumber,
+        url: data.url,
+        duplicateOf: data.duplicateOf || null
+      };
+    } catch (err) {
+      return { ok: false, error: (err && err.message) || "Network or CORS error" };
+    }
   }
 
   async function voteIssueViaEndpoint(issueNumber, endpointOverride) {
@@ -352,24 +361,28 @@ window.Feud = window.Feud || {};
     if (voted.has(num)) {
       return { ok: true, alreadyVoted: true };
     }
-    const endpoint = String(endpointOverride || FEEDBACK_CONFIG.reportEndpoint || "").trim();
+    const endpoint = normalizeEndpointUrl(endpointOverride || FEEDBACK_CONFIG.reportEndpoint);
     if (!endpoint) {
       return { ok: false, unconfigured: true };
     }
-    const res = await fetch(`${endpoint.replace(/\/+$/, "")}/vote`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ issueNumber: num })
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      return { ok: false, error: data.error || `HTTP ${res.status}` };
-    }
-    markIssueVotedLocally(num);
     try {
-      sessionStorage.removeItem(ISSUES_CACHE_KEY);
-    } catch (e) {}
-    return { ok: true, votes: data.votes };
+      const res = await fetch(`${endpoint}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ issueNumber: num })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { ok: false, error: data.error || `HTTP ${res.status}` };
+      }
+      markIssueVotedLocally(num);
+      try {
+        sessionStorage.removeItem(ISSUES_CACHE_KEY);
+      } catch (e) {}
+      return { ok: true, votes: data.votes };
+    } catch (err) {
+      return { ok: false, error: (err && err.message) || "Network or CORS error" };
+    }
   }
 
   Object.assign(Feud, {
