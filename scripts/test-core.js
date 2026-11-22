@@ -51,6 +51,8 @@ function createBrowserSandbox() {
     Uint8Array,
     TextEncoder,
     TextDecoder,
+    URL,
+    URLSearchParams,
     CompressionStream: typeof CompressionStream !== "undefined" ? CompressionStream : undefined,
     DecompressionStream:
       typeof DecompressionStream !== "undefined" ? DecompressionStream : undefined,
@@ -93,7 +95,13 @@ function createBrowserSandbox() {
 
   vm.createContext(sandbox);
 
-  const scriptsToLoad = ["js/state.js", "js/formats.js", "js/decks.js", "js/sync.js"];
+  const scriptsToLoad = [
+    "js/state.js",
+    "js/formats.js",
+    "js/decks.js",
+    "js/sync.js",
+    "js/feedback.js"
+  ];
   for (const relPath of scriptsToLoad) {
     const fullPath = path.join(ROOT_DIR, relPath);
     const code = fs.readFileSync(fullPath, "utf8");
@@ -409,6 +417,58 @@ async function runTest(name, fn) {
     assert.strictEqual(Feud.normalizeBoardTheme("valentine"), "rose");
     assert.strictEqual(Feud.saveBoardTheme("thanksgiving"), "harvest");
     assert.strictEqual(Feud.loadSavedBoardTheme(), "harvest");
+  });
+
+  await runTest("11. Bug Reporting Diagnostics Sanitization, Auto-Grouping & URL Builders", () => {
+    const state = Feud.createDefaultRoomState("9876");
+    state.team1Name = "Secret Family Team";
+    state.team2Name = "Private Squad";
+    state.stage = "main";
+    state.roundPhase = "playing";
+    state.strikes = 2;
+    state.pot = 120;
+
+    Feud.pushErrorEntry("error", "Test MQTT timeout error");
+    const diag = Feud.buildBugDiagnostics(state, "host", "GA42");
+    const md = Feud.formatDiagnosticsMarkdown(diag);
+
+    assert.strictEqual(diag.role, "host");
+    assert.strictEqual(diag.roundPhase, "playing");
+    assert.strictEqual(diag.strikes, 2);
+    assert.strictEqual(diag.pot, 120);
+    assert.ok(!md.includes("9876"), "Diagnostics must NEVER include Host PIN");
+    assert.ok(!md.includes("Secret Family Team"), "Diagnostics must NEVER include custom team names");
+    assert.ok(md.includes("Test MQTT timeout error"), "Diagnostics should include recent captured errors");
+
+    const sampleIssues = [
+      {
+        number: 14,
+        title: "[Sync / Buzzers] Phone buzzer disconnect on cellular",
+        body: "MQTT relay drops\n<!-- feud-votes:4 -->",
+        labels: [{ name: "role:buzzer" }],
+        reactions: { "+1": 3 }
+      },
+      {
+        number: 22,
+        title: "Add dark mode contrast tweak",
+        body: "UI request",
+        labels: [],
+        reactions: { "+1": 1 }
+      }
+    ];
+    assert.strictEqual(Feud.extractCommunityVotes(sampleIssues[0]), 7);
+    const similar = Feud.findSimilarIssues(sampleIssues, "Phone buzzer reconnect issue", "Sync / Buzzers", diag);
+    assert.strictEqual(similar.length, 1);
+    assert.strictEqual(similar[0].issue.number, 14);
+
+    const ghUrl = Feud.buildGitHubIssueUrl({
+      title: "Buzzer stuck",
+      category: "Sync / Buzzers",
+      description: "Repro steps",
+      diag
+    });
+    assert.ok(ghUrl.includes("template=bug-report.yml"));
+    assert.ok(ghUrl.includes("Buzzer+stuck") || ghUrl.includes("Buzzer%20stuck"));
   });
 
   console.log(`\n=============================================================`);

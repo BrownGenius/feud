@@ -31,7 +31,7 @@
   <meta name="twitter:image:alt" content="Party Feud 16:9 TV Display Board showing revealed survey answers and scores" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
-  <link rel="stylesheet" href="./css/styles.css?v=20261120a" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261122b" />
 </head>
 <body>
 
@@ -803,6 +803,7 @@
               <button type="button" class="top-btn" onclick="cycleBoardTheme(); closeHostMoreMenu()" title="Cycle Classic / Holiday / FRC / Classroom board theme">🎨 Switch Theme</button>
               <button type="button" class="top-btn" onclick="Feud.playIntroJingle && Feud.playIntroJingle(); closeHostMoreMenu()" title="Play upbeat game show intro stinger">🎵 Intro Jingle</button>
               <button type="button" id="hostTabWinner" class="top-btn gold" onclick="openNextMatchModal(); closeHostMoreMenu()">🏁 End Match</button>
+              <button type="button" class="top-btn" onclick="openBugReportModal(); closeHostMoreMenu()">🐛 Report Bug / Vote</button>
               <button id="hostMenuMuteBtn" type="button" class="top-btn host-more-mobile-only" onclick="toggleMute(); closeHostMoreMenu()">🔊 Sound</button>
               <button type="button" class="top-btn host-more-mobile-only" onclick="leaveToLobby(); closeHostMoreMenu()">🏠 Lobby</button>
             </div>
@@ -986,16 +987,84 @@
     </button>
   </section>
 
-  <footer id="appBuildBadge" class="app-build-badge">Build v20261120a</footer>
+  <!-- IN-APP BUG REPORT, AUTO-GROUPING & VOTING MODAL -->
+  <div id="bugReportModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" onclick="if(event.target===this)closeBugReportModal()">
+    <div class="modal-card" style="max-width:660px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <h3 class="brand-title display-font">🐛 Report a Bug or Vote on Issues</h3>
+        <button type="button" class="top-btn" onclick="closeBugReportModal()">✕ Close</button>
+      </div>
+      <p style="font-size:12px; color:#fde68a; line-height:1.45;">
+        Game state, build version, sync status, and recent errors are captured automatically (Host PINs and custom team names are never included).
+      </p>
+
+      <div class="setup-step-box">
+        <div class="buzzer-split-btns">
+          <div>
+            <label class="field-label" for="bugCategorySelect" style="font-size:10px;">Category</label>
+            <select id="bugCategorySelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;" onchange="onBugReportInputChange()">
+              <option value="Sync / Buzzers">🔔 Sync / Phone Buzzers</option>
+              <option value="TV / UI">📺 TV Display / Layout</option>
+              <option value="Scoring / Rules">🎯 Scoring / Game Rules</option>
+              <option value="Feature Request">✨ Feature Request</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="bugTitleInput" style="font-size:10px;">Short Summary</label>
+            <input id="bugTitleInput" class="fm-txt" style="width:100%; margin-top:4px; font-size:13px; text-transform:none;" type="text" placeholder="e.g., Team 2 buzzer didn't lock after reconnect" oninput="onBugReportInputChange()" />
+          </div>
+        </div>
+        <div style="margin-top:8px;">
+          <label class="field-label" for="bugDescInput" style="font-size:10px;">What happened? (Steps to reproduce)</label>
+          <textarea id="bugDescInput" class="ai-builder-textarea" style="min-height:76px; margin-top:4px;" placeholder="Describe what you clicked and what you expected to happen..."></textarea>
+        </div>
+      </div>
+
+      <div id="bugSimilarIssuesBox" class="setup-step-box hidden">
+        <span class="field-label">🔍 Similar Open Issues — Vote 👍 instead of creating a duplicate!</span>
+        <div id="bugSimilarIssuesList" class="bug-issues-list"></div>
+      </div>
+
+      <div id="bugTopIssuesBox" class="setup-step-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+          <span class="field-label">🔥 Top Open Issues &amp; Feature Requests</span>
+          <a href="https://github.com/BrownGenius/feud/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc" target="_blank" rel="noopener" style="font-size:11px; color:#93c5fd; font-weight:700;">View All on GitHub ↗</a>
+        </div>
+        <div id="bugTopIssuesList" class="bug-issues-list">
+          <div style="font-size:11.5px; color:#94a3b8;">Loading open issues…</div>
+        </div>
+      </div>
+
+      <details class="setup-step-box">
+        <summary style="cursor:pointer; font-size:11.5px; font-weight:800; color:#cbd5e1;">📋 Preview Captured Diagnostics (Safe &amp; Sanitized)</summary>
+        <pre id="bugDiagnosticsPreview" class="bug-diag-pre"></pre>
+      </details>
+
+      <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end;">
+        <button type="button" class="top-btn" onclick="copyBugDiagnostics()">📋 Copy Diagnostics</button>
+        <button type="button" class="top-btn" onclick="emailBugReport()">✉️ Email Report</button>
+        <button type="button" class="top-btn" onclick="openBugReportOnGitHub()">🐙 Open on GitHub</button>
+        <button id="btnSubmitBugDirect" type="button" class="action-btn btn-gold display-font" style="width:auto; min-height:42px; padding:8px 18px; font-size:13px;" onclick="submitBugReport()">
+          🚀 Submit Bug Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer-bar">
+    <span id="appBuildBadge" class="app-build-badge">Build v20261122b</span>
+    <button id="btnOpenBugReportFooter" type="button" class="top-btn" style="min-height:26px; padding:2px 10px; font-size:11px;" onclick="openBugReportModal()">🐛 Report Bug / Vote</button>
+  </footer>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js" async></script>
-  <script src="./js/audio.js?v=20261120a"></script>
-  <script src="./js/state.js?v=20261120a"></script>
-  <script src="./js/formats.js?v=20261120a"></script>
-  <script src="./js/decks.js?v=20261120a"></script>
-  <script src="./js/sync.js?v=20261120a"></script>
-  <script src="./js/views.js?v=20261120a"></script>
-  <script src="./js/app.js?v=20261120a"></script>
+  <script src="./js/audio.js?v=20261122b"></script>
+  <script src="./js/state.js?v=20261122b"></script>
+  <script src="./js/formats.js?v=20261122b"></script>
+  <script src="./js/decks.js?v=20261122b"></script>
+  <script src="./js/sync.js?v=20261122b"></script>
+  <script src="./js/feedback.js?v=20261122b"></script>
+  <script src="./js/views.js?v=20261122b"></script>
+  <script src="./js/app.js?v=20261122b"></script>
 </body>
 </html>

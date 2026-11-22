@@ -4092,6 +4092,195 @@ window.Feud = window.Feud || {};
     document.getElementById("editRoundModal").classList.add("hidden");
   }
 
+  let cachedBugIssues = [];
+  let lastBugDiagnostics = null;
+
+  function renderBugIssueListHtml(items) {
+    const votedSet = Feud.getVotedIssueSet ? Feud.getVotedIssueSet() : new Set();
+    return items
+      .map((item) => {
+        const issue = item.issue || item;
+        const num = Number(issue.number);
+        const votes =
+          item.votes !== undefined
+            ? item.votes
+            : Feud.extractCommunityVotes
+            ? Feud.extractCommunityVotes(issue)
+            : 0;
+        const isVoted = votedSet.has(num);
+        return `
+          <div class="bug-issue-row">
+            <a class="bug-issue-title" href="${Feud.escapeHtml(issue.html_url || "#")}" target="_blank" rel="noopener">
+              #${num}: ${Feud.escapeHtml(issue.title || "")}
+            </a>
+            <button type="button" class="bug-vote-btn${isVoted ? " is-voted" : ""}" onclick="voteBugReportIssue(${num})">
+              👍 ${votes}${isVoted ? " ✓" : ""}
+            </button>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  function renderBugModalIssues() {
+    const topEl = document.getElementById("bugTopIssuesList");
+    const simBox = document.getElementById("bugSimilarIssuesBox");
+    const simEl = document.getElementById("bugSimilarIssuesList");
+    const titleVal = (document.getElementById("bugTitleInput")?.value || "").trim();
+    const catVal = document.getElementById("bugCategorySelect")?.value || "Bug";
+
+    if (simBox && simEl && Feud.findSimilarIssues) {
+      const similar = Feud.findSimilarIssues(
+        cachedBugIssues,
+        titleVal,
+        catVal,
+        lastBugDiagnostics
+      );
+      if (similar.length > 0) {
+        simBox.classList.remove("hidden");
+        simEl.innerHTML = renderBugIssueListHtml(similar);
+      } else {
+        simBox.classList.add("hidden");
+        simEl.innerHTML = "";
+      }
+    }
+
+    if (topEl) {
+      if (!cachedBugIssues.length) {
+        topEl.innerHTML =
+          '<div style="font-size:11.5px; color:#94a3b8;">No open issues loaded (offline or none open).</div>';
+      } else {
+        const sorted = cachedBugIssues
+          .map((issue) => ({
+            issue,
+            votes: Feud.extractCommunityVotes ? Feud.extractCommunityVotes(issue) : 0
+          }))
+          .sort((a, b) => b.votes - a.votes || b.issue.number - a.issue.number)
+          .slice(0, 5);
+        topEl.innerHTML = renderBugIssueListHtml(sorted);
+      }
+    }
+  }
+
+  async function openBugReportModal() {
+    lastBugDiagnostics = Feud.buildBugDiagnostics
+      ? Feud.buildBugDiagnostics(roomState, activeRole, currentRoomCode)
+      : {};
+    const preEl = document.getElementById("bugDiagnosticsPreview");
+    if (preEl && Feud.formatDiagnosticsMarkdown) {
+      preEl.textContent = Feud.formatDiagnosticsMarkdown(lastBugDiagnostics);
+    }
+    const modal = document.getElementById("bugReportModal");
+    if (modal) modal.classList.remove("hidden");
+
+    if (Feud.fetchOpenIssues) {
+      cachedBugIssues = await Feud.fetchOpenIssues();
+      renderBugModalIssues();
+    }
+  }
+
+  function closeBugReportModal() {
+    document.getElementById("bugReportModal")?.classList.add("hidden");
+  }
+
+  function onBugReportInputChange() {
+    renderBugModalIssues();
+  }
+
+  function getBugReportFormPayload() {
+    const title = (document.getElementById("bugTitleInput")?.value || "").trim();
+    const category = document.getElementById("bugCategorySelect")?.value || "Bug";
+    const description = (document.getElementById("bugDescInput")?.value || "").trim();
+    const diag =
+      lastBugDiagnostics ||
+      (Feud.buildBugDiagnostics
+        ? Feud.buildBugDiagnostics(roomState, activeRole, currentRoomCode)
+        : {});
+    const diagnosticsMarkdown = Feud.formatDiagnosticsMarkdown
+      ? Feud.formatDiagnosticsMarkdown(diag)
+      : "";
+    return { title, category, description, diag, diagnostics: diag, diagnosticsMarkdown };
+  }
+
+  async function submitBugReport() {
+    const payload = getBugReportFormPayload();
+    if (!payload.title || payload.title.length < 4) {
+      Feud.showToast("Please enter a short summary title first.");
+      document.getElementById("bugTitleInput")?.focus();
+      return;
+    }
+
+    if (Feud.submitReportToEndpoint) {
+      const res = await Feud.submitReportToEndpoint(payload);
+      if (res.ok) {
+        Feud.showToast(`✅ Submitted as Issue #${res.issueNumber}!`);
+        document.getElementById("bugTitleInput").value = "";
+        document.getElementById("bugDescInput").value = "";
+        closeBugReportModal();
+        return;
+      }
+      if (!res.unconfigured) {
+        Feud.showToast(`⚠️ Direct submit failed (${res.error}) — opening GitHub Issue instead.`);
+      }
+    }
+    openBugReportOnGitHub();
+  }
+
+  async function voteBugReportIssue(issueNumber) {
+    if (!Feud.voteIssueViaEndpoint) return;
+    const res = await Feud.voteIssueViaEndpoint(issueNumber);
+    if (res.ok) {
+      if (!res.alreadyVoted && typeof res.votes === "number") {
+        cachedBugIssues = cachedBugIssues.map((it) =>
+          it.number === Number(issueNumber)
+            ? { ...it, body: `${it.body || ""}\n<!-- feud-votes:${res.votes} -->` }
+            : it
+        );
+      }
+      renderBugModalIssues();
+      Feud.showToast(res.alreadyVoted ? "👍 You already voted on this issue." : `👍 Vote recorded for #${issueNumber}!`);
+      return;
+    }
+    if (res.unconfigured) {
+      const target = cachedBugIssues.find((it) => it.number === Number(issueNumber));
+      if (target && target.html_url) {
+        window.open(target.html_url, "_blank", "noopener");
+      }
+      Feud.showToast("Opened issue on GitHub — click 👍 to vote!");
+    } else {
+      Feud.showToast(`⚠️ Could not record vote: ${res.error || "Error"}`);
+    }
+  }
+
+  async function copyBugDiagnostics() {
+    const payload = getBugReportFormPayload();
+    const text = [
+      payload.title ? `Summary: ${payload.title}` : "",
+      payload.description ? `Details: ${payload.description}` : "",
+      payload.diagnosticsMarkdown
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      Feud.showToast("📋 Diagnostics copied to clipboard!");
+    } catch (e) {
+      Feud.showToast("Select and copy the diagnostics preview above.");
+    }
+  }
+
+  function openBugReportOnGitHub() {
+    const payload = getBugReportFormPayload();
+    const url = Feud.buildGitHubIssueUrl ? Feud.buildGitHubIssueUrl(payload) : "https://github.com/BrownGenius/feud/issues/new";
+    window.open(url, "_blank", "noopener");
+  }
+
+  function emailBugReport() {
+    const payload = getBugReportFormPayload();
+    const url = Feud.buildMailtoUrl ? Feud.buildMailtoUrl(payload) : "mailto:";
+    window.location.href = url;
+  }
+
   async function saveEditedRound() {
     const newPrompt = document.getElementById("editPromptInput").value.trim();
     const newMult = Number(document.getElementById("editMultSelect").value) || 1;
@@ -5078,6 +5267,14 @@ Rules:
     switchSoloAndHostView,
     openEditRoundModal,
     closeEditRoundModal,
+    openBugReportModal,
+    closeBugReportModal,
+    onBugReportInputChange,
+    submitBugReport,
+    voteBugReportIssue,
+    copyBugDiagnostics,
+    openBugReportOnGitHub,
+    emailBugReport,
     saveEditedRound,
     resetCurrentRoundToDefault,
     openDeckManagerModal,

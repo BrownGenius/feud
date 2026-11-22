@@ -1,0 +1,84 @@
+name: Triage & Auto-Group Issues
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-label & link similar open issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const title = (issue.title || "").trim();
+            const body = issue.body || "";
+            const text = `${title}\n${body}`.toLowerCase();
+
+            // 1. Auto-apply diagnostic & role labels
+            const labelsToAdd = [];
+            if (/host remote|\brole\b.*`host`|\[host\]/i.test(text)) labelsToAdd.push("role:host");
+            if (/tv display|\brole\b.*`(tv|solo)`|\[tv\]/i.test(text)) labelsToAdd.push("role:tv");
+            if (/buzzer|\brole\b.*`buzzer/i.test(text)) labelsToAdd.push("role:buzzer");
+            if (/mqtt|webrtc|trystero|relay|disconnect|qr/i.test(text)) labelsToAdd.push("sync/relay");
+            if (/file:\/\/|offline/i.test(text)) labelsToAdd.push("offline/file");
+            if (/feature request|enhancement/i.test(text)) labelsToAdd.push("enhancement");
+
+            if (labelsToAdd.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: [...new Set(labelsToAdd)]
+              });
+            }
+
+            // 2. Find potential duplicate open issues by keyword overlap
+            const stop = new Set(["the", "and", "for", "with", "that", "this", "from", "when", "does", "party", "feud", "bug", "issue"]);
+            const tokens = (s) => new Set(
+              String(s || "")
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, " ")
+                .split(/\s+/)
+                .filter((w) => w.length >= 3 && !stop.has(w))
+            );
+
+            const curTokens = tokens(title);
+            if (curTokens.size === 0) return;
+
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              per_page: 50
+            });
+
+            const matches = [];
+            for (const other of openIssues) {
+              if (other.pull_request || other.number === issue.number) continue;
+              const otherTokens = tokens(other.title);
+              let shared = 0;
+              for (const t of curTokens) {
+                if (otherTokens.has(t)) shared++;
+              }
+              if (shared >= 2 || (curTokens.size <= 3 && shared >= 1 && shared / curTokens.size >= 0.5)) {
+                matches.push({ number: other.number, title: other.title, shared });
+              }
+            }
+
+            matches.sort((a, b) => b.shared - a.shared);
+            const top = matches.slice(0, 3);
+            if (top.length > 0) {
+              const listMd = top.map((m) => `- #${m.number}: ${m.title}`).join("\n");
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `🤖 **Auto-Triage:** These open issues look similar — feel free to add context or 👍 react if it's the same issue:\n${listMd}`
+              });
+            }
