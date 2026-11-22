@@ -501,13 +501,15 @@ async function runStep(name, fn) {
         deckOptionCount: document.getElementById('deckManagerSelect').options.length,
         tagPillCount: document.querySelectorAll('#deckTagPills .deck-tag-pill').length,
         starterFormat3Disabled: document.querySelector('#setupMatchFormatSelect option[value="3"]')?.disabled,
-        starterFormat4Disabled: document.querySelector('#setupMatchFormatSelect option[value="4"]')?.disabled
+        starterFormat4Disabled: document.querySelector('#setupMatchFormatSelect option[value="4"]')?.disabled,
+        tvModeHint: document.getElementById('tvModeSetupHint')?.textContent.trim() || ''
       })`);
 
       assert.strictEqual(lobbyState.title, "Party Feud");
       assert.strictEqual(lobbyState.lobbyVisible, true);
       assert.ok(lobbyState.deckOptionCount >= 8, `Expected >= 8 decks (Starter + 7 JSON decks), got ${lobbyState.deckOptionCount}`);
       assert.ok(lobbyState.tagPillCount >= 4, `Expected >= 4 category tag pills, got ${lobbyState.tagPillCount}`);
+      assert.ok(lobbyState.tvModeHint.length > 10, "Setup screen should display TV & buzzer mode hint");
       // Starter deck has 5 regular rounds; with 4 rounds/game, 3-team (8 rounds) & 4-team (12 rounds) must be disabled!
       assert.strictEqual(lobbyState.starterFormat3Disabled, true, "3-Team format should be disabled on 5-round Starter deck at 4 rounds/game");
       assert.strictEqual(lobbyState.starterFormat4Disabled, true, "4-Team format should be disabled on 5-round Starter deck at 4 rounds/game");

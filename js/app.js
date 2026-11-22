@@ -851,16 +851,41 @@ window.Feud = window.Feud || {};
 
   function syncTvSetupModeUi() {
     const mode = getSelectedTvSetupMode();
+    const isFile = isFileProtocol();
+    const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
     const qrBtn = document.getElementById("tvModeBtnQr");
     if (qrBtn) {
-      qrBtn.disabled = isFileProtocol();
-      qrBtn.title = isFileProtocol()
+      qrBtn.disabled = isFile;
+      qrBtn.title = isFile
         ? "Remote TV QR requires HTTP/HTTPS (use Pop-Out TV on file://)"
         : "Show Remote TV QR code & link right after starting";
     }
     document.querySelectorAll("#tvModeChoiceGroup .tv-mode-btn").forEach((btn) => {
       btn.classList.toggle("is-selected", btn.dataset.tvMode === mode);
     });
+
+    const hintEl = document.getElementById("tvModeSetupHint");
+    if (hintEl) {
+      if (mode === "local") {
+        if (isFile || isOffline) {
+          hintEl.textContent =
+            'Offline HDMI mode: Host & TV sync locally with no internet. Phone QR buzzers require internet — have players buzz in verbally/on the table and tap "Team 1 / Team 2 Buzzed" on the Host screen.';
+          hintEl.style.color = "#fde68a";
+        } else {
+          hintEl.textContent =
+            'HDMI dual-screen mode: opens a local TV window right away. Phone QR buzzers still work if you have internet — or just tap "Team 1 / Team 2 Buzzed" on the Host screen.';
+          hintEl.style.color = "#cbd5e1";
+        }
+      } else if (isOffline) {
+        hintEl.textContent =
+          "⚠️ Remote TV & Phone QR buzzers require internet. Switch to Pop-Out TV (HDMI) for offline play.";
+        hintEl.style.color = "#fde68a";
+      } else {
+        hintEl.textContent =
+          "Remote TV mode: shows a QR code & link to open the TV board on another device (phone QR buzzers also available).";
+        hintEl.style.color = "#cbd5e1";
+      }
+    }
   }
 
   function selectTvSetupMode(mode) {
@@ -2458,9 +2483,10 @@ window.Feud = window.Feud || {};
     if (qrTextEl) qrTextEl.textContent = code;
 
     const fileProto = isFileProtocol();
+    const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
     document.getElementById("qrRemoteTvBox")?.classList.toggle("hidden", fileProto);
     document.getElementById("qrBuzzersSection")?.classList.toggle("hidden", fileProto);
-    document.getElementById("qrFileModeHint")?.classList.toggle("hidden", !fileProto);
+    document.getElementById("qrFileModeHint")?.classList.toggle("hidden", !fileProto && !isOffline);
     const diag = Feud.getSyncDiagnostics ? Feud.getSyncDiagnostics() : { relayOk: true };
     updateQrRelayWarning(diag.relayOk);
 
@@ -5235,6 +5261,8 @@ Rules:
       });
       joinRoomInputEl.addEventListener("focus", () => refreshLobbyBuzzerLocks(true));
     }
+    window.addEventListener("online", syncTvSetupModeUi);
+    window.addEventListener("offline", syncTvSetupModeUi);
     window.addEventListener("focus", () => {
       if (activeRole === "lobby") refreshLobbyBuzzerLocks(true);
       if (activeRole === "host" && openedTvPopupWindow && openedTvPopupWindow.closed) {

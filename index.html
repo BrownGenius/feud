@@ -31,7 +31,7 @@
   <meta name="twitter:image:alt" content="Party Feud 16:9 TV Display Board showing revealed survey answers and scores" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
-  <link rel="stylesheet" href="./css/styles.css?v=20261120a" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261122a" />
 </head>
 <body>
 
@@ -203,7 +203,7 @@
       </div>
 
       <div id="qrFileModeHint" class="hidden" style="font-size:12px; color:#fde68a; line-height:1.45; text-align:left; background:rgba(15,23,42,0.7); border:1px solid rgba(251,191,36,0.3); border-radius:12px; padding:10px 12px; width:100%;">
-        ⚠️ Phone QR buzzers require serving over HTTP/HTTPS (such as GitHub Pages or a local web server). On offline <code>file://</code>, use <strong>🖥️ Open Local TV Window</strong> above for HDMI dual-screen play!
+        ⚠️ Phone QR buzzers require HTTP/HTTPS and an internet connection. When playing offline (or via <code>file://</code>), use <strong>🖥️ Open Local TV Window</strong> for HDMI dual-screen play, have players buzz in verbally/on the table, and tap <strong>🔔 Team 1 / Team 2 Buzzed</strong> on the Host screen!
       </div>
 
       <div id="qrLanHostWrap" class="hidden" style="width:100%; display:flex; flex-direction:column; gap:6px; margin-top:4px;">
@@ -467,6 +467,7 @@
                 <button type="button" class="tv-mode-btn" data-tv-mode="local" onclick="selectTvSetupMode('local')">🖥️ Pop-Out TV (HDMI)</button>
                 <button type="button" id="tvModeBtnQr" class="tv-mode-btn" data-tv-mode="qr" onclick="selectTvSetupMode('qr')">📱 Remote TV (QR / Link)</button>
               </div>
+              <div id="tvModeSetupHint" style="font-size:11.5px; color:#cbd5e1; line-height:1.4; margin-top:4px;"></div>
             </div>
 
             <!-- Collapsible Game Rules, Theme, Timer & PIN -->
@@ -971,16 +972,16 @@
     </button>
   </section>
 
-  <footer id="appBuildBadge" class="app-build-badge">Build v20261120a</footer>
+  <footer id="appBuildBadge" class="app-build-badge">Build v20261122a</footer>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js" async></script>
-  <script src="./js/audio.js?v=20261120a"></script>
-  <script src="./js/state.js?v=20261120a"></script>
-  <script src="./js/formats.js?v=20261120a"></script>
-  <script src="./js/decks.js?v=20261120a"></script>
-  <script src="./js/sync.js?v=20261120a"></script>
-  <script src="./js/views.js?v=20261120a"></script>
-  <script src="./js/app.js?v=20261120a"></script>
+  <script src="./js/audio.js?v=20261122a"></script>
+  <script src="./js/state.js?v=20261122a"></script>
+  <script src="./js/formats.js?v=20261122a"></script>
+  <script src="./js/decks.js?v=20261122a"></script>
+  <script src="./js/sync.js?v=20261122a"></script>
+  <script src="./js/views.js?v=20261122a"></script>
+  <script src="./js/app.js?v=20261122a"></script>
 </body>
 </html>

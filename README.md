@@ -95,6 +95,9 @@ Launch straight into any bundled question deck with one click — or open the pr
 ### Option 2: Laptop + HDMI TV (Works Even Offline)
 1. Plug your laptop into your TV in **Extended Display** mode (works even with Wi-Fi turned off by opening `index.html`).
 2. Leave **🖥️ Pop-Out TV (HDMI)** selected and click **🚀 Start Game** — the TV window pops out automatically; drag it onto your TV and click **⛶ Fullscreen**.
+3. **Buzzers in HDMI mode:**
+   * **With internet:** Phone QR buzzers still work normally alongside your HDMI TV.
+   * **Completely offline (`file://` or Wi-Fi off):** Phone QR buzzers require an internet connection and will **not** connect offline — have players buzz in verbally or slap the table, and click **`🔔 Team 1 Buzzed`** / **`🔔 Team 2 Buzzed`** directly on the Host screen instead.
 
 ---
 
