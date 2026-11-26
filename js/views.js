@@ -370,8 +370,14 @@ window.Feud = window.Feud || {};
     const tieBreakerUnlocked = Feud.isTieBreakerUnlocked
       ? Feud.isTieBreakerUnlocked(roomState)
       : false;
+    const clinchedInfo = Feud.getClinchedWinnerInfo
+      ? Feud.getClinchedWinnerInfo(roomState)
+      : { clinched: false };
     const isLastRegularRound = !isTieBreaker && roomState.roundIdx + 1 >= regCount;
-    const isLastRound = isTieBreaker || (isLastRegularRound && !tieBreakerUnlocked);
+    const isLastRound =
+      isTieBreaker ||
+      (isLastRegularRound && !tieBreakerUnlocked) ||
+      Boolean(clinchedInfo.clinched);
 
     const steps = isTieBreaker
       ? [
@@ -597,6 +603,8 @@ window.Feud = window.Feud || {};
           ? `⚡ TIE SCORE (${roomState.team1Score || 0} – ${
               roomState.team2Score || 0
             })! Sudden-Death Tie-Breaker Unlocked!`
+          : clinchedInfo.clinched
+          ? `🏆 Match Clinched — ${getTeamLabel(roomState, clinchedInfo.winnerTeam)} Wins! (Skip Remaining ${clinchedInfo.remainingRounds} Round${clinchedInfo.remainingRounds === 1 ? "" : "s"})`
           : `🎉 Round Complete — ${winName} Won the Round!`;
       if (!allRevealed) {
         sayScript = `“🎉 ${winName} takes the round! Before we move on, let's see the remaining answers on the board — Audience, what was #${
@@ -908,29 +916,17 @@ window.Feud = window.Feud || {};
         !(Feud.isAudioUnlocked && Feud.isAudioUnlocked());
       unlockBadge.classList.toggle("hidden", !needUnlock);
     }
-    const totalRounds = Feud.getRoundCount(roomState);
     const round = Feud.getRoundData(roomState, roomState.roundIdx);
-    const multText =
-      round.multiplier === 1 ? "1x Single" : round.multiplier === 2 ? "2x Double" : "3x Triple";
+    const isTieBreaker = Feud.isTieBreakerRound ? Feud.isTieBreakerRound(round) : false;
+    const multNum = round.multiplier || 1;
     const phase =
       roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
 
     document.getElementById("tvThemeBadge").textContent = round.theme;
     document.getElementById("tvPotValue").textContent = String(roomState.pot || 0);
-    document.getElementById("tvMultBadge").textContent = `${multText} Points`;
-
-    const strikesBadgeEl = document.getElementById("tvStrikesBadge");
-    if (strikesBadgeEl) {
-      if (phase === "round-over") {
-        strikesBadgeEl.textContent = "🏆 Round Complete";
-      } else if (phase === "steal") {
-        strikesBadgeEl.textContent = "🚨 Steal Mode (3 / 3 X)";
-      } else if (String(phase).startsWith("faceoff") || phase === "pass-or-play") {
-        strikesBadgeEl.textContent = "⚡ Face-Off";
-      } else {
-        strikesBadgeEl.textContent = `Strikes: ${roomState.strikes || 0} / 3`;
-      }
-    }
+    document.getElementById("tvMultBadge").textContent = isTieBreaker
+      ? `⚡ Tie-Breaker (${multNum}X)`
+      : `Round ${roomState.roundIdx + 1} (${multNum}X)`;
 
     document.getElementById("tvTeam1Name").textContent = roomState.team1Name;
     document.getElementById("tvTeam1Score").textContent = String(roomState.team1Score || 0);
@@ -1031,14 +1027,6 @@ window.Feud = window.Feud || {};
       if (winWrap) winWrap.classList.add("hidden");
     }
 
-    const regRounds = Feud.getRegularRoundCount
-      ? Feud.getRegularRoundCount(roomState)
-      : totalRounds;
-    const isTieBreaker = Feud.isTieBreakerRound ? Feud.isTieBreakerRound(round) : false;
-    document.getElementById("tvRoundCounter").textContent = isTieBreaker
-      ? `⚡ ${round.title} (Sudden Death)`
-      : `${round.title} (${roomState.roundIdx + 1} of ${regRounds})`;
-
     const promptBanner = document.getElementById("tvPromptBanner");
     const promptText = document.getElementById("tvPromptText");
     if (roomState.questionRevealed) {
@@ -1113,16 +1101,22 @@ window.Feud = window.Feud || {};
     const unrevealedLeft = Math.max(0, round.answers.length - revSet.size);
 
     if (phase === "round-over") {
+      const clinchedBanner = Feud.getClinchedWinnerInfo
+        ? Feud.getClinchedWinnerInfo(roomState)
+        : { clinched: false };
       const winName = getTeamLabel(
         roomState,
-        roomState.roundWinnerTeam || roomState.controllingTeam || 1
+        clinchedBanner.clinched
+          ? clinchedBanner.winnerTeam
+          : roomState.roundWinnerTeam || roomState.controllingTeam || 1
       );
-      buzzBanner.textContent =
-        unrevealedLeft > 0
-          ? `🏆 ${winName} Wins the Round! • ${unrevealedLeft} Survey Answer${
-              unrevealedLeft === 1 ? "" : "s"
-            } Left`
-          : `🏆 ${winName} Wins the Round!`;
+      buzzBanner.textContent = clinchedBanner.clinched
+        ? `🏆 MATCH WINNER: ${winName}! (Insurmountable ${clinchedBanner.lead}-Pt Lead)`
+        : unrevealedLeft > 0
+        ? `🏆 ${winName} Wins the Round! • ${unrevealedLeft} Survey Answer${
+            unrevealedLeft === 1 ? "" : "s"
+          } Left`
+        : `🏆 ${winName} Wins the Round!`;
       buzzBanner.classList.add("active");
     } else if (phase === "steal") {
       const stealTeamName = getTeamLabel(

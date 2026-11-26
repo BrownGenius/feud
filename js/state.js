@@ -1209,6 +1209,48 @@ window.Feud.ROOM_WORDS = window.Feud.DEFAULT_DECK.roomWords;
     return next;
   }
 
+  function getRemainingPossiblePoints(roomState) {
+    if (!roomState) return 0;
+    const regCount = getRegularRoundCount(roomState);
+    const curIdx = Number(roomState.roundIdx) || 0;
+    let total = 0;
+    for (let i = curIdx + 1; i < regCount; i++) {
+      const r = getRoundData(roomState, i);
+      if (!r || isTieBreakerRound(r)) continue;
+      const mult = Number(r.multiplier) || 1;
+      const roundPts = (Array.isArray(r.answers) ? r.answers : []).reduce(
+        (sum, a) => sum + Math.max(0, Number(a && a.points) || 0),
+        0
+      );
+      total += roundPts * mult;
+    }
+    return total;
+  }
+
+  function getClinchedWinnerInfo(roomState) {
+    if (!roomState) {
+      return { clinched: false, winnerTeam: 0, lead: 0, maxRemainingPoints: 0, remainingRounds: 0 };
+    }
+    const curIdx = Number(roomState.roundIdx) || 0;
+    const regCount = getRegularRoundCount(roomState);
+    const curRound = getRoundData(roomState, curIdx);
+    const isTie = isTieBreakerRound(curRound);
+    const s1 = Number(roomState.team1Score) || 0;
+    const s2 = Number(roomState.team2Score) || 0;
+    const lead = Math.abs(s1 - s2);
+    const winnerTeam = s1 > s2 ? 1 : s2 > s1 ? 2 : 0;
+    const remainingRounds = isTie ? 0 : Math.max(0, regCount - 1 - curIdx);
+    const maxRemainingPoints = isTie ? 0 : getRemainingPossiblePoints(roomState);
+    const clinched =
+      !isTie &&
+      !roomState.isDemoMode &&
+      winnerTeam !== 0 &&
+      remainingRounds > 0 &&
+      lead > maxRemainingPoints;
+
+    return { clinched, winnerTeam, lead, maxRemainingPoints, remainingRounds };
+  }
+
   function clearLastSession() {
     try {
       localStorage.removeItem(STORAGE_LAST_SESSION_KEY);
@@ -1252,6 +1294,8 @@ window.Feud.ROOM_WORDS = window.Feud.DEFAULT_DECK.roomWords;
     getRegularRoundCount,
     getDeckRegularRoundCount,
     isTieBreakerUnlocked,
+    getRemainingPossiblePoints,
+    getClinchedWinnerInfo,
     getRoundCount,
     getRoundData,
     getAllEffectiveRounds,

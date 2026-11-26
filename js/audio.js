@@ -100,58 +100,80 @@ window.Feud = window.Feud || {};
       const ctx = unlockAudio();
       if (!ctx) return;
       const now = ctx.currentTime;
+      const dur = 0.52;
 
-      // Balanced, warm game-show "bzzzt-bzzzt" wrong-answer buzzer
+      // Mechanical solenoid/reed game-show wrong-answer buzzer ("ERRRNT!")
       const shaper = ctx.createWaveShaper();
       const curve = new Float32Array(256);
       for (let i = 0; i < 256; i++) {
         const x = (i * 2) / 255 - 1;
-        curve[i] = Math.tanh(x * 1.8);
+        curve[i] = Math.tanh(x * 2.8);
       }
       shaper.curve = curve;
 
       const filter = ctx.createBiquadFilter();
       filter.type = "lowpass";
-      filter.frequency.setValueAtTime(1850, now);
-      filter.Q.setValueAtTime(1.0, now);
+      filter.frequency.setValueAtTime(1450, now);
+      filter.Q.setValueAtTime(1.5, now);
 
       const master = ctx.createGain();
-      master.gain.setValueAtTime(0.26, now);
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.linearRampToValueAtTime(0.32, now + 0.006);
+      master.gain.setValueAtTime(0.3, now + dur - 0.08);
+      master.gain.exponentialRampToValueAtTime(0.0008, now + dur);
+
+      // 58 Hz mechanical contact flutter modulating master gain
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.type = "sine";
+      lfo.frequency.setValueAtTime(58, now);
+      lfoGain.gain.setValueAtTime(0.075, now);
+      lfo.connect(lfoGain);
+      lfoGain.connect(master.gain);
+      lfo.start(now);
+      lfo.stop(now + dur + 0.02);
 
       filter.connect(shaper);
       shaper.connect(master);
       master.connect(ctx.destination);
 
-      const voices = [
-        { freq: 110.0, type: "sawtooth", weight: 0.42 },
-        { freq: 116.54, type: "triangle", weight: 0.45 },
-        { freq: 164.81, type: "triangle", weight: 0.34 },
-        { freq: 220.0, type: "sawtooth", weight: 0.28 }
-      ];
-
-      const pulses = [
-        { start: 0, dur: 0.13, peak: 0.36 },
-        { start: 0.16, dur: 0.46, peak: 0.4 }
-      ];
-      pulses.forEach((pulse) => {
-        voices.forEach((v) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          const t0 = now + pulse.start;
-          osc.type = v.type;
-          osc.frequency.setValueAtTime(v.freq, t0);
-          osc.frequency.linearRampToValueAtTime(v.freq * 0.97, t0 + pulse.dur);
-          const lvl = pulse.peak * v.weight;
-          gain.gain.setValueAtTime(0.0001, t0);
-          gain.gain.linearRampToValueAtTime(lvl, t0 + 0.008);
-          gain.gain.setValueAtTime(lvl * 0.9, t0 + pulse.dur * 0.8);
-          gain.gain.exponentialRampToValueAtTime(0.0008, t0 + pulse.dur);
-          osc.connect(gain);
-          gain.connect(filter);
-          osc.start(t0);
-          osc.stop(t0 + pulse.dur + 0.02);
-        });
+      // Detuned low sawtooth + square voices for rich analog rasp
+      [
+        { freq: 92.5, type: "sawtooth", weight: 0.45 },
+        { freq: 95.0, type: "sawtooth", weight: 0.45 },
+        { freq: 138.6, type: "square", weight: 0.22 },
+        { freq: 185.0, type: "sawtooth", weight: 0.25 }
+      ].forEach((v) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = v.type;
+        osc.frequency.setValueAtTime(v.freq, now);
+        osc.frequency.linearRampToValueAtTime(v.freq * 0.96, now + dur);
+        gain.gain.setValueAtTime(v.weight, now);
+        osc.connect(gain);
+        gain.connect(filter);
+        osc.start(now);
+        osc.stop(now + dur + 0.02);
       });
+
+      // Subtle band-passed contact rattle noise
+      const noiseLen = Math.floor(ctx.sampleRate * dur);
+      const noiseBuf = ctx.createBuffer(1, noiseLen, ctx.sampleRate);
+      const data = noiseBuf.getChannelData(0);
+      for (let i = 0; i < noiseLen; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = noiseBuf;
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass";
+      bp.frequency.setValueAtTime(920, now);
+      bp.Q.setValueAtTime(1.2, now);
+      const nGain = ctx.createGain();
+      nGain.gain.setValueAtTime(0.14, now);
+      noise.connect(bp);
+      bp.connect(nGain);
+      nGain.connect(filter);
+      noise.start(now);
+      noise.stop(now + dur + 0.02);
     } catch (e) {}
   }
 
