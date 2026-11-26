@@ -908,6 +908,14 @@ window.Feud = window.Feud || {};
     renderTurnTimerUI(roomState);
     renderGuidedFlowUI(roomState);
     renderTvQrOverlay(roomState);
+    const unlockBadge = document.getElementById("tvAudioUnlockBadge");
+    if (unlockBadge) {
+      const needUnlock =
+        activeRole === "tv" &&
+        !(Feud.isAudioMuted && Feud.isAudioMuted()) &&
+        !(Feud.isAudioUnlocked && Feud.isAudioUnlocked());
+      unlockBadge.classList.toggle("hidden", !needUnlock);
+    }
     const round = Feud.getRoundData(roomState, roomState.roundIdx);
     const isTieBreaker = Feud.isTieBreakerRound ? Feud.isTieBreakerRound(round) : false;
     const multNum = round.multiplier || 1;

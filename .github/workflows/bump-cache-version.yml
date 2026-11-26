@@ -1,0 +1,51 @@
+name: Bump Cache-Busting Version
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'index.html'
+      - 'review.html'
+      - 'sw.js'
+      - 'css/**'
+      - 'js/**'
+      - 'icons/**'
+      - 'manifest.webmanifest'
+      - 'scripts/bump-cache-version.js'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bump-cache-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Bump cache-busting version
+        run: |
+          node scripts/bump-cache-version.js
+          node scripts/validate-repo.js
+
+      - name: Commit and push updated cache version
+        run: |
+          if git diff --quiet index.html review.html sw.js; then
+            echo "No cache version changes needed."
+            exit 0
+          fi
+          NEW_VER=$(node -e "const s=require('fs').readFileSync('sw.js','utf8').match(/party-feud-(v[0-9a-z]+)/); console.log(s?s[1]:'');")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html review.html sw.js
+          git commit -m "chore(cache): bump cache version to ${NEW_VER} [skip ci]"
+          git push origin HEAD:main

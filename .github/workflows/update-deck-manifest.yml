@@ -11,7 +11,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   update-manifest:
@@ -28,23 +27,14 @@ jobs:
       - name: Generate decks/manifest.json
         run: node scripts/generate-manifest.js
 
-      - name: Open PR with updated manifest if changed
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Commit and push updated manifest if changed
         run: |
           if git diff --quiet decks/manifest.json; then
             echo "decks/manifest.json is already up to date."
             exit 0
           fi
-          BRANCH="chore/update-deck-manifest"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -B "$BRANCH"
           git add decks/manifest.json
           git commit -m "chore(decks): update decks/manifest.json [skip ci]"
-          git push -f origin "$BRANCH"
-          if ! gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number' | grep -q .; then
-            gh pr create --base main --head "$BRANCH" \
-              --title "chore(decks): update decks/manifest.json" \
-              --body "Automated update of \`decks/manifest.json\` after deck changes on \`main\`."
-          fi
+          git push origin HEAD:main

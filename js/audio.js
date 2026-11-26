@@ -10,14 +10,33 @@ window.Feud = window.Feud || {};
   let audioCtx = null;
   let isMuted = false;
 
+  function notifyAudioState() {
+    try {
+      if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
+        window.dispatchEvent(new CustomEvent("feud-audio-state"));
+      }
+    } catch (e) {}
+  }
+
+  function isAudioUnlocked() {
+    return Boolean(audioCtx && audioCtx.state === "running");
+  }
+
   function unlockAudio() {
     try {
       if (!audioCtx) {
         const AC = window.AudioContext || window.webkitAudioContext;
-        if (AC) audioCtx = new AC();
+        if (AC) {
+          audioCtx = new AC();
+          if (typeof audioCtx.addEventListener === "function") {
+            audioCtx.addEventListener("statechange", notifyAudioState);
+          }
+        }
       }
       if (audioCtx && audioCtx.state === "suspended") {
-        audioCtx.resume().catch(() => {});
+        audioCtx.resume().then(notifyAudioState).catch(() => {});
+      } else if (audioCtx && audioCtx.state === "running") {
+        notifyAudioState();
       }
     } catch (e) {}
     return audioCtx;
@@ -384,6 +403,7 @@ window.Feud = window.Feud || {};
 
   Object.assign(Feud, {
     unlockAudio,
+    isAudioUnlocked,
     isAudioMuted,
     setAudioMuted,
     toggleAudioMute,
