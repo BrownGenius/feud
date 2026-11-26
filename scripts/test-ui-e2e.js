@@ -491,7 +491,7 @@ async function runStep(name, fn) {
       `
     });
 
-    await runStep("1. Lobby View Loads, Discovers Decks via manifest.json & Renders Category Tag Pills", async () => {
+    await runStep("1. Lobby View Loads & Discovers Decks via manifest.json", async () => {
       await cdp.navigate(`${baseUrl}/index.html`);
       await cdp.waitFor("window.Feud && document.getElementById('deckManagerSelect').options.length >= 7");
 
@@ -499,7 +499,6 @@ async function runStep(name, fn) {
         title: document.getElementById('topBrandTitle')?.textContent.trim(),
         lobbyVisible: !document.getElementById('lobbyView').classList.contains('hidden'),
         deckOptionCount: document.getElementById('deckManagerSelect').options.length,
-        tagPillCount: document.querySelectorAll('#deckTagPills .deck-tag-pill').length,
         starterFormat3Disabled: document.querySelector('#setupMatchFormatSelect option[value="3"]')?.disabled,
         starterFormat4Disabled: document.querySelector('#setupMatchFormatSelect option[value="4"]')?.disabled,
         tvModeHint: document.getElementById('tvModeSetupHint')?.textContent.trim() || ''
@@ -507,8 +506,8 @@ async function runStep(name, fn) {
 
       assert.strictEqual(lobbyState.title, "Party Feud");
       assert.strictEqual(lobbyState.lobbyVisible, true);
+      assert.strictEqual(await cdp.eval(`document.getElementById('deckTagPills') === null`), true, "Category tag filter pills should be removed");
       assert.ok(lobbyState.deckOptionCount >= 8, `Expected >= 8 decks (Starter + 7 JSON decks), got ${lobbyState.deckOptionCount}`);
-      assert.ok(lobbyState.tagPillCount >= 4, `Expected >= 4 category tag pills, got ${lobbyState.tagPillCount}`);
       assert.ok(lobbyState.tvModeHint.length > 10, "Setup screen should display TV & buzzer mode hint");
       // Starter deck has 5 regular rounds; with 4 rounds/game, 3-team (8 rounds) & 4-team (12 rounds) must be disabled!
       assert.strictEqual(lobbyState.starterFormat3Disabled, true, "3-Team format should be disabled on 5-round Starter deck at 4 rounds/game");
@@ -714,10 +713,10 @@ async function runStep(name, fn) {
       }
 
       const stealCheck = await cdp.eval(`({
-        strikesText: document.getElementById('tvStrikesBadge')?.textContent.trim(),
-        headline: document.getElementById('hostFlowHeadline')?.textContent.trim()
+        tvBanner: document.getElementById('tvBuzzerBanner')?.textContent.trim() || '',
+        headline: document.getElementById('hostFlowHeadline')?.textContent.trim() || ''
       })`);
-      assert.ok(stealCheck.strikesText.includes("3 / 3"), `Expected 3/3 strikes, got ${stealCheck.strikesText}`);
+      assert.ok(/CHANCE TO STEAL/i.test(stealCheck.tvBanner), `Expected CHANCE TO STEAL in TV banner, got ${stealCheck.tvBanner}`);
       assert.ok(/Steal/i.test(stealCheck.headline), `Expected Steal headline, got ${stealCheck.headline}`);
 
       // Step G: Red Rockets succeed on the Steal by hitting Answer #3 (15 pts -> Total Pot 79 awarded to Team 2!)
@@ -781,6 +780,9 @@ async function runStep(name, fn) {
       await cdp.waitFor("!document.getElementById('hostContextPopover').classList.contains('hidden')");
       const popoverTitle = await cdp.eval(`document.getElementById('hostPopoverTitle')?.textContent.trim()`);
       assert.ok(popoverTitle.length > 0, "Host contextual popover should render title");
+      await cdp.eval(`document.getElementById('hostShortcutsBtn').click()`);
+      const shortcutsTitle = await cdp.eval(`document.getElementById('hostPopoverTitle')?.textContent.trim()`);
+      assert.ok(/Shortcuts/i.test(shortcutsTitle), `Expected shortcuts popover title, got: ${shortcutsTitle}`);
       await cdp.eval(`window.closeHostPopover()`);
 
       await cdp.eval(`window.openQrModal()`);
@@ -1050,10 +1052,10 @@ async function runStep(name, fn) {
         }
         await window.hostNextRound();
       })()`);
-      await cdp.waitFor("/Tie-Breaker/i.test(document.getElementById('tvRoundCounter')?.textContent || '')");
+      await cdp.waitFor("/Tie-Breaker/i.test(document.getElementById('tvMultBadge')?.textContent || '')");
 
       const tbCheck = await cdp.eval(`({
-        tvCounter: document.getElementById('tvRoundCounter')?.textContent.trim(),
+        tvCounter: document.getElementById('tvMultBadge')?.textContent.trim(),
         headline: document.getElementById('hostFlowHeadline')?.textContent.trim()
       })`);
       assert.ok(/Tie-Breaker|Sudden Death/i.test(tbCheck.tvCounter), `Expected Sudden-Death Tie-Breaker counter, got: ${tbCheck.tvCounter}`);
@@ -1068,11 +1070,11 @@ async function runStep(name, fn) {
       await sleep(150);
 
       const tbWin = await cdp.eval(`({
-        strikesBadge: document.getElementById('tvStrikesBadge')?.textContent.trim(),
+        tvBanner: document.getElementById('tvBuzzerBanner')?.textContent.trim() || '',
         t1Score: Number(document.getElementById('tvTeam1Score')?.textContent || 0),
         t2Score: Number(document.getElementById('tvTeam2Score')?.textContent || 0)
       })`);
-      assert.ok(/Round Complete/i.test(tbWin.strikesBadge), "Tie-Breaker #1 answer should complete the round");
+      assert.ok(/Wins the Round/i.test(tbWin.tvBanner), `Tie-Breaker #1 answer should complete the round, got: ${tbWin.tvBanner}`);
       assert.ok(tbWin.t2Score > tbWin.t1Score, "Team 2 hitting #1 answer in Tie-Breaker should take the lead to win");
     });
 
@@ -1169,6 +1171,38 @@ async function runStep(name, fn) {
       await cdp.waitFor("/Shared Hash Review Deck/i.test(document.getElementById('reviewDocTitle')?.textContent || '')");
       const hashCardText = await cdp.eval(`document.getElementById('reviewContentRoot')?.textContent || ''`);
       assert.ok(hashCardText.includes("Name a noble gas."), "review.html should decode and render #deckData hash decks");
+
+      // Test inline card editing & Save to Local File button in review.html
+      const hasSaveLocalBtn = await cdp.eval(`Boolean(document.getElementById('btnSaveToLocalFile'))`);
+      assert.strictEqual(hasSaveLocalBtn, true, "review.html should render #btnSaveToLocalFile button");
+      await cdp.eval(`document.querySelector('[data-edit-round="0"]').click()`);
+      await cdp.waitFor("Boolean(document.querySelector('.q-card.is-editing[data-editing-round=\"0\"]'))");
+      await cdp.eval(`(() => {
+        const card = document.querySelector('.q-card.is-editing[data-editing-round="0"]');
+        const inp = card.querySelector('[data-inline-prompt]');
+        inp.value = 'Name a noble gas (Edited Inline).';
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+        card.querySelector('[data-inline-save]').click();
+      })()`);
+      await cdp.waitFor("!document.querySelector('.q-card.is-editing')");
+      const editedText = await cdp.eval(`document.getElementById('card-r-0')?.textContent || ''`);
+      assert.ok(editedText.includes("Name a noble gas (Edited Inline)."), "Inline edit save should update the card in place");
+
+      // Test Fast Money inline editing on Starter deck
+      await cdp.navigate(`${baseUrl}/review.html?deck=starter&answers=show`);
+      await cdp.waitFor("Boolean(document.querySelector('[data-edit-fm-set=\"0\"]'))");
+      await cdp.eval(`document.querySelector('[data-edit-fm-set="0"]').click()`);
+      await cdp.waitFor("Boolean(document.querySelector('.q-card.fm-card.is-editing[data-editing-fm-set=\"0\"]'))");
+      await cdp.eval(`(() => {
+        const card = document.querySelector('.q-card.fm-card.is-editing[data-editing-fm-set="0"]');
+        const inp = card.querySelector('[data-inline-fm-prompt]');
+        inp.value = 'Edited Fast Money Question?';
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+        card.querySelector('[data-inline-fm-save]').click();
+      })()`);
+      await cdp.waitFor("!document.querySelector('.q-card.fm-card.is-editing')");
+      const fmEditedText = await cdp.eval(`document.getElementById('card-fm-0')?.textContent || ''`);
+      assert.ok(fmEditedText.includes("Edited Fast Money Question?"), "Fast Money inline edit should update the card in place");
     });
 
     await runStep("14. URL Deep-Linking (?deck=&theme=, index.html#deckData=) & PWA Assets", async () => {
@@ -1181,6 +1215,12 @@ async function runStep(name, fn) {
       })`);
       assert.ok(/2026-frc-rules/i.test(frcState.selectedDeck), `Expected 2026-frc-rules selected, got: ${frcState.selectedDeck}`);
       assert.strictEqual(frcState.bodyTheme, "frc", "URL &theme=frc should apply frc visual theme");
+
+      // A2. Slugified ?deck=desi-thanksgiving-37-rounds resolves to canonical desi-thanksgiving.json
+      await cdp.navigate(`${baseUrl}/index.html?deck=desi-thanksgiving-37-rounds`);
+      await cdp.waitFor("/desi-thanksgiving\\.json/i.test(document.getElementById('deckManagerSelect')?.value || '')");
+      const desiSelected = await cdp.eval(`document.getElementById('deckManagerSelect')?.value || ''`);
+      assert.strictEqual(desiSelected, "desi-thanksgiving.json", "Slugified ?deck=desi-thanksgiving-37-rounds should resolve to desi-thanksgiving.json");
 
       // B. index.html#deckData=... compressed custom deck load
       const token = await cdp.eval(`(async () => {
@@ -1260,12 +1300,12 @@ async function runStep(name, fn) {
         t1: document.getElementById('tvTeam1Score')?.textContent.trim(),
         t2: document.getElementById('tvTeam2Score')?.textContent.trim(),
         pot: document.getElementById('tvPotValue')?.textContent.trim(),
-        badge: document.getElementById('tvStrikesBadge')?.textContent.trim()
+        tvBanner: document.getElementById('tvBuzzerBanner')?.textContent.trim() || ''
       })`);
       assert.strictEqual(afterStealMiss.t1, "40", "Original playing team (Team 1) must keep the 40-pt pot when steal misses");
       assert.strictEqual(afterStealMiss.t2, "0");
       assert.strictEqual(afterStealMiss.pot, "0");
-      assert.ok(/Round Complete/i.test(afterStealMiss.badge));
+      assert.ok(/Wins the Round/i.test(afterStealMiss.tvBanner));
 
       // C. Post-Round 0-Pt Reveal: clicking remaining unrevealed answer in round-over must NOT add points
       await cdp.eval(`document.querySelectorAll('#hostAnswersList button')[1].click()`);
@@ -1330,7 +1370,43 @@ async function runStep(name, fn) {
       assert.strictEqual(resetScores.t2, "0", "Next match should reset Team 2 score to 0");
     });
 
-    await runStep("17. Zero Uncaught Page Exceptions or Console Errors", async () => {
+    await runStep("17. Clinched Victory Skips Subsequent Rounds & Declares Winner Immediately", async () => {
+      await cdp.eval(`(async () => {
+        await window.onSelectCatalogDeck('starter');
+        window.resetCurrentDeckHistory();
+        document.getElementById('setupTeam1Input').value = 'Clinch Champs';
+        document.getElementById('setupTeam2Input').value = 'Trailing Team';
+        await window.confirmStartNewGame('host');
+      })()`);
+      await cdp.waitFor("!document.getElementById('hostView').classList.contains('hidden')");
+
+      // Advance to Round 3 of 4 (max 300 pts left in Round 4), give Team 1 350 pts and award Round 3 pot
+      await cdp.eval(`(async () => {
+        await window.hostSelectRound(2);
+        await window.hostAdjustScore(1, 350);
+        await window.hostRevealQuestionAndStartTimer();
+        await window.hostSetFaceOffWinner(1);
+        document.querySelectorAll('#hostAnswersList button')[0].click();
+      })()`);
+      await sleep(100);
+      await cdp.eval(`(async () => {
+        await window.hostChoosePlayOrPass('play');
+        await window.hostAwardPot(1);
+      })()`);
+      await sleep(120);
+
+      const clinchUi = await cdp.eval(`({
+        headline: document.getElementById('hostFlowHeadline')?.textContent.trim() || '',
+        tvBanner: document.getElementById('tvBuzzerBanner')?.textContent.trim() || '',
+        actionsText: document.getElementById('hostFaceOffDecisionBar')?.textContent || ''
+      })`);
+      assert.ok(/Match Clinched/i.test(clinchUi.headline), `Expected Match Clinched headline, got: ${clinchUi.headline}`);
+      assert.ok(/MATCH WINNER: Clinch Champs/i.test(clinchUi.tvBanner), `TV banner should declare winner immediately, got: ${clinchUi.tvBanner}`);
+      assert.ok(!/Next Round/i.test(clinchUi.actionsText), "Next Round button must be skipped when match is clinched");
+      assert.ok(/Show Winner Screen/i.test(clinchUi.actionsText), "Show Winner Screen button must appear immediately when clinched");
+    });
+
+    await runStep("18. Zero Uncaught Page Exceptions or Console Errors", async () => {
       assert.strictEqual(
         cdp.pageErrors.length,
         0,

@@ -68,7 +68,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 | **Live Phone Buzzers** | **QR Scan — Team 1, Team 2, Shared Combo, Haptics & 2-Way Test** | ❌ None (honor system / yelling) | ⚠️ Separate buzzer app or paid tier |
 | **Host Controls & Demo** | **1-Click Demo, Answer Key, Live Mini TV, Teleprompter & 25-Step Undo** | ❌ Clunky slide presenter view | ⚠️ Basic host toggles |
 | **TV Presentation, Themes & SFX** | **3D Flipping Tiles, 4 Visual Themes, Tension Audio, Big Red `X`, Winner Screen** | ⚠️ Static slides, manual point math | ✅ Varies |
-| **Tournaments, AI Decks & Sharing** | **3/4-Team Brackets, In-App AI Builder, `#deckData` Share Links & Category Filters** | ❌ Hard to edit slides | ⚠️ Locked or paywalled |
+| **Tournaments, AI Decks & Sharing** | **3/4-Team Brackets, In-App AI Builder, `#deckData` Share Links & Deck Search** | ❌ Hard to edit slides | ⚠️ Locked or paywalled |
 | **Offline & Installable PWA** | **Installable PWA + Works Offline Over HDMI (`file://`)** | ✅ Local file | ❌ Requires internet server |
 
 ---
@@ -79,7 +79,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 * **🎙️ Stress-Free Hosting & 1-Click Demo:** Try the **▶ 10-Second Interactive Demo** right from the Lobby, or host with a full answer key, **live mini TV preview**, **step-by-step coach**, collapsible **Host Script** (`SAY` / `DO`), and **25-step Undo**.
 * **🔔 Phone Buzzers (Haptics & 2-Way Test):** Scan a QR code from the TV or Host screen to join as **Team 1 Buzzer**, **Team 2 Buzzer**, or **Combo Buzzer** (both teams on one shared phone/iPad). Includes multi-stage vibration haptics and a pre-game **🔔 Test Buzz** ping (Host ↔ Phone).
 * **🏆 3-Team & 4-Team Tournament Brackets:** Switch from Classic 2-Team play to a **3-Team Mini Bracket** (`2` games) or **4-Team Tournament** (`3` games: Semifinals → Championship Final) whenever the chosen deck has enough regular rounds to guarantee unique questions across every match.
-* **✨ In-App AI Deck Builder & `#deckData` Share Links:** Filter decks by category tag or search, generate a custom JSON deck on any topic with the built-in **✨ AI Deck Builder**, and share playable custom decks via compressed `#deckData=...` URL links without hosting files.
+* **✨ In-App AI Deck Builder & `#deckData` Share Links:** Search decks by name or topic, generate a custom JSON deck on any topic with the built-in **✨ AI Deck Builder**, and share playable custom decks via compressed `#deckData=...` URL links without hosting files.
 * **📲 Installable PWA & Offline Ready:** Install as a standalone desktop/tablet Web App (`manifest.webmanifest` + Service Worker) or open `index.html` over `file://` for offline HDMI play.
 * **⚡ Optional Fast Money Bonus Round:** Toggle Fast Money on or off for any game, complete with 20s / 25s clocks, hidden Player 1 answers, duplicate-answer buzzers, and 1-tap score chips.
 
@@ -89,7 +89,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 
 ### Option 1: Party Setup (TV + Phone Buzzers via QR Code)
 1. Open **[Party Feud](https://browngenius.github.io/feud)** on your laptop or tablet — the game setup sits right on the Lobby (or click **▶ Try 10-Second Interactive Demo** for an instant preview)!
-2. Filter or search for a question deck (or click **✨ AI Deck** to build one on the spot), pick **2 Teams (Classic)** or a **3/4-Team Tournament Bracket**, optionally pick a **🎨 Visual Board Theme** under Game Rules, choose your **📺 TV Display** option (**Pop-Out TV (HDMI)** or **Remote TV (QR / Link)**), and tap **🚀 Start Game**.
+2. Search for a question deck by name or topic (or click **✨ AI Deck** to build one on the spot), pick **2 Teams (Classic)** or a **3/4-Team Tournament Bracket**, optionally pick a **🎨 Visual Board Theme** under Game Rules, choose your **📺 TV Display** option (**Pop-Out TV (HDMI)** or **Remote TV (QR / Link)**), and tap **🚀 Start Game**.
 3. Click **`📺 TV: 0/1 • 📱 Buzzers: 0/2`** in the Host header anytime to open the unified **Connect TV & Buzzers** panel — copy/scan the TV link, project **Individual Buzzers** or **Combo Buzzer** onto the TV for players to scan, and click **🔔 Ping Connected Buzzers** (or tap **🔔 Test** on any phone) to test sound and vibration before Round 1.
 
 ### Option 2: Laptop + HDMI TV (Works Even Offline)
@@ -111,7 +111,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 4. **Going Down the Line (`R` / `X`):** Press **`R`** to start each player's clock, tap matching answers (`1`–`8`) to flip them into the Round Pot, or press **`X`** for a wrong guess.
    * **Need clarification?** Tap **🔍 Be More Specific** for a gentle double-buzz and `+5s` on the clock.
    * **3 Strikes (`XXX`):** Automatically switches to the opposing team for a **30-second Steal**! If they hit an unrevealed answer, they steal the whole pot; if they miss, the original team keeps it.
-5. **Round Over, Winner Screen & Tournament Advancement:** Reveal any remaining unguessed answers (`0 pts`) to the crowd, then click **⏭️ Next Round** — or after the final round, click **🏆 Show Winner Screen** to celebrate and advance to the next match (**Winner Stays On**, **Rematch**, **Two New Teams**, or the next **Tournament Bracket** matchup).
+5. **Round Over, Clinched Victory & Tournament Advancement:** Reveal any remaining unguessed answers (`0 pts`) to the crowd, then click **⏭️ Next Round** — if one team leads by more points than remain in the match, subsequent rounds are skipped and the winner is declared immediately! After the final round (or clinched victory), click **🏆 Show Winner Screen** to celebrate and advance to the next match (**Winner Stays On**, **Rematch**, **Two New Teams**, or the next **Tournament Bracket** matchup).
 
 ---
 
@@ -228,7 +228,7 @@ stateDiagram-v2
     round_over --> round_over : "Reveal Remaining Answers (0 pts)"
     round_over --> faceoff_ready : "Next Round"
     faceoff_ready --> faceoff_ready : "Swap / Pick Round (While Hidden)"
-    round_over --> winner : "Final Round Complete -> Show Winner Screen"
+    round_over --> winner : "Final Round OR Clinched Victory -> Show Winner Screen"
 ```
 
 | Phase (`roundPhase`) | Answer Tiles | Primary Host Actions Allowed |
@@ -284,7 +284,7 @@ A Party Feud Deck JSON file configures `gameTitle`, `gameIcon`, `deckName`, `tea
 * **Static Manifest + Auto-Discovery:** Loads [`decks/manifest.json`](./decks/manifest.json) in a single static CDN request (auto-updated on push via `.github/workflows/update-deck-manifest.yml` / `node scripts/generate-manifest.js`), falling back to the GitHub Contents API or `./decks/` directory listing.
 * **Offline (`file://`) Folder Scan & Custom Deck Files:** Use **`📂 Scan Folder`** (`showDirectoryPicker` + IndexedDB handle persistence for 1-click **`🔄 Re-scan`**, with `<input webkitdirectory>` fallback) to scan your local `/decks` folder directly from disk, or **`📄 Load Deck File`** to load individual custom `.json` decks — cached across reloads and between [`index.html`](./index.html) and [`review.html`](./review.html).
 * **Direct & Compressed URL Loading:** `?deck=2026-frc-rules` (bundled `/decks` slug), `?theme=frc` (or `classic`, `holiday`, `classroom` visual board theme), `?deck=https://.../my-questions.json`, or `#deckData=z....` (deflate-compressed shareable custom deck URL). Decks can also specify a default `"boardTheme"` (`"classic"`, `"holiday"`, `"frc"`, or `"classroom"`).
-* **Printable Review & `Used` Tracker:** Open [`review.html`](./review.html) (or `review.html?deck=desi-thanksgiving`) to filter by category tag, inspect all rounds/Fast Money sets, scan local folders or load custom files, and toggle `Used` / `Unused` status in `localStorage`.
+* **Printable Review, Inline Editing & `Used` Tracker:** Open [`review.html`](./review.html) (or `review.html?deck=desi-thanksgiving`) to filter by category tag, inspect all rounds/Fast Money sets, edit rounds inline (with unsaved-change exit warnings), save changes directly back to your local `.json` file (**📁 Save to Local File** / **💾 Download .json** preserving original formatting), scan local folders or load custom files, and toggle `Used` / `Unused` status in `localStorage`.
 
 </details>
 
@@ -300,7 +300,10 @@ feud/
 ├── CONTRIBUTING.md                 # Guide for submitting question decks & code contributions
 ├── AGENT.md                        # AI/developer workflow, conventions & cache-busting guide
 ├── .github/
-│   ├── workflows/validate-pr.yml   # Automated CI validating JS syntax, deck schemas & cache versions
+│   ├── workflows/
+│   │   ├── validate-pr.yml         # Automated CI validating JS syntax, deck schemas & cache versions
+│   │   ├── bump-cache-version.yml  # Auto-bumps ?v=YYYYMMDD<suffix> on push to main
+│   │   └── update-deck-manifest.yml# Auto-updates decks/manifest.json on push to main
 │   ├── ISSUE_TEMPLATE/             # Issue forms for submitting question decks & bug reports
 │   └── pull_request_template.md    # Pull request checklist
 ├── css/
@@ -308,6 +311,7 @@ feud/
 ├── icons/
 │   └── icon.svg                    # Vector PWA & favicon app icon
 ├── scripts/
+│   ├── bump-cache-version.js       # Increments ?v=YYYYMMDD<suffix> across index.html, review.html & sw.js
 │   ├── generate-manifest.js        # Generates decks/manifest.json with metadata & category tags
 │   ├── validate-repo.js            # Validates deck JSON schemas, JS syntax & cache-busting sync
 │   ├── test-core.js                # Zero-dependency Node unit test suite for core game & deck logic

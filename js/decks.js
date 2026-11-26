@@ -216,6 +216,63 @@ window.Feud = window.Feud || {};
     return String(rawName).toLowerCase();
   }
 
+  function normalizeDeckIdKey(id) {
+    return String(id || "")
+      .trim()
+      .toLowerCase()
+      .replace(/^\.?\/?decks\//i, "")
+      .replace(/\.json$/i, "");
+  }
+
+  function slugifyDeckName(name) {
+    return String(name || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\.json$/i, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  function findCatalogDeckMatch(queryOrSlug) {
+    const clean = String(queryOrSlug || "").trim();
+    if (!clean) return null;
+    const catalog = getDeckCatalog();
+    const normKey = normalizeDeckIdKey(clean);
+    const slug = slugifyDeckName(clean);
+    return (
+      catalog.find((item) => {
+        if (!item || !item.id) return false;
+        if (item.id.toLowerCase() === clean.toLowerCase()) return true;
+        if (normalizeDeckIdKey(item.id) === normKey) return true;
+        if (item.file && item.file.toLowerCase() === clean.toLowerCase()) return true;
+        if (slug && slugifyDeckName(item.id) === slug) return true;
+        const dName = (item.data && item.data.deckName) || (item.meta && item.meta.deckName) || "";
+        return Boolean(dName && slug && slugifyDeckName(dName) === slug);
+      }) || null
+    );
+  }
+
+  function getDeckSignature(entry) {
+    if (!entry) return "";
+    const name = String(
+      (entry.data && entry.data.deckName) ||
+        (entry.meta && entry.meta.deckName) ||
+        ""
+    )
+      .trim()
+      .toLowerCase();
+    if (!name) return "";
+    const rounds =
+      (entry.data && Array.isArray(entry.data.rounds) && entry.data.rounds.length) ||
+      (entry.meta && Number(entry.meta.roundsCount)) ||
+      0;
+    const fm =
+      (entry.data && Array.isArray(entry.data.fastMoney) && entry.data.fastMoney.length) ||
+      (entry.meta && Number(entry.meta.fastMoneySets)) ||
+      0;
+    return `${name}|${rounds}|${fm}`;
+  }
+
   function upsertCatalogEntries(newEntries, options = {}) {
     const replaceSource = options && options.replaceSource ? options.replaceSource : null;
     const catalog = getDeckCatalog();
@@ -231,18 +288,35 @@ window.Feud = window.Feud || {};
 
     (newEntries || []).forEach((incoming) => {
       if (!incoming || !incoming.id || incoming.builtin === "starter") return;
-      const incomingIdLower = String(incoming.id).toLowerCase();
-      const existingIdx = catalog.findIndex(
-        (item) => item && item.id && String(item.id).toLowerCase() === incomingIdLower
+      const incomingIdKey = normalizeDeckIdKey(incoming.id);
+      const incomingSig = getDeckSignature(incoming);
+      const incomingNameSlug = slugifyDeckName(
+        (incoming.data && incoming.data.deckName) || (incoming.meta && incoming.meta.deckName) || ""
       );
+      const existingIdx = catalog.findIndex((item) => {
+        if (!item || !item.id || item.builtin === "starter") return false;
+        const itemKey = normalizeDeckIdKey(item.id);
+        if (itemKey === incomingIdKey) return true;
+        if (incoming.source === "remote" && (item.source === "local-folder" || item.source === "custom-file")) {
+          if (incomingNameSlug && itemKey === incomingNameSlug) return true;
+          if (incomingSig && getDeckSignature(item) === incomingSig) return true;
+        }
+        return false;
+      });
 
       if (existingIdx !== -1) {
         const cur = catalog[existingIdx];
         if (cur.builtin === "starter") return;
+        const shouldDropStaleData =
+          !incoming.data &&
+          incoming.source === "remote" &&
+          incoming.meta &&
+          cur.data &&
+          getDeckSignature(cur) !== incomingSig;
         catalog[existingIdx] = {
           ...cur,
           ...incoming,
-          data: incoming.data || cur.data || null,
+          data: incoming.data || (shouldDropStaleData ? null : cur.data) || null,
           file: incoming.file !== undefined ? incoming.file : cur.file || null
         };
       } else {
@@ -1020,6 +1094,155 @@ window.Feud = window.Feud || {};
     await discoverRemoteDecksOverHttp();
   }
 
+  function formatDeckJsonLikeOriginal(payload, originalText) {
+    let merged = { ...(payload || {}) };
+    let eol = "\n";
+    let trailingNewline = true;
+    let indent = "  ";
+    let compactAnswers = true;
+    let compactPresets = true;
+
+    if (typeof originalText === "string" && originalText.trim()) {
+      eol = /\r\n/.test(originalText) ? "\r\n" : "\n";
+      trailingNewline = /\r?\n$/.test(originalText);
+      const indentMatch = originalText.match(/^[ \t]+(?=")/m);
+      if (indentMatch && indentMatch[0]) {
+        indent = indentMatch[0];
+      }
+      compactAnswers = /\{\s*"text"\s*:[^\r\n]+\}/m.test(originalText);
+      compactPresets = /\[\s*"[^"\r\n]*"\s*,\s*"[^"\r\n]*"\s*\]/m.test(originalText);
+
+      try {
+        const origObj = JSON.parse(originalText.replace(/^\uFEFF/, ""));
+        if (origObj && typeof origObj === "object" && !Array.isArray(origObj)) {
+          const ordered = {};
+          Object.keys(origObj).forEach((k) => {
+            if (Object.prototype.hasOwnProperty.call(merged, k)) {
+              if (merged[k] !== undefined) ordered[k] = merged[k];
+            } else {
+              ordered[k] = origObj[k];
+            }
+          });
+          Object.keys(merged).forEach((k) => {
+            if (!Object.prototype.hasOwnProperty.call(ordered, k) && merged[k] !== undefined) {
+              ordered[k] = merged[k];
+            }
+          });
+          merged = ordered;
+        }
+      } catch (e) {}
+    }
+
+    let out = JSON.stringify(merged, null, indent);
+    if (compactPresets) {
+      out = out.replace(
+        /\[\n([ \t]+)"((?:\\.|[^"\\])*)",\n\1"((?:\\.|[^"\\])*)"\n[ \t]+\]/g,
+        '["$2", "$3"]'
+      );
+    }
+    if (compactAnswers) {
+      out = out.replace(
+        /\{\n([ \t]+)"text": ("(?:\\.|[^"\\])*"),\n\1"points": (-?\d+(?:\.\d+)?)\n[ \t]+\}/g,
+        '{ "text": $2, "points": $3 }'
+      );
+    }
+    if (eol === "\r\n") {
+      out = out.replace(/\n/g, "\r\n");
+    }
+    if (trailingNewline && !out.endsWith(eol)) {
+      out += eol;
+    }
+    return out;
+  }
+
+  async function saveDeckToLocalFile(deckId, payload) {
+    const cleanName = String(deckId || "")
+      .trim()
+      .replace(/^\.?\/?decks\//i, "");
+    const fallbackSlug = slugifyDeckName((payload && payload.deckName) || "party-feud-deck") || "party-feud-deck";
+    const fileName = /\.json$/i.test(cleanName) ? cleanName : `${cleanName || fallbackSlug}.json`;
+
+    // 1. If a scanned local folder handle exists and has write access, write directly back to that file
+    try {
+      const dirHandle = await loadDirectoryHandle();
+      if (dirHandle && typeof dirHandle.getFileHandle === "function") {
+        let targetDir = dirHandle;
+        try {
+          const sub = await dirHandle.getDirectoryHandle("decks");
+          if (sub) targetDir = sub;
+        } catch (e) {}
+
+        const perm =
+          typeof targetDir.queryPermission === "function"
+            ? await targetDir.queryPermission({ mode: "readwrite" })
+            : "prompt";
+        const granted =
+          perm === "granted" ||
+          (typeof targetDir.requestPermission === "function" &&
+            (await targetDir.requestPermission({ mode: "readwrite" })) === "granted");
+
+        if (granted) {
+          let fileHandle = null;
+          try {
+            fileHandle = await targetDir.getFileHandle(fileName, { create: false });
+          } catch (e) {}
+          if (fileHandle && typeof fileHandle.createWritable === "function") {
+            let origText = "";
+            try {
+              origText = await (await fileHandle.getFile()).text();
+            } catch (e) {}
+            const jsonText = formatDeckJsonLikeOriginal(payload, origText);
+            const writable = await fileHandle.createWritable();
+            await writable.write(jsonText);
+            await writable.close();
+            upsertCatalogEntries([
+              {
+                id: fileName,
+                label: formatFilenameFallbackLabel(fileName),
+                file: `./decks/${fileName}`,
+                source: "local-folder",
+                data: payload
+              }
+            ]);
+            await saveCacheAsync();
+            dispatchDecksUpdated();
+            return { ok: true, method: "local-folder", fileName };
+          }
+        }
+      }
+    } catch (err) {
+      if (err && err.name === "AbortError") return { ok: false, aborted: true };
+    }
+
+    // 2. Fallback: native Save File Picker (lets user overwrite any local .json file directly)
+    if (typeof window !== "undefined" && window.isSecureContext && typeof window.showSaveFilePicker === "function") {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: fileName,
+          types: [
+            {
+              description: "Party Feud Deck JSON",
+              accept: { "application/json": [".json"] }
+            }
+          ]
+        });
+        let origText = "";
+        try {
+          origText = await (await handle.getFile()).text();
+        } catch (e) {}
+        const jsonText = formatDeckJsonLikeOriginal(payload, origText);
+        const writable = await handle.createWritable();
+        await writable.write(jsonText);
+        await writable.close();
+        return { ok: true, method: "save-picker", fileName: handle.name || fileName };
+      } catch (err) {
+        if (err && err.name === "AbortError") return { ok: false, aborted: true };
+      }
+    }
+
+    return { ok: false, fallbackDownload: true, fileName };
+  }
+
   function resolveDeckCandidateUrls(rawUrlOrSlug) {
     const clean = String(rawUrlOrSlug || "").trim();
     if (!clean) return [];
@@ -1047,6 +1270,8 @@ window.Feud = window.Feud || {};
   Object.assign(Feud, {
     DECK_TAG_DEFINITIONS,
     getDeckCatalog,
+    slugifyDeckName,
+    findCatalogDeckMatch,
     isIgnoredDeckFileName,
     getDeckTags,
     formatFilenameFallbackLabel,
@@ -1064,6 +1289,8 @@ window.Feud = window.Feud || {};
     ingestCustomDeckFiles,
     parseDirectoryIndexHtml,
     discoverAvailableDecks,
+    formatDeckJsonLikeOriginal,
+    saveDeckToLocalFile,
     resolveDeckCandidateUrls
   });
 })(window.Feud);

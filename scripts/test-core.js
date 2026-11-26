@@ -411,6 +411,107 @@ async function runTest(name, fn) {
     assert.strictEqual(Feud.loadSavedBoardTheme(), "harvest");
   });
 
+  await runTest("11. Clinched Victory Detection & Remaining Possible Points", () => {
+    localStorage.clear();
+    const state = Feud.createDefaultRoomState("1234");
+    const slice = Feud.buildMatchSlice(state, { roundsPerMatch: 4, roundOrder: "sequential" });
+    state.matchRounds = slice.matchRounds; // 4 regular rounds (1x, 1x, 2x, 3x) + 1 tie-breaker
+
+    // After Round 3 (index 2), only Round 4 (index 3, 3x = 300 pts max) remains
+    state.roundIdx = 2;
+    state.team1Score = 250;
+    state.team2Score = 0;
+    assert.strictEqual(Feud.getRemainingPossiblePoints(state), 300);
+    assert.strictEqual(Feud.getClinchedWinnerInfo(state).clinched, false, "250 <= 300 max remaining, not clinched");
+
+    // Equal lead (300 vs 0, 300 left) -> opponent could still tie to force Sudden Death -> not clinched
+    state.team1Score = 300;
+    assert.strictEqual(Feud.getClinchedWinnerInfo(state).clinched, false, "Exact tie possibility means not clinched");
+
+    // Insurmountable lead (301 vs 0, 300 left) -> mathematically clinched!
+    state.team1Score = 301;
+    const clinched = Feud.getClinchedWinnerInfo(state);
+    assert.strictEqual(clinched.clinched, true);
+    assert.strictEqual(clinched.winnerTeam, 1);
+    assert.strictEqual(clinched.remainingRounds, 1);
+    assert.strictEqual(clinched.maxRemainingPoints, 300);
+  });
+
+  await runTest("12. Deck Slug Matching, Duplicate Reconciliation & Format-Preserving JSON", () => {
+    assert.strictEqual(Feud.slugifyDeckName("Desi Thanksgiving (37 Rounds)"), "desi-thanksgiving-37-rounds");
+
+    // Simulate a stale slug-named custom-file entry in catalog before manifest loads
+    Feud.upsertCatalogEntries(
+      [
+        {
+          id: "desi-thanksgiving-37-rounds.json",
+          source: "custom-file",
+          data: {
+            deckName: "Desi Thanksgiving (37 Rounds)",
+            rounds: [{ title: "R1", multiplier: 1, prompt: "Old?", answers: [{ text: "A", points: 100 }] }],
+            fastMoney: []
+          }
+        }
+      ],
+      { skipSave: true }
+    );
+
+    // Remote manifest entry with canonical id should reconcile/replace the stale duplicate
+    Feud.upsertCatalogEntries(
+      [
+        {
+          id: "desi-thanksgiving.json",
+          file: "./decks/desi-thanksgiving.json",
+          source: "remote",
+          meta: {
+            deckName: "Desi Thanksgiving (37 Rounds)",
+            roundsCount: 37,
+            fastMoneySets: 5
+          }
+        }
+      ],
+      { skipSave: true }
+    );
+
+    const catalog = Feud.getDeckCatalog();
+    const desiMatches = catalog.filter((c) => /Desi Thanksgiving/i.test((c.meta && c.meta.deckName) || (c.data && c.data.deckName) || ""));
+    assert.strictEqual(desiMatches.length, 1, "Duplicate slugified & canonical Desi Thanksgiving entries must reconcile to 1");
+    assert.strictEqual(desiMatches[0].id, "desi-thanksgiving.json");
+    assert.strictEqual(desiMatches[0].data, null, "Stale cached data should be dropped when remote metadata differs");
+
+    const bySlug = Feud.findCatalogDeckMatch("desi-thanksgiving-37-rounds");
+    const byId = Feud.findCatalogDeckMatch("desi-thanksgiving");
+    assert.ok(bySlug && byId && bySlug.id === byId.id, "Both slugified and canonical ?deck= params should resolve to the same entry");
+
+    // Verify formatDeckJsonLikeOriginal preserves 4-space CRLF & extra keys
+    const origCrlf = '{\r\n    "gameTitle": "Test",\r\n    "boardTheme": "harvest",\r\n    "rounds": [\r\n        {\r\n            "prompt": "Q?",\r\n            "answers": [\r\n                { "text": "Yes", "points": 100 }\r\n            ]\r\n        }\r\n    ]\r\n}\r\n';
+    const formatted = Feud.formatDeckJsonLikeOriginal(
+      {
+        gameTitle: "Test Updated",
+        rounds: [{ prompt: "Q2?", answers: [{ text: "No", points: 100 }] }]
+      },
+      origCrlf
+    );
+    assert.ok(formatted.includes("\r\n"), "Should preserve CRLF line endings");
+    assert.ok(formatted.includes('\n    "gameTitle": "Test Updated"'), "Should preserve 4-space indentation");
+    assert.ok(formatted.includes('"boardTheme": "harvest"'), "Should preserve extra top-level keys");
+    assert.ok(formatted.includes('{ "text": "No", "points": 100 }'), "Should preserve compact single-line answers");
+  });
+
+  await runTest("13. Cache-Bumper Suffix Progression (a..z, aa..az, ba..zz, aaa)", () => {
+    const bumper = require("./bump-cache-version.js");
+    assert.strictEqual(bumper.nextSuffix("a"), "b");
+    assert.strictEqual(bumper.nextSuffix("y"), "z");
+    assert.strictEqual(bumper.nextSuffix("z"), "aa");
+    assert.strictEqual(bumper.nextSuffix("aa"), "ab");
+    assert.strictEqual(bumper.nextSuffix("az"), "ba");
+    assert.strictEqual(bumper.nextSuffix("ba"), "bb");
+    assert.strictEqual(bumper.nextSuffix("zz"), "aaa");
+    assert.strictEqual(bumper.computeNextVersion("20261125z", "20261126"), "20261126a");
+    assert.strictEqual(bumper.computeNextVersion("20261126a", "20261126"), "20261126b");
+    assert.strictEqual(bumper.computeNextVersion("20261126z", "20261126"), "20261126aa");
+  });
+
   console.log(`\n=============================================================`);
   if (failed > 0) {
     console.error(`❌ Core Logic Test Suite Failed: ${failed} failed, ${passed} passed.`);
