@@ -900,6 +900,14 @@ window.Feud = window.Feud || {};
     renderTurnTimerUI(roomState);
     renderGuidedFlowUI(roomState);
     renderTvQrOverlay(roomState);
+    const unlockBadge = document.getElementById("tvAudioUnlockBadge");
+    if (unlockBadge) {
+      const needUnlock =
+        activeRole === "tv" &&
+        !(Feud.isAudioMuted && Feud.isAudioMuted()) &&
+        !(Feud.isAudioUnlocked && Feud.isAudioUnlocked());
+      unlockBadge.classList.toggle("hidden", !needUnlock);
+    }
     const totalRounds = Feud.getRoundCount(roomState);
     const round = Feud.getRoundData(roomState, roomState.roundIdx);
     const multText =

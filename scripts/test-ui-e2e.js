@@ -491,7 +491,7 @@ async function runStep(name, fn) {
       `
     });
 
-    await runStep("1. Lobby View Loads, Discovers Decks via manifest.json & Renders Category Tag Pills", async () => {
+    await runStep("1. Lobby View Loads & Discovers Decks via manifest.json", async () => {
       await cdp.navigate(`${baseUrl}/index.html`);
       await cdp.waitFor("window.Feud && document.getElementById('deckManagerSelect').options.length >= 7");
 
@@ -499,7 +499,6 @@ async function runStep(name, fn) {
         title: document.getElementById('topBrandTitle')?.textContent.trim(),
         lobbyVisible: !document.getElementById('lobbyView').classList.contains('hidden'),
         deckOptionCount: document.getElementById('deckManagerSelect').options.length,
-        tagPillCount: document.querySelectorAll('#deckTagPills .deck-tag-pill').length,
         starterFormat3Disabled: document.querySelector('#setupMatchFormatSelect option[value="3"]')?.disabled,
         starterFormat4Disabled: document.querySelector('#setupMatchFormatSelect option[value="4"]')?.disabled,
         tvModeHint: document.getElementById('tvModeSetupHint')?.textContent.trim() || ''
@@ -507,8 +506,8 @@ async function runStep(name, fn) {
 
       assert.strictEqual(lobbyState.title, "Party Feud");
       assert.strictEqual(lobbyState.lobbyVisible, true);
+      assert.strictEqual(await cdp.eval(`document.getElementById('deckTagPills') === null`), true, "Category tag filter pills should be removed");
       assert.ok(lobbyState.deckOptionCount >= 8, `Expected >= 8 decks (Starter + 7 JSON decks), got ${lobbyState.deckOptionCount}`);
-      assert.ok(lobbyState.tagPillCount >= 4, `Expected >= 4 category tag pills, got ${lobbyState.tagPillCount}`);
       assert.ok(lobbyState.tvModeHint.length > 10, "Setup screen should display TV & buzzer mode hint");
       // Starter deck has 5 regular rounds; with 4 rounds/game, 3-team (8 rounds) & 4-team (12 rounds) must be disabled!
       assert.strictEqual(lobbyState.starterFormat3Disabled, true, "3-Team format should be disabled on 5-round Starter deck at 4 rounds/game");
@@ -781,6 +780,9 @@ async function runStep(name, fn) {
       await cdp.waitFor("!document.getElementById('hostContextPopover').classList.contains('hidden')");
       const popoverTitle = await cdp.eval(`document.getElementById('hostPopoverTitle')?.textContent.trim()`);
       assert.ok(popoverTitle.length > 0, "Host contextual popover should render title");
+      await cdp.eval(`document.getElementById('hostShortcutsBtn').click()`);
+      const shortcutsTitle = await cdp.eval(`document.getElementById('hostPopoverTitle')?.textContent.trim()`);
+      assert.ok(/Shortcuts/i.test(shortcutsTitle), `Expected shortcuts popover title, got: ${shortcutsTitle}`);
       await cdp.eval(`window.closeHostPopover()`);
 
       await cdp.eval(`window.openQrModal()`);
@@ -1169,6 +1171,38 @@ async function runStep(name, fn) {
       await cdp.waitFor("/Shared Hash Review Deck/i.test(document.getElementById('reviewDocTitle')?.textContent || '')");
       const hashCardText = await cdp.eval(`document.getElementById('reviewContentRoot')?.textContent || ''`);
       assert.ok(hashCardText.includes("Name a noble gas."), "review.html should decode and render #deckData hash decks");
+
+      // Test inline card editing & Save to Local File button in review.html
+      const hasSaveLocalBtn = await cdp.eval(`Boolean(document.getElementById('btnSaveToLocalFile'))`);
+      assert.strictEqual(hasSaveLocalBtn, true, "review.html should render #btnSaveToLocalFile button");
+      await cdp.eval(`document.querySelector('[data-edit-round="0"]').click()`);
+      await cdp.waitFor("Boolean(document.querySelector('.q-card.is-editing[data-editing-round=\"0\"]'))");
+      await cdp.eval(`(() => {
+        const card = document.querySelector('.q-card.is-editing[data-editing-round="0"]');
+        const inp = card.querySelector('[data-inline-prompt]');
+        inp.value = 'Name a noble gas (Edited Inline).';
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+        card.querySelector('[data-inline-save]').click();
+      })()`);
+      await cdp.waitFor("!document.querySelector('.q-card.is-editing')");
+      const editedText = await cdp.eval(`document.getElementById('card-r-0')?.textContent || ''`);
+      assert.ok(editedText.includes("Name a noble gas (Edited Inline)."), "Inline edit save should update the card in place");
+
+      // Test Fast Money inline editing on Starter deck
+      await cdp.navigate(`${baseUrl}/review.html?deck=starter&answers=show`);
+      await cdp.waitFor("Boolean(document.querySelector('[data-edit-fm-set=\"0\"]'))");
+      await cdp.eval(`document.querySelector('[data-edit-fm-set="0"]').click()`);
+      await cdp.waitFor("Boolean(document.querySelector('.q-card.fm-card.is-editing[data-editing-fm-set=\"0\"]'))");
+      await cdp.eval(`(() => {
+        const card = document.querySelector('.q-card.fm-card.is-editing[data-editing-fm-set="0"]');
+        const inp = card.querySelector('[data-inline-fm-prompt]');
+        inp.value = 'Edited Fast Money Question?';
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+        card.querySelector('[data-inline-fm-save]').click();
+      })()`);
+      await cdp.waitFor("!document.querySelector('.q-card.fm-card.is-editing')");
+      const fmEditedText = await cdp.eval(`document.getElementById('card-fm-0')?.textContent || ''`);
+      assert.ok(fmEditedText.includes("Edited Fast Money Question?"), "Fast Money inline edit should update the card in place");
     });
 
     await runStep("14. URL Deep-Linking (?deck=&theme=, index.html#deckData=) & PWA Assets", async () => {
@@ -1181,6 +1215,12 @@ async function runStep(name, fn) {
       })`);
       assert.ok(/2026-frc-rules/i.test(frcState.selectedDeck), `Expected 2026-frc-rules selected, got: ${frcState.selectedDeck}`);
       assert.strictEqual(frcState.bodyTheme, "frc", "URL &theme=frc should apply frc visual theme");
+
+      // A2. Slugified ?deck=desi-thanksgiving-37-rounds resolves to canonical desi-thanksgiving.json
+      await cdp.navigate(`${baseUrl}/index.html?deck=desi-thanksgiving-37-rounds`);
+      await cdp.waitFor("/desi-thanksgiving\\.json/i.test(document.getElementById('deckManagerSelect')?.value || '')");
+      const desiSelected = await cdp.eval(`document.getElementById('deckManagerSelect')?.value || ''`);
+      assert.strictEqual(desiSelected, "desi-thanksgiving.json", "Slugified ?deck=desi-thanksgiving-37-rounds should resolve to desi-thanksgiving.json");
 
       // B. index.html#deckData=... compressed custom deck load
       const token = await cdp.eval(`(async () => {

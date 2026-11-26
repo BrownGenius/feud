@@ -65,8 +65,9 @@ This document summarizes the architecture, priorities, coding style, and develop
 1. **Local Testing:**
    - **Offline HDMI / Dual-Window:** Open `index.html` directly via `file://` (Host auto-opens TV window).
    - **Cross-Device / QR Testing:** Serve the repo over HTTP (e.g. `python -m http.server 5500 --bind 0.0.0.0` or VS Code Live Server) and open `http://<LAN-IP>:5500/` or deploy to GitHub Pages (`https://`).
-2. **Cache-Busting (Required on Every Edit):**
-   - Whenever modifying `css/styles.css` or any file in `js/` or `decks/`, increment the `?v=YYYYMMDDxx` query string on **both** `<link rel="stylesheet" href="./css/styles.css?v=..." />` and all `<script src="./...?v=...">` tags in `index.html`.
+2. **Cache-Busting (Automated on `main`):**
+   - Do **not** manually bump `?v=YYYYMMDDx` on feature branches (to avoid merge conflicts across `index.html`, `review.html`, and `sw.js`).
+   - `.github/workflows/bump-cache-version.yml` automatically runs `node scripts/bump-cache-version.js` on push to `main` (incrementing `a, b, ..., z, aa, ab, ...` per UTC date) and commits the updated version.
    - Remind users to hard-reload (`Ctrl + Shift + R`) when testing `file://` or cached tabs.
 3. **Documentation Sync:**
    - Keep `README.md` accurate whenever user-facing features, modes, or controls are added, changed, or temporarily disabled.
