@@ -111,7 +111,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 4. **Going Down the Line (`R` / `X`):** Press **`R`** to start each player's clock, tap matching answers (`1`–`8`) to flip them into the Round Pot, or press **`X`** for a wrong guess.
    * **Need clarification?** Tap **🔍 Be More Specific** for a gentle double-buzz and `+5s` on the clock.
    * **3 Strikes (`XXX`):** Automatically switches to the opposing team for a **30-second Steal**! If they hit an unrevealed answer, they steal the whole pot; if they miss, the original team keeps it.
-5. **Round Over, Winner Screen & Tournament Advancement:** Reveal any remaining unguessed answers (`0 pts`) to the crowd, then click **⏭️ Next Round** — or after the final round, click **🏆 Show Winner Screen** to celebrate and advance to the next match (**Winner Stays On**, **Rematch**, **Two New Teams**, or the next **Tournament Bracket** matchup).
+5. **Round Over, Clinched Victory & Tournament Advancement:** Reveal any remaining unguessed answers (`0 pts`) to the crowd, then click **⏭️ Next Round** — if one team leads by more points than remain in the match, subsequent rounds are skipped and the winner is declared immediately! After the final round (or clinched victory), click **🏆 Show Winner Screen** to celebrate and advance to the next match (**Winner Stays On**, **Rematch**, **Two New Teams**, or the next **Tournament Bracket** matchup).
 
 ---
 
@@ -228,7 +228,7 @@ stateDiagram-v2
     round_over --> round_over : "Reveal Remaining Answers (0 pts)"
     round_over --> faceoff_ready : "Next Round"
     faceoff_ready --> faceoff_ready : "Swap / Pick Round (While Hidden)"
-    round_over --> winner : "Final Round Complete -> Show Winner Screen"
+    round_over --> winner : "Final Round OR Clinched Victory -> Show Winner Screen"
 ```
 
 | Phase (`roundPhase`) | Answer Tiles | Primary Host Actions Allowed |

@@ -714,10 +714,10 @@ async function runStep(name, fn) {
       }
 
       const stealCheck = await cdp.eval(`({
-        strikesText: document.getElementById('tvStrikesBadge')?.textContent.trim(),
-        headline: document.getElementById('hostFlowHeadline')?.textContent.trim()
+        tvBanner: document.getElementById('tvBuzzerBanner')?.textContent.trim() || '',
+        headline: document.getElementById('hostFlowHeadline')?.textContent.trim() || ''
       })`);
-      assert.ok(stealCheck.strikesText.includes("3 / 3"), `Expected 3/3 strikes, got ${stealCheck.strikesText}`);
+      assert.ok(/CHANCE TO STEAL/i.test(stealCheck.tvBanner), `Expected CHANCE TO STEAL in TV banner, got ${stealCheck.tvBanner}`);
       assert.ok(/Steal/i.test(stealCheck.headline), `Expected Steal headline, got ${stealCheck.headline}`);
 
       // Step G: Red Rockets succeed on the Steal by hitting Answer #3 (15 pts -> Total Pot 79 awarded to Team 2!)
@@ -1050,10 +1050,10 @@ async function runStep(name, fn) {
         }
         await window.hostNextRound();
       })()`);
-      await cdp.waitFor("/Tie-Breaker/i.test(document.getElementById('tvRoundCounter')?.textContent || '')");
+      await cdp.waitFor("/Tie-Breaker/i.test(document.getElementById('tvMultBadge')?.textContent || '')");
 
       const tbCheck = await cdp.eval(`({
-        tvCounter: document.getElementById('tvRoundCounter')?.textContent.trim(),
+        tvCounter: document.getElementById('tvMultBadge')?.textContent.trim(),
         headline: document.getElementById('hostFlowHeadline')?.textContent.trim()
       })`);
       assert.ok(/Tie-Breaker|Sudden Death/i.test(tbCheck.tvCounter), `Expected Sudden-Death Tie-Breaker counter, got: ${tbCheck.tvCounter}`);
@@ -1068,11 +1068,11 @@ async function runStep(name, fn) {
       await sleep(150);
 
       const tbWin = await cdp.eval(`({
-        strikesBadge: document.getElementById('tvStrikesBadge')?.textContent.trim(),
+        tvBanner: document.getElementById('tvBuzzerBanner')?.textContent.trim() || '',
         t1Score: Number(document.getElementById('tvTeam1Score')?.textContent || 0),
         t2Score: Number(document.getElementById('tvTeam2Score')?.textContent || 0)
       })`);
-      assert.ok(/Round Complete/i.test(tbWin.strikesBadge), "Tie-Breaker #1 answer should complete the round");
+      assert.ok(/Wins the Round/i.test(tbWin.tvBanner), `Tie-Breaker #1 answer should complete the round, got: ${tbWin.tvBanner}`);
       assert.ok(tbWin.t2Score > tbWin.t1Score, "Team 2 hitting #1 answer in Tie-Breaker should take the lead to win");
     });
 
@@ -1260,12 +1260,12 @@ async function runStep(name, fn) {
         t1: document.getElementById('tvTeam1Score')?.textContent.trim(),
         t2: document.getElementById('tvTeam2Score')?.textContent.trim(),
         pot: document.getElementById('tvPotValue')?.textContent.trim(),
-        badge: document.getElementById('tvStrikesBadge')?.textContent.trim()
+        tvBanner: document.getElementById('tvBuzzerBanner')?.textContent.trim() || ''
       })`);
       assert.strictEqual(afterStealMiss.t1, "40", "Original playing team (Team 1) must keep the 40-pt pot when steal misses");
       assert.strictEqual(afterStealMiss.t2, "0");
       assert.strictEqual(afterStealMiss.pot, "0");
-      assert.ok(/Round Complete/i.test(afterStealMiss.badge));
+      assert.ok(/Wins the Round/i.test(afterStealMiss.tvBanner));
 
       // C. Post-Round 0-Pt Reveal: clicking remaining unrevealed answer in round-over must NOT add points
       await cdp.eval(`document.querySelectorAll('#hostAnswersList button')[1].click()`);
@@ -1330,7 +1330,43 @@ async function runStep(name, fn) {
       assert.strictEqual(resetScores.t2, "0", "Next match should reset Team 2 score to 0");
     });
 
-    await runStep("17. Zero Uncaught Page Exceptions or Console Errors", async () => {
+    await runStep("17. Clinched Victory Skips Subsequent Rounds & Declares Winner Immediately", async () => {
+      await cdp.eval(`(async () => {
+        await window.onSelectCatalogDeck('starter');
+        window.resetCurrentDeckHistory();
+        document.getElementById('setupTeam1Input').value = 'Clinch Champs';
+        document.getElementById('setupTeam2Input').value = 'Trailing Team';
+        await window.confirmStartNewGame('host');
+      })()`);
+      await cdp.waitFor("!document.getElementById('hostView').classList.contains('hidden')");
+
+      // Advance to Round 3 of 4 (max 300 pts left in Round 4), give Team 1 350 pts and award Round 3 pot
+      await cdp.eval(`(async () => {
+        await window.hostSelectRound(2);
+        await window.hostAdjustScore(1, 350);
+        await window.hostRevealQuestionAndStartTimer();
+        await window.hostSetFaceOffWinner(1);
+        document.querySelectorAll('#hostAnswersList button')[0].click();
+      })()`);
+      await sleep(100);
+      await cdp.eval(`(async () => {
+        await window.hostChoosePlayOrPass('play');
+        await window.hostAwardPot(1);
+      })()`);
+      await sleep(120);
+
+      const clinchUi = await cdp.eval(`({
+        headline: document.getElementById('hostFlowHeadline')?.textContent.trim() || '',
+        tvBanner: document.getElementById('tvBuzzerBanner')?.textContent.trim() || '',
+        actionsText: document.getElementById('hostFaceOffDecisionBar')?.textContent || ''
+      })`);
+      assert.ok(/Match Clinched/i.test(clinchUi.headline), `Expected Match Clinched headline, got: ${clinchUi.headline}`);
+      assert.ok(/MATCH WINNER: Clinch Champs/i.test(clinchUi.tvBanner), `TV banner should declare winner immediately, got: ${clinchUi.tvBanner}`);
+      assert.ok(!/Next Round/i.test(clinchUi.actionsText), "Next Round button must be skipped when match is clinched");
+      assert.ok(/Show Winner Screen/i.test(clinchUi.actionsText), "Show Winner Screen button must appear immediately when clinched");
+    });
+
+    await runStep("18. Zero Uncaught Page Exceptions or Console Errors", async () => {
       assert.strictEqual(
         cdp.pageErrors.length,
         0,

@@ -3138,7 +3138,10 @@ window.Feud = window.Feud || {};
         stealTeam === 1 ? (roomState.team1Score || 0) + newPot : roomState.team1Score || 0;
       const nextT2 =
         stealTeam === 2 ? (roomState.team2Score || 0) + newPot : roomState.team2Score || 0;
-      const matchWon = isFinalRegularRound && nextT1 !== nextT2;
+      const clinchedInfo = Feud.getClinchedWinnerInfo
+        ? Feud.getClinchedWinnerInfo({ ...roomState, team1Score: nextT1, team2Score: nextT2 })
+        : { clinched: false };
+      const matchWon = (isFinalRegularRound && nextT1 !== nextT2) || clinchedInfo.clinched;
       const matchTied = isFinalRegularRound && nextT1 === nextT2;
       setTimeout(() => Feud.playFanfare(), 400);
 
@@ -3158,7 +3161,13 @@ window.Feud = window.Feud || {};
         turnTimerRunning: false,
         fanfareSeq: nextFanfare
       });
-      if (matchWon) {
+      if (clinchedInfo.clinched) {
+        Feud.showToast(
+          `🚨 STEAL SUCCESSFUL! 🏆 MATCH CLINCHED: ${getTeamNameByNum(
+            clinchedInfo.winnerTeam
+          )} leads by ${clinchedInfo.lead} pts (only ${clinchedInfo.maxRemainingPoints} pts left) — Winner Declared!`
+        );
+      } else if (matchWon) {
         Feud.showToast(
           `🚨 STEAL SUCCESSFUL! 🏆 ${getTeamNameByNum(
             nextT1 > nextT2 ? 1 : 2
@@ -3191,7 +3200,10 @@ window.Feud = window.Feud || {};
         playTeam === 1 ? (roomState.team1Score || 0) + newPot : roomState.team1Score || 0;
       const nextT2 =
         playTeam === 2 ? (roomState.team2Score || 0) + newPot : roomState.team2Score || 0;
-      const matchWon = isFinalRegularRound && nextT1 !== nextT2;
+      const clinchedInfo = Feud.getClinchedWinnerInfo
+        ? Feud.getClinchedWinnerInfo({ ...roomState, team1Score: nextT1, team2Score: nextT2 })
+        : { clinched: false };
+      const matchWon = (isFinalRegularRound && nextT1 !== nextT2) || clinchedInfo.clinched;
       const matchTied = isFinalRegularRound && nextT1 === nextT2;
       setTimeout(() => Feud.playFanfare(), 400);
       await pushRoomPatch({
@@ -3211,7 +3223,13 @@ window.Feud = window.Feud || {};
         turnTimerRunning: false,
         fanfareSeq: nextFanfare
       });
-      if (matchWon) {
+      if (clinchedInfo.clinched) {
+        Feud.showToast(
+          `🧹 Board Swept! 🏆 MATCH CLINCHED: ${getTeamNameByNum(
+            clinchedInfo.winnerTeam
+          )} leads by ${clinchedInfo.lead} pts (only ${clinchedInfo.maxRemainingPoints} pts left) — Winner Declared!`
+        );
+      } else if (matchWon) {
         Feud.showToast(
           `🧹 Board Swept! 🏆 ${getTeamNameByNum(
             nextT1 > nextT2 ? 1 : 2
@@ -3412,7 +3430,11 @@ window.Feud = window.Feud || {};
         origTeam === 1 ? (roomState.team1Score || 0) + pot : roomState.team1Score || 0;
       const nextT2 =
         origTeam === 2 ? (roomState.team2Score || 0) + pot : roomState.team2Score || 0;
-      const matchWon = (isFinalRegularRound || isTieBreaker) && nextT1 !== nextT2;
+      const clinchedInfo = Feud.getClinchedWinnerInfo
+        ? Feud.getClinchedWinnerInfo({ ...roomState, team1Score: nextT1, team2Score: nextT2 })
+        : { clinched: false };
+      const matchWon =
+        ((isFinalRegularRound || isTieBreaker) && nextT1 !== nextT2) || clinchedInfo.clinched;
       const matchTied = isFinalRegularRound && nextT1 === nextT2;
 
       Feud.showBigRedXOverlay(1);
@@ -3433,7 +3455,13 @@ window.Feud = window.Feud || {};
         turnTimerRunning: false,
         turnTimerRemaining: dur
       });
-      if (matchWon) {
+      if (clinchedInfo.clinched) {
+        Feud.showToast(
+          `${prefix}❌ Steal Missed! 🏆 MATCH CLINCHED: ${getTeamNameByNum(
+            clinchedInfo.winnerTeam
+          )} leads by ${clinchedInfo.lead} pts (only ${clinchedInfo.maxRemainingPoints} pts left) — Winner Declared!`
+        );
+      } else if (matchWon) {
         Feud.showToast(
           `${prefix}❌ Steal Missed! 🏆 ${getTeamNameByNum(
             nextT1 > nextT2 ? 1 : 2
@@ -3613,6 +3641,14 @@ window.Feud = window.Feud || {};
   }
 
   async function hostNextRound() {
+    const clinchedInfo = Feud.getClinchedWinnerInfo
+      ? Feud.getClinchedWinnerInfo(roomState)
+      : { clinched: false };
+    if (clinchedInfo.clinched) {
+      await hostShowWinnerScreen();
+      return;
+    }
+
     const regCount = Feud.getRegularRoundCount(roomState);
     const total = Feud.getRoundCount(roomState);
     const next = roomState.roundIdx + 1;
@@ -3892,7 +3928,11 @@ window.Feud = window.Feud || {};
     const isFinalRegularRound = !isTieBreaker && roomState.roundIdx === regCount - 1;
     const nextT1 = team === 1 ? (roomState.team1Score || 0) + pot : roomState.team1Score || 0;
     const nextT2 = team === 2 ? (roomState.team2Score || 0) + pot : roomState.team2Score || 0;
-    const matchWon = (isFinalRegularRound || isTieBreaker) && nextT1 !== nextT2;
+    const clinchedInfo = Feud.getClinchedWinnerInfo
+      ? Feud.getClinchedWinnerInfo({ ...roomState, team1Score: nextT1, team2Score: nextT2 })
+      : { clinched: false };
+    const matchWon =
+      ((isFinalRegularRound || isTieBreaker) && nextT1 !== nextT2) || clinchedInfo.clinched;
     const matchTied = isFinalRegularRound && nextT1 === nextT2;
 
     Feud.playFanfare();
@@ -3911,7 +3951,13 @@ window.Feud = window.Feud || {};
       turnTimerRunning: false,
       fanfareSeq: nextFanfare
     });
-    if (matchWon) {
+    if (clinchedInfo.clinched) {
+      Feud.showToast(
+        `🏆 MATCH CLINCHED: ${getTeamNameByNum(
+          clinchedInfo.winnerTeam
+        )} leads by ${clinchedInfo.lead} pts (only ${clinchedInfo.maxRemainingPoints} pts left) — Winner Declared!`
+      );
+    } else if (matchWon) {
       Feud.showToast(
         `🏆 ${getTeamNameByNum(
           nextT1 > nextT2 ? 1 : 2
