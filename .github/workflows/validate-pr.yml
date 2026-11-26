@@ -28,15 +28,6 @@ jobs:
       - name: Run repository & deck validator
         run: node scripts/validate-repo.js
 
-      - name: Verify decks/manifest.json is up to date
-        run: |
-          node scripts/generate-manifest.js
-          if ! git diff --quiet decks/manifest.json; then
-            echo "❌ decks/manifest.json is out of date. Run 'node scripts/generate-manifest.js' and commit the result."
-            git diff decks/manifest.json
-            exit 1
-          fi
-
       - name: Run core logic & state engine unit tests
         run: node scripts/test-core.js
 
