@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   bump-cache-version:
@@ -37,15 +38,24 @@ jobs:
           node scripts/bump-cache-version.js
           node scripts/validate-repo.js
 
-      - name: Commit and push updated cache version
+      - name: Open PR with updated cache version
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if git diff --quiet index.html review.html sw.js; then
             echo "No cache version changes needed."
             exit 0
           fi
+          BRANCH="chore/bump-cache-version"
           NEW_VER=$(node -e "const s=require('fs').readFileSync('sw.js','utf8').match(/party-feud-(v[0-9a-z]+)/); console.log(s?s[1]:'');")
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
           git add index.html review.html sw.js
           git commit -m "chore(cache): bump cache version to ${NEW_VER} [skip ci]"
-          git push origin HEAD:main
+          git push -f origin "$BRANCH"
+          if ! gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number' | grep -q .; then
+            gh pr create --base main --head "$BRANCH" \
+              --title "chore(cache): bump cache version to ${NEW_VER}" \
+              --body "Automated cache-busting version bump to \`${NEW_VER}\` after changes on \`main\`."
+          fi
