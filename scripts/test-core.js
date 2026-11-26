@@ -411,6 +411,32 @@ async function runTest(name, fn) {
     assert.strictEqual(Feud.loadSavedBoardTheme(), "harvest");
   });
 
+  await runTest("11. Clinched Victory Detection & Remaining Possible Points", () => {
+    localStorage.clear();
+    const state = Feud.createDefaultRoomState("1234");
+    const slice = Feud.buildMatchSlice(state, { roundsPerMatch: 4, roundOrder: "sequential" });
+    state.matchRounds = slice.matchRounds; // 4 regular rounds (1x, 1x, 2x, 3x) + 1 tie-breaker
+
+    // After Round 3 (index 2), only Round 4 (index 3, 3x = 300 pts max) remains
+    state.roundIdx = 2;
+    state.team1Score = 250;
+    state.team2Score = 0;
+    assert.strictEqual(Feud.getRemainingPossiblePoints(state), 300);
+    assert.strictEqual(Feud.getClinchedWinnerInfo(state).clinched, false, "250 <= 300 max remaining, not clinched");
+
+    // Equal lead (300 vs 0, 300 left) -> opponent could still tie to force Sudden Death -> not clinched
+    state.team1Score = 300;
+    assert.strictEqual(Feud.getClinchedWinnerInfo(state).clinched, false, "Exact tie possibility means not clinched");
+
+    // Insurmountable lead (301 vs 0, 300 left) -> mathematically clinched!
+    state.team1Score = 301;
+    const clinched = Feud.getClinchedWinnerInfo(state);
+    assert.strictEqual(clinched.clinched, true);
+    assert.strictEqual(clinched.winnerTeam, 1);
+    assert.strictEqual(clinched.remainingRounds, 1);
+    assert.strictEqual(clinched.maxRemainingPoints, 300);
+  });
+
   console.log(`\n=============================================================`);
   if (failed > 0) {
     console.error(`❌ Core Logic Test Suite Failed: ${failed} failed, ${passed} passed.`);
