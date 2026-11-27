@@ -1109,6 +1109,8 @@ window.Feud = window.Feud || {};
     if (phase === "faceoff-buzz" && st.questionRevealed && !st.buzzerWinner) {
       return {
         buzzerWinner: teamNum,
+        buzzerWinnerAt: Date.now(),
+        buzzerRunnerUpDeltaMs: 0,
         buzzerArmedTeam: 0,
         controllingTeam: teamNum,
         faceoffFirstTeam: teamNum,
@@ -1124,10 +1126,37 @@ window.Feud = window.Feud || {};
 
   function handleIncomingBuzzOnHost(teamNum) {
     const st = getLocalStateCallback ? getLocalStateCallback() : null;
+    const now = Date.now();
     const patch = buildBuzzPatch(st, teamNum);
-    if (!patch) return;
+    if (!patch) {
+      // Record runner-up buzz delta so the losing phone can show exact lockout timing
+      if (
+        st &&
+        (teamNum === 1 || teamNum === 2) &&
+        st.buzzerWinner &&
+        st.buzzerWinner !== teamNum &&
+        st.buzzerWinnerAt &&
+        !st.buzzerRunnerUpDeltaMs &&
+        now - st.buzzerWinnerAt <= 4000
+      ) {
+        const deltaPatch = {
+          buzzerRunnerUpDeltaMs: Math.max(1, now - st.buzzerWinnerAt),
+          updatedAt: now
+        };
+        const updatedDelta = { ...st, ...deltaPatch };
+        Feud.saveRoomStateToStorage(currentCode, updatedDelta);
+        if (onRemoteStateCallback) onRemoteStateCallback(updatedDelta);
+        broadcastFromHostToPeers(updatedDelta);
+        if (firebaseReady && db && firestoreMod && currentRole !== "solo") {
+          firestoreMod
+            .updateDoc(getFirestoreRoomRef(currentCode), deltaPatch)
+            .catch(() => {});
+        }
+      }
+      return;
+    }
 
-    const updated = { ...st, ...patch, updatedAt: Date.now() };
+    const updated = { ...st, ...patch, updatedAt: now };
     Feud.saveRoomStateToStorage(currentCode, updated);
     if (onRemoteStateCallback) onRemoteStateCallback(updated);
     broadcastFromHostToPeers(updated);

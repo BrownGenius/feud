@@ -275,7 +275,23 @@ window.Feud = window.Feud || {};
         incoming.roundIdx !== roomState.roundIdx;
 
       const prevStage = roomState.stage;
+      const prevBuzzArmed =
+        (roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready")) === "faceoff-buzz" &&
+        Boolean(roomState.questionRevealed) &&
+        !roomState.buzzerWinner;
       roomState = { ...roomState, ...incoming };
+      const nowBuzzArmed =
+        (roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready")) === "faceoff-buzz" &&
+        Boolean(roomState.questionRevealed) &&
+        !roomState.buzzerWinner;
+      if (
+        !prevBuzzArmed &&
+        nowBuzzArmed &&
+        navigator.vibrate &&
+        (activeRole === "buzzer1" || activeRole === "buzzer2" || activeRole === "buzzer_combo")
+      ) {
+        navigator.vibrate(30);
+      }
 
       if (incoming.buzzerWinner && incoming.buzzerWinner !== lastBuzzerWinner) {
         if (activeRole === "tv" || activeRole === "host" || activeRole === "solo") {
@@ -288,6 +304,30 @@ window.Feud = window.Feud || {};
             const myTeam = activeRole === "buzzer1" ? 1 : 2;
             navigator.vibrate(incoming.buzzerWinner === myTeam ? [80, 40, 80] : 30);
           }
+        }
+        const flashBuzzerEl = (id, cls) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.classList.remove("buzz-win-flash", "buzz-lose-flash");
+          void el.offsetWidth;
+          el.classList.add(cls);
+          setTimeout(() => el.classList.remove(cls), 900);
+        };
+        if (activeRole === "buzzer1" || activeRole === "buzzer2") {
+          const myTeam = activeRole === "buzzer1" ? 1 : 2;
+          flashBuzzerEl(
+            "giantBuzzerBtn",
+            incoming.buzzerWinner === myTeam ? "buzz-win-flash" : "buzz-lose-flash"
+          );
+        } else if (activeRole === "buzzer_combo") {
+          flashBuzzerEl(
+            "comboBtnTeam1",
+            incoming.buzzerWinner === 1 ? "buzz-win-flash" : "buzz-lose-flash"
+          );
+          flashBuzzerEl(
+            "comboBtnTeam2",
+            incoming.buzzerWinner === 2 ? "buzz-win-flash" : "buzz-lose-flash"
+          );
         }
         if (activeRole === "host" && incoming.turnTimerRunning) {
           startLocalTurnTimerLoop();
@@ -2749,6 +2789,26 @@ window.Feud = window.Feud || {};
     );
   }
 
+  async function hostReArmBuzzers() {
+    Feud.unlockAudio();
+    pushUndoSnapshot();
+    stopLocalTurnTimerInterval();
+    const dur = Number(roomState.turnTimerDuration) || 10;
+    await pushRoomPatch({
+      roundPhase: "faceoff-buzz",
+      questionRevealed: true,
+      buzzerWinner: 0,
+      buzzerWinnerAt: 0,
+      buzzerRunnerUpDeltaMs: 0,
+      buzzerArmedTeam: 0,
+      controllingTeam: 0,
+      faceoffFirstTeam: 0,
+      turnTimerRemaining: dur,
+      turnTimerRunning: false
+    });
+    Feud.showToast("🔔 Buzzers cleared & re-armed!");
+  }
+
   async function hostSetFaceOffWinner(teamNum) {
     Feud.unlockAudio();
     pushUndoSnapshot();
@@ -4966,6 +5026,7 @@ window.Feud = window.Feud || {};
     hostStopResetTurnTimer,
     hostSetTurnTimerDuration,
     hostToggleAutoStartTimerOnStrike,
+    hostReArmBuzzers,
     hostSetFaceOffWinner,
     hostSetControllingTeam,
     hostToggleAnswer,
