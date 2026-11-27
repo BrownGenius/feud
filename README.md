@@ -289,6 +289,18 @@ A Party Feud Deck JSON file configures `gameTitle`, `gameIcon`, `deckName`, `tea
 </details>
 
 <details>
+<summary><strong>🐛 In-App Bug Reporting, Auto-Grouping &amp; No-Login Voting</strong></summary>
+
+Party Feud includes a zero-login bug reporter (`js/feedback.js`) accessible from the Lobby footer and Host **`⋯`** menu:
+
+* **Sanitized Auto-Diagnostics:** Automatically captures build version, active `role` / `stage` / `roundPhase`, URL params, `sync` status, viewport, and the last `10` runtime `error` / `unhandledrejection` events — while stripping Host PINs, custom team names, and custom deck payloads.
+* **Client-Side Auto-Grouping & Voting:** Fetches open GitHub issues (`30s` `sessionStorage` cache + manual **`🔄 Refresh`** button), surfaces matching open issues as the user types to prevent duplicates, and ranks top issues by combined native 👍 + `<!-- feud-votes:N -->` counts.
+* **Cloudflare Worker Proxy (`scripts/cloudflare-bug-worker.js`):** Handles `POST /report` and `POST /vote` using a fine-grained GitHub PAT (`Issues: Read and write`) stored as a Cloudflare Secret (`GITHUB_TOKEN`) so hosts without a GitHub account can submit bugs and upvote issues directly from the app. Includes `mailto:` and **Copy Diagnostics** fallbacks when offline.
+* **GitHub Actions Auto-Triage (`.github/workflows/triage-issues.yml`):** Automatically applies `role:*`, `sync/relay`, `offline/file`, and `enhancement` labels on newly opened issues and comments with links to similar open issues.
+
+</details>
+
+<details>
 <summary><strong>📁 Repository Structure</strong></summary>
 
 ```text
@@ -303,7 +315,8 @@ feud/
 │   ├── workflows/
 │   │   ├── validate-pr.yml         # Automated CI validating JS syntax, deck schemas & cache versions
 │   │   ├── bump-cache-version.yml  # Auto-bumps ?v=YYYYMMDD<suffix> on push to main
-│   │   └── update-deck-manifest.yml# Auto-updates decks/manifest.json on push to main
+│   │   ├── update-deck-manifest.yml# Auto-updates decks/manifest.json on push to main
+│   │   └── triage-issues.yml       # Auto-labels & links similar open issues on creation
 │   ├── ISSUE_TEMPLATE/             # Issue forms for submitting question decks & bug reports
 │   └── pull_request_template.md    # Pull request checklist
 ├── css/
@@ -315,13 +328,15 @@ feud/
 │   ├── generate-manifest.js        # Generates decks/manifest.json with metadata & category tags
 │   ├── validate-repo.js            # Validates deck JSON schemas, JS syntax & cache-busting sync
 │   ├── test-core.js                # Zero-dependency Node unit test suite for core game & deck logic
-│   └── test-ui-e2e.js              # Headless browser E2E UI & multi-tab gameplay smoke test suite
+│   ├── test-ui-e2e.js              # Headless browser E2E UI & multi-tab gameplay smoke test suite
+│   └── cloudflare-bug-worker.js    # Cloudflare Worker proxy for no-login bug reports & votes
 ├── docs/
 │   └── screenshots/                # Gameplay demo GIF & screenshots embedded in README.md
 ├── js/
 │   ├── app.js                      # Controller, demo/tournament/AI builder & modal handlers
 │   ├── state.js                    # Built-in Starter deck, state management, tournament & localStorage
 │   ├── sync.js                     # Trystero WebRTC P2P + MQTT-WSS + BroadcastChannel + Firebase sync
+│   ├── feedback.js                 # Sanitized diagnostics, duplicate grouping & Worker/GitHub issue client
 │   ├── formats.js                  # Universal Party Feud & Friendly-Feud JSON parser/exporter
 │   ├── decks.js                    # Manifest loader, tag filter, #deckData URL codec & folder scanner
 │   ├── views.js                    # DOM renderers for TV Display, Host Remote, Bracket & Buzzers

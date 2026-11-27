@@ -30,6 +30,7 @@ const jsFiles = [
   "js/formats.js",
   "js/decks.js",
   "js/sync.js",
+  "js/feedback.js",
   "js/views.js",
   "js/ai-builder.js",
   "js/app.js",

@@ -1370,7 +1370,61 @@ async function runStep(name, fn) {
       assert.strictEqual(resetScores.t2, "0", "Next match should reset Team 2 score to 0");
     });
 
-    await runStep("17. Clinched Victory Skips Subsequent Rounds & Declares Winner Immediately", async () => {
+    await runStep("17. In-App Bug Report Modal, Diagnostics Capture, Auto-Grouping & Voting", async () => {
+      await cdp.navigate(`${baseUrl}/index.html`);
+      await cdp.waitFor("window.Feud && document.getElementById('btnOpenBugReportFooter')");
+
+      // Seed cached open issues so auto-grouping & Top Issues render deterministically without hitting live GitHub
+      await cdp.eval(`(() => {
+        sessionStorage.setItem('party_feud_open_issues_cache_v1', JSON.stringify({
+          ts: Date.now(),
+          items: [
+            {
+              number: 101,
+              title: 'Phone buzzer fails to reconnect after Wi-Fi switch',
+              body: 'Happens on iOS Safari\\n<!-- feud-votes:5 -->',
+              html_url: 'https://github.com/BrownGenius/feud/issues/101',
+              labels: [{ name: 'role:buzzer' }],
+              reactions: { '+1': 2 }
+            },
+            {
+              number: 102,
+              title: 'Support custom sound packs',
+              body: 'Feature idea',
+              html_url: 'https://github.com/BrownGenius/feud/issues/102',
+              labels: [{ name: 'enhancement' }],
+              reactions: { '+1': 1 }
+            }
+          ]
+        }));
+      })()`);
+
+      await cdp.eval(`document.getElementById('btnOpenBugReportFooter').click()`);
+      await cdp.waitFor("!document.getElementById('bugReportModal').classList.contains('hidden')");
+
+      const diagText = await cdp.eval(`document.getElementById('bugDiagnosticsPreview')?.textContent || ''`);
+      assert.ok(diagText.includes("Diagnostics (Auto-Captured)"), "Diagnostics preview should populate automatically");
+      assert.ok(/v\d{8}[a-z]+/.test(diagText), "Diagnostics should include current build version");
+
+      // Type a matching summary and verify auto-grouping surfaces #101 in Similar Open Issues
+      await cdp.eval(`(() => {
+        document.getElementById('bugTitleInput').value = 'Phone buzzer reconnect problem';
+        window.onBugReportInputChange();
+      })()`);
+
+      const bugModalState = await cdp.eval(`({
+        similarVisible: !document.getElementById('bugSimilarIssuesBox').classList.contains('hidden'),
+        similarText: document.getElementById('bugSimilarIssuesList')?.textContent || '',
+        topText: document.getElementById('bugTopIssuesList')?.textContent || ''
+      })`);
+      assert.strictEqual(bugModalState.similarVisible, true, "Similar Open Issues box should appear when title matches");
+      assert.ok(bugModalState.similarText.includes("#101"), "Auto-grouping should suggest #101");
+      assert.ok(bugModalState.topText.includes("👍 7"), "Top issues list should sum native + worker votes (2 + 5 = 7)");
+
+      await cdp.eval(`window.closeBugReportModal()`);
+    });
+
+    await runStep("18. Clinched Victory Skips Subsequent Rounds & Declares Winner Immediately", async () => {
       await cdp.eval(`(async () => {
         await window.onSelectCatalogDeck('starter');
         window.resetCurrentDeckHistory();
@@ -1406,7 +1460,7 @@ async function runStep(name, fn) {
       assert.ok(/Show Winner Screen/i.test(clinchUi.actionsText), "Show Winner Screen button must appear immediately when clinched");
     });
 
-    await runStep("18. Zero Uncaught Page Exceptions or Console Errors", async () => {
+    await runStep("19. Zero Uncaught Page Exceptions or Console Errors", async () => {
       assert.strictEqual(
         cdp.pageErrors.length,
         0,
