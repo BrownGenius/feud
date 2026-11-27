@@ -939,6 +939,8 @@ window.Feud.ROOM_WORDS = window.Feud.DEFAULT_DECK.roomWords;
       buzzerWinner: 0,
       buzzerWinnerAt: 0,
       buzzerRunnerUpDeltaMs: 0,
+      buzzerTokens: { t1: "T1A", t2: "T2A" },
+      buzzerStatus: { b1: false, b2: false, combo: false },
       showTvWelcome: false,
       tvWelcomeInfo: null,
       tvQrOverlay: null,

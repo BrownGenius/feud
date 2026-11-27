@@ -4520,6 +4520,31 @@ body[data-theme="rose"] .tile-num-badge {
   color: #cbd5e1;
 }
 
+.tv-team-name-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.tv-buzzer-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tv-buzzer-dot.is-online {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
+}
+
+.tv-buzzer-dot.is-offline {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.7);
+}
+
 .ai-builder-textarea {
   width: 100%;
   min-height: 150px;

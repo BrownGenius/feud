@@ -12,6 +12,7 @@ window.Feud = window.Feud || {};
 (function (Feud) {
   let activeRole = "lobby"; // 'lobby' | 'host' | 'tv' | 'buzzer1' | 'buzzer2' | 'solo'
   let currentRoomCode = "";
+  let localBuzzerToken = "";
   let roomState = Feud.createDefaultRoomState("1234");
 
   let lastStrikeSeq = 0;
@@ -280,6 +281,17 @@ window.Feud = window.Feud || {};
         Boolean(roomState.questionRevealed) &&
         !roomState.buzzerWinner;
       roomState = { ...roomState, ...incoming };
+      if (activeRole === "buzzer1" || activeRole === "buzzer2") {
+        const tKey = activeRole === "buzzer1" ? "t1" : "t2";
+        const expectedTok = incoming.buzzerTokens && incoming.buzzerTokens[tKey];
+        if (localBuzzerToken && expectedTok && expectedTok !== localBuzzerToken) {
+          roomState._localBuzzerStale = true;
+          renderActiveView();
+          if (Feud.cleanupSync) Feud.cleanupSync();
+          Feud.showToast("🏁 Match Over — New teams are playing!");
+          return;
+        }
+      }
       const nowBuzzArmed =
         (roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready")) === "faceoff-buzz" &&
         Boolean(roomState.questionRevealed) &&
@@ -1162,6 +1174,8 @@ window.Feud = window.Feud || {};
       pot: 0,
       strikes: 0,
       buzzerWinner: 0,
+      buzzerTokens: { t1: Feud.generateRoomCode(), t2: Feud.generateRoomCode() },
+      buzzerStatus: { b1: false, b2: false, combo: false },
       showTvWelcome: mode === "host" && !isFileProtocol(),
       tvWelcomeInfo: null,
       fmClock: 20,
@@ -1387,9 +1401,6 @@ window.Feud = window.Feud || {};
 
     roomState = { ...roomState, ...conn.state };
     currentRoomCode = code;
-    if (roomState.showTvWelcome) {
-      roomState.tvWelcomeInfo = buildTvWelcomeInfo("individual", null, code);
-    }
     syncSequenceCounters(roomState);
     // An auto-launched TV window shares localStorage with the Host window — don't overwrite the Host's saved session/PIN
     if (!autoLaunched) Feud.saveLastSession("tv", code);
@@ -1476,11 +1487,20 @@ window.Feud = window.Feud || {};
     });
     if (!conn || conn.handedOffToPopup) return;
 
-    roomState = { ...roomState, ...conn.state };
-    currentRoomCode = code;
-    if (roomState.showTvWelcome) {
-      roomState.tvWelcomeInfo = buildTvWelcomeInfo("individual", null, code);
+    const urlBt = (new URLSearchParams(window.location.search).get("bt") || "").trim();
+    const tKey = teamNum === 1 ? "t1" : "t2";
+    const expectedTok = (conn.state && conn.state.buzzerTokens && conn.state.buzzerTokens[tKey]) || "";
+    if (urlBt && expectedTok && urlBt !== expectedTok) {
+      roomState = { ...roomState, ...conn.state, _localBuzzerStale: true };
+      currentRoomCode = code;
+      enterRole(role, code);
+      if (Feud.cleanupSync) Feud.cleanupSync();
+      Feud.showToast("🏁 This QR code expired — scan the new team's QR!");
+      return;
     }
+    localBuzzerToken = urlBt || expectedTok;
+    roomState = { ...roomState, ...conn.state, _localBuzzerStale: false };
+    currentRoomCode = code;
     syncSequenceCounters(roomState);
     Feud.saveLastSession(role, code);
     enterRole(role, code);
@@ -1511,9 +1531,6 @@ window.Feud = window.Feud || {};
 
     roomState = { ...roomState, ...conn.state };
     currentRoomCode = code;
-    if (roomState.showTvWelcome) {
-      roomState.tvWelcomeInfo = buildTvWelcomeInfo("individual", null, code);
-    }
     syncSequenceCounters(roomState);
     Feud.saveLastSession(role, code);
     enterRole(role, code);
@@ -1983,6 +2000,23 @@ window.Feud = window.Feud || {};
       nextTournament = Feud.createTournamentBracket(nextTournament.teams);
     }
 
+    const oldTokens = (roomState && roomState.buzzerTokens) || { t1: "T1A", t2: "T2A" };
+    const t1Changed = String(t1).trim().toLowerCase() !== String(roomState.team1Name || "").trim().toLowerCase();
+    const t2Changed = String(t2).trim().toLowerCase() !== String(roomState.team2Name || "").trim().toLowerCase();
+    const nextTokens = {
+      t1: t1Changed ? Feud.generateRoomCode() : oldTokens.t1,
+      t2: t2Changed ? Feud.generateRoomCode() : oldTokens.t2
+    };
+    const curBz = Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {};
+    const nextBz = {
+      b1: t1Changed ? false : Boolean(curBz.b1),
+      b2: t2Changed ? false : Boolean(curBz.b2),
+      combo: Boolean(curBz.combo)
+    };
+    roomState.buzzerTokens = nextTokens;
+    const qrSupported =
+      activeRole === "host" && !isFileProtocol() && currentRoomCode !== "SOLO" && currentRoomCode !== "DEMO";
+
     closeNextMatchModal();
     await pushRoomPatch({
       stage: "main",
@@ -2009,11 +2043,10 @@ window.Feud = window.Feud || {};
       pot: 0,
       strikes: 0,
       buzzerWinner: 0,
-      showTvWelcome: activeRole === "host" && !isFileProtocol() && currentRoomCode !== "SOLO" && currentRoomCode !== "DEMO",
-      tvWelcomeInfo:
-        activeRole === "host" && !isFileProtocol() && currentRoomCode !== "SOLO" && currentRoomCode !== "DEMO"
-          ? buildTvWelcomeInfo(null, null, currentRoomCode)
-          : null,
+      buzzerTokens: nextTokens,
+      buzzerStatus: nextBz,
+      showTvWelcome: qrSupported,
+      tvWelcomeInfo: qrSupported ? buildTvWelcomeInfo(null, nextBz, currentRoomCode) : null,
       team1Name: t1,
       team2Name: t2,
       team1Score: 0,
@@ -2254,7 +2287,14 @@ window.Feud = window.Feud || {};
   function buildQrJoinUrl(role) {
     const code = currentRoomCode || "SOLO";
     const baseUrl = getQrBaseUrl();
-    return `${baseUrl}?room=${encodeURIComponent(code)}&role=${encodeURIComponent(role)}`;
+    const tokens = (roomState && roomState.buzzerTokens) || {};
+    let url = `${baseUrl}?room=${encodeURIComponent(code)}&role=${encodeURIComponent(role)}`;
+    if (role === "buzzer1" && tokens.t1) {
+      url += `&bt=${encodeURIComponent(tokens.t1)}`;
+    } else if (role === "buzzer2" && tokens.t2) {
+      url += `&bt=${encodeURIComponent(tokens.t2)}`;
+    }
+    return url;
   }
 
   async function copyQrJoinUrl(role = "tv") {
@@ -2429,16 +2469,38 @@ window.Feud = window.Feud || {};
   }
 
   function syncTvWelcomeWithBuzzers(bz) {
-    if (activeRole !== "host" || !roomState || !roomState.showTvWelcome) return;
-    const nextInfo = buildTvWelcomeInfo(null, bz, currentRoomCode);
-    const prev = roomState.tvWelcomeInfo || {};
-    if (
-      prev.b1Connected !== nextInfo.b1Connected ||
-      prev.b2Connected !== nextInfo.b2Connected ||
-      prev.comboConnected !== nextInfo.comboConnected ||
-      prev.qrMode !== nextInfo.qrMode
-    ) {
-      pushRoomPatch({ tvWelcomeInfo: nextInfo });
+    if (activeRole !== "host" || !roomState) return;
+    const info = bz || (Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {});
+    const prevStatus = roomState.buzzerStatus || {};
+    const nextStatus = {
+      b1: Boolean(info.b1),
+      b2: Boolean(info.b2),
+      combo: Boolean(info.combo)
+    };
+    const statusChanged =
+      Boolean(prevStatus.b1) !== nextStatus.b1 ||
+      Boolean(prevStatus.b2) !== nextStatus.b2 ||
+      Boolean(prevStatus.combo) !== nextStatus.combo;
+
+    const patch = {};
+    if (statusChanged) patch.buzzerStatus = nextStatus;
+
+    if (roomState.showTvWelcome) {
+      const nextInfo = buildTvWelcomeInfo(null, nextStatus, currentRoomCode);
+      const prev = roomState.tvWelcomeInfo || {};
+      if (
+        prev.b1Connected !== nextInfo.b1Connected ||
+        prev.b2Connected !== nextInfo.b2Connected ||
+        prev.comboConnected !== nextInfo.comboConnected ||
+        prev.qrMode !== nextInfo.qrMode ||
+        prev.url1 !== nextInfo.url1 ||
+        prev.url2 !== nextInfo.url2
+      ) {
+        patch.tvWelcomeInfo = nextInfo;
+      }
+    }
+    if (Object.keys(patch).length > 0) {
+      pushRoomPatch(patch);
     }
   }
 

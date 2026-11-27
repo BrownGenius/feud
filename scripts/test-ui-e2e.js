@@ -1039,6 +1039,14 @@ async function runStep(name, fn) {
         assert.strictEqual(partialQr.t2QrVisible, true, "Team 2 QR code should remain visible while waiting for Team 2");
         assert.strictEqual(partialQr.overlayStillOpen, true, "TV QR overlay should remain open until both buzzers connect");
 
+        // Verify TV HUD buzzer dots reflect Team 1 online (green) and Team 2 offline (red)
+        const hudDotsPartial = await cdp.eval(`({
+          t1Online: document.getElementById('tvT1BuzzerDot')?.classList.contains('is-online'),
+          t2Offline: document.getElementById('tvT2BuzzerDot')?.classList.contains('is-offline')
+        })`);
+        assert.strictEqual(hudDotsPartial.t1Online, true, "TV HUD Team 1 buzzer dot should be green when connected");
+        assert.strictEqual(hudDotsPartial.t2Offline, true, "TV HUD Team 2 buzzer dot should be red when disconnected");
+
         // Now connect Team 2 -> TV QR overlay must auto-hide completely!
         b2Conn = await openTab(`${baseUrl}/index.html?room=${roomCode}&role=buzzer2`);
         await b2Conn.tabCdp.waitFor("!document.getElementById('buzzerView').classList.contains('hidden')");
@@ -1157,9 +1165,48 @@ async function runStep(name, fn) {
         // Team 1 presses Combo Buzzer -> Host & TV lock Blue Blazers!
         await comboConn.tabCdp.eval(`window.pressComboBuzzer(1)`);
         await cdp.waitFor("/Blue Blazers/i.test(document.getElementById('hostFlowHeadline')?.textContent || '')");
+
+        // Next Match with Combo Buzzer connected: Welcome Screen returns, Combo stays connected & updates team names!
+        await cdp.eval(`(async () => {
+          window.openNextMatchModal();
+          document.getElementById('nextMatchTeam1Input').value = 'Blue Blazers';
+          document.getElementById('nextMatchTeam2Input').value = 'Green Giants';
+          await window.confirmStartNextMatch();
+        })()`);
+        await cdp.waitFor("!document.getElementById('tvWelcomeWrap').classList.contains('hidden')");
+        await comboConn.tabCdp.waitFor("/GREEN GIANTS/i.test(document.getElementById('comboTitleT2')?.textContent || '')");
+        const nextMatchCombo = await cdp.eval(`({
+          comboActive: !document.getElementById('tvWelcomeQrConnectedCombo').classList.contains('hidden'),
+          t2Name: document.getElementById('tvWelcomeT2Name')?.textContent.trim(),
+          qr2Src: document.getElementById('tvWelcomeQrImgT2')?.getAttribute('src') || ''
+        })`);
+        assert.strictEqual(nextMatchCombo.comboActive, true, "Combo Buzzer should remain active across Next Match");
+        assert.strictEqual(nextMatchCombo.t2Name, "GREEN GIANTS");
+        assert.ok(nextMatchCombo.qr2Src.includes("bt%3D") || nextMatchCombo.qr2Src.includes("bt="), "Team 2 QR should include per-team token");
+        await cdp.eval(`window.hostRevealQuestionAndStartTimer()`);
+        await cdp.waitFor("document.getElementById('tvWelcomeWrap').classList.contains('hidden')");
+
         assert.strictEqual(comboConn.tabCdp.pageErrors.length, 0);
       } finally {
         await comboConn.close();
+      }
+
+      // Clear disconnected Combo presence, then verify stale per-team QR token (?bt=OLD9) is locked out with Match Over message
+      await cdp.eval(`localStorage.removeItem('party_feud_active_buzzers_' + '${roomCode}')`);
+      await cdp.waitFor("/Buzzers: 0\\/2/.test(document.getElementById('hostBuzzerStatusPill')?.textContent || '')");
+      const staleConn = await openTab(`${baseUrl}/index.html?room=${roomCode}&role=buzzer2&bt=OLD9`);
+      try {
+        await staleConn.tabCdp.waitFor("!document.getElementById('buzzerView').classList.contains('hidden')");
+        const staleState = await staleConn.tabCdp.eval(`({
+          disabled: document.getElementById('giantBuzzerBtn')?.disabled,
+          title: document.getElementById('giantBuzzText')?.textContent.trim(),
+          sub: document.getElementById('giantBuzzSub')?.textContent.trim()
+        })`);
+        assert.strictEqual(staleState.disabled, true, "Stale team QR token must lock out buzzer");
+        assert.ok(/Match Over/i.test(staleState.title), `Expected Match Over title, got: ${staleState.title}`);
+        assert.ok(/scan new QR/i.test(staleState.sub), `Expected scan new QR subtitle, got: ${staleState.sub}`);
+      } finally {
+        await staleConn.close();
       }
     });
 

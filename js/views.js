@@ -1016,6 +1016,33 @@ window.Feud = window.Feud || {};
     document.getElementById("tvTeam2Name").textContent = roomState.team2Name;
     document.getElementById("tvTeam2Score").textContent = String(roomState.team2Score || 0);
 
+    const t1Dot = document.getElementById("tvT1BuzzerDot");
+    const t2Dot = document.getElementById("tvT2BuzzerDot");
+    const showDots = Boolean(
+      typeof window !== "undefined" &&
+        window.location &&
+        window.location.protocol !== "file:" &&
+        !roomState.isDemoMode
+    );
+    const bzLive =
+      activeRole === "host" && Feud.getConnectedBuzzerTeams
+        ? Feud.getConnectedBuzzerTeams()
+        : roomState.buzzerStatus || {};
+    const t1DotOn = Boolean(bzLive.b1 || bzLive.combo);
+    const t2DotOn = Boolean(bzLive.b2 || bzLive.combo);
+    if (t1Dot) {
+      t1Dot.classList.toggle("hidden", !showDots);
+      t1Dot.classList.toggle("is-online", showDots && t1DotOn);
+      t1Dot.classList.toggle("is-offline", showDots && !t1DotOn);
+      t1Dot.title = t1DotOn ? "Team 1 Buzzer Connected" : "Team 1 Buzzer Disconnected";
+    }
+    if (t2Dot) {
+      t2Dot.classList.toggle("hidden", !showDots);
+      t2Dot.classList.toggle("is-online", showDots && t2DotOn);
+      t2Dot.classList.toggle("is-offline", showDots && !t2DotOn);
+      t2Dot.title = t2DotOn ? "Team 2 Buzzer Connected" : "Team 2 Buzzer Disconnected";
+    }
+
     const activeWinnerTeam =
       phase === "round-over"
         ? roomState.roundWinnerTeam || roomState.controllingTeam || 0
@@ -1715,6 +1742,15 @@ window.Feud = window.Feud || {};
       isFaceOffUnderway && (timerRunning || timerExpired || (rawRem > 0 && rawRem < dur));
 
     icon.classList.remove("is-big-timer", "is-urgent");
+    if (roomState._localBuzzerStale) {
+      btn.disabled = true;
+      btn.classList.add("locked-out-state");
+      icon.textContent = "🏁";
+      text.textContent = "Match Over";
+      sub.textContent = "New teams playing — scan new QR to rejoin";
+      if (banner) banner.textContent = "🏁 MATCH OVER — NEW TEAMS PLAYING";
+      return;
+    }
     if (canBuzz) {
       btn.disabled = false;
       btn.classList.add("is-armed");
