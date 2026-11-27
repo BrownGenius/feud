@@ -31,6 +31,10 @@ Pick from **300+ built-in survey rounds**, cast or plug in a TV, hand phones to 
 | :---: | :---: |
 | ![Individual Team Buzzer](docs/screenshots/team-buzzer.png) | ![Combo Buzzer](docs/screenshots/combo-buzzer.png) |
 
+| Mobile Lobby (Buzzer-First Join) | Mobile Host Control (Sticky Action Bar) |
+| :---: | :---: |
+| ![Mobile Lobby](docs/screenshots/mobile-lobby.png) | ![Mobile Host Control](docs/screenshots/mobile-host.png) |
+
 | Printable Question Review Sheet | |
 | :---: | :---: |
 | ![Question Review Sheet](docs/screenshots/review-sheet.png) | |
