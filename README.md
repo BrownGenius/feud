@@ -77,11 +77,11 @@ Launch straight into any bundled question deck with one click — or open the pr
 
 * **📺 Real TV Show Presentation & Themes:** Big 16:9 board with flipping answer tiles, 4 selectable **Board Themes** (*Classic Blue & Gold*, *Holiday Red & Green*, *FRC Robotics Neon*, *Classroom Clean*), giant red `X` strike overlays, escalating 3-second countdown tension audio, game-show dings/buzzers/fanfare, and a **Match Champion** celebration screen.
 * **🎙️ Stress-Free Hosting & 1-Click Demo:** Try the **▶ 10-Second Interactive Demo** right from the Lobby, or host with a full answer key, **live mini TV preview**, **step-by-step coach**, collapsible **Host Script** (`SAY` / `DO`), and **25-step Undo**.
-* **🔔 Phone Buzzers (Haptics & 2-Way Test):** Scan a QR code from the TV or Host screen to join as **Team 1 Buzzer**, **Team 2 Buzzer**, or **Combo Buzzer** (both teams on one shared phone/iPad). Includes multi-stage vibration haptics and a pre-game **🔔 Test Buzz** ping (Host ↔ Phone).
+* **🔔 Phone Buzzers (Haptics, Tie-Lockout Delta & Re-Arm):** Scan a QR code from the TV or Host screen to join as **Team 1 Buzzer**, **Team 2 Buzzer**, or **Combo Buzzer** (both teams on one shared phone/iPad). Includes `pointerdown` instant triggering, a `30ms` "Get Ready" haptic pulse when buzzers arm, win/lose flashes with exact runner-up delta feedback (`Too slow (+0.18s)`), a pre-game **🔔 Test Buzz** ping (Host ↔ Phone), and one-tap **🔄 Re-Arm Buzzers** on Host.
 * **🏆 3-Team & 4-Team Tournament Brackets:** Switch from Classic 2-Team play to a **3-Team Mini Bracket** (`2` games) or **4-Team Tournament** (`3` games: Semifinals → Championship Final) whenever the chosen deck has enough regular rounds to guarantee unique questions across every match.
 * **✨ In-App AI Deck Builder & `#deckData` Share Links:** Search decks by name or topic, generate a custom JSON deck on any topic with the built-in **✨ AI Deck Builder**, and share playable custom decks via compressed `#deckData=...` URL links without hosting files.
 * **📲 Installable PWA & Offline Ready:** Install as a standalone desktop/tablet Web App (`manifest.webmanifest` + Service Worker) or open `index.html` over `file://` for offline HDMI play.
-* **⚡ Optional Fast Money Bonus Round:** Toggle Fast Money on or off for any game, complete with 20s / 25s clocks, hidden Player 1 answers, duplicate-answer buzzers, and 1-tap score chips.
+* **⚡ Optional Fast Money Bonus Round:** Toggle Fast Money on or off for any game, complete with 20s / 25s clocks, live **`Need X to win`** countdown on Host & TV, hidden Player 1 answers, duplicate-answer buzzers, and 1-tap score chips.
 
 ---
 
@@ -104,7 +104,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 ## 🎙️ How a Round Works (Host Guide)
 
 1. **Mystery Question → Show Question (`Space`):** New rounds keep the question hidden on the TV so players can't read ahead. Once both podium players are ready, click **👁️ Show Question on TV** (`Space`) — buzzers unlock with no timer running yet.
-2. **Face-Off Buzz-In:** First team to buzz gets the shot clock.
+2. **Face-Off Buzz-In:** First team to buzz gets the shot clock (and losing phones show the exact `Too slow (+X.XXs)` delta). Tap **🔄 Re-Arm Buzzers** anytime to clear an accidental early tap.
    * **`#1` Answer:** Instantly wins the Face-Off!
    * **`#2`–`#8` Answer or Wrong Guess (`❌`):** Flashes 1 temporary `X` (without adding a round strike) and automatically starts the timer for the opposing player to try to beat it.
 3. **Play or Pass:** The Face-Off winner chooses **▶️ PLAY** or **🔀 PASS**.
@@ -235,14 +235,14 @@ stateDiagram-v2
 | :--- | :--- | :--- |
 | **`faceoff-ready`** | 🔒 Locked | **👁️ Show Question on TV (`Space`)**, or tap the Host question box / round pill to swap or randomize rounds (`1x`/`2x`/`3x` tree) |
 | **`faceoff-buzz`** | 🔒 Locked | **🔔 Team A Buzzed** or **🔔 Team B Buzzed** (remote buzzers unlocked) |
-| **`faceoff-p1`** | 🔓 Unrevealed clickable | Tap revealed answer (`1`–`8`), **❌ Wrong Guess** (1 Temp X + auto-starts Turn 2 timer), or **🔍 Be More Specific** (`+5s`) |
+| **`faceoff-p1`** | 🔓 Unrevealed clickable | Tap revealed answer (`1`–`8`), **❌ Wrong Guess** (1 Temp X + auto-starts Turn 2 timer), **🔍 Be More Specific** (`+5s`), or **🔄 Re-Arm Buzzers** |
 | **`faceoff-p2`** | 🔓 Unrevealed clickable | Tap 2nd player's answer (`1`–`8`), **❌ Wrong Guess**, or **🔍 Be More Specific** (`+5s`) |
 | **`pass-or-play`** | 🔒 Locked | **▶️ PLAY Board** or **🔀 PASS Board** |
 | **`playing`** | 🔓 Unrevealed clickable | Tap board answer (`1`–`8`), **❌ Wrong Answer (`X`)**, **🔍 Be More Specific** (`+5s`), or **🔄 Start Timer (`R`)** |
 | **`steal`** | 🔓 Unrevealed clickable | **⏱️ Start 30s Steal Timer (`R`)**, tap stolen answer (`1`–`8`), **❌ Steal Missed (`X`)**, or **🔍 Be More Specific** (`+5s`) |
 | **`round-over`** | 🔓 Unrevealed clickable (`0 pts`) | **👁️ Reveal Answer #N (0 pts)**, **⏭️ Next Round ▶**, or **🏆 Show Winner Screen** (final round) |
 
-> **Host Shortcuts & Popovers:** Tap any Team Score Card, the Phase Stepper, or the `⏱️` Timer Pill directly to open contextual override popovers.
+> **Host Shortcuts & Popovers:** Tap any Team Score Card, the Phase Stepper, or the `⏱️` Timer Pill directly to open contextual override popovers (including **⇄ Swap Sides** to swap Team 1 ↔ Team 2 names, scores, and active control in one tap).
 
 </details>
 
@@ -319,13 +319,15 @@ feud/
 ├── docs/
 │   └── screenshots/                # Gameplay demo GIF & screenshots embedded in README.md
 ├── js/
+│   ├── ai-builder.js               # In-app AI Deck Builder prompt generator & JSON validator
 │   ├── app.js                      # Controller, demo/tournament/AI builder & modal handlers
+│   ├── audio.js                    # Web Audio API synthesizer (no external MP3 dependencies)
+│   ├── decks.js                    # Manifest loader, tag filter, #deckData URL codec & folder scanner
+│   ├── formats.js                  # Universal Party Feud & Friendly-Feud JSON parser/exporter
+│   ├── review.js                   # Printable review sheet controller, inline editor & local file saver
 │   ├── state.js                    # Built-in Starter deck, state management, tournament & localStorage
 │   ├── sync.js                     # Trystero WebRTC P2P + MQTT-WSS + BroadcastChannel + Firebase sync
-│   ├── formats.js                  # Universal Party Feud & Friendly-Feud JSON parser/exporter
-│   ├── decks.js                    # Manifest loader, tag filter, #deckData URL codec & folder scanner
-│   ├── views.js                    # DOM renderers for TV Display, Host Remote, Bracket & Buzzers
-│   └── audio.js                    # Web Audio API synthesizer (no external MP3 dependencies)
+│   └── views.js                    # DOM renderers for TV Display, Host Remote, Bracket & Buzzers
 └── decks/
     ├── manifest.json                       # Auto-generated static deck manifest (counts, icons, tags)
     ├── 2025.json                           # Family Feud 2025 (60 Rounds • 8 Fast Money Sets)

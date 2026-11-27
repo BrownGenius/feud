@@ -1176,6 +1176,12 @@ window.Feud = window.Feud || {};
       0
     );
     document.getElementById("tvFmTotal").textContent = String(total);
+    const tvNeedEl = document.getElementById("tvFmNeedPill");
+    if (tvNeedEl) {
+      const rem = Math.max(0, 200 - total);
+      tvNeedEl.textContent = total >= 200 ? "🎉 200+ GOAL REACHED!" : `Need ${rem} to win`;
+      tvNeedEl.style.color = total >= 200 ? "#86efac" : "#fde68a";
+    }
 
     const box = document.getElementById("tvFmRows");
     box.innerHTML = fmQuestions
@@ -1432,6 +1438,12 @@ window.Feud = window.Feud || {};
       0
     );
     document.getElementById("hostFmTotal").textContent = String(total);
+    const hostNeedEl = document.getElementById("hostFmNeedBadge");
+    if (hostNeedEl) {
+      const rem = Math.max(0, 200 - total);
+      hostNeedEl.textContent = total >= 200 ? "(🎉 Goal Reached!)" : `(Need ${rem} more)`;
+      hostNeedEl.style.color = total >= 200 ? "#86efac" : "#fde68a";
+    }
 
     const fmScriptEl = document.getElementById("hostFmScriptBox");
     if (fmScriptEl) {

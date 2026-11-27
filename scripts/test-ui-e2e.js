@@ -780,6 +780,22 @@ async function runStep(name, fn) {
       await cdp.waitFor("!document.getElementById('hostContextPopover').classList.contains('hidden')");
       const popoverTitle = await cdp.eval(`document.getElementById('hostPopoverTitle')?.textContent.trim()`);
       assert.ok(popoverTitle.length > 0, "Host contextual popover should render title");
+
+      // Verify Swap Team Sides swaps Team 1 & Team 2 names and scores (and swaps back cleanly)
+      const beforeSwap = await cdp.eval(`({
+        t1: document.getElementById('hostStripT1Name')?.textContent.trim(),
+        t2: document.getElementById('hostStripT2Name')?.textContent.trim()
+      })`);
+      await cdp.eval(`window.hostSwapTeamSides()`);
+      await sleep(80);
+      const afterSwap = await cdp.eval(`({
+        t1: document.getElementById('hostStripT1Name')?.textContent.trim(),
+        t2: document.getElementById('hostStripT2Name')?.textContent.trim()
+      })`);
+      assert.strictEqual(afterSwap.t1, beforeSwap.t2, "Swap Sides should move Team 2 name to Team 1");
+      assert.strictEqual(afterSwap.t2, beforeSwap.t1, "Swap Sides should move Team 1 name to Team 2");
+      await cdp.eval(`window.hostSwapTeamSides()`);
+      await sleep(80);
       await cdp.eval(`document.getElementById('hostShortcutsBtn').click()`);
       const shortcutsTitle = await cdp.eval(`document.getElementById('hostPopoverTitle')?.textContent.trim()`);
       assert.ok(/Shortcuts/i.test(shortcutsTitle), `Expected shortcuts popover title, got: ${shortcutsTitle}`);
@@ -818,9 +834,18 @@ async function runStep(name, fn) {
       assert.strictEqual(fmState.tvFmVisible, true, "TV Fast Money board should be visible");
       assert.strictEqual(fmState.tvFmClock, "20");
 
-      // Score Player 1 & Player 2 across all 5 questions to cross 200 points
+      // Score first answer (42) -> verify live "Need 158" countdown on both Host & TV
+      await cdp.eval(`window.hostSelectFmChip(0, 1, 'Cheese', 42)`);
+      await sleep(80);
+      const fmMidCheck = await cdp.eval(`({
+        hostNeed: document.getElementById('hostFmNeedBadge')?.textContent.trim(),
+        tvNeed: document.getElementById('tvFmNeedPill')?.textContent.trim()
+      })`);
+      assert.ok(/Need 158/i.test(fmMidCheck.hostNeed), `Host FM need badge should show Need 158, got: ${fmMidCheck.hostNeed}`);
+      assert.ok(/Need 158/i.test(fmMidCheck.tvNeed), `TV FM need pill should show Need 158, got: ${fmMidCheck.tvNeed}`);
+
+      // Score remaining answers to cross 200 points
       await cdp.eval(`(async () => {
-        await window.hostSelectFmChip(0, 1, 'Cheese', 42);
         await window.hostSelectFmChip(1, 1, 'Plastic containers', 45);
         await window.hostSelectFmChip(2, 1, 'Uno', 38);
         await window.hostSelectFmChip(3, 1, 'New York', 35);
@@ -830,10 +855,14 @@ async function runStep(name, fn) {
 
       const fmTotalCheck = await cdp.eval(`({
         hostTotal: document.getElementById('hostFmTotal')?.textContent.trim(),
-        tvTotal: document.getElementById('tvFmTotal')?.textContent.trim()
+        tvTotal: document.getElementById('tvFmTotal')?.textContent.trim(),
+        hostNeed: document.getElementById('hostFmNeedBadge')?.textContent.trim(),
+        tvNeed: document.getElementById('tvFmNeedPill')?.textContent.trim()
       })`);
       assert.strictEqual(fmTotalCheck.hostTotal, "202", "Host Fast Money total should equal 202");
       assert.strictEqual(fmTotalCheck.tvTotal, "202", "TV Fast Money total should equal 202");
+      assert.ok(/Goal Reached/i.test(fmTotalCheck.hostNeed), `Host FM badge should show Goal Reached, got: ${fmTotalCheck.hostNeed}`);
+      assert.ok(/GOAL REACHED/i.test(fmTotalCheck.tvNeed), `TV FM pill should show GOAL REACHED, got: ${fmTotalCheck.tvNeed}`);
 
       // Test Duplicate Answer buzzer, Hide P1 toggle, and Reset
       await cdp.eval(`(async () => {

@@ -4779,6 +4779,9 @@ window.Feud = window.Feud || {};
             } onclick="hostAwardPot(${teamNum}); closeHostPopover();">
               🏆 Award Round Pot (${pot} pts)
             </button>
+            <button type="button" class="top-btn" onclick="hostSwapTeamSides().then(()=>closeHostPopover())">
+              ⇄ Swap Team 1 ↔ Team 2 (Sides &amp; Scores)
+            </button>
           </div>
         </div>
       `;
@@ -4929,6 +4932,34 @@ window.Feud = window.Feud || {};
     }
   }
 
+  function swapSetupTeamSides() {
+    const t1El = document.getElementById("setupTeam1Input");
+    const t2El = document.getElementById("setupTeam2Input");
+    if (!t1El || !t2El) return;
+    const tmp = t1El.value;
+    t1El.value = t2El.value;
+    t2El.value = tmp;
+    Feud.showToast("⇄ Swapped Team 1 & Team 2!");
+  }
+
+  async function hostSwapTeamSides() {
+    Feud.unlockAudio();
+    pushUndoSnapshot();
+    const flip = (n) => (Number(n) === 1 ? 2 : Number(n) === 2 ? 1 : Number(n) || 0);
+    await pushRoomPatch({
+      team1Name: roomState.team2Name || "Team 2",
+      team2Name: roomState.team1Name || "Team 1",
+      team1Score: Number(roomState.team2Score) || 0,
+      team2Score: Number(roomState.team1Score) || 0,
+      controllingTeam: flip(roomState.controllingTeam),
+      faceoffFirstTeam: flip(roomState.faceoffFirstTeam),
+      faceoffWinnerTeam: flip(roomState.faceoffWinnerTeam),
+      buzzerWinner: flip(roomState.buzzerWinner),
+      roundWinnerTeam: flip(roomState.roundWinnerTeam)
+    });
+    Feud.showToast("⇄ Swapped Team 1 & Team 2 sides & scores!");
+  }
+
   function openHostPopover(kind) {
     activePopoverKind = kind;
     renderHostPopoverBody(kind);
@@ -4956,6 +4987,8 @@ window.Feud = window.Feud || {};
     openNewGameModal,
     closeNewGameModal,
     cycleSetupTeamPresets,
+    swapSetupTeamSides,
+    hostSwapTeamSides,
     syncTournamentFormatAvailability,
     onSetupMatchFormatChange,
     onBoardThemeChange,

@@ -435,6 +435,7 @@
                     <option value="4">🏆 4-Team Tournament</option>
                   </select>
                   <button type="button" class="top-btn" style="min-height:28px; padding:4px 10px; font-size:11px;" onclick="cycleSetupTeamPresets()">🎲 Swap Names</button>
+                  <button type="button" id="btnSwapSetupTeamSides" class="top-btn" style="min-height:28px; padding:4px 10px; font-size:11px;" onclick="swapSetupTeamSides()" title="Swap Team 1 (Left/Blue) and Team 2 (Right/Red)">⇄ Swap Sides</button>
                 </div>
               </div>
               <div class="buzzer-split-btns">
@@ -687,6 +688,7 @@
         <div class="pot-box" style="min-width:160px;">
           <div class="pot-label">Total (Goal 200)</div>
           <div id="tvFmTotal" class="pot-value display-font">0</div>
+          <div id="tvFmNeedPill" style="font-size:11px; font-weight:800; color:#fde68a; margin-top:2px;">Need 200 to win</div>
         </div>
       </div>
       <div id="tvFmRows"></div>
@@ -857,7 +859,7 @@
           <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px;">
             <div>
               <h2 class="brand-title display-font">⚡ Fast Money Host Panel</h2>
-              <p class="brand-sub">Combined Total: <strong id="hostFmTotal" style="color:#fff;">0</strong> / 200</p>
+              <p class="brand-sub">Combined Total: <strong id="hostFmTotal" style="color:#fff;">0</strong> / 200 <span id="hostFmNeedBadge" style="color:#fde68a; font-weight:700; margin-left:6px;">(Need 200 more)</span></p>
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
               <span id="hostFmClock" class="display-font" style="font-size:32px; color:var(--gold); margin-right:6px;">20s</span>
