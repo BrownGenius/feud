@@ -856,15 +856,29 @@ async function runStep(name, fn) {
       assert.strictEqual(fmState.tvFmVisible, true, "TV Fast Money board should be visible");
       assert.strictEqual(fmState.tvFmClock, "20");
 
-      // Score first answer (42) -> verify live "Need 158" countdown on both Host & TV
+      // Score first answer (42) -> verify live "Need 158" countdown AND one-tap Ready Player 2 button
       await cdp.eval(`window.hostSelectFmChip(0, 1, 'Cheese', 42)`);
       await sleep(80);
       const fmMidCheck = await cdp.eval(`({
         hostNeed: document.getElementById('hostFmNeedBadge')?.textContent.trim(),
-        tvNeed: document.getElementById('tvFmNeedPill')?.textContent.trim()
+        tvNeed: document.getElementById('tvFmNeedPill')?.textContent.trim(),
+        readyP2Visible: !document.getElementById('hostBtnFmReadyP2')?.classList.contains('hidden')
       })`);
       assert.ok(/Need 158/i.test(fmMidCheck.hostNeed), `Host FM need badge should show Need 158, got: ${fmMidCheck.hostNeed}`);
       assert.ok(/Need 158/i.test(fmMidCheck.tvNeed), `TV FM need pill should show Need 158, got: ${fmMidCheck.tvNeed}`);
+      assert.strictEqual(fmMidCheck.readyP2Visible, true, "Ready Player 2 button should appear once P1 has answers");
+
+      // Test Ready Player 2 one-tap transition (hides P1 & sets clock to 25s), then unhide P1 to continue scoring
+      await cdp.eval(`window.hostFmReadyPlayer2()`);
+      await sleep(80);
+      const fmReadyP2Check = await cdp.eval(`({
+        tvClock: document.getElementById('tvFmClock')?.textContent.trim(),
+        p1Hidden: document.getElementById('tvFmRows')?.textContent.includes('HIDDEN')
+      })`);
+      assert.strictEqual(fmReadyP2Check.tvClock, "25", "Ready Player 2 should set clock to 25s");
+      assert.strictEqual(fmReadyP2Check.p1Hidden, true, "Ready Player 2 should hide Player 1 answers on TV");
+      await cdp.eval(`window.hostToggleFmHideP1()`);
+      await sleep(60);
 
       // Score remaining answers to cross 200 points
       await cdp.eval(`(async () => {
@@ -1280,22 +1294,42 @@ async function runStep(name, fn) {
       await cdp.eval(`window.closeNextMatchModal()`);
     });
 
-    await runStep("12. Lobby Deck Search, Category Filter Pills & 3-Team Tournament Bracket Modal", async () => {
+    await runStep("12. Lobby Rules Summary, Mobile TV Mode Guard, Quick Swap & 3-Team Tournament Bracket Modal", async () => {
       await cdp.eval(`window.leaveToLobby({ force: true })`);
       await cdp.waitFor("!document.getElementById('lobbyView').classList.contains('hidden')");
 
-      // Test search filter & category pill
-      const filterStats = await cdp.eval(`(() => {
-        const searchIn = document.getElementById('deckSearchInput');
-        searchIn.value = 'FRC';
-        window.onDeckFilterInput('FRC');
-        const frcCount = document.getElementById('deckManagerSelect').options.length;
-        searchIn.value = '';
-        window.onDeckFilterInput('');
-        const allCount = document.getElementById('deckManagerSelect').options.length;
-        return { frcCount, allCount };
+      // Verify deck search input is removed & live Rules Summary pill updates dynamically
+      const lobbyCleanCheck = await cdp.eval(`(() => {
+        const noSearch = !document.getElementById('deckSearchInput');
+        document.getElementById('setupTurnTimerSelect').value = '15';
+        window.updateSetupRulesSummary();
+        const summary = document.getElementById('setupRulesSummaryPill')?.textContent.trim() || '';
+        document.getElementById('setupTurnTimerSelect').value = '10';
+        window.updateSetupRulesSummary();
+        return { noSearch, summary };
       })()`);
-      assert.ok(filterStats.frcCount >= 1 && filterStats.frcCount < filterStats.allCount, "Deck search should narrow options");
+      assert.strictEqual(lobbyCleanCheck.noSearch, true, "Deck search input should be removed from Lobby");
+      assert.ok(/15s/.test(lobbyCleanCheck.summary), `Live Rules Summary pill should reflect 15s timer, got: ${lobbyCleanCheck.summary}`);
+
+      // Verify Pop-Out TV (HDMI) is hidden on narrow phone viewports and defaults to Remote TV (QR)
+      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+      await cdp.eval(`window.dispatchEvent(new Event('resize'))`);
+      await sleep(80);
+      const mobileTvChoice = await cdp.eval(`({
+        localHidden: document.getElementById('tvModeBtnLocal')?.classList.contains('hidden'),
+        qrSelected: document.getElementById('tvModeBtnQr')?.classList.contains('is-selected')
+      })`);
+      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
+      await cdp.eval(`window.dispatchEvent(new Event('resize'))`);
+      await sleep(80);
+      const desktopTvRestored = await cdp.eval(`({
+        localVisible: !document.getElementById('tvModeBtnLocal')?.classList.contains('hidden'),
+        localSelected: document.getElementById('tvModeBtnLocal')?.classList.contains('is-selected')
+      })`);
+      assert.strictEqual(mobileTvChoice.localHidden, true, "Pop-Out TV (HDMI) should be hidden on phone viewports");
+      assert.strictEqual(mobileTvChoice.qrSelected, true, "Remote TV (QR) should auto-select on phone viewports");
+      assert.strictEqual(desktopTvRestored.localVisible, true, "Pop-Out TV (HDMI) should reappear on desktop viewports");
+      assert.strictEqual(desktopTvRestored.localSelected, true, "Desktop default Pop-Out TV (HDMI) should restore cleanly without latching QR");
 
       // Start a 3-Team Tournament using 2026.json
       await cdp.eval(`(async () => {
@@ -1314,6 +1348,35 @@ async function runStep(name, fn) {
 
       const tournPillVisible = await cdp.eval(`!document.getElementById('hostTournamentPill').classList.contains('hidden')`);
       assert.strictEqual(tournPillVisible, true, "Tournament Bracket pill should be visible in 3-team tournament");
+
+      // Verify Quick Swap button (#hostQuickSwapRoundBtn) is visible while question hidden & swaps round prompt,
+      // and #hostFlowSubtext only appears when Host collapses the SAY/DO script
+      const hostPolishBefore = await cdp.eval(`({
+        swapVisible: !document.getElementById('hostQuickSwapRoundBtn')?.classList.contains('hidden'),
+        promptBefore: document.getElementById('hostPromptText')?.textContent.trim() || '',
+        subtextHiddenWhenScriptOpen: document.getElementById('hostFlowSubtext')?.classList.contains('hidden')
+      })`);
+      assert.strictEqual(hostPolishBefore.swapVisible, true, "Quick Swap button should be visible while question is hidden");
+      assert.strictEqual(hostPolishBefore.subtextHiddenWhenScriptOpen, true, "Redundant subtext should be hidden while SAY/DO script is open");
+
+      await cdp.eval(`document.getElementById('hostQuickSwapRoundBtn').click()`);
+      await sleep(120);
+      const hostPolishAfterSwap = await cdp.eval(`(() => {
+        const promptAfter = document.getElementById('hostPromptText')?.textContent.trim() || '';
+        window.toggleHostScript(true);
+        const subtextVisibleWhenCollapsed = !document.getElementById('hostFlowSubtext')?.classList.contains('hidden');
+        window.toggleHostScript(false);
+        const subtextHiddenAgain = document.getElementById('hostFlowSubtext')?.classList.contains('hidden');
+        return { promptAfter, subtextVisibleWhenCollapsed, subtextHiddenAgain };
+      })()`);
+      assert.notStrictEqual(hostPolishAfterSwap.promptAfter, hostPolishBefore.promptBefore, "Quick Swap button should swap to a different question from the deck");
+      assert.strictEqual(hostPolishAfterSwap.subtextVisibleWhenCollapsed, true, "Fallback subtext should appear when Host collapses SAY/DO script");
+      assert.strictEqual(hostPolishAfterSwap.subtextHiddenAgain, true, "Fallback subtext should hide again when SAY/DO script is re-expanded");
+
+      await cdp.eval(`window.hostRevealQuestionAndStartTimer()`);
+      await sleep(100);
+      const swapHiddenAfterReveal = await cdp.eval(`document.getElementById('hostQuickSwapRoundBtn')?.classList.contains('hidden')`);
+      assert.strictEqual(swapHiddenAfterReveal, true, "Quick Swap button should hide once the question is revealed on TV");
 
       await cdp.eval(`window.openTournamentModal()`);
       await cdp.waitFor("!document.getElementById('tournamentBracketModal').classList.contains('hidden')");

@@ -1503,12 +1503,16 @@ window.Feud = window.Feud || {};
     const isQuestionHidden = !roomState.questionRevealed || phase === "faceoff-ready";
     const qBox = document.getElementById("hostQuestionBox");
     const qHint = document.getElementById("hostQuestionSwapHint");
+    const qSwapBtn = document.getElementById("hostQuickSwapRoundBtn");
     if (qBox) {
       qBox.classList.toggle("is-swappable", isQuestionHidden);
       qBox.title = isQuestionHidden ? "Tap to swap or pick another round from deck" : "";
     }
     if (qHint) {
       qHint.classList.toggle("hidden", !isQuestionHidden);
+    }
+    if (qSwapBtn) {
+      qSwapBtn.classList.toggle("hidden", !isQuestionHidden);
     }
 
     const toggleOnlyBtn = document.getElementById("hostBtnToggleQuestionOnly");
@@ -1618,10 +1622,15 @@ window.Feud = window.Feud || {};
       hostNeedEl.style.color = total >= 200 ? "#86efac" : "#fde68a";
     }
 
+    const p1Done = entries.some((e) => e && (e.p1Ans || Number(e.p1Pts) > 0));
+    const p2Done = entries.some((e) => e && (e.p2Ans || Number(e.p2Pts) > 0));
+    const readyP2Btn = document.getElementById("hostBtnFmReadyP2");
+    if (readyP2Btn) {
+      readyP2Btn.classList.toggle("hidden", !(p1Done && !roomState.fmHideP1 && !p2Done));
+    }
+
     const fmScriptEl = document.getElementById("hostFmScriptBox");
     if (fmScriptEl) {
-      const p1Done = entries.some((e) => e && (e.p1Ans || Number(e.p1Pts) > 0));
-      const p2Done = entries.some((e) => e && (e.p2Ans || Number(e.p2Pts) > 0));
       let fmSay = "";
       let fmDo = "";
       if (total >= 200) {
@@ -1632,7 +1641,7 @@ window.Feud = window.Feud || {};
         fmDo = `1) Click “20s” then “Start” when you begin reading Question #1. 2) Tap the matching answer chips below (or type their answer & points) to reveal them on the TV.`;
       } else if (!roomState.fmHideP1 && !p2Done) {
         fmSay = `“Great job Player 1! Before we bring Player 2 back out, let's hide Player 1's answers on the TV!”`;
-        fmDo = `Click “🙈 Hide/Show P1” above so Player 2 can't see Player 1's answers, then set the clock to “25s” for Player 2!`;
+        fmDo = `Click “⏭️ Ready Player 2” above to hide Player 1's answers on TV and set the clock to 25s!`;
       } else {
         fmSay = `“Welcome back Player 2! You have 25 seconds to answer the same 5 questions. You cannot repeat any of Player 1's answers—if you hear the duplicate buzzer, give me another answer immediately! Together you need 200 points!”`;
         fmDo = `Click “25s” then “Start”. If Player 2 repeats an answer from Player 1, click “Dup ❌” and ask for a different answer! Then tap the chips for Player 2's answers.`;

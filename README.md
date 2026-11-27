@@ -76,7 +76,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 | **Live Phone Buzzers** | **QR Scan — Team 1, Team 2, Shared Combo, Haptics & 2-Way Test** | ❌ None (honor system / yelling) | ⚠️ Separate buzzer app or paid tier |
 | **Host Controls & Demo** | **1-Click Demo, Answer Key, Live Mini TV, Teleprompter & 25-Step Undo** | ❌ Clunky slide presenter view | ⚠️ Basic host toggles |
 | **TV Presentation, Themes & SFX** | **3D Flipping Tiles, 4 Visual Themes, Tension Audio, Big Red `X`, Winner Screen** | ⚠️ Static slides, manual point math | ✅ Varies |
-| **Tournaments, AI Decks & Sharing** | **3/4-Team Brackets, In-App AI Builder, `#deckData` Share Links & Deck Search** | ❌ Hard to edit slides | ⚠️ Locked or paywalled |
+| **Tournaments, AI Decks & Sharing** | **3/4-Team Brackets, In-App AI Builder & `#deckData` Share Links** | ❌ Hard to edit slides | ⚠️ Locked or paywalled |
 | **Offline & Installable PWA** | **Installable PWA + Works Offline Over HDMI (`file://`)** | ✅ Local file | ❌ Requires internet server |
 
 ---
@@ -87,9 +87,9 @@ Launch straight into any bundled question deck with one click — or open the pr
 * **🎙️ Stress-Free Hosting & 1-Click Demo:** Try the **▶ 10-Second Interactive Demo** right from the Lobby, or host with a full answer key, **live mini TV preview**, **step-by-step coach**, collapsible **Host Script** (`SAY` / `DO`), and **25-step Undo**.
 * **🔔 Phone Buzzers (Haptics, Tie-Lockout Delta & Re-Arm):** Scan a QR code from the TV or Host screen to join as **Team 1 Buzzer**, **Team 2 Buzzer**, or **Combo Buzzer** (both teams on one shared phone/iPad). Includes `pointerdown` instant triggering, a `30ms` "Get Ready" haptic pulse when buzzers arm, win/lose flashes with exact runner-up delta feedback (`Too slow (+0.18s)`), a pre-game **🔔 Test Buzz** ping (Host ↔ Phone), and one-tap **🔄 Re-Arm Buzzers** on Host.
 * **🏆 3-Team & 4-Team Tournament Brackets:** Switch from Classic 2-Team play to a **3-Team Mini Bracket** (`2` games) or **4-Team Tournament** (`3` games: Semifinals → Championship Final) whenever the chosen deck has enough regular rounds to guarantee unique questions across every match.
-* **✨ In-App AI Deck Builder & `#deckData` Share Links:** Search decks by name or topic, generate a custom JSON deck on any topic with the built-in **✨ AI Deck Builder**, and share playable custom decks via compressed `#deckData=...` URL links without hosting files.
+* **✨ In-App AI Deck Builder & `#deckData` Share Links:** Pick any built-in deck from the dropdown, generate a custom JSON deck on any topic with the built-in **✨ AI Deck Builder**, and share playable custom decks via compressed `#deckData=...` URL links without hosting files.
 * **📲 Installable PWA & Offline Ready:** Install as a standalone desktop/tablet Web App (`manifest.webmanifest` + Service Worker) or open `index.html` over `file://` for offline HDMI play.
-* **⚡ Optional Fast Money Bonus Round:** Toggle Fast Money on or off for any game, complete with 20s / 25s clocks, live **`Need X to win`** countdown on Host & TV, hidden Player 1 answers, duplicate-answer buzzers, and 1-tap score chips.
+* **⚡ Optional Fast Money Bonus Round:** Toggle Fast Money on or off for any game, complete with 20s / 25s clocks, live **`Need X to win`** countdown on Host & TV, one-tap **`⏭️ Ready Player 2`** (hides P1 & sets 25s), duplicate-answer buzzers, and 1-tap score chips.
 
 ---
 
@@ -97,7 +97,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 
 ### Option 1: Party Setup (TV + Phone Buzzers via QR Code)
 1. Open **[Party Feud](https://browngenius.github.io/feud)** on your laptop or tablet — the game setup sits right on the Lobby (or click **▶ Try 10-Second Interactive Demo** for an instant preview)!
-2. Search for a question deck by name or topic (or click **✨ AI Deck** to build one on the spot), pick **2 Teams (Classic)** or a **3/4-Team Tournament Bracket**, optionally pick a **🎨 Visual Board Theme** under Game Rules, choose your **📺 TV Display** option (**Pop-Out TV (HDMI)** or **Remote TV (QR / Link)**), and tap **🚀 Start Game**.
+2. Pick a question deck (or click **✨ AI Deck** to build one on the spot), pick **2 Teams (Classic)** or a **3/4-Team Tournament Bracket**, optionally verify/adjust **⚙️ Rules, Theme & Timer** right from its live summary pill, choose your **📺 TV Display** option (**Pop-Out TV (HDMI)** on desktop/laptop or **Remote TV (QR / Link)** on any device), and tap **🚀 Start Game**.
 3. Click **`📺 TV: 0/1 • 📱 Buzzers: 0/2`** in the Host header anytime to open the unified **Connect TV & Buzzers** panel — copy/scan the TV link, project **Individual Buzzers** or **Combo Buzzer** onto the TV for players to scan, and click **🔔 Ping Connected Buzzers** (or tap **🔔 Test** on any phone) to test sound and vibration before Round 1.
 
 ### Option 2: Laptop + HDMI TV (Works Even Offline)

@@ -404,8 +404,6 @@ window.Feud = window.Feud || {};
     return Feud.DECK_CATALOG;
   }
 
-  let activeDeckSearchQuery = "";
-
   function isCatalogItemSelected(item, activeDeckName) {
     return Boolean(
       (!activeDeckName && item.builtin === "starter") ||
@@ -422,11 +420,6 @@ window.Feud = window.Feud || {};
     );
   }
 
-  function onDeckFilterInput(query) {
-    activeDeckSearchQuery = String(query || "").trim().toLowerCase();
-    populateDeckCatalogSelect();
-  }
-
   function populateDeckCatalogSelect() {
     const sel = document.getElementById("deckManagerSelect");
     if (!sel) return;
@@ -434,22 +427,7 @@ window.Feud = window.Feud || {};
     const catalog = getCatalogList();
     const activeDeckName =
       roomState.customDeck && roomState.customDeck.name ? roomState.customDeck.name : null;
-
-    const filtered = catalog.filter((item) => {
-      if (activeDeckSearchQuery) {
-        const haystack = [
-          item.id,
-          item.label,
-          item.data && item.data.deckName,
-          item.meta && item.meta.deckName
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(activeDeckSearchQuery)) return false;
-      }
-      return true;
-    });
+    const filtered = catalog;
 
     sel.innerHTML = "";
     let matched = false;
@@ -816,7 +794,28 @@ window.Feud = window.Feud || {};
     }
     syncTournamentFormatAvailability();
     syncDeckManagerBrandingInputs();
+    updateSetupRulesSummary();
     Feud.renderBranding(roomState);
+  }
+
+  function updateSetupRulesSummary() {
+    const pill = document.getElementById("setupRulesSummaryPill");
+    if (!pill) return;
+    const rdsSel = document.getElementById("setupRoundsPerMatchSelect");
+    const timerSel = document.getElementById("setupTurnTimerSelect");
+    const themeSel = document.getElementById("setupBoardThemeSelect");
+    const fmCheck = document.getElementById("setupEnableFastMoneyCheckbox");
+
+    const rdsVal = rdsSel ? parseInt(rdsSel.value, 10) : Number(roomState.roundsPerMatch ?? 4);
+    const rdsLabel = rdsVal === 0 ? "All Rds" : `${rdsVal} Rds`;
+    const timerVal = timerSel ? parseInt(timerSel.value, 10) || 10 : Number(roomState.turnTimerDuration || 10);
+    const rawThemeText =
+      themeSel && themeSel.selectedOptions && themeSel.selectedOptions[0]
+        ? themeSel.selectedOptions[0].textContent.trim()
+        : "Classic";
+    const themeLabel = rawThemeText.replace(/^[^\w]+/, "").split("(")[0].split("&")[0].trim() || "Classic";
+    const fmOn = fmCheck ? Boolean(fmCheck.checked && !fmCheck.disabled) : Boolean(roomState.enableFastMoney);
+    pill.textContent = `${rdsLabel} • ${timerVal}s • ${themeLabel} • ${fmOn ? "Fast Money On" : "Fast Money Off"}`;
   }
 
   function syncDeckManagerBrandingInputs() {
@@ -841,32 +840,50 @@ window.Feud = window.Feud || {};
     return Boolean(openedTvPopupWindow && !openedTvPopupWindow.closed);
   }
 
+  function isDesktopTvCapable() {
+    if (isFileProtocol()) return true;
+    if (typeof window === "undefined") return true;
+    const isTouchOnly =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    return !isTouchOnly && window.innerWidth >= 900;
+  }
+
   function getDefaultTvSetupMode() {
     if (isFileProtocol()) return "local";
-    return typeof window !== "undefined" && window.innerWidth >= 900 ? "local" : "qr";
+    return isDesktopTvCapable() ? "local" : "qr";
   }
 
   function getSelectedTvSetupMode() {
-    if (!selectedTvSetupMode) {
+    let savedPref = selectedTvSetupMode;
+    if (!savedPref) {
       try {
         const saved = localStorage.getItem(TV_SETUP_MODE_KEY);
         if (saved === "local" || saved === "qr") {
+          savedPref = saved;
           selectedTvSetupMode = saved;
         }
       } catch (e) {}
     }
-    let mode = selectedTvSetupMode || getDefaultTvSetupMode();
+    let mode = savedPref || getDefaultTvSetupMode();
+    if (!isDesktopTvCapable() && mode === "local") {
+      mode = "qr";
+    }
     if (isFileProtocol() && mode === "qr") {
       mode = "local";
     }
-    selectedTvSetupMode = mode;
     return mode;
   }
 
   function syncTvSetupModeUi() {
     const mode = getSelectedTvSetupMode();
     const isFile = isFileProtocol();
+    const desktopCapable = isDesktopTvCapable();
     const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+    const localBtn = document.getElementById("tvModeBtnLocal");
+    if (localBtn) {
+      localBtn.classList.toggle("hidden", !desktopCapable);
+    }
     const qrBtn = document.getElementById("tvModeBtnQr");
     if (qrBtn) {
       qrBtn.disabled = isFile;
@@ -882,21 +899,17 @@ window.Feud = window.Feud || {};
     if (hintEl) {
       if (mode === "local") {
         if (isFile || isOffline) {
-          hintEl.textContent =
-            'Offline HDMI mode: Host & TV sync locally with no internet. Phone QR buzzers require internet — have players buzz in verbally/on the table and tap "Team 1 / Team 2 Buzzed" on the Host screen.';
+          hintEl.textContent = "Offline HDMI mode — Host & TV sync locally; tap team buzz buttons on Host.";
           hintEl.style.color = "#fde68a";
         } else {
-          hintEl.textContent =
-            'HDMI dual-screen mode: opens a local TV window right away. Phone QR buzzers still work if you have internet — or just tap "Team 1 / Team 2 Buzzed" on the Host screen.';
+          hintEl.textContent = "Opens a local TV window for HDMI (phone buzzers join via the TV Welcome Screen).";
           hintEl.style.color = "#cbd5e1";
         }
       } else if (isOffline) {
-        hintEl.textContent =
-          "⚠️ Remote TV & Phone QR buzzers require internet. Switch to Pop-Out TV (HDMI) for offline play.";
+        hintEl.textContent = "⚠️ Remote TV & phone buzzers require internet.";
         hintEl.style.color = "#fde68a";
       } else {
-        hintEl.textContent =
-          "Remote TV mode: shows a QR code & link to open the TV board on another device (phone QR buzzers also available).";
+        hintEl.textContent = "Connect any TV or iPad by QR/link — phone buzzers join via the TV Welcome Screen.";
         hintEl.style.color = "#cbd5e1";
       }
     }
@@ -904,6 +917,9 @@ window.Feud = window.Feud || {};
 
   function selectTvSetupMode(mode) {
     if (mode !== "local" && mode !== "qr") return;
+    if (!isDesktopTvCapable() && mode === "local") {
+      mode = "qr";
+    }
     if (isFileProtocol() && mode === "qr") {
       Feud.showToast("Remote TV QR requires HTTP/HTTPS — using Pop-Out TV.");
       mode = "local";
@@ -4290,6 +4306,16 @@ window.Feud = window.Feud || {};
     await pushRoomPatch({ fmHideP1: !roomState.fmHideP1 });
   }
 
+  async function hostFmReadyPlayer2() {
+    Feud.unlockAudio();
+    clearInterval(hostFmTimerInterval);
+    hostFmTimerInterval = null;
+    const btn = document.getElementById("hostBtnFmTimer");
+    if (btn) btn.textContent = "Start";
+    await pushRoomPatch({ fmHideP1: true, fmClock: 25 });
+    Feud.showToast("🙈 Player 1 hidden & 25s clock ready for Player 2!");
+  }
+
   async function hostResetFm() {
     clearInterval(hostFmTimerInterval);
     hostFmTimerInterval = null;
@@ -4684,7 +4710,6 @@ window.Feud = window.Feud || {};
 
     Feud.populateRoundDropdowns(roomState);
     syncSetupModalInputsFromState();
-    syncSetupModalInputsFromState();
     if (closeModals) {
       closeDeckManagerModal();
       closeEditRoundModal();
@@ -4735,7 +4760,6 @@ window.Feud = window.Feud || {};
     });
 
     Feud.populateRoundDropdowns(roomState);
-    syncSetupModalInputsFromState();
     syncSetupModalInputsFromState();
     if (closeModals) {
       closeDeckManagerModal();
@@ -4806,7 +4830,10 @@ window.Feud = window.Feud || {};
 
   document.addEventListener("fullscreenchange", syncFullscreenBodyClass);
   document.addEventListener("webkitfullscreenchange", syncFullscreenBodyClass);
-  window.addEventListener("resize", syncFullscreenBodyClass);
+  window.addEventListener("resize", () => {
+    syncFullscreenBodyClass();
+    syncTvSetupModeUi();
+  });
   syncFullscreenBodyClass();
 
   function toggleFullScreen() {
@@ -4860,8 +4887,10 @@ window.Feud = window.Feud || {};
 
   function applyHostScriptCollapsed(collapsed) {
     const wrap = document.getElementById("hostScriptCollapseWrap");
+    const sub = document.getElementById("hostFlowSubtext");
     const btn = document.getElementById("hostScriptToggleBtn");
     if (wrap) wrap.classList.toggle("hidden", collapsed);
+    if (sub) sub.classList.toggle("hidden", !collapsed);
     if (btn) btn.textContent = collapsed ? "🎙️ Script" : "🎙️ Hide";
   }
 
@@ -5159,7 +5188,7 @@ window.Feud = window.Feud || {};
     toggleFullScreen,
     leaveToLobby,
     onSelectCatalogDeck,
-    onDeckFilterInput,
+    updateSetupRulesSummary,
     scanLocalDecksFolder,
     rescanSavedDecksFolder,
     onLocalDecksFolderInputChange,
@@ -5275,6 +5304,7 @@ window.Feud = window.Feud || {};
     hostToggleFmClock,
     hostFmDuplicateBuzz,
     hostToggleFmHideP1,
+    hostFmReadyPlayer2,
     hostResetFm,
     toggleHostScript,
     setHostMobileTab,

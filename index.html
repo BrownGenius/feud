@@ -398,9 +398,6 @@
                 <span class="field-label">📚 1. Question Deck</span>
                 <span id="setupDeckUsageBadge" class="pill-badge awake-ok" style="min-height:24px; font-size:10px;">📊 All Rounds Unused</span>
               </div>
-              <div class="deck-filter-bar">
-                <input id="deckSearchInput" type="search" class="fm-txt deck-search-input" placeholder="🔍 Search decks by name or topic…" oninput="onDeckFilterInput(this.value)" />
-              </div>
               <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-width:0;">
                 <select id="deckManagerSelect" class="fm-txt" style="flex:1 1 180px; min-width:0; max-width:100%; font-size:13px; text-transform:none;" onchange="onSelectCatalogDeck(this.value)"></select>
                 <a href="./review.html?from=setup" target="_blank" rel="opener" class="top-btn gold review-deck-link" style="text-decoration:none; display:inline-flex; align-items:center;">🖨️ Review</a>
@@ -463,7 +460,7 @@
             <div class="setup-step-box">
               <span class="field-label">📺 3. TV Display</span>
               <div id="tvModeChoiceGroup" class="tv-mode-group" role="radiogroup" aria-label="TV Display Mode">
-                <button type="button" class="tv-mode-btn" data-tv-mode="local" onclick="selectTvSetupMode('local')">🖥️ Pop-Out TV (HDMI)</button>
+                <button type="button" id="tvModeBtnLocal" class="tv-mode-btn" data-tv-mode="local" onclick="selectTvSetupMode('local')">🖥️ Pop-Out TV (HDMI)</button>
                 <button type="button" id="tvModeBtnQr" class="tv-mode-btn" data-tv-mode="qr" onclick="selectTvSetupMode('qr')">📱 Remote TV (QR / Link)</button>
               </div>
               <div id="tvModeSetupHint" style="font-size:11.5px; color:#cbd5e1; line-height:1.4; margin-top:4px;"></div>
@@ -471,11 +468,14 @@
 
             <!-- Collapsible Game Rules, Theme, Timer & PIN -->
             <details class="setup-step-box">
-              <summary style="cursor:pointer; font-size:12px; font-weight:800; color:#fde68a;">⚙️ Game Rules, Theme, Timer &amp; PIN Options</summary>
+              <summary class="setup-rules-summary">
+                <span>⚙️ Rules, Theme &amp; Timer</span>
+                <span id="setupRulesSummaryPill" class="setup-rules-summary-pill">4 Rds • 10s • Classic • FM Off</span>
+              </summary>
               <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
                 <div>
                   <label class="field-label" for="setupBoardThemeSelect" style="font-size:10px;">🎨 Visual Board Theme</label>
-                  <select id="setupBoardThemeSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;" onchange="onBoardThemeChange(this.value)">
+                  <select id="setupBoardThemeSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;" onchange="onBoardThemeChange(this.value); updateSetupRulesSummary();">
                     <optgroup label="🎭 Classic &amp; Party Vibes">
                       <option value="classic" selected>🎭 Classic Blue &amp; Gold</option>
                       <option value="classroom">🏫 Classroom Clean</option>
@@ -499,7 +499,7 @@
                 <div class="buzzer-split-btns">
                   <div>
                     <label class="field-label" for="setupRoundsPerMatchSelect" style="font-size:10px;">Rounds Per Game</label>
-                    <select id="setupRoundsPerMatchSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;" onchange="syncTournamentFormatAvailability()">
+                    <select id="setupRoundsPerMatchSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;" onchange="syncTournamentFormatAvailability(); updateSetupRulesSummary();">
                       <option value="3">3 Rounds (1x, 2x, 3x)</option>
                       <option value="4" selected>4 Rounds (Standard: 1x, 1x, 2x, 3x)</option>
                       <option value="5">5 Rounds (1x, 1x, 2x, 2x, 3x)</option>
@@ -517,13 +517,13 @@
                   </div>
                 </div>
                 <label id="setupFastMoneyLabel" style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:800; color:#fef08a; cursor:pointer;">
-                  <input id="setupEnableFastMoneyCheckbox" type="checkbox" style="width:18px; height:18px; accent-color:#fbbf24;" />
+                  <input id="setupEnableFastMoneyCheckbox" type="checkbox" style="width:18px; height:18px; accent-color:#fbbf24;" onchange="updateSetupRulesSummary()" />
                   <span>⚡ Include "Fast Money" Bonus Round in this game <span id="setupFastMoneyHint" style="font-size:11px; color:#94a3b8; font-weight:700;"></span></span>
                 </label>
                 <div class="buzzer-split-btns">
                   <div>
                     <label class="field-label" for="setupTurnTimerSelect">⏱️ Player Answer Timer</label>
-                    <select id="setupTurnTimerSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:13px;">
+                    <select id="setupTurnTimerSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:13px;" onchange="updateSetupRulesSummary()">
                       <option value="5">5 Seconds (Fast Pace)</option>
                       <option value="7">7 Seconds (TV Standard)</option>
                       <option value="10" selected>10 Seconds (Party Standard)</option>
@@ -887,8 +887,8 @@
           <div id="hostFlowHeadline" class="flow-coach-headline display-font">Step 1: Face-Off Ready</div>
           <div id="hostScriptCollapseWrap" class="host-script-collapse-wrap">
             <div id="hostFlowScriptBox" class="host-script-box"></div>
-            <div id="hostFlowSubtext" class="flow-coach-sub">Reveal the question to start the Face-Off!</div>
           </div>
+          <div id="hostFlowSubtext" class="flow-coach-sub hidden">Reveal the question to start the Face-Off!</div>
         </div>
       </div>
       <!-- Mode-specific action buttons right inside the Host Script / instructions card -->
@@ -921,8 +921,11 @@
 
           <!-- Question Prompt (tappable to swap round while hidden on TV) -->
           <div id="hostQuestionBox" class="host-question-box" onclick="if(this.classList.contains('is-swappable'))openHostPopover('round')">
-            <p id="hostPromptText" class="host-prompt-text"></p>
-            <div id="hostQuestionSwapHint" class="host-question-swap-hint hidden">📋 Tap question to swap round from deck</div>
+            <div class="host-question-row">
+              <p id="hostPromptText" class="host-prompt-text"></p>
+              <button id="hostQuickSwapRoundBtn" type="button" class="top-btn gold host-quick-swap-btn hidden" onclick="event.stopPropagation(); hostRandomizeCurrentRound();" title="Swap to another random unplayed question of the same level">🎲 Swap</button>
+            </div>
+            <div id="hostQuestionSwapHint" class="host-question-swap-hint hidden">📋 Tap question to pick another round from deck</div>
           </div>
 
           <!-- Clickable Survey Answers (1–8) -->
@@ -942,6 +945,7 @@
               <button class="top-btn" onclick="hostSetFmClock(25)">25s</button>
               <button id="hostBtnFmTimer" class="top-btn gold" onclick="hostToggleFmClock()">Start</button>
               <button class="top-btn" style="background:#991b1b;" onclick="hostFmDuplicateBuzz()">Dup ❌</button>
+              <button id="hostBtnFmReadyP2" type="button" class="top-btn gold hidden" onclick="hostFmReadyPlayer2()" title="Hide Player 1 answers on TV and set clock to 25s for Player 2">⏭️ Ready Player 2</button>
               <button class="top-btn" onclick="hostToggleFmHideP1()">🙈 Hide/Show P1</button>
               <button class="top-btn" onclick="hostResetFm()">Reset</button>
             </div>
