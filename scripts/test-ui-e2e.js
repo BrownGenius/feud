@@ -809,13 +809,15 @@ async function runStep(name, fn) {
         return {
           overflowX: document.documentElement.scrollWidth - window.innerWidth,
           overlap,
-          shortcutsHidden: getComputedStyle(document.getElementById('hostShortcutsBtn')).display === 'none'
+          shortcutsHidden: getComputedStyle(document.getElementById('hostShortcutsBtn')).display === 'none',
+          stickyVisible: getComputedStyle(document.getElementById('hostMobileStickyBar')).display !== 'none'
         };
       })()`);
       await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
       assert.ok(mobileHostLayout.overflowX <= 0, `Mobile Host view should not overflow horizontally, got: ${mobileHostLayout.overflowX}`);
       assert.strictEqual(mobileHostLayout.overlap, false, "Mobile Host header left & timer groups must not overlap");
       assert.strictEqual(mobileHostLayout.shortcutsHidden, true, "Keyboard shortcuts (?) button should be hidden on phone viewports");
+      assert.strictEqual(mobileHostLayout.stickyVisible, true, "Sticky bottom action bar should be visible on phone Host view");
       await cdp.eval(`document.getElementById('hostShortcutsBtn').click()`);
       const shortcutsTitle = await cdp.eval(`document.getElementById('hostPopoverTitle')?.textContent.trim()`);
       assert.ok(/Shortcuts/i.test(shortcutsTitle), `Expected shortcuts popover title, got: ${shortcutsTitle}`);

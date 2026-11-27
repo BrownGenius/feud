@@ -440,7 +440,14 @@ window.Feud = window.Feud || {};
       round.multiplier === 1 ? "Single" : round.multiplier === 2 ? "Double" : "Triple";
 
     if (phase === "faceoff-ready") {
-      headline = isTieBreaker
+      const hasWelcomeQrs = Boolean(
+        roomState.showTvWelcome &&
+          roomState.tvWelcomeInfo &&
+          (roomState.tvWelcomeInfo.url1 || roomState.tvWelcomeInfo.url2 || roomState.tvWelcomeInfo.urlCombo)
+      );
+      headline = hasWelcomeQrs
+        ? "👋 TV on Welcome Screen — Click Show Question When Phones Are Ready"
+        : isTieBreaker
         ? "⚡ Sudden-Death Tie-Breaker: #1 Answer Wins the Match!"
         : "🔔 Step 1: Ready for the Face-Off";
       sayScript = isTieBreaker
@@ -810,6 +817,42 @@ window.Feud = window.Feud || {};
       } else {
         wrongBarEl.className = "host-answers-wrong-bar hidden";
         wrongBarEl.innerHTML = "";
+      }
+    }
+
+    const stickyBar = document.getElementById("hostMobileStickyBar");
+    if (stickyBar) {
+      let stickyHtml = "";
+      if (roomState.stage === "main") {
+        if (phase === "faceoff-ready") {
+          stickyHtml = `<button type="button" class="action-btn btn-gold display-font" onclick="hostRevealQuestionAndStartTimer()">👁️ Show Question on TV</button>`;
+        } else if (phase === "faceoff-buzz") {
+          stickyHtml = `
+            <button type="button" class="action-btn btn-blue display-font" style="flex:1;" onclick="hostManualBuzz(1)">🔔 ${escapeHtml(t1)}</button>
+            <button type="button" class="action-btn btn-red display-font" style="flex:1;" onclick="hostManualBuzz(2)">🔔 ${escapeHtml(t2)}</button>
+          `;
+        } else if (phase === "faceoff-p1" || phase === "faceoff-p2") {
+          stickyHtml = `<button type="button" class="action-btn btn-red display-font" onclick="hostFaceOffWrongGuess()">⚡ Face-Off Wrong Guess</button>`;
+        } else if (phase === "pass-or-play") {
+          stickyHtml = `
+            <button type="button" class="action-btn btn-gold display-font" style="flex:1;" onclick="hostChoosePlayOrPass('play')">▶️ Play</button>
+            <button type="button" class="action-btn btn-blue display-font" style="flex:1;" onclick="hostChoosePlayOrPass('pass')">🔀 Pass</button>
+          `;
+        } else if (phase === "playing") {
+          const curStrikes = Number(roomState.strikes) || 0;
+          stickyHtml = `<button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">❌ Wrong Answer (${curStrikes + 1}/3)</button>`;
+        } else if (phase === "steal") {
+          stickyHtml = `<button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">❌ Steal Missed</button>`;
+        } else if (phase === "round-over") {
+          stickyHtml = actionsHtml;
+        }
+      }
+      if (stickyHtml) {
+        stickyBar.className = "host-mobile-sticky-bar";
+        stickyBar.innerHTML = stickyHtml;
+      } else {
+        stickyBar.className = "host-mobile-sticky-bar hidden";
+        stickyBar.innerHTML = "";
       }
     }
   }

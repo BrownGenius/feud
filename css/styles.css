@@ -2754,6 +2754,49 @@ body.buzzer-nav-locked .buzzer-exit-hold-btn {
     display: none;
   }
 
+  .join-role-stack {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .join-role-stack .buzzer-split-btns {
+    order: 1;
+    margin-top: 0 !important;
+  }
+
+  #btnJoinBuzzerCombo {
+    order: 2;
+  }
+
+  #btnJoinTvDisplay {
+    order: 3;
+    background: rgba(30, 41, 59, 0.85);
+    border-color: rgba(148, 163, 184, 0.4);
+    color: #cbd5e1;
+    font-size: 13px;
+    min-height: 40px;
+  }
+
+  .host-mobile-sticky-bar {
+    display: flex;
+    gap: 8px;
+    position: sticky;
+    bottom: 8px;
+    z-index: 45;
+    padding: 8px 10px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.94);
+    border: 2px solid rgba(251, 191, 36, 0.65);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.65);
+    margin-top: 8px;
+  }
+
+  .host-mobile-sticky-bar .action-btn {
+    min-height: 44px;
+    font-size: 13.5px;
+    margin: 0;
+  }
+
   .flow-coach-headline {
     font-size: 13px;
   }
@@ -4558,6 +4601,12 @@ body[data-theme="rose"] .tile-num-badge {
   padding: 0 10px;
   font-size: 15px;
   margin-bottom: 1px;
+}
+
+@media (min-width: 641px) {
+  .host-mobile-sticky-bar {
+    display: none;
+  }
 }
 
 .ai-builder-textarea {

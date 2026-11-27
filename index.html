@@ -388,7 +388,6 @@
       <article id="lobbyHostCard" class="role-card lobby-host-card">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
           <h2>🎙️ Host a New Game</h2>
-          <span class="pill-badge awake-ok" style="min-height:24px; font-size:10px;">⚡ 1-Click Start</span>
         </div>
 
         <div id="lobbySetupSlot">
@@ -564,8 +563,8 @@
           <input id="joinRoomCodeInput" class="lobby-input" type="text" maxlength="4" placeholder="GA42" />
         </div>
 
-        <div class="field-row">
-          <button class="action-btn btn-blue display-font" onclick="joinTvDisplay()">
+        <div class="field-row join-role-stack">
+          <button id="btnJoinTvDisplay" class="action-btn btn-blue display-font" onclick="joinTvDisplay()">
             📺 Join as TV Display
           </button>
           <div class="buzzer-split-btns" style="margin-top:4px;">
@@ -960,6 +959,9 @@
         </div>
       </div>
     </div>
+
+    <!-- STICKY BOTTOM ACTION BAR ON MOBILE HOST VIEW -->
+    <div id="hostMobileStickyBar" class="host-mobile-sticky-bar hidden"></div>
   </section>
 
   <!-- =====================================================================
