@@ -722,6 +722,7 @@ window.Feud = window.Feud || {};
       } else if (phase === "faceoff-buzz" || phase === "faceoff-p1") {
         const activeTeam =
           roomState.controllingTeam || roomState.buzzerWinner || roomState.faceoffFirstTeam || 0;
+        const canReArm = phase === "faceoff-p1" || Boolean(roomState.buzzerWinner);
         inlineBarEl.className = "faceoff-decision-bar";
         inlineBarEl.innerHTML = `
           <div class="fodb-actions">
@@ -731,6 +732,11 @@ window.Feud = window.Feud || {};
             <button type="button" class="top-btn ${activeTeam === 2 ? "gold" : ""}" style="flex:1; min-width:130px;" onclick="hostSetFaceOffWinner(2)">
               🔔 ${escapeHtml(t2)} ${activeTeam === 2 ? "✓ (Answering)" : "Buzzed"}
             </button>
+            ${
+              canReArm
+                ? `<button type="button" class="top-btn" onclick="hostReArmBuzzers()" title="Clear accidental buzz and re-arm phone buzzers">🔄 Re-Arm Buzzers</button>`
+                : ""
+            }
           </div>
         `;
       } else if (phase === "faceoff-p2") {
@@ -1170,6 +1176,12 @@ window.Feud = window.Feud || {};
       0
     );
     document.getElementById("tvFmTotal").textContent = String(total);
+    const tvNeedEl = document.getElementById("tvFmNeedPill");
+    if (tvNeedEl) {
+      const rem = Math.max(0, 200 - total);
+      tvNeedEl.textContent = total >= 200 ? "🎉 200+ GOAL REACHED!" : `Need ${rem} to win`;
+      tvNeedEl.style.color = total >= 200 ? "#86efac" : "#fde68a";
+    }
 
     const box = document.getElementById("tvFmRows");
     box.innerHTML = fmQuestions
@@ -1426,6 +1438,12 @@ window.Feud = window.Feud || {};
       0
     );
     document.getElementById("hostFmTotal").textContent = String(total);
+    const hostNeedEl = document.getElementById("hostFmNeedBadge");
+    if (hostNeedEl) {
+      const rem = Math.max(0, 200 - total);
+      hostNeedEl.textContent = total >= 200 ? "(🎉 Goal Reached!)" : `(Need ${rem} more)`;
+      hostNeedEl.style.color = total >= 200 ? "#86efac" : "#fde68a";
+    }
 
     const fmScriptEl = document.getElementById("hostFmScriptBox");
     if (fmScriptEl) {
@@ -1563,10 +1581,13 @@ window.Feud = window.Feud || {};
     const sub = document.getElementById("giantBuzzSub");
     const banner = document.getElementById("buzzerStatusBanner");
 
-    const keepFlash = btn.classList.contains("test-ping-flash");
+    const preservedClasses = ["test-ping-flash", "buzz-win-flash", "buzz-lose-flash"]
+      .filter((c) => btn.classList.contains(c))
+      .map((c) => ` ${c}`)
+      .join("");
     btn.className = `giant-buzzer-btn ${
       myTeam === 1 ? "team-1-theme" : "team-2-theme"
-    } combo-buzzer-btn${keepFlash ? " test-ping-flash" : ""}`;
+    } combo-buzzer-btn${preservedClasses}`;
 
     const phase =
       roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
@@ -1624,8 +1645,18 @@ window.Feud = window.Feud || {};
       btn.classList.add("locked-out-state");
       icon.textContent = "⏳";
       text.textContent = myName;
-      sub.textContent = "Waiting…";
-      if (banner) banner.textContent = `🎤 ${otherName}'S TURN!`;
+      const deltaMs = Number(roomState.buzzerRunnerUpDeltaMs) || 0;
+      if (roomState.buzzerWinner === otherTeam && deltaMs > 0) {
+        const deltaSec = (deltaMs / 1000).toFixed(2);
+        sub.textContent = `Too slow (+${deltaSec}s)`;
+        if (banner) banner.textContent = `⚡ ${otherName} buzzed first (+${deltaSec}s)`;
+      } else if (roomState.buzzerWinner === otherTeam) {
+        sub.textContent = "Too slow — locked out";
+        if (banner) banner.textContent = `⚡ ${otherName} buzzed first!`;
+      } else {
+        sub.textContent = "Waiting…";
+        if (banner) banner.textContent = `🎤 ${otherName}'S TURN!`;
+      }
     } else {
       btn.disabled = true;
       btn.classList.add("locked-out-state");
@@ -1677,10 +1708,13 @@ window.Feud = window.Feud || {};
     };
 
     if (!btn1 || !btn2) return;
-    const keepFlash1 = btn1.classList.contains("test-ping-flash");
-    const keepFlash2 = btn2.classList.contains("test-ping-flash");
-    btn1.className = `giant-buzzer-btn team-1-theme combo-buzzer-btn combo-buzzer-top${keepFlash1 ? " test-ping-flash" : ""}`;
-    btn2.className = `giant-buzzer-btn team-2-theme combo-buzzer-btn${keepFlash2 ? " test-ping-flash" : ""}`;
+    const keepClasses = (el) =>
+      ["test-ping-flash", "buzz-win-flash", "buzz-lose-flash"]
+        .filter((c) => el.classList.contains(c))
+        .map((c) => ` ${c}`)
+        .join("");
+    btn1.className = `giant-buzzer-btn team-1-theme combo-buzzer-btn combo-buzzer-top${keepClasses(btn1)}`;
+    btn2.className = `giant-buzzer-btn team-2-theme combo-buzzer-btn${keepClasses(btn2)}`;
     if (title1) title1.textContent = t1Name;
     if (title2) title2.textContent = t2Name;
 
@@ -1746,9 +1780,21 @@ window.Feud = window.Feud || {};
         }
       }
       if (idleIcon) idleIcon.textContent = "⏳";
-      if (sub1) sub1.textContent = activeTurnTeam === 1 ? "YOUR TURN!" : "Waiting…";
-      if (sub2) sub2.textContent = activeTurnTeam === 2 ? "YOUR TURN!" : "Waiting…";
-      setComboBanner(`🎤 ${activeTurnTeam === 1 ? t1Name : t2Name}'S TURN!`);
+      const deltaMs = Number(roomState.buzzerRunnerUpDeltaMs) || 0;
+      const winTeamName = activeTurnTeam === 1 ? t1Name : t2Name;
+      const loserSubText =
+        roomState.buzzerWinner === activeTurnTeam && deltaMs > 0
+          ? `Too slow (+${(deltaMs / 1000).toFixed(2)}s)`
+          : roomState.buzzerWinner === activeTurnTeam
+            ? "Too slow — locked out"
+            : "Waiting…";
+      if (sub1) sub1.textContent = activeTurnTeam === 1 ? "YOUR TURN!" : loserSubText;
+      if (sub2) sub2.textContent = activeTurnTeam === 2 ? "YOUR TURN!" : loserSubText;
+      if (roomState.buzzerWinner === activeTurnTeam && deltaMs > 0) {
+        setComboBanner(`⚡ ${winTeamName} buzzed first (+${(deltaMs / 1000).toFixed(2)}s)`);
+      } else {
+        setComboBanner(`🎤 ${winTeamName}'S TURN!`);
+      }
     } else {
       btn1.disabled = true;
       btn2.disabled = true;

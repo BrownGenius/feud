@@ -31,7 +31,7 @@
   <meta name="twitter:image:alt" content="Party Feud 16:9 TV Display Board showing revealed survey answers and scores" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
-  <link rel="stylesheet" href="./css/styles.css?v=20261126g" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261127a" />
 </head>
 <body>
 
@@ -435,6 +435,7 @@
                     <option value="4">🏆 4-Team Tournament</option>
                   </select>
                   <button type="button" class="top-btn" style="min-height:28px; padding:4px 10px; font-size:11px;" onclick="cycleSetupTeamPresets()">🎲 Swap Names</button>
+                  <button type="button" id="btnSwapSetupTeamSides" class="top-btn" style="min-height:28px; padding:4px 10px; font-size:11px;" onclick="swapSetupTeamSides()" title="Swap Team 1 (Left/Blue) and Team 2 (Right/Red)">⇄ Swap Sides</button>
                 </div>
               </div>
               <div class="buzzer-split-btns">
@@ -687,6 +688,7 @@
         <div class="pot-box" style="min-width:160px;">
           <div class="pot-label">Total (Goal 200)</div>
           <div id="tvFmTotal" class="pot-value display-font">0</div>
+          <div id="tvFmNeedPill" style="font-size:11px; font-weight:800; color:#fde68a; margin-top:2px;">Need 200 to win</div>
         </div>
       </div>
       <div id="tvFmRows"></div>
@@ -858,7 +860,7 @@
           <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px;">
             <div>
               <h2 class="brand-title display-font">⚡ Fast Money Host Panel</h2>
-              <p class="brand-sub">Combined Total: <strong id="hostFmTotal" style="color:#fff;">0</strong> / 200</p>
+              <p class="brand-sub">Combined Total: <strong id="hostFmTotal" style="color:#fff;">0</strong> / 200 <span id="hostFmNeedBadge" style="color:#fde68a; font-weight:700; margin-left:6px;">(Need 200 more)</span></p>
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
               <span id="hostFmClock" class="display-font" style="font-size:32px; color:var(--gold); margin-right:6px;">20s</span>
@@ -1051,20 +1053,20 @@
   </div>
 
   <footer class="app-footer-bar">
-    <span id="appBuildBadge" class="app-build-badge">Build v20261126g</span>
+    <span id="appBuildBadge" class="app-build-badge">Build v20261127a</span>
     <button id="btnOpenBugReportFooter" type="button" class="top-btn" style="min-height:26px; padding:2px 10px; font-size:11px;" onclick="openBugReportModal()">🐛 Report Bug / Vote</button>
   </footer>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js" async></script>
-  <script src="./js/audio.js?v=20261126g"></script>
-  <script src="./js/state.js?v=20261126g"></script>
-  <script src="./js/formats.js?v=20261126g"></script>
-  <script src="./js/decks.js?v=20261126g"></script>
-  <script src="./js/sync.js?v=20261126g"></script>
-  <script src="./js/feedback.js?v=20261126g"></script>
-  <script src="./js/views.js?v=20261126g"></script>
-  <script src="./js/ai-builder.js?v=20261126g"></script>
-  <script src="./js/app.js?v=20261126g"></script>
+  <script src="./js/audio.js?v=20261127a"></script>
+  <script src="./js/state.js?v=20261127a"></script>
+  <script src="./js/formats.js?v=20261127a"></script>
+  <script src="./js/decks.js?v=20261127a"></script>
+  <script src="./js/sync.js?v=20261127a"></script>
+  <script src="./js/feedback.js?v=20261127a"></script>
+  <script src="./js/views.js?v=20261127a"></script>
+  <script src="./js/ai-builder.js?v=20261127a"></script>
+  <script src="./js/app.js?v=20261127a"></script>
 </body>
 </html>
