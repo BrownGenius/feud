@@ -1288,8 +1288,20 @@ window.Feud = window.Feud || {};
     const code = document.getElementById("joinRoomCodeInput").value.trim().toUpperCase();
     const pin = document.getElementById("hostJoinPin").value.trim();
 
-    if (code.length < 4 || pin.length < 4) {
-      Feud.showToast("Enter the 4-character Room Code and 4-digit Host PIN.");
+    if (code.length < 4) {
+      Feud.showToast("Enter the 4-character Room Code.");
+      return;
+    }
+
+    if (pin.length < 4) {
+      Feud.showToast(`Checking Room ${code}…`);
+      const probe = await Feud.joinExistingRoomSync({ code, role: "tv" });
+      if (Feud.cleanupSync) Feud.cleanupSync();
+      if (!probe.ok) {
+        Feud.showToast(probe.error || `Room "${code}" not found.`);
+        return;
+      }
+      Feud.showToast(`Room ${code} found! Enter the 4-digit Host PIN to unlock.`);
       return;
     }
 
@@ -1308,6 +1320,42 @@ window.Feud = window.Feud || {};
     Feud.showToast(`Unlocked Host Mode for Room ${code}!`);
   }
 
+  async function connectAndMaybeOpenPopup({
+    code,
+    role,
+    autoLaunched,
+    windowName,
+    features,
+    connectingMsg,
+    retryMsg
+  }) {
+    Feud.showToast(connectingMsg);
+    let res = await Feud.joinExistingRoomSync({ code, role });
+    if (!res.ok && autoLaunched && retryMsg && !(res.error && res.error.includes("already open"))) {
+      Feud.showToast(retryMsg);
+      await new Promise((r) => setTimeout(r, 1500));
+      res = await Feud.joinExistingRoomSync({ code, role });
+    }
+    if (!res.ok) {
+      Feud.showToast(res.error || `Room "${code}" not found.`);
+      return null;
+    }
+
+    if (!autoLaunched && windowName) {
+      const popupWin = openRoleWindow(code, role, windowName, features);
+      if (popupWin) {
+        if (Feud.cleanupSync) Feud.cleanupSync();
+        if (role === "buzzer1" || role === "buzzer2" || role === "buzzer_combo") {
+          openedBuzzerPopups[role] = popupWin;
+          refreshLobbyBuzzerLocks(false);
+        }
+        return { handedOffToPopup: true };
+      }
+    }
+
+    return { handedOffToPopup: false, state: res.state };
+  }
+
   async function joinTvDisplay(opts) {
     const autoLaunched = Boolean(opts && opts.autoLaunched === true);
     Feud.unlockAudio();
@@ -1317,18 +1365,17 @@ window.Feud = window.Feud || {};
       return;
     }
 
-    if (!autoLaunched) {
-      if (openTvDisplayWindow(code)) return;
-    }
+    const conn = await connectAndMaybeOpenPopup({
+      code,
+      role: "tv",
+      autoLaunched,
+      windowName: "partyFeudTvDisplay",
+      features: "popup=yes,width=1280,height=720",
+      connectingMsg: `Connecting TV to Room ${code}…`
+    });
+    if (!conn || conn.handedOffToPopup) return;
 
-    Feud.showToast(`Connecting TV to Room ${code}…`);
-    const res = await Feud.joinExistingRoomSync({ code, role: "tv" });
-    if (!res.ok) {
-      Feud.showToast(res.error || `Room "${code}" not found.`);
-      return;
-    }
-
-    roomState = { ...roomState, ...res.state };
+    roomState = { ...roomState, ...conn.state };
     currentRoomCode = code;
     syncSequenceCounters(roomState);
     // An auto-launched TV window shares localStorage with the Host window — don't overwrite the Host's saved session/PIN
@@ -1405,32 +1452,18 @@ window.Feud = window.Feud || {};
     }
 
     const role = teamNum === 1 ? "buzzer1" : "buzzer2";
-    if (!autoLaunched) {
-      const popupWin = openRoleWindow(
-        code,
-        role,
-        `partyFeudBuzzer${teamNum}`,
-        "popup=yes,width=480,height=780"
-      );
-      if (popupWin) {
-        openedBuzzerPopups[role] = popupWin;
-        refreshLobbyBuzzerLocks(false);
-        return;
-      }
-    }
-    Feud.showToast(`Connecting Team ${teamNum} Buzzer to ${code}…`);
-    let res = await Feud.joinExistingRoomSync({ code, role });
-    if (!res.ok && autoLaunched && !(res.error && res.error.includes("already open"))) {
-      Feud.showToast(`Retrying Team ${teamNum} Buzzer connection…`);
-      await new Promise((r) => setTimeout(r, 1500));
-      res = await Feud.joinExistingRoomSync({ code, role });
-    }
-    if (!res.ok) {
-      Feud.showToast(res.error || `Room "${code}" not found.`);
-      return;
-    }
+    const conn = await connectAndMaybeOpenPopup({
+      code,
+      role,
+      autoLaunched,
+      windowName: `partyFeudBuzzer${teamNum}`,
+      features: "popup=yes,width=480,height=780",
+      connectingMsg: `Connecting Team ${teamNum} Buzzer to ${code}…`,
+      retryMsg: `Retrying Team ${teamNum} Buzzer connection…`
+    });
+    if (!conn || conn.handedOffToPopup) return;
 
-    roomState = { ...roomState, ...res.state };
+    roomState = { ...roomState, ...conn.state };
     currentRoomCode = code;
     syncSequenceCounters(roomState);
     Feud.saveLastSession(role, code);
@@ -1449,32 +1482,18 @@ window.Feud = window.Feud || {};
     }
 
     const role = "buzzer_combo";
-    if (!autoLaunched) {
-      const popupWin = openRoleWindow(
-        code,
-        role,
-        "partyFeudComboBuzzer",
-        "popup=yes,width=540,height=860"
-      );
-      if (popupWin) {
-        openedBuzzerPopups[role] = popupWin;
-        refreshLobbyBuzzerLocks(false);
-        return;
-      }
-    }
-    Feud.showToast(`Connecting Combo Buzzer to ${code}…`);
-    let res = await Feud.joinExistingRoomSync({ code, role });
-    if (!res.ok && autoLaunched && !(res.error && res.error.includes("already open"))) {
-      Feud.showToast("Retrying Combo Buzzer connection…");
-      await new Promise((r) => setTimeout(r, 1500));
-      res = await Feud.joinExistingRoomSync({ code, role });
-    }
-    if (!res.ok) {
-      Feud.showToast(res.error || `Room "${code}" not found.`);
-      return;
-    }
+    const conn = await connectAndMaybeOpenPopup({
+      code,
+      role,
+      autoLaunched,
+      windowName: "partyFeudComboBuzzer",
+      features: "popup=yes,width=540,height=860",
+      connectingMsg: `Connecting Combo Buzzer to ${code}…`,
+      retryMsg: "Retrying Combo Buzzer connection…"
+    });
+    if (!conn || conn.handedOffToPopup) return;
 
-    roomState = { ...roomState, ...res.state };
+    roomState = { ...roomState, ...conn.state };
     currentRoomCode = code;
     syncSequenceCounters(roomState);
     Feud.saveLastSession(role, code);

@@ -1614,6 +1614,7 @@ window.Feud = window.Feud || {};
     icon.classList.remove("is-big-timer", "is-urgent");
     if (canBuzz) {
       btn.disabled = false;
+      btn.classList.add("is-armed");
       icon.textContent = "🔔";
       text.textContent = myName;
       sub.textContent = "Tap to buzz in!";
@@ -1746,6 +1747,8 @@ window.Feud = window.Feud || {};
     if (canBuzz) {
       btn1.disabled = false;
       btn2.disabled = false;
+      btn1.classList.add("is-armed");
+      btn2.classList.add("is-armed");
       if (icon1) icon1.textContent = "🔔";
       if (icon2) icon2.textContent = "🔔";
       if (sub1) sub1.textContent = "Tap to buzz in!";

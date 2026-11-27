@@ -796,6 +796,26 @@ async function runStep(name, fn) {
       assert.strictEqual(afterSwap.t2, beforeSwap.t1, "Swap Sides should move Team 1 name to Team 2");
       await cdp.eval(`window.hostSwapTeamSides()`);
       await sleep(80);
+
+      // Verify Host Mode adapts cleanly to a 390x844 phone viewport (zero horizontal overflow & non-overlapping header rows)
+      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+      await sleep(100);
+      const mobileHostLayout = await cdp.eval(`(() => {
+        const left = document.querySelector('#hostFlowCoachCard .host-header-left')?.getBoundingClientRect();
+        const right = document.querySelector('#hostFlowCoachCard .host-quick-timer-group')?.getBoundingClientRect();
+        const overlap = left && right
+          ? !(left.right <= right.left + 1 || right.right <= left.left + 1 || left.bottom <= right.top + 1 || right.bottom <= left.top + 1)
+          : false;
+        return {
+          overflowX: document.documentElement.scrollWidth - window.innerWidth,
+          overlap,
+          shortcutsHidden: getComputedStyle(document.getElementById('hostShortcutsBtn')).display === 'none'
+        };
+      })()`);
+      await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
+      assert.ok(mobileHostLayout.overflowX <= 0, `Mobile Host view should not overflow horizontally, got: ${mobileHostLayout.overflowX}`);
+      assert.strictEqual(mobileHostLayout.overlap, false, "Mobile Host header left & timer groups must not overlap");
+      assert.strictEqual(mobileHostLayout.shortcutsHidden, true, "Keyboard shortcuts (?) button should be hidden on phone viewports");
       await cdp.eval(`document.getElementById('hostShortcutsBtn').click()`);
       const shortcutsTitle = await cdp.eval(`document.getElementById('hostPopoverTitle')?.textContent.trim()`);
       assert.ok(/Shortcuts/i.test(shortcutsTitle), `Expected shortcuts popover title, got: ${shortcutsTitle}`);
@@ -1029,6 +1049,8 @@ async function runStep(name, fn) {
         await cdp.waitFor("!document.querySelector('#hostFaceOffDecisionBar button[onclick=\"hostReArmBuzzers()\"]')");
         await b1Conn.tabCdp.waitFor("document.getElementById('giantBuzzerBtn').disabled === false");
         await b2Conn.tabCdp.waitFor("document.getElementById('giantBuzzerBtn').disabled === false");
+        const armedClassCheck = await b1Conn.tabCdp.eval(`document.getElementById('giantBuzzerBtn').classList.contains('is-armed')`);
+        assert.strictEqual(armedClassCheck, true, "Armed phone buzzer should have pulsing is-armed class");
         const vibCalls = await b1Conn.tabCdp.eval(`window.__vibrateCalls`);
         assert.ok(Array.isArray(vibCalls) && vibCalls.includes(30), `Expected 30ms haptic arm pulse, got: ${JSON.stringify(vibCalls)}`);
 
@@ -1382,6 +1404,46 @@ async function runStep(name, fn) {
       assert.strictEqual(pinCheck.badOk, false, "Wrong Host PIN must be rejected");
       assert.ok(/Incorrect Host PIN/i.test(pinCheck.badErr));
       assert.strictEqual(pinCheck.goodOk, true, "Correct Host PIN must unlock room");
+
+      // E. Joining Nonexistent Room must verify room exists BEFORE opening popup or switching UI
+      await cdp.navigate(`${baseUrl}/index.html`);
+      await cdp.waitFor("window.Feud && !document.getElementById('lobbyView').classList.contains('hidden')");
+      const missingRoomCheck = await cdp.eval(`(async () => {
+        let openCalls = 0;
+        const origOpen = window.open;
+        window.open = () => { openCalls++; return null; };
+        document.getElementById('joinRoomCodeInput').value = 'NO99';
+        await window.joinTvDisplay();
+        const tvToast = document.getElementById('toastBanner')?.textContent.trim() || '';
+        await window.joinTeamBuzzer(1);
+        const b1Toast = document.getElementById('toastBanner')?.textContent.trim() || '';
+        await window.joinComboBuzzer();
+        const comboToast = document.getElementById('toastBanner')?.textContent.trim() || '';
+        document.getElementById('hostJoinPin').value = '';
+        await window.joinHostRoom();
+        const hostToast = document.getElementById('toastBanner')?.textContent.trim() || '';
+        window.open = origOpen;
+        return {
+          openCalls,
+          lobbyVisible: !document.getElementById('lobbyView').classList.contains('hidden'),
+          tvHidden: document.getElementById('tvView').classList.contains('hidden'),
+          buzzerHidden: document.getElementById('buzzerView').classList.contains('hidden'),
+          comboHidden: document.getElementById('comboBuzzerView').classList.contains('hidden'),
+          tvToast,
+          b1Toast,
+          comboToast,
+          hostToast
+        };
+      })()`);
+      assert.strictEqual(missingRoomCheck.openCalls, 0, "Should never open popup window for a nonexistent room");
+      assert.strictEqual(missingRoomCheck.lobbyVisible, true, "Should remain in Lobby when room does not exist");
+      assert.strictEqual(missingRoomCheck.tvHidden, true);
+      assert.strictEqual(missingRoomCheck.buzzerHidden, true);
+      assert.strictEqual(missingRoomCheck.comboHidden, true);
+      assert.ok(/not found/i.test(missingRoomCheck.tvToast), `Expected not found toast for TV, got: ${missingRoomCheck.tvToast}`);
+      assert.ok(/not found/i.test(missingRoomCheck.b1Toast), `Expected not found toast for Buzzer 1, got: ${missingRoomCheck.b1Toast}`);
+      assert.ok(/not found/i.test(missingRoomCheck.comboToast), `Expected not found toast for Combo, got: ${missingRoomCheck.comboToast}`);
+      assert.ok(/not found/i.test(missingRoomCheck.hostToast), `Expected not found toast for Unlock Host Mode before PIN check, got: ${missingRoomCheck.hostToast}`);
     });
 
     await runStep("16. review.html Used/Unused Tracker Persistence & Next Match Contender Modes", async () => {
