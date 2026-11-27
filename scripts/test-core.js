@@ -123,14 +123,15 @@ async function runTest(name, fn) {
 
   const { Feud, localStorage } = createBrowserSandbox();
 
-  await runTest("1. Default Starter Deck & Room State Initialization", () => {
+  await runTest("1. Default Classic Party Mix Deck & Room State Initialization", () => {
     localStorage.clear();
     assert.ok(Feud.DEFAULT_DECK, "DEFAULT_DECK should be defined");
-    assert.strictEqual(Feud.DEFAULT_ROUNDS.length, 6, "Starter deck should have 6 rounds");
+    assert.strictEqual(Feud.DEFAULT_DECK.deckName, "Classic Party Mix");
+    assert.strictEqual(Feud.DEFAULT_ROUNDS.length, 25, "Default Classic Party Mix deck should have 25 rounds (24 regular + 1 tie-breaker)");
     assert.strictEqual(
       Feud.FAST_MONEY_QUESTIONS.length,
-      5,
-      "Starter deck should have 5 Fast Money questions"
+      15,
+      "Default Classic Party Mix deck should have 15 Fast Money questions (3 sets)"
     );
 
     const state = Feud.createDefaultRoomState("4321");
@@ -138,7 +139,12 @@ async function runTest(name, fn) {
     assert.strictEqual(state.stage, "main");
     assert.strictEqual(state.roundPhase, "faceoff-ready");
     assert.strictEqual(state.roundsPerMatch, 4);
-    assert.strictEqual(Feud.getRegularRoundCount(state), 5, "5 regular rounds + 1 tie-breaker");
+    assert.strictEqual(Feud.getRegularRoundCount(state), 24, "24 regular rounds + 1 tie-breaker");
+    for (let i = 0; i < 24; i++) {
+      const r = Feud.DEFAULT_ROUNDS[i];
+      const sum = (r.answers || []).reduce((acc, a) => acc + (Number(a.points) || 0), 0);
+      assert.strictEqual(sum, 100, `Default round ${i + 1} answers should sum to 100 (got ${sum})`);
+    }
   });
 
   await runTest("2. Universal JSON Parser (Native, Friendly-Feud & Custom Overrides)", () => {
@@ -363,7 +369,7 @@ async function runTest(name, fn) {
     assert.strictEqual(decoded.data.deckName, "Unit Test Share Deck");
     assert.strictEqual(decoded.data.gameIcon, "🧪");
     assert.strictEqual(decoded.data.rounds.length, 3);
-    assert.strictEqual(decoded.data.fastMoney.length, 5);
+    assert.strictEqual(decoded.data.fastMoney.length, Feud.FAST_MONEY_QUESTIONS.length);
   });
 
   await runTest("8. Authoritative Face-Off Buzzer Arbitration (buildBuzzPatch)", () => {
@@ -484,6 +490,29 @@ async function runTest(name, fn) {
     const bySlug = Feud.findCatalogDeckMatch("desi-thanksgiving-37-rounds");
     const byId = Feud.findCatalogDeckMatch("desi-thanksgiving");
     assert.ok(bySlug && byId && bySlug.id === byId.id, "Both slugified and canonical ?deck= params should resolve to the same entry");
+
+    // Verify classic-party-mix.json deduplicates against built-in starter entry
+    Feud.upsertCatalogEntries(
+      [
+        {
+          id: "classic-party-mix.json",
+          file: "./decks/classic-party-mix.json",
+          source: "remote",
+          meta: {
+            deckName: "Classic Party Mix",
+            roundsCount: 25,
+            fastMoneySets: 3
+          }
+        }
+      ],
+      { skipSave: true }
+    );
+    const classicEntries = Feud.getDeckCatalog().filter(
+      (c) => /classic/i.test((c.label || "") + " " + ((c.meta && c.meta.deckName) || "") + " " + (c.id || ""))
+    );
+    assert.strictEqual(classicEntries.length, 1, "classic-party-mix.json must deduplicate with built-in starter entry");
+    const byClassicParam = Feud.findCatalogDeckMatch("classic-party-mix");
+    assert.ok(byClassicParam && byClassicParam.builtin === "starter", "findCatalogDeckMatch('classic-party-mix') should resolve to built-in entry");
 
     // Verify formatDeckJsonLikeOriginal preserves 4-space CRLF & extra keys
     const origCrlf = '{\r\n    "gameTitle": "Test",\r\n    "boardTheme": "harvest",\r\n    "rounds": [\r\n        {\r\n            "prompt": "Q?",\r\n            "answers": [\r\n                { "text": "Yes", "points": 100 }\r\n            ]\r\n        }\r\n    ]\r\n}\r\n';

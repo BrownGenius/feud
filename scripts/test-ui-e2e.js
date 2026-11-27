@@ -499,6 +499,8 @@ async function runStep(name, fn) {
         title: document.getElementById('topBrandTitle')?.textContent.trim(),
         lobbyVisible: !document.getElementById('lobbyView').classList.contains('hidden'),
         deckOptionCount: document.getElementById('deckManagerSelect').options.length,
+        classicOptionCount: Array.from(document.getElementById('deckManagerSelect').options).filter(o => /Classic Party Mix/i.test(o.textContent)).length,
+        selectedDeckLabel: document.getElementById('deckManagerSelect').selectedOptions[0]?.textContent.trim() || '',
         starterFormat3Disabled: document.querySelector('#setupMatchFormatSelect option[value="3"]')?.disabled,
         starterFormat4Disabled: document.querySelector('#setupMatchFormatSelect option[value="4"]')?.disabled,
         tvModeHint: document.getElementById('tvModeSetupHint')?.textContent.trim() || ''
@@ -507,11 +509,13 @@ async function runStep(name, fn) {
       assert.strictEqual(lobbyState.title, "Party Feud");
       assert.strictEqual(lobbyState.lobbyVisible, true);
       assert.strictEqual(await cdp.eval(`document.getElementById('deckTagPills') === null`), true, "Category tag filter pills should be removed");
-      assert.ok(lobbyState.deckOptionCount >= 8, `Expected >= 8 decks (Starter + 7 JSON decks), got ${lobbyState.deckOptionCount}`);
+      assert.ok(lobbyState.deckOptionCount >= 8, `Expected >= 8 decks (Classic Party Mix + 7 other JSON decks), got ${lobbyState.deckOptionCount}`);
+      assert.strictEqual(lobbyState.classicOptionCount, 1, "Classic Party Mix should appear only once in deck dropdown (deduplicated)");
+      assert.ok(/Classic Party Mix/i.test(lobbyState.selectedDeckLabel), `Expected default deck to be Classic Party Mix, got: ${lobbyState.selectedDeckLabel}`);
       assert.ok(lobbyState.tvModeHint.length > 10, "Setup screen should display TV & buzzer mode hint");
-      // Starter deck has 5 regular rounds; with 4 rounds/game, 3-team (8 rounds) & 4-team (12 rounds) must be disabled!
-      assert.strictEqual(lobbyState.starterFormat3Disabled, true, "3-Team format should be disabled on 5-round Starter deck at 4 rounds/game");
-      assert.strictEqual(lobbyState.starterFormat4Disabled, true, "4-Team format should be disabled on 5-round Starter deck at 4 rounds/game");
+      // Default Classic Party Mix has 24 regular rounds; 3-team (8 rounds) & 4-team (12 rounds) are immediately unlocked!
+      assert.strictEqual(lobbyState.starterFormat3Disabled, false, "3-Team format should be enabled immediately on 24-round Classic Party Mix deck");
+      assert.strictEqual(lobbyState.starterFormat4Disabled, false, "4-Team format should be enabled immediately on 24-round Classic Party Mix deck");
     });
 
     await runStep("2. Selecting a 60-Round Deck Enables 3-Team & 4-Team Tournament Modes & Theme Switching", async () => {
@@ -621,12 +625,14 @@ async function runStep(name, fn) {
 
       const demoState = await cdp.eval(`({
         demoBannerVisible: !document.getElementById('hostDemoBanner').classList.contains('hidden'),
+        demoTitle: document.getElementById('topBrandTitle')?.textContent.trim() || '',
         hostPrompt: document.getElementById('hostPromptText')?.textContent.trim(),
         tvDockedInsideHost: Boolean(document.querySelector('#hostTvMonitorDock #tvView')),
         hostAnswerBtnCount: document.querySelectorAll('#hostAnswersList button').length
       })`);
 
       assert.strictEqual(demoState.demoBannerVisible, true, "Interactive Demo banner should be visible");
+      assert.strictEqual(demoState.demoTitle, "Classic Party Mix", "Interactive Demo should use Classic Party Mix");
       assert.ok(demoState.hostPrompt.length > 10, "Host prompt should render starter question");
       assert.strictEqual(demoState.tvDockedInsideHost, true, "Live TV preview should be docked inside Host workspace");
       assert.strictEqual(demoState.hostAnswerBtnCount, 6, "Round 1 should render 6 clickable answer buttons on Host remote");
@@ -1521,6 +1527,12 @@ async function runStep(name, fn) {
       await cdp.waitFor("/desi-thanksgiving\\.json/i.test(document.getElementById('deckManagerSelect')?.value || '')");
       const desiSelected = await cdp.eval(`document.getElementById('deckManagerSelect')?.value || ''`);
       assert.strictEqual(desiSelected, "desi-thanksgiving.json", "Slugified ?deck=desi-thanksgiving-37-rounds should resolve to desi-thanksgiving.json");
+
+      // A3. ?deck=classic-party-mix resolves cleanly to deduplicated built-in starter entry
+      await cdp.navigate(`${baseUrl}/index.html?deck=classic-party-mix`);
+      await cdp.waitFor("document.getElementById('deckManagerSelect')?.value === 'starter'");
+      const classicSelected = await cdp.eval(`document.getElementById('deckManagerSelect')?.value || ''`);
+      assert.strictEqual(classicSelected, "starter", "?deck=classic-party-mix should resolve to built-in Classic Party Mix entry");
 
       // B. index.html#deckData=... compressed custom deck load
       const token = await cdp.eval(`(async () => {

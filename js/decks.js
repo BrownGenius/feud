@@ -22,8 +22,8 @@ window.Feud = window.Feud || {};
 
   const STARTER_ENTRY = {
     id: "starter",
-    label: "🎉 Starter Party Deck (6 Rounds)",
-    file: null,
+    label: "🎉 Classic Party Mix (25 Rounds)",
+    file: "./decks/classic-party-mix.json",
     builtin: "starter",
     source: "builtin"
   };
@@ -233,12 +233,23 @@ window.Feud = window.Feud || {};
       .replace(/^-+|-+$/g, "");
   }
 
+  function isDefaultClassicDeckMatch(id, deckName) {
+    const idKey = normalizeDeckIdKey(id);
+    if (idKey === "classic-party-mix" || idKey === "starter") return true;
+    const slug = slugifyDeckName(deckName);
+    return slug === "classic-party-mix" || slug === "classic-party-mix-25-rounds";
+  }
+
   function findCatalogDeckMatch(queryOrSlug) {
     const clean = String(queryOrSlug || "").trim();
     if (!clean) return null;
     const catalog = getDeckCatalog();
     const normKey = normalizeDeckIdKey(clean);
     const slug = slugifyDeckName(clean);
+    if (normKey === "classic-party-mix" || slug === "classic-party-mix" || normKey === "starter") {
+      const builtinStarter = catalog.find((item) => item && item.builtin === "starter");
+      if (builtinStarter) return builtinStarter;
+    }
     return (
       catalog.find((item) => {
         if (!item || !item.id) return false;
@@ -288,6 +299,16 @@ window.Feud = window.Feud || {};
 
     (newEntries || []).forEach((incoming) => {
       if (!incoming || !incoming.id || incoming.builtin === "starter") return;
+      const incomingDeckName =
+        (incoming.data && incoming.data.deckName) || (incoming.meta && incoming.meta.deckName) || "";
+      if (isDefaultClassicDeckMatch(incoming.id, incomingDeckName)) {
+        const starterEntry = catalog.find((item) => item && item.builtin === "starter");
+        if (starterEntry) {
+          if (incoming.meta) starterEntry.meta = { ...(starterEntry.meta || {}), ...incoming.meta };
+          if (incoming.file) starterEntry.file = incoming.file;
+        }
+        return;
+      }
       const incomingIdKey = normalizeDeckIdKey(incoming.id);
       const incomingSig = getDeckSignature(incoming);
       const incomingNameSlug = slugifyDeckName(

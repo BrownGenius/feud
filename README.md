@@ -54,7 +54,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 | **🤖 2026 FRC Game & Rules** | 24 FIRST Robotics Competition Rounds | [▶ Play](https://browngenius.github.io/feud/?deck=2026-frc-rules&theme=frc) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=2026-frc-rules) |
 | **🦃 Desi Thanksgiving** | 37 Rounds • 5 Fast Money Sets | [▶ Play](https://browngenius.github.io/feud/?deck=desi-thanksgiving) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=desi-thanksgiving) |
 | **🎬 Bollywood Music & Movies** | 12 Rounds • Fast Money | [▶ Play](https://browngenius.github.io/feud/?deck=bollywood-music-movies) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=bollywood-music-movies) |
-| **🎉 Starter Party Deck** | 6 Classic Party Rounds • Fast Money | [▶ Play](https://browngenius.github.io/feud/?deck=starter) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=starter) |
+| **🎉 Classic Party Mix *(Default)*** | 25 Rounds (All-Ages) • 3 Fast Money Sets *(Offline Ready)* | [▶ Play](https://browngenius.github.io/feud/?deck=classic-party-mix) | [🖨️ Review](https://browngenius.github.io/feud/review.html?deck=classic-party-mix) |
 
 ---
 

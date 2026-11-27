@@ -395,7 +395,7 @@ window.Feud = window.Feud || {};
       Feud.DECK_CATALOG = [
         {
           id: "starter",
-          label: "🎉 Starter Party Deck (6 Rounds)",
+          label: "🎉 Classic Party Mix (25 Rounds)",
           file: null,
           builtin: "starter"
         }
@@ -464,7 +464,7 @@ window.Feud = window.Feud || {};
     } else if (!activeDeckName && !matched && filtered.length > 0) {
       const starterOpt = document.createElement("option");
       starterOpt.value = "__custom__";
-      starterOpt.textContent = `🎉 Active: Starter Party Deck`;
+      starterOpt.textContent = `🎉 Active: Classic Party Mix`;
       starterOpt.selected = true;
       sel.appendChild(starterOpt);
     }
@@ -1248,7 +1248,7 @@ window.Feud = window.Feud || {};
 
     const starterRounds = Array.isArray(Feud.DEFAULT_ROUNDS) ? Feud.DEFAULT_ROUNDS : [];
     const starterTitle =
-      (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) || "Starter Party Deck";
+      (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) || "Classic Party Mix";
     const starterIcon = (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameIcon) || "🎉";
     const fresh = Feud.createDefaultRoomState("1234");
     const demoRounds = starterRounds.map((r, i) => ({ ...r, sourceIdx: i }));
@@ -4792,7 +4792,7 @@ window.Feud = window.Feud || {};
     Feud.saveCustomRounds({});
     const defTitle =
       (Feud.DEFAULT_DECK && (Feud.DEFAULT_DECK.deckName || Feud.DEFAULT_DECK.gameTitle)) ||
-      "Starter Party Deck";
+      "Classic Party Mix";
     const defIcon = (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameIcon) || "🎉";
     Feud.saveGameTitle(defTitle);
     Feud.saveGameIcon(defIcon);
@@ -4834,7 +4834,7 @@ window.Feud = window.Feud || {};
     if (closeModals) {
       closeDeckManagerModal();
     }
-    Feud.showToast(`${defIcon} Restored the default Starter Party Deck!`);
+    Feud.showToast(`${defIcon} Restored the default Classic Party Mix!`);
   }
 
   function triggerFileDownload(filename, content, mimeType) {

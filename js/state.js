@@ -10,7 +10,7 @@ window.Feud = window.Feud || {};
 window.Feud.DEFAULT_DECK = {
   gameTitle: "Party Feud",
   gameIcon: "🎉",
-  deckName: "Starter Party Deck",
+  deckName: "Classic Party Mix",
   teamPresets: [
     ["Team A", "Team B"],
     ["Team Red", "Team Blue"],
@@ -21,8 +21,9 @@ window.Feud.DEFAULT_DECK = {
     "BUZZ", "TEAM", "SHOW", "LIVE", "CLUB"
   ],
   rounds: [
+    // --- 1x SINGLE POINT ROUNDS (8) ---
     {
-      theme: "🔥 Live Party Poll (Editable!)",
+      theme: "🍽️ Food & Gatherings",
       title: "Round 1",
       multiplier: 1,
       prompt: "Name something people always do right after finishing a huge meal.",
@@ -36,7 +37,7 @@ window.Feud.DEFAULT_DECK = {
       ]
     },
     {
-      theme: "🔥 Live Party Poll (Editable!)",
+      theme: "✈️ Travel & Getaways",
       title: "Round 2",
       multiplier: 1,
       prompt: "What is one item you will NEVER travel on an airplane without?",
@@ -50,7 +51,7 @@ window.Feud.DEFAULT_DECK = {
       ]
     },
     {
-      theme: "🎉 Everyday Life & Trivia",
+      theme: "🎉 Everyday Life",
       title: "Round 3",
       multiplier: 1,
       prompt: "Name a reason someone might be running 30 minutes late to a party.",
@@ -63,8 +64,79 @@ window.Feud.DEFAULT_DECK = {
       ]
     },
     {
-      theme: "🎉 Everyday Life & Trivia",
+      theme: "🏖️ Travel & Getaways",
       title: "Round 4",
+      multiplier: 1,
+      prompt: "Name something people always forget to bring to the beach.",
+      answers: [
+        { text: "Sunscreen", points: 34 },
+        { text: "Beach towel", points: 24 },
+        { text: "Sunglasses", points: 18 },
+        { text: "Flip-flops / Sandals", points: 12 },
+        { text: "Extra clothes / Dry bag", points: 7 },
+        { text: "Umbrella / Shade", points: 5 }
+      ]
+    },
+    {
+      theme: "🍽️ Food & Gatherings",
+      title: "Round 5",
+      multiplier: 1,
+      prompt: "Name a food that tastes even better as leftovers the next day.",
+      answers: [
+        { text: "Pizza", points: 42 },
+        { text: "Chili / Stew / Curry", points: 24 },
+        { text: "Pasta / Lasagna", points: 15 },
+        { text: "Thanksgiving turkey / Stuffing", points: 10 },
+        { text: "Soup", points: 5 },
+        { text: "Chinese takeout", points: 4 }
+      ]
+    },
+    {
+      theme: "🚗 Everyday Life",
+      title: "Round 6",
+      multiplier: 1,
+      prompt: "Name something people do while stuck in a long traffic jam.",
+      answers: [
+        { text: "Sing along to the radio / music", points: 36 },
+        { text: "Check their phone / call someone", points: 26 },
+        { text: "Eat snacks or drink coffee", points: 16 },
+        { text: "Complain / Talk to other drivers", points: 11 },
+        { text: "Listen to a podcast / audiobook", points: 6 },
+        { text: "Look for an alternate route", points: 5 }
+      ]
+    },
+    {
+      theme: "🏠 Home & Habits",
+      title: "Round 7",
+      multiplier: 1,
+      prompt: "Name something you always find in the bottom of a kitchen junk drawer.",
+      answers: [
+        { text: "Dead or loose batteries", points: 35 },
+        { text: "Rubber bands / Twist ties", points: 23 },
+        { text: "Pens that don't work", points: 17 },
+        { text: "Mystery keys", points: 12 },
+        { text: "Tape / Scissors", points: 8 },
+        { text: "Takeout sauce packets", points: 5 }
+      ]
+    },
+    {
+      theme: "🏠 Home & Habits",
+      title: "Round 8",
+      multiplier: 1,
+      prompt: "Name a household chore almost everyone puts off as long as possible.",
+      answers: [
+        { text: "Folding and putting away laundry", points: 34 },
+        { text: "Washing the dishes", points: 25 },
+        { text: "Cleaning the bathroom", points: 18 },
+        { text: "Vacuuming / Mopping floors", points: 12 },
+        { text: "Taking out the trash", points: 7 },
+        { text: "Cleaning out the fridge", points: 4 }
+      ]
+    },
+    // --- 2x DOUBLE POINT ROUNDS (8) ---
+    {
+      theme: "💸 Everyday Life",
+      title: "Round 9",
       multiplier: 2,
       prompt: "Name something people spend way too much money on every week.",
       answers: [
@@ -76,8 +148,8 @@ window.Feud.DEFAULT_DECK = {
       ]
     },
     {
-      theme: "🎉 Everyday Life & Trivia",
-      title: "Round 5",
+      theme: "🚗 Travel & Getaways",
+      title: "Round 10",
       multiplier: 2,
       prompt: "Name something that always happens on a long road trip.",
       answers: [
@@ -89,6 +161,190 @@ window.Feud.DEFAULT_DECK = {
       ]
     },
     {
+      theme: "😅 Funny Habits",
+      title: "Round 11",
+      multiplier: 2,
+      prompt: "Name something people fib about when visiting the dentist or doctor.",
+      answers: [
+        { text: "How often they floss", points: 41 },
+        { text: "How much they exercise", points: 25 },
+        { text: "Their diet / Junk food intake", points: 15 },
+        { text: "How much water they drink", points: 11 },
+        { text: "How many hours they sleep", points: 8 }
+      ]
+    },
+    {
+      theme: "🏠 Home & Habits",
+      title: "Round 12",
+      multiplier: 2,
+      prompt: "Name a sound in another room that makes you think a pet or kid is in trouble.",
+      answers: [
+        { text: "Glass or dishes shattering", points: 37 },
+        { text: "Complete, sudden silence", points: 26 },
+        { text: "A loud thud or crash", points: 17 },
+        { text: "Giggling / Whispering", points: 12 },
+        { text: "Running water overflowing", points: 8 }
+      ]
+    },
+    {
+      theme: "😅 Funny Habits",
+      title: "Round 13",
+      multiplier: 2,
+      prompt: "Name something people secretly do when nobody else is home.",
+      answers: [
+        { text: "Sing or dance around the house", points: 36 },
+        { text: "Eat straight from the carton or pot", points: 24 },
+        { text: "Talk out loud to themselves or pets", points: 17 },
+        { text: "Watch guilty-pleasure TV shows", points: 13 },
+        { text: "Walk around in pajamas all day", points: 10 }
+      ]
+    },
+    {
+      theme: "📱 Modern Life",
+      title: "Round 14",
+      multiplier: 2,
+      prompt: "Name a reason someone might pretend they didn't see a text message.",
+      answers: [
+        { text: "They don't want to say no to plans", points: 39 },
+        { text: "They're too tired to chat right now", points: 24 },
+        { text: "They forgot and now it's awkward", points: 16 },
+        { text: "Someone is asking for a favor", points: 12 },
+        { text: "It's a work message after hours", points: 9 }
+      ]
+    },
+    {
+      theme: "🍽️ Food & Gatherings",
+      title: "Round 15",
+      multiplier: 2,
+      prompt: "Name something that can ruin a backyard barbecue or picnic.",
+      answers: [
+        { text: "Sudden rain or wind", points: 40 },
+        { text: "Ants, wasps, or mosquitoes", points: 26 },
+        { text: "Running out of propane / charcoal", points: 16 },
+        { text: "Burning the burgers or hot dogs", points: 11 },
+        { text: "Forgetting the plates or utensils", points: 7 }
+      ]
+    },
+    {
+      theme: "😅 Funny Habits",
+      title: "Round 16",
+      multiplier: 2,
+      prompt: "Name a classic excuse people use for skipping a workout.",
+      answers: [
+        { text: "Too tired / Didn't sleep well", points: 38 },
+        { text: "Too busy with work or errands", points: 25 },
+        { text: "Bad weather outside", points: 17 },
+        { text: "Sore from yesterday's workout", points: 12 },
+        { text: "Forgot gym clothes or shoes", points: 8 }
+      ]
+    },
+    // --- 3x TRIPLE POINT ROUNDS (8) ---
+    {
+      theme: "💼 Work & School",
+      title: "Round 17",
+      multiplier: 3,
+      prompt: "Name something you hate realizing you forgot after leaving for work or school.",
+      answers: [
+        { text: "Your phone", points: 39 },
+        { text: "Your wallet / ID badge", points: 24 },
+        { text: "Your lunch or coffee", points: 16 },
+        { text: "Keys", points: 12 },
+        { text: "Laptop / Charger", points: 9 }
+      ]
+    },
+    {
+      theme: "💼 Work & School",
+      title: "Round 18",
+      multiplier: 3,
+      prompt: "Name something people do to look busy when the boss or teacher walks by.",
+      answers: [
+        { text: "Start typing furiously on the keyboard", points: 38 },
+        { text: "Switch browser tabs to a spreadsheet", points: 26 },
+        { text: "Shuffle papers or stare at a notebook", points: 17 },
+        { text: "Furrow their brow at the screen", points: 11 },
+        { text: "Pretend to be on an important call", points: 8 }
+      ]
+    },
+    {
+      theme: "🎬 Movies & Fun",
+      title: "Round 19",
+      multiplier: 3,
+      prompt: "Name a movie theater snack that disappears before the trailers even finish.",
+      answers: [
+        { text: "Buttered popcorn", points: 46 },
+        { text: "Nachos", points: 24 },
+        { text: "Boxed candy / M&Ms / Skittles", points: 15 },
+        { text: "Soda / Slushie", points: 9 },
+        { text: "Soft pretzel", points: 6 }
+      ]
+    },
+    {
+      theme: "🏠 Home & Habits",
+      title: "Round 20",
+      multiplier: 3,
+      prompt: "Name something people keep in their closet even though they never use it.",
+      answers: [
+        { text: "Clothes that don't fit anymore", points: 40 },
+        { text: "Old shoes / Worn-out sneakers", points: 25 },
+        { text: "Unused exercise gear", points: 16 },
+        { text: "Gift bags / Empty shoeboxes", points: 11 },
+        { text: "Old cords and electronics", points: 8 }
+      ]
+    },
+    {
+      theme: "✈️ Travel & Getaways",
+      title: "Round 21",
+      multiplier: 3,
+      prompt: "Name something you immediately check when you walk into a hotel room.",
+      answers: [
+        { text: "The bed / Pillows", points: 37 },
+        { text: "The bathroom", points: 25 },
+        { text: "The view out the window", points: 17 },
+        { text: "The Wi-Fi / Outlets", points: 12 },
+        { text: "The mini-fridge / Coffee maker", points: 9 }
+      ]
+    },
+    {
+      theme: "🎉 Parties & Fun",
+      title: "Round 22",
+      multiplier: 3,
+      prompt: "Name a polite white lie people tell to leave a party early.",
+      answers: [
+        { text: "I have an early morning tomorrow", points: 40 },
+        { text: "Not feeling well / Headache", points: 25 },
+        { text: "Need to let the dog out / Check on kids", points: 16 },
+        { text: "Long drive home / Beat traffic", points: 11 },
+        { text: "Another commitment to get to", points: 8 }
+      ]
+    },
+    {
+      theme: "🎉 Parties & Fun",
+      title: "Round 23",
+      multiplier: 3,
+      prompt: "Name something people argue about during a family board game night.",
+      answers: [
+        { text: "The official rules / House rules", points: 42 },
+        { text: "Someone accused of cheating", points: 24 },
+        { text: "Taking too long on a turn", points: 16 },
+        { text: "Who goes first / Who is banker", points: 10 },
+        { text: "Ganging up on the leader", points: 8 }
+      ]
+    },
+    {
+      theme: "🌟 Big Dreams",
+      title: "Round 24",
+      multiplier: 3,
+      prompt: "Name something you'd buy or do first if you won the lottery tomorrow.",
+      answers: [
+        { text: "Buy a dream house", points: 44 },
+        { text: "Pay off all debt / Mortgage", points: 26 },
+        { text: "Take a luxury vacation", points: 14 },
+        { text: "Buy a brand-new car", points: 10 },
+        { text: "Quit your job", points: 6 }
+      ]
+    },
+    // --- SUDDEN-DEATH TIE-BREAKER (1) ---
+    {
       theme: "⚡ Sudden-Death Tie-Breaker (#1 Answer Only)",
       title: "Tie-Breaker",
       multiplier: 3,
@@ -99,6 +355,7 @@ window.Feud.DEFAULT_DECK = {
     }
   ],
   fastMoney: [
+    // Set 1 (Q1-Q5)
     {
       prompt: "Name a pizza topping almost everyone can agree on.",
       hint: "Cheese (42), Pepperoni (30), Mushrooms (14), Olives (8), Peppers (6)"
@@ -118,6 +375,48 @@ window.Feud.DEFAULT_DECK = {
     {
       prompt: "Name something you hear on the TV in a living room on weekends.",
       hint: "Live sports (42), Movies (26), News (16), Video games (10), Music (6)"
+    },
+    // Set 2 (Q6-Q10)
+    {
+      prompt: "Name a classic breakfast food people order at a diner.",
+      hint: "Pancakes (38), Eggs (28), Bacon (16), Waffles (11), French toast (7)"
+    },
+    {
+      prompt: "Name the most popular ice cream flavor at a scoop shop.",
+      hint: "Vanilla (36), Chocolate (32), Cookies & Cream (14), Strawberry (10), Mint Chip (8)"
+    },
+    {
+      prompt: "Name a common name people give a pet dog.",
+      hint: "Max (34), Bella (26), Charlie (18), Buddy (13), Luna (9)"
+    },
+    {
+      prompt: "Name something people drink first thing in the morning.",
+      hint: "Coffee (56), Water (22), Orange juice (11), Tea (8), Milk (3)"
+    },
+    {
+      prompt: "Name a superpower people wish they had.",
+      hint: "Flying (42), Invisibility (24), Teleportation (16), Time travel (11), Mind reading (7)"
+    },
+    // Set 3 (Q11-Q15)
+    {
+      prompt: "Name something people always buy even when it wasn't on the grocery list.",
+      hint: "Chips / Snacks (38), Ice cream / Candy (26), Bakery treats (16), Soda (12), Fruit (8)"
+    },
+    {
+      prompt: "Name a school subject people still remember years later.",
+      hint: "Math (36), History (24), English (18), Science (14), Art / Music (8)"
+    },
+    {
+      prompt: "Name a place where you are supposed to stay very quiet.",
+      hint: "Library (48), Movie theater (24), Hospital (12), Church (10), Museum (6)"
+    },
+    {
+      prompt: "Name a comfort food people crave on a rainy day.",
+      hint: "Soup (44), Grilled cheese (22), Mac and cheese (16), Ramen / Noodles (11), Hot cocoa (7)"
+    },
+    {
+      prompt: "Name something you see in almost every living room.",
+      hint: "Couch / Sofa (46), TV (30), Coffee table (12), Lamp (7), Rug (5)"
     }
   ]
 };
