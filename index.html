@@ -434,15 +434,15 @@
                     <option value="3">🏆 3-Team Mini Bracket</option>
                     <option value="4">🏆 4-Team Tournament</option>
                   </select>
-                  <button type="button" class="top-btn" style="min-height:28px; padding:4px 10px; font-size:11px;" onclick="cycleSetupTeamPresets()">🎲 Swap Names</button>
-                  <button type="button" id="btnSwapSetupTeamSides" class="top-btn" style="min-height:28px; padding:4px 10px; font-size:11px;" onclick="swapSetupTeamSides()" title="Swap Team 1 (Left/Blue) and Team 2 (Right/Red)">⇄ Swap Sides</button>
+                  <button type="button" class="top-btn" style="min-height:28px; padding:4px 8px; font-size:12px;" onclick="cycleSetupTeamPresets()" title="Cycle Team Name Presets">🎲</button>
                 </div>
               </div>
-              <div class="buzzer-split-btns">
+              <div class="setup-teams-pair">
                 <div>
                   <label class="field-label" for="setupTeam1Input" style="font-size:10px; color:#93c5fd;">Team 1 (Blue)</label>
                   <input id="setupTeam1Input" class="host-team-input team-1-input" style="margin-top:4px;" type="text" placeholder="Team 1" value="Team Alpha" />
                 </div>
+                <button type="button" id="btnSwapSetupTeamSides" class="top-btn setup-swap-sides-btn" onclick="swapSetupTeamSides()" title="Swap Team 1 ↔ Team 2 sides">⇄</button>
                 <div>
                   <label class="field-label" for="setupTeam2Input" style="font-size:10px; color:#fca5a5;">Team 2 (Red)</label>
                   <input id="setupTeam2Input" class="host-team-input team-2-input" style="margin-top:4px;" type="text" placeholder="Team 2" value="Team Omega" />

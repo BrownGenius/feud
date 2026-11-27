@@ -502,14 +502,14 @@ window.Feud = window.Feud || {};
       const bestRank = roomState.faceoffBestRank ?? 999;
 
       if (bestRank < 999 && !isTieBreaker) {
-        headline = `🎤 Face-Off (2nd Turn): ${secondName} Must Beat Answer #${bestRank + 1}!`;
+        headline = `🎯 ${secondName.toUpperCase()} TURN 2 — MUST BEAT #${bestRank + 1}`;
         sayScript = `“${firstName} is on the board with the #${bestRank + 1} answer! ${secondName}, can you beat #${bestRank + 1} to take control? What's your answer?”`;
         doGuide = `Click ${secondName}'s answer below if it's on the board, or click “⚡ Face-Off Wrong Guess (1 Temp X)” if it's not.`;
         subtext = `${firstName} hit #${bestRank + 1}. Higher rank wins the Face-Off.`;
       } else {
         headline = isTieBreaker
-          ? `⚡ Tie-Breaker: ${secondName} Can Win the Match Right Here!`
-          : `🎤 Face-Off (2nd Turn): ${secondName} Can Win the Face-Off!`;
+          ? `⚡ TIE-BREAKER: ${secondName.toUpperCase()} CAN WIN THE MATCH!`
+          : `🎯 ${secondName.toUpperCase()} TURN 2 — ANY ANSWER WINS`;
         sayScript = isTieBreaker
           ? `“Show me that answer… ❌ Survey says NO! ${secondName}, you can win the ENTIRE MATCH right here if your answer is anywhere on the board: ‘${round.prompt}’!”`
           : `“Show me that answer… ❌ Survey says NO! ${secondName}, you can win the Face-Off right here if your answer is anywhere on the board: ‘${round.prompt}’!”`;

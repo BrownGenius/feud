@@ -758,7 +758,7 @@ async function runStep(name, fn) {
       await sleep(120);
 
       const p2Check = await cdp.eval(`document.getElementById('hostFlowHeadline')?.textContent.trim()`);
-      assert.ok(/Beat Answer #2|2nd Turn/i.test(p2Check), `Expected Face-Off 2nd Turn headline, got: ${p2Check}`);
+      assert.ok(/TURN 2.*MUST BEAT #2/i.test(p2Check), `Expected Face-Off Turn 2 target headline, got: ${p2Check}`);
 
       // Team 2 misses -> Team 1 wins Face-Off -> Pass to Team 2
       await cdp.eval(`(async () => {
@@ -940,6 +940,8 @@ async function runStep(name, fn) {
       // A. Standalone TV Display (?room=XXXX&role=tv): auto-closes Remote TV setup modal when connected
       await cdp.eval(`window.openQrModal(null, { forTvSetup: true })`);
       await cdp.waitFor("!document.getElementById('qrModal').classList.contains('hidden')");
+      const tvSetupModalCheck = await cdp.eval(`document.getElementById('qrBuzzersSection').classList.contains('hidden')`);
+      assert.strictEqual(tvSetupModalCheck, true, "QR modal opened for Remote TV setup should hide duplicate buzzers section");
       const tvConn = await openTab(`${baseUrl}/index.html?room=${roomCode}&role=tv`);
       try {
         await tvConn.tabCdp.waitFor("!document.getElementById('tvView').classList.contains('hidden')");

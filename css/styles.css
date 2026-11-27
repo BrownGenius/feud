@@ -4545,6 +4545,21 @@ body[data-theme="rose"] .tile-num-badge {
   box-shadow: 0 0 6px rgba(239, 68, 68, 0.7);
 }
 
+.setup-teams-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: end;
+}
+
+.setup-swap-sides-btn {
+  min-height: 40px;
+  min-width: 38px;
+  padding: 0 10px;
+  font-size: 15px;
+  margin-bottom: 1px;
+}
+
 .ai-builder-textarea {
   width: 100%;
   min-height: 150px;

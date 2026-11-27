@@ -2651,7 +2651,7 @@ window.Feud = window.Feud || {};
     const fileProto = isFileProtocol();
     const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
     document.getElementById("qrRemoteTvBox")?.classList.toggle("hidden", fileProto);
-    document.getElementById("qrBuzzersSection")?.classList.toggle("hidden", fileProto);
+    document.getElementById("qrBuzzersSection")?.classList.toggle("hidden", fileProto || qrModalOpenedForTvSetup);
     document.getElementById("qrFileModeHint")?.classList.toggle("hidden", !fileProto && !isOffline);
     const diag = Feud.getSyncDiagnostics ? Feud.getSyncDiagnostics() : { relayOk: true };
     updateQrRelayWarning(diag.relayOk);
