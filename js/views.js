@@ -153,6 +153,30 @@ window.Feud = window.Feud || {};
       hostToggleBtn.textContent = running ? "⏸️ Pause" : "▶️ Resume";
     }
 
+    const primaryTimerBtn = document.getElementById("hostPrimaryTimerBtn");
+    if (primaryTimerBtn) {
+      const isSteal = phase === "steal";
+      if (running) {
+        primaryTimerBtn.textContent = isSteal
+          ? `⏸️ Pause Steal Timer (${rem}s) (T)`
+          : `⏸️ Pause Timer (${rem}s) (T)`;
+        primaryTimerBtn.setAttribute("onclick", "hostToggleTurnTimer()");
+      } else if (canResume) {
+        primaryTimerBtn.textContent = isSteal
+          ? `▶️ Resume Steal Timer (${rem}s) (T)`
+          : `▶️ Resume Timer (${rem}s) (T)`;
+        primaryTimerBtn.setAttribute("onclick", "hostToggleTurnTimer()");
+      } else {
+        primaryTimerBtn.textContent = isSteal
+          ? "⏱️ Start 30s Steal Timer (R)"
+          : `🔄 Start ${dur}s Timer for Next Player (R)`;
+        primaryTimerBtn.setAttribute(
+          "onclick",
+          isSteal ? "hostStartStealTimer()" : "hostRestartTurnTimer()"
+        );
+      }
+    }
+
     const showOnBuzzer =
       (phase === "faceoff-p1" || phase === "faceoff-p2") &&
       (running || isExpired || (rem > 0 && rem < dur));
@@ -440,17 +464,45 @@ window.Feud = window.Feud || {};
       round.multiplier === 1 ? "Single" : round.multiplier === 2 ? "Double" : "Triple";
 
     if (phase === "faceoff-ready") {
-      headline = isTieBreaker
+      const hasWelcomeQrs = Boolean(
+        roomState.showTvWelcome &&
+          roomState.tvWelcomeInfo &&
+          (roomState.tvWelcomeInfo.url1 || roomState.tvWelcomeInfo.url2 || roomState.tvWelcomeInfo.urlCombo)
+      );
+      const bzLive = Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : null;
+      const wInfo = roomState.tvWelcomeInfo || {};
+      const allBuzzersReady = Boolean(
+        hasWelcomeQrs &&
+          ((bzLive && ((bzLive.t1 && bzLive.t2) || bzLive.combo)) ||
+            (wInfo.b1Connected && wInfo.b2Connected) ||
+            wInfo.comboConnected ||
+            (roomState.buzzerStatus &&
+              ((roomState.buzzerStatus.b1 && roomState.buzzerStatus.b2) ||
+                roomState.buzzerStatus.combo)))
+      );
+      headline = allBuzzersReady
+        ? "✅ All Buzzers Ready — Click Show Question to Start Round 1!"
+        : hasWelcomeQrs
+        ? "👋 TV on Welcome Screen — Click Show Question When Phones Are Ready"
+        : isTieBreaker
         ? "⚡ Sudden-Death Tie-Breaker: #1 Answer Wins the Match!"
         : "🔔 Step 1: Ready for the Face-Off";
       sayScript = isTieBreaker
         ? `“We are TIED! Welcome to the Sudden-Death Tie-Breaker! Give me one player from ${t1} and one player from ${t2} at the buzzers—the team that gets the #1 answer wins the entire match!”`
         : `“Welcome to Round ${roomState.roundIdx + 1} (${multWord} Points)! Give me one player from ${t1} and one player from ${t2} at the buzzer podiums—hands ready!”`;
       doGuide = `Click “👁️ Show Question on TV” below (or press Space), then read the survey question out loud. There is NO timer until the first player buzzes in!`;
-      subtext = `Unlimited time until the first player buzzes (${round.answers.length} answers on the board).`;
+      subtext = allBuzzersReady
+        ? "All team buzzers are connected — click Show Question on TV to begin!"
+        : `Unlimited time until the first player buzzes (${round.answers.length} answers on the board).`;
       actionsHtml = `
-        <button type="button" class="action-btn btn-gold display-font" onclick="hostRevealQuestionAndStartTimer()">
-          👁️ Show Question on TV (Space)
+        <button type="button" id="hostShowQuestionBtn" class="action-btn btn-gold display-font${
+          allBuzzersReady ? " is-buzzers-ready" : ""
+        }" onclick="hostRevealQuestionAndStartTimer()">
+          ${
+            allBuzzersReady
+              ? "✅ Buzzers Ready — Show Question on TV (Space)"
+              : "👁️ Show Question on TV (Space)"
+          }
         </button>
       `;
     } else if (phase === "faceoff-buzz") {
@@ -502,14 +554,14 @@ window.Feud = window.Feud || {};
       const bestRank = roomState.faceoffBestRank ?? 999;
 
       if (bestRank < 999 && !isTieBreaker) {
-        headline = `🎤 Face-Off (2nd Turn): ${secondName} Must Beat Answer #${bestRank + 1}!`;
+        headline = `🎯 ${secondName.toUpperCase()} TURN 2 — MUST BEAT #${bestRank + 1}`;
         sayScript = `“${firstName} is on the board with the #${bestRank + 1} answer! ${secondName}, can you beat #${bestRank + 1} to take control? What's your answer?”`;
         doGuide = `Click ${secondName}'s answer below if it's on the board, or click “⚡ Face-Off Wrong Guess (1 Temp X)” if it's not.`;
         subtext = `${firstName} hit #${bestRank + 1}. Higher rank wins the Face-Off.`;
       } else {
         headline = isTieBreaker
-          ? `⚡ Tie-Breaker: ${secondName} Can Win the Match Right Here!`
-          : `🎤 Face-Off (2nd Turn): ${secondName} Can Win the Face-Off!`;
+          ? `⚡ TIE-BREAKER: ${secondName.toUpperCase()} CAN WIN THE MATCH!`
+          : `🎯 ${secondName.toUpperCase()} TURN 2 — ANY ANSWER WINS`;
         sayScript = isTieBreaker
           ? `“Show me that answer… ❌ Survey says NO! ${secondName}, you can win the ENTIRE MATCH right here if your answer is anywhere on the board: ‘${round.prompt}’!”`
           : `“Show me that answer… ❌ Survey says NO! ${secondName}, you can win the Face-Off right here if your answer is anywhere on the board: ‘${round.prompt}’!”`;
@@ -743,11 +795,23 @@ window.Feud = window.Feud || {};
         inlineBarEl.className = "faceoff-decision-bar hidden";
         inlineBarEl.innerHTML = "";
       } else if (phase === "steal") {
+        const sRem =
+          roomState.turnTimerRemaining !== undefined && roomState.turnTimerRemaining !== null
+            ? Number(roomState.turnTimerRemaining)
+            : 30;
+        const sRun = Boolean(roomState.turnTimerRunning);
+        const sCanResume = !sRun && sRem > 0 && sRem < 30;
+        const sLabel = sRun
+          ? `⏸️ Pause Steal Timer (${sRem}s) (T)`
+          : sCanResume
+          ? `▶️ Resume Steal Timer (${sRem}s) (T)`
+          : "⏱️ Start 30s Steal Timer (R)";
+        const sAction = sRun || sCanResume ? "hostToggleTurnTimer()" : "hostStartStealTimer()";
         inlineBarEl.className = "faceoff-decision-bar steal-highlight";
         inlineBarEl.innerHTML = `
           <div class="fodb-actions">
-            <button type="button" class="action-btn btn-gold display-font" style="flex:1; min-width:180px; min-height:40px; font-size:13px;" onclick="hostStartStealTimer()">
-              ⏱️ Start 30s Steal Timer (R)
+            <button id="hostPrimaryTimerBtn" type="button" class="action-btn btn-gold display-font" style="flex:1; min-width:180px; min-height:40px; font-size:13px;" onclick="${sAction}">
+              ${sLabel}
             </button>
           </div>
         `;
@@ -755,11 +819,23 @@ window.Feud = window.Feud || {};
         inlineBarEl.className = "faceoff-decision-bar pass-play-highlight";
         inlineBarEl.innerHTML = `<div class="fodb-actions">${actionsHtml}</div>`;
       } else if (phase === "playing") {
+        const pRem =
+          roomState.turnTimerRemaining !== undefined && roomState.turnTimerRemaining !== null
+            ? Number(roomState.turnTimerRemaining)
+            : dur;
+        const pRun = Boolean(roomState.turnTimerRunning);
+        const pCanResume = !pRun && pRem > 0 && pRem < dur;
+        const pLabel = pRun
+          ? `⏸️ Pause Timer (${pRem}s) (T)`
+          : pCanResume
+          ? `▶️ Resume Timer (${pRem}s) (T)`
+          : `🔄 Start ${dur}s Timer for Next Player (R)`;
+        const pAction = pRun || pCanResume ? "hostToggleTurnTimer()" : "hostRestartTurnTimer()";
         inlineBarEl.className = "faceoff-decision-bar";
         inlineBarEl.innerHTML = `
           <div class="fodb-actions">
-            <button type="button" class="action-btn btn-gold display-font" onclick="hostRestartTurnTimer()">
-              🔄 Start ${dur}s Timer for Next Player (R)
+            <button id="hostPrimaryTimerBtn" type="button" class="action-btn btn-gold display-font" onclick="${pAction}">
+              ${pLabel}
             </button>
           </div>
         `;
@@ -810,6 +886,64 @@ window.Feud = window.Feud || {};
       } else {
         wrongBarEl.className = "host-answers-wrong-bar hidden";
         wrongBarEl.innerHTML = "";
+      }
+    }
+
+    const stickyBar = document.getElementById("hostMobileStickyBar");
+    if (stickyBar) {
+      let stickyHtml = "";
+      if (roomState.stage === "main") {
+        if (phase === "faceoff-ready") {
+          const hasWelcomeQrs = Boolean(
+            roomState.showTvWelcome &&
+              roomState.tvWelcomeInfo &&
+              (roomState.tvWelcomeInfo.url1 ||
+                roomState.tvWelcomeInfo.url2 ||
+                roomState.tvWelcomeInfo.urlCombo)
+          );
+          const bzLive = Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : null;
+          const wInfo = roomState.tvWelcomeInfo || {};
+          const ready = Boolean(
+            hasWelcomeQrs &&
+              ((bzLive && ((bzLive.t1 && bzLive.t2) || bzLive.combo)) ||
+                (wInfo.b1Connected && wInfo.b2Connected) ||
+                wInfo.comboConnected ||
+                (roomState.buzzerStatus &&
+                  ((roomState.buzzerStatus.b1 && roomState.buzzerStatus.b2) ||
+                    roomState.buzzerStatus.combo)))
+          );
+          stickyHtml = `<button type="button" class="action-btn btn-gold display-font${
+            ready ? " is-buzzers-ready" : ""
+          }" onclick="hostRevealQuestionAndStartTimer()">${
+            ready ? "✅ Buzzers Ready — Show Question" : "👁️ Show Question on TV"
+          }</button>`;
+        } else if (phase === "faceoff-buzz") {
+          stickyHtml = `
+            <button type="button" class="action-btn btn-blue display-font" style="flex:1;" onclick="hostManualBuzz(1)">🔔 ${escapeHtml(t1)}</button>
+            <button type="button" class="action-btn btn-red display-font" style="flex:1;" onclick="hostManualBuzz(2)">🔔 ${escapeHtml(t2)}</button>
+          `;
+        } else if (phase === "faceoff-p1" || phase === "faceoff-p2") {
+          stickyHtml = `<button type="button" class="action-btn btn-red display-font" onclick="hostFaceOffWrongGuess()">⚡ Face-Off Wrong Guess</button>`;
+        } else if (phase === "pass-or-play") {
+          stickyHtml = `
+            <button type="button" class="action-btn btn-gold display-font" style="flex:1;" onclick="hostChoosePlayOrPass('play')">▶️ Play</button>
+            <button type="button" class="action-btn btn-blue display-font" style="flex:1;" onclick="hostChoosePlayOrPass('pass')">🔀 Pass</button>
+          `;
+        } else if (phase === "playing") {
+          const curStrikes = Number(roomState.strikes) || 0;
+          stickyHtml = `<button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">❌ Wrong Answer (${curStrikes + 1}/3)</button>`;
+        } else if (phase === "steal") {
+          stickyHtml = `<button type="button" class="action-btn btn-red display-font" onclick="hostHandleWrongAnswer()">❌ Steal Missed</button>`;
+        } else if (phase === "round-over") {
+          stickyHtml = actionsHtml;
+        }
+      }
+      if (stickyHtml) {
+        stickyBar.className = "host-mobile-sticky-bar";
+        stickyBar.innerHTML = stickyHtml;
+      } else {
+        stickyBar.className = "host-mobile-sticky-bar hidden";
+        stickyBar.innerHTML = "";
       }
     }
   }
@@ -909,6 +1043,83 @@ window.Feud = window.Feud || {};
     overlayEl.classList.remove("hidden");
   }
 
+  function renderTvWelcomeScreen(roomState) {
+    const welcomeWrap = document.getElementById("tvWelcomeWrap");
+    if (!welcomeWrap) return;
+    const t1 = roomState.team1Name || "Team 1";
+    const t2 = roomState.team2Name || "Team 2";
+    const title = (roomState.gameTitle || "Party Feud").toUpperCase();
+    const icon = roomState.gameIcon || "🎉";
+    const deckName =
+      (roomState.customDeck && roomState.customDeck.name) ||
+      (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) ||
+      "Starter Party Deck";
+    const regCount = Feud.getRegularRoundCount ? Feud.getRegularRoundCount(roomState) : Feud.getRoundCount(roomState);
+    const fmSuffix = roomState.enableFastMoney === false ? "" : " + Fast Money";
+
+    const iconEl = document.getElementById("tvWelcomeIcon");
+    const titleEl = document.getElementById("tvWelcomeTitle");
+    const metaEl = document.getElementById("tvWelcomeDeckMeta");
+    const t1El = document.getElementById("tvWelcomeT1Name");
+    const t2El = document.getElementById("tvWelcomeT2Name");
+    if (iconEl) iconEl.textContent = icon;
+    if (titleEl) titleEl.textContent = title;
+    if (metaEl) metaEl.textContent = `${deckName} • ${regCount} Rounds (1x / 2x / 3x)${fmSuffix}`;
+    if (t1El) t1El.textContent = t1.toUpperCase();
+    if (t2El) t2El.textContent = t2.toUpperCase();
+
+    const info = roomState.tvWelcomeInfo || {};
+    const code = info.roomCode || "----";
+    const codeEl = document.getElementById("tvWelcomeRoomCode");
+    if (codeEl) codeEl.textContent = code;
+
+    const hasUrls = Boolean(info.url1 || info.url2 || info.urlCombo);
+    const b1Conn = Boolean(info.b1Connected);
+    const b2Conn = Boolean(info.b2Connected);
+    const comboConn = Boolean(info.comboConnected);
+    const t1Ready = b1Conn || comboConn;
+    const t2Ready = b2Conn || comboConn;
+    const indActive = !comboConn && (b1Conn || b2Conn);
+
+    const setQrImg = (id, url, size) => {
+      const img = document.getElementById(id);
+      if (img && url && img.dataset.qrUrl !== url) {
+        img.dataset.qrUrl = url;
+        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=4&data=${encodeURIComponent(
+          url
+        )}`;
+      }
+    };
+
+    if (hasUrls) {
+      setQrImg("tvWelcomeQrImgT1", info.url1, 300);
+      setQrImg("tvWelcomeQrImgT2", info.url2, 300);
+      setQrImg("tvWelcomeQrImgCombo", info.urlCombo, 300);
+    }
+
+    document.getElementById("tvWelcomeQrImgWrapT1")?.classList.toggle("hidden", !hasUrls || t1Ready);
+    document.getElementById("tvWelcomeQrConnectedT1")?.classList.toggle("hidden", !hasUrls || !t1Ready);
+    document.getElementById("tvWelcomeQrImgWrapT2")?.classList.toggle("hidden", !hasUrls || t2Ready);
+    document.getElementById("tvWelcomeQrConnectedT2")?.classList.toggle("hidden", !hasUrls || !t2Ready);
+
+    const comboBox = document.getElementById("tvWelcomeComboBox");
+    if (comboBox) comboBox.classList.toggle("hidden", !hasUrls);
+    document.getElementById("tvWelcomeQrImgWrapCombo")?.classList.toggle("hidden", !hasUrls || comboConn || indActive);
+    document.getElementById("tvWelcomeQrConnectedCombo")?.classList.toggle("hidden", !hasUrls || !comboConn);
+    document.getElementById("tvWelcomeQrLockedCombo")?.classList.toggle("hidden", !hasUrls || !indActive);
+
+    const p1 = document.getElementById("tvWelcomePillT1");
+    const p2 = document.getElementById("tvWelcomePillT2");
+    if (p1) {
+      p1.textContent = t1Ready ? `✓ ${t1} Connected` : `⏳ ${t1} Waiting…`;
+      p1.className = `tv-welcome-status-pill ${t1Ready ? "is-connected" : "is-waiting"}`;
+    }
+    if (p2) {
+      p2.textContent = t2Ready ? `✓ ${t2} Connected` : `⏳ ${t2} Waiting…`;
+      p2.className = `tv-welcome-status-pill ${t2Ready ? "is-connected" : "is-waiting"}`;
+    }
+  }
+
   function renderTvView(roomState, activeRole, handlers) {
     renderBranding(roomState);
     renderTurnTimerUI(roomState);
@@ -938,6 +1149,33 @@ window.Feud = window.Feud || {};
     document.getElementById("tvTeam1Score").textContent = String(roomState.team1Score || 0);
     document.getElementById("tvTeam2Name").textContent = roomState.team2Name;
     document.getElementById("tvTeam2Score").textContent = String(roomState.team2Score || 0);
+
+    const t1Dot = document.getElementById("tvT1BuzzerDot");
+    const t2Dot = document.getElementById("tvT2BuzzerDot");
+    const showDots = Boolean(
+      typeof window !== "undefined" &&
+        window.location &&
+        window.location.protocol !== "file:" &&
+        !roomState.isDemoMode
+    );
+    const bzLive =
+      activeRole === "host" && Feud.getConnectedBuzzerTeams
+        ? Feud.getConnectedBuzzerTeams()
+        : roomState.buzzerStatus || {};
+    const t1DotOn = Boolean(bzLive.b1 || bzLive.combo);
+    const t2DotOn = Boolean(bzLive.b2 || bzLive.combo);
+    if (t1Dot) {
+      t1Dot.classList.toggle("hidden", !showDots);
+      t1Dot.classList.toggle("is-online", showDots && t1DotOn);
+      t1Dot.classList.toggle("is-offline", showDots && !t1DotOn);
+      t1Dot.title = t1DotOn ? "Team 1 Buzzer Connected" : "Team 1 Buzzer Disconnected";
+    }
+    if (t2Dot) {
+      t2Dot.classList.toggle("hidden", !showDots);
+      t2Dot.classList.toggle("is-online", showDots && t2DotOn);
+      t2Dot.classList.toggle("is-offline", showDots && !t2DotOn);
+      t2Dot.title = t2DotOn ? "Team 2 Buzzer Connected" : "Team 2 Buzzer Disconnected";
+    }
 
     const activeWinnerTeam =
       phase === "round-over"
@@ -1008,12 +1246,18 @@ window.Feud = window.Feud || {};
     }
 
     const topHud = document.querySelector(".tv-top-hud");
+    const welcomeWrap = document.getElementById("tvWelcomeWrap");
     const mainWrap = document.getElementById("tvMainBoardWrap");
     const fmWrap = document.getElementById("tvFastMoneyWrap");
     const winWrap = document.getElementById("tvWinnerWrap");
 
+    const hasWelcomeQrs = Boolean(
+      roomState.tvWelcomeInfo &&
+        (roomState.tvWelcomeInfo.url1 || roomState.tvWelcomeInfo.url2 || roomState.tvWelcomeInfo.urlCombo)
+    );
     if (roomState.stage === "winner") {
       if (topHud) topHud.classList.add("hidden");
+      if (welcomeWrap) welcomeWrap.classList.add("hidden");
       mainWrap.classList.add("hidden");
       fmWrap.classList.add("hidden");
       if (winWrap) winWrap.classList.remove("hidden");
@@ -1021,13 +1265,23 @@ window.Feud = window.Feud || {};
       return;
     } else if (roomState.stage === "fast") {
       if (topHud) topHud.classList.add("hidden");
+      if (welcomeWrap) welcomeWrap.classList.add("hidden");
       mainWrap.classList.add("hidden");
       fmWrap.classList.remove("hidden");
       if (winWrap) winWrap.classList.add("hidden");
       renderTvFastMoney(roomState);
       return;
+    } else if (roomState.showTvWelcome && hasWelcomeQrs) {
+      if (topHud) topHud.classList.add("hidden");
+      if (welcomeWrap) welcomeWrap.classList.remove("hidden");
+      mainWrap.classList.add("hidden");
+      fmWrap.classList.add("hidden");
+      if (winWrap) winWrap.classList.add("hidden");
+      renderTvWelcomeScreen(roomState);
+      return;
     } else {
       if (topHud) topHud.classList.remove("hidden");
+      if (welcomeWrap) welcomeWrap.classList.add("hidden");
       mainWrap.classList.remove("hidden");
       fmWrap.classList.add("hidden");
       if (winWrap) winWrap.classList.add("hidden");
@@ -1140,8 +1394,17 @@ window.Feud = window.Feud || {};
       buzzBanner.textContent = `🏆 ${winName} Won the Face-Off — Play or Pass?`;
       buzzBanner.classList.add("active");
     } else if (phase === "playing" && roomState.controllingTeam) {
-      // Active team card already displays the glowing control badge; keep banner minimal
-      buzzBanner.textContent = `Strikes: ${roomState.strikes || 0} / 3`;
+      // Active team card already displays the glowing control badge; show classic 3 red-X strike boxes
+      const sCount = Math.max(0, Math.min(3, Number(roomState.strikes) || 0));
+      const boxes = [0, 1, 2]
+        .map(
+          (i) =>
+            `<span class="tv-strike-box display-font${i < sCount ? " is-struck" : ""}">${
+              i < sCount ? "X" : ""
+            }</span>`
+        )
+        .join("");
+      buzzBanner.innerHTML = `<span class="tv-strike-banner-row" aria-label="Strikes: ${sCount} of 3"><span class="tv-strike-banner-label">STRIKES</span><span class="tv-strike-boxes">${boxes}</span></span>`;
     } else if (phase === "faceoff-p2" && roomState.controllingTeam) {
       const p2Name = getTeamLabel(roomState, roomState.controllingTeam);
       const bestRank = roomState.faceoffBestRank ?? 999;
@@ -1229,6 +1492,16 @@ window.Feud = window.Feud || {};
     if (undoBtn) {
       undoBtn.disabled = !(handlers && typeof handlers.canUndo === "function" && handlers.canUndo());
     }
+    const welcomeMenuBtn = document.getElementById("hostBtnToggleWelcome");
+    if (welcomeMenuBtn) {
+      const qrSupported =
+        typeof window !== "undefined" &&
+        window.location &&
+        window.location.protocol !== "file:" &&
+        !(roomState && roomState.isDemoMode);
+      welcomeMenuBtn.classList.toggle("hidden", !qrSupported);
+      welcomeMenuBtn.textContent = roomState && roomState.showTvWelcome ? "👋 Hide Welcome" : "👋 Welcome Screen";
+    }
     const demoBanner = document.getElementById("hostDemoBanner");
     if (demoBanner) {
       demoBanner.classList.toggle("hidden", !(roomState && roomState.isDemoMode));
@@ -1281,6 +1554,19 @@ window.Feud = window.Feud || {};
     if (stripT2Name) stripT2Name.textContent = roomState.team2Name || "Team 2";
     if (stripT2Score) stripT2Score.textContent = String(roomState.team2Score || 0);
     if (stripPotVal) stripPotVal.textContent = String(roomState.pot || 0);
+    const stripStrikesEl = document.getElementById("hostStripStrikes");
+    if (stripStrikesEl) {
+      const sCount = Math.max(0, Math.min(3, Number(roomState.strikes) || 0));
+      stripStrikesEl.setAttribute("aria-label", `Strikes: ${sCount} of 3`);
+      stripStrikesEl.innerHTML = [0, 1, 2]
+        .map(
+          (i) =>
+            `<span class="host-strike-box display-font${i < sCount ? " is-struck" : ""}">${
+              i < sCount ? "X" : ""
+            }</span>`
+        )
+        .join("");
+    }
     const activeStripTeam =
       (roomState.roundPhase === "round-over"
         ? roomState.roundWinnerTeam || roomState.controllingTeam
@@ -1330,12 +1616,16 @@ window.Feud = window.Feud || {};
     const isQuestionHidden = !roomState.questionRevealed || phase === "faceoff-ready";
     const qBox = document.getElementById("hostQuestionBox");
     const qHint = document.getElementById("hostQuestionSwapHint");
+    const qSwapBtn = document.getElementById("hostQuickSwapRoundBtn");
     if (qBox) {
       qBox.classList.toggle("is-swappable", isQuestionHidden);
       qBox.title = isQuestionHidden ? "Tap to swap or pick another round from deck" : "";
     }
     if (qHint) {
       qHint.classList.toggle("hidden", !isQuestionHidden);
+    }
+    if (qSwapBtn) {
+      qSwapBtn.classList.toggle("hidden", !isQuestionHidden);
     }
 
     const toggleOnlyBtn = document.getElementById("hostBtnToggleQuestionOnly");
@@ -1445,21 +1735,26 @@ window.Feud = window.Feud || {};
       hostNeedEl.style.color = total >= 200 ? "#86efac" : "#fde68a";
     }
 
+    const p1Done = entries.some((e) => e && (e.p1Ans || Number(e.p1Pts) > 0));
+    const p2Done = entries.some((e) => e && (e.p2Ans || Number(e.p2Pts) > 0));
+    const readyP2Btn = document.getElementById("hostBtnFmReadyP2");
+    if (readyP2Btn) {
+      readyP2Btn.classList.toggle("hidden", !(p1Done && !roomState.fmHideP1 && !p2Done));
+    }
+
     const fmScriptEl = document.getElementById("hostFmScriptBox");
     if (fmScriptEl) {
-      const p1Done = entries.some((e) => e && (e.p1Ans || Number(e.p1Pts) > 0));
-      const p2Done = entries.some((e) => e && (e.p2Ans || Number(e.p2Pts) > 0));
       let fmSay = "";
       let fmDo = "";
       if (total >= 200) {
         fmSay = `“🎉 ${total} POINTS! You broke 200 points and won Fast Money!”`;
-        fmDo = `Celebrate the victory, then click “🏁 End Match / Next Game” in the top bar!`;
+        fmDo = `Celebrate the victory, then click “🏆 Finish & Winner Screen” above!`;
       } else if (!p1Done) {
         fmSay = `“Welcome to Fast Money! Player 2, head backstage or cover your ears so you can't hear Player 1's answers! Player 1, you have 20 seconds to answer 5 survey questions—if you get stuck, say ‘Pass’!”`;
         fmDo = `1) Click “20s” then “Start” when you begin reading Question #1. 2) Tap the matching answer chips below (or type their answer & points) to reveal them on the TV.`;
       } else if (!roomState.fmHideP1 && !p2Done) {
         fmSay = `“Great job Player 1! Before we bring Player 2 back out, let's hide Player 1's answers on the TV!”`;
-        fmDo = `Click “🙈 Hide/Show P1” above so Player 2 can't see Player 1's answers, then set the clock to “25s” for Player 2!`;
+        fmDo = `Click “⏭️ Ready Player 2” above to hide Player 1's answers on TV and set the clock to 25s!`;
       } else {
         fmSay = `“Welcome back Player 2! You have 25 seconds to answer the same 5 questions. You cannot repeat any of Player 1's answers—if you hear the duplicate buzzer, give me another answer immediately! Together you need 200 points!”`;
         fmDo = `Click “25s” then “Start”. If Player 2 repeats an answer from Player 1, click “Dup ❌” and ask for a different answer! Then tap the chips for Player 2's answers.`;
@@ -1612,8 +1907,18 @@ window.Feud = window.Feud || {};
       isFaceOffUnderway && (timerRunning || timerExpired || (rawRem > 0 && rawRem < dur));
 
     icon.classList.remove("is-big-timer", "is-urgent");
+    if (roomState._localBuzzerStale) {
+      btn.disabled = true;
+      btn.classList.add("locked-out-state");
+      icon.textContent = "🏁";
+      text.textContent = "Match Over";
+      sub.textContent = "New teams playing — scan new QR to rejoin";
+      if (banner) banner.textContent = "🏁 MATCH OVER — NEW TEAMS PLAYING";
+      return;
+    }
     if (canBuzz) {
       btn.disabled = false;
+      btn.classList.add("is-armed");
       icon.textContent = "🔔";
       text.textContent = myName;
       sub.textContent = "Tap to buzz in!";
@@ -1746,6 +2051,8 @@ window.Feud = window.Feud || {};
     if (canBuzz) {
       btn1.disabled = false;
       btn2.disabled = false;
+      btn1.classList.add("is-armed");
+      btn2.classList.add("is-armed");
       if (icon1) icon1.textContent = "🔔";
       if (icon2) icon2.textContent = "🔔";
       if (sub1) sub1.textContent = "Tap to buzz in!";

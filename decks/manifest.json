@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T22:29:19.501Z",
+  "generatedAt": "2026-11-27T16:42:23.116Z",
   "decks": [
     {
       "id": "2026-frc-rules.json",
@@ -26,6 +26,18 @@
         "movies-music"
       ],
       "boardTheme": "marigold"
+    },
+    {
+      "id": "classic-party-mix.json",
+      "file": "./decks/classic-party-mix.json",
+      "deckName": "Classic Party Mix",
+      "gameIcon": "🎉",
+      "roundsCount": 25,
+      "fastMoneySets": 3,
+      "tags": [
+        "family-friendly",
+        "classic"
+      ]
     },
     {
       "id": "desi-thanksgiving.json",

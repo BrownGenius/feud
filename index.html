@@ -383,12 +383,22 @@
       </div>
     </section>
 
+    <div id="lobbyResumeBanner" class="marquee-panel lobby-resume-banner hidden" role="region" aria-label="Resume Active Room">
+      <div class="lobby-resume-info">
+        <span id="lobbyResumeTitle" class="lobby-resume-title display-font">🔄 Resume Active Room</span>
+        <span id="lobbyResumeSub" class="lobby-resume-sub">Pick up right where you left off.</span>
+      </div>
+      <div class="lobby-resume-actions">
+        <button id="btnResumeHostSession" type="button" class="action-btn btn-gold display-font lobby-resume-btn" onclick="resumeLastHostSession()">▶ Resume as Host</button>
+        <button id="btnDismissResumeBanner" type="button" class="top-btn" onclick="dismissResumeHostBanner()" title="Dismiss saved room">✕</button>
+      </div>
+    </div>
+
     <div class="lobby-grid-2">
       <!-- LEFT PRIMARY CARD: HOST A NEW GAME (INLINE 1-CLICK SETUP) -->
       <article id="lobbyHostCard" class="role-card lobby-host-card">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
           <h2>🎙️ Host a New Game</h2>
-          <span class="pill-badge awake-ok" style="min-height:24px; font-size:10px;">⚡ 1-Click Start</span>
         </div>
 
         <div id="lobbySetupSlot">
@@ -398,9 +408,6 @@
               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
                 <span class="field-label">📚 1. Question Deck</span>
                 <span id="setupDeckUsageBadge" class="pill-badge awake-ok" style="min-height:24px; font-size:10px;">📊 All Rounds Unused</span>
-              </div>
-              <div class="deck-filter-bar">
-                <input id="deckSearchInput" type="search" class="fm-txt deck-search-input" placeholder="🔍 Search decks by name or topic…" oninput="onDeckFilterInput(this.value)" />
               </div>
               <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-width:0;">
                 <select id="deckManagerSelect" class="fm-txt" style="flex:1 1 180px; min-width:0; max-width:100%; font-size:13px; text-transform:none;" onchange="onSelectCatalogDeck(this.value)"></select>
@@ -434,15 +441,15 @@
                     <option value="3">🏆 3-Team Mini Bracket</option>
                     <option value="4">🏆 4-Team Tournament</option>
                   </select>
-                  <button type="button" class="top-btn" style="min-height:28px; padding:4px 10px; font-size:11px;" onclick="cycleSetupTeamPresets()">🎲 Swap Names</button>
-                  <button type="button" id="btnSwapSetupTeamSides" class="top-btn" style="min-height:28px; padding:4px 10px; font-size:11px;" onclick="swapSetupTeamSides()" title="Swap Team 1 (Left/Blue) and Team 2 (Right/Red)">⇄ Swap Sides</button>
+                  <button type="button" class="top-btn" style="min-height:28px; padding:4px 8px; font-size:12px;" onclick="cycleSetupTeamPresets()" title="Cycle Team Name Presets">🎲</button>
                 </div>
               </div>
-              <div class="buzzer-split-btns">
+              <div class="setup-teams-pair">
                 <div>
                   <label class="field-label" for="setupTeam1Input" style="font-size:10px; color:#93c5fd;">Team 1 (Blue)</label>
                   <input id="setupTeam1Input" class="host-team-input team-1-input" style="margin-top:4px;" type="text" placeholder="Team 1" value="Team Alpha" />
                 </div>
+                <button type="button" id="btnSwapSetupTeamSides" class="top-btn setup-swap-sides-btn" onclick="swapSetupTeamSides()" title="Swap Team 1 ↔ Team 2 sides">⇄</button>
                 <div>
                   <label class="field-label" for="setupTeam2Input" style="font-size:10px; color:#fca5a5;">Team 2 (Red)</label>
                   <input id="setupTeam2Input" class="host-team-input team-2-input" style="margin-top:4px;" type="text" placeholder="Team 2" value="Team Omega" />
@@ -464,7 +471,7 @@
             <div class="setup-step-box">
               <span class="field-label">📺 3. TV Display</span>
               <div id="tvModeChoiceGroup" class="tv-mode-group" role="radiogroup" aria-label="TV Display Mode">
-                <button type="button" class="tv-mode-btn" data-tv-mode="local" onclick="selectTvSetupMode('local')">🖥️ Pop-Out TV (HDMI)</button>
+                <button type="button" id="tvModeBtnLocal" class="tv-mode-btn" data-tv-mode="local" onclick="selectTvSetupMode('local')">🖥️ Pop-Out TV (HDMI)</button>
                 <button type="button" id="tvModeBtnQr" class="tv-mode-btn" data-tv-mode="qr" onclick="selectTvSetupMode('qr')">📱 Remote TV (QR / Link)</button>
               </div>
               <div id="tvModeSetupHint" style="font-size:11.5px; color:#cbd5e1; line-height:1.4; margin-top:4px;"></div>
@@ -472,11 +479,14 @@
 
             <!-- Collapsible Game Rules, Theme, Timer & PIN -->
             <details class="setup-step-box">
-              <summary style="cursor:pointer; font-size:12px; font-weight:800; color:#fde68a;">⚙️ Game Rules, Theme, Timer &amp; PIN Options</summary>
+              <summary class="setup-rules-summary">
+                <span>⚙️ Rules, Theme &amp; Timer</span>
+                <span id="setupRulesSummaryPill" class="setup-rules-summary-pill">4 Rds • 10s • Classic • FM Off</span>
+              </summary>
               <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
                 <div>
                   <label class="field-label" for="setupBoardThemeSelect" style="font-size:10px;">🎨 Visual Board Theme</label>
-                  <select id="setupBoardThemeSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;" onchange="onBoardThemeChange(this.value)">
+                  <select id="setupBoardThemeSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;" onchange="onBoardThemeChange(this.value); updateSetupRulesSummary();">
                     <optgroup label="🎭 Classic &amp; Party Vibes">
                       <option value="classic" selected>🎭 Classic Blue &amp; Gold</option>
                       <option value="classroom">🏫 Classroom Clean</option>
@@ -500,7 +510,7 @@
                 <div class="buzzer-split-btns">
                   <div>
                     <label class="field-label" for="setupRoundsPerMatchSelect" style="font-size:10px;">Rounds Per Game</label>
-                    <select id="setupRoundsPerMatchSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;" onchange="syncTournamentFormatAvailability()">
+                    <select id="setupRoundsPerMatchSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:12px; text-transform:none;" onchange="syncTournamentFormatAvailability(); updateSetupRulesSummary();">
                       <option value="3">3 Rounds (1x, 2x, 3x)</option>
                       <option value="4" selected>4 Rounds (Standard: 1x, 1x, 2x, 3x)</option>
                       <option value="5">5 Rounds (1x, 1x, 2x, 2x, 3x)</option>
@@ -518,13 +528,13 @@
                   </div>
                 </div>
                 <label id="setupFastMoneyLabel" style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:800; color:#fef08a; cursor:pointer;">
-                  <input id="setupEnableFastMoneyCheckbox" type="checkbox" style="width:18px; height:18px; accent-color:#fbbf24;" />
+                  <input id="setupEnableFastMoneyCheckbox" type="checkbox" style="width:18px; height:18px; accent-color:#fbbf24;" onchange="updateSetupRulesSummary()" />
                   <span>⚡ Include "Fast Money" Bonus Round in this game <span id="setupFastMoneyHint" style="font-size:11px; color:#94a3b8; font-weight:700;"></span></span>
                 </label>
                 <div class="buzzer-split-btns">
                   <div>
                     <label class="field-label" for="setupTurnTimerSelect">⏱️ Player Answer Timer</label>
-                    <select id="setupTurnTimerSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:13px;">
+                    <select id="setupTurnTimerSelect" class="fm-txt" style="width:100%; margin-top:4px; font-size:13px;" onchange="updateSetupRulesSummary()">
                       <option value="5">5 Seconds (Fast Pace)</option>
                       <option value="7">7 Seconds (TV Standard)</option>
                       <option value="10" selected>10 Seconds (Party Standard)</option>
@@ -561,11 +571,11 @@
 
         <div class="field-row">
           <label class="field-label" for="joinRoomCodeInput">Room Code</label>
-          <input id="joinRoomCodeInput" class="lobby-input" type="text" maxlength="4" placeholder="GA42" />
+          <input id="joinRoomCodeInput" class="lobby-input" type="text" maxlength="4" placeholder="GA42" autocapitalize="characters" autocomplete="off" spellcheck="false" />
         </div>
 
-        <div class="field-row">
-          <button class="action-btn btn-blue display-font" onclick="joinTvDisplay()">
+        <div class="field-row join-role-stack">
+          <button id="btnJoinTvDisplay" class="action-btn btn-blue display-font" onclick="joinTvDisplay()">
             📺 Join as TV Display
           </button>
           <div class="buzzer-split-btns" style="margin-top:4px;">
@@ -607,7 +617,10 @@
       <div id="tvTeam1Card" class="marquee-panel team-display-card tv-team-pod">
         <div class="tv-team-meta">
           <span id="tvTeam1ControlBadge" class="control-badge hidden">🎯 Playing Board</span>
-          <div id="tvTeam1Name" class="team-display-name display-font">Team A</div>
+          <div class="tv-team-name-row">
+            <span id="tvT1BuzzerDot" class="tv-buzzer-dot hidden" title="Team 1 Buzzer Status" aria-hidden="true"></span>
+            <div id="tvTeam1Name" class="team-display-name display-font">Team A</div>
+          </div>
         </div>
         <div id="tvTeam1Score" class="team-display-score display-font">0</div>
       </div>
@@ -636,8 +649,80 @@
         <div id="tvTeam2Score" class="team-display-score display-font">0</div>
         <div class="tv-team-meta">
           <span id="tvTeam2ControlBadge" class="control-badge hidden">🎯 Playing Board</span>
-          <div id="tvTeam2Name" class="team-display-name display-font">Team B</div>
+          <div class="tv-team-name-row">
+            <div id="tvTeam2Name" class="team-display-name display-font">Team B</div>
+            <span id="tvT2BuzzerDot" class="tv-buzzer-dot hidden" title="Team 2 Buzzer Status" aria-hidden="true"></span>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <!-- TV WELCOME / GRAB YOUR PHONES SPLASH (AUTO-SHOWN BEFORE ROUND 1) -->
+    <div id="tvWelcomeWrap" class="marquee-panel tv-welcome-wrap hidden">
+      <div class="tv-welcome-header">
+        <div class="tv-welcome-brand">
+          <span id="tvWelcomeIcon" class="tv-welcome-icon">🎉</span>
+          <h2 id="tvWelcomeTitle" class="hero-title display-font tv-welcome-title">PARTY FEUD</h2>
+          <div class="tv-welcome-room-pill">
+            ROOM: <strong id="tvWelcomeRoomCode" class="display-font">----</strong>
+          </div>
+          <span id="tvWelcomeDeckMeta" class="tv-welcome-deck-meta">Starter Party Deck • 6 Rounds (1x / 2x / 3x)</span>
+        </div>
+        <div class="tv-welcome-flow-summary">
+          Face-Off → Play or Pass → 3 Strikes Steal → Fast Money
+        </div>
+      </div>
+
+      <div id="tvWelcomeGrid" class="tv-welcome-split-grid">
+        <!-- Left Half: Team A -->
+        <div class="tv-welcome-team-col t1">
+          <div id="tvWelcomeT1Name" class="tv-welcome-team t1 display-font">TEAM A</div>
+          <div id="tvWelcomeQrCaptionT1" class="tv-welcome-qr-caption">📱 Scan for Mobile Buzzer</div>
+          <div id="tvWelcomeQrImgWrapT1" class="tv-welcome-qr-img-wrap">
+            <img id="tvWelcomeQrImgT1" src="" alt="Team 1 Buzzer QR" width="220" height="220" />
+          </div>
+          <div id="tvWelcomeQrConnectedT1" class="tv-welcome-connected-box hidden">
+            <span>✅</span>
+            <span class="display-font">Ready!</span>
+          </div>
+          <span id="tvWelcomePillT1" class="tv-welcome-status-pill is-waiting">⏳ Team A Waiting…</span>
+        </div>
+
+        <!-- Center Column: VS + Shared Combo QR -->
+        <div class="tv-welcome-center-col">
+          <div class="tv-welcome-vs-badge display-font">VS</div>
+          <div id="tvWelcomeComboBox" class="tv-welcome-combo-card">
+            <div class="tv-welcome-combo-title">⚡ 1-Phone Combo Buzzer</div>
+            <div id="tvWelcomeQrImgWrapCombo" class="tv-welcome-qr-img-wrap combo-size">
+              <img id="tvWelcomeQrImgCombo" src="" alt="Combo Buzzer QR" width="160" height="160" />
+            </div>
+            <div id="tvWelcomeQrConnectedCombo" class="tv-welcome-connected-box combo-size hidden">
+              <span>✅</span>
+              <span class="display-font">Combo Active</span>
+            </div>
+            <div id="tvWelcomeQrLockedCombo" class="tv-welcome-locked-box hidden">
+              <span>🔒 Individual Mode</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Half: Team B -->
+        <div class="tv-welcome-team-col t2">
+          <div id="tvWelcomeT2Name" class="tv-welcome-team t2 display-font">TEAM B</div>
+          <div id="tvWelcomeQrCaptionT2" class="tv-welcome-qr-caption">📱 Scan for Mobile Buzzer</div>
+          <div id="tvWelcomeQrImgWrapT2" class="tv-welcome-qr-img-wrap">
+            <img id="tvWelcomeQrImgT2" src="" alt="Team 2 Buzzer QR" width="220" height="220" />
+          </div>
+          <div id="tvWelcomeQrConnectedT2" class="tv-welcome-connected-box hidden">
+            <span>✅</span>
+            <span class="display-font">Ready!</span>
+          </div>
+          <span id="tvWelcomePillT2" class="tv-welcome-status-pill is-waiting">⏳ Team B Waiting…</span>
+        </div>
+      </div>
+
+      <div class="tv-welcome-wait-msg">
+        Scan your team's QR (or the center 1-Phone Combo QR) • Waiting for Host to start Round 1…
       </div>
     </div>
 
@@ -793,6 +878,7 @@
             <div class="host-more-dropdown">
               <button type="button" id="hostTabMain" class="top-btn gold hidden" onclick="hostSwitchStage('main'); closeHostMoreMenu()">🎯 Main Board</button>
               <button type="button" id="hostTabFm" class="top-btn" onclick="hostSwitchStage('fast'); closeHostMoreMenu()">⚡ Fast Money</button>
+              <button type="button" id="hostBtnToggleWelcome" class="top-btn" onclick="hostToggleTvWelcome(); closeHostMoreMenu()" title="Show or hide the TV Welcome Screen">👋 Welcome Screen</button>
               <button type="button" class="top-btn gold" onclick="reopenTvWindow(); closeHostMoreMenu()" title="Open or focus the separate TV Display window">📺 Pop Out TV</button>
               <button type="button" class="top-btn gold" onclick="hostRandomizeCurrentRound(); closeHostMoreMenu()" title="Pick a random unplayed question of the same multiplier level (1x / 2x / 3x) from the deck">🎲 Randomize Round</button>
               <button type="button" class="top-btn" onclick="hostResetRound(); closeHostMoreMenu()">↺ Reset Round</button>
@@ -812,8 +898,8 @@
           <div id="hostFlowHeadline" class="flow-coach-headline display-font">Step 1: Face-Off Ready</div>
           <div id="hostScriptCollapseWrap" class="host-script-collapse-wrap">
             <div id="hostFlowScriptBox" class="host-script-box"></div>
-            <div id="hostFlowSubtext" class="flow-coach-sub">Reveal the question to start the Face-Off!</div>
           </div>
+          <div id="hostFlowSubtext" class="flow-coach-sub hidden">Reveal the question to start the Face-Off!</div>
         </div>
       </div>
       <!-- Mode-specific action buttons right inside the Host Script / instructions card -->
@@ -834,6 +920,7 @@
             <div class="host-strip-pot" onclick="openHostPopover('phase')" title="Tap to override phase or strikes">
               <span class="host-strip-pot-label">POT</span>
               <span id="hostStripPotVal" class="host-strip-pot-val display-font">0</span>
+              <div id="hostStripStrikes" class="host-strip-strikes" aria-label="Strikes: 0 of 3"></div>
             </div>
             <button type="button" id="hostStripTeam2" class="host-strip-team team-2" onclick="openHostPopover('team2')" title="Tap to edit Team 2 name, score, or make active">
               <span id="hostStripT2Name" class="host-strip-name">Team 2</span>
@@ -846,8 +933,11 @@
 
           <!-- Question Prompt (tappable to swap round while hidden on TV) -->
           <div id="hostQuestionBox" class="host-question-box" onclick="if(this.classList.contains('is-swappable'))openHostPopover('round')">
-            <p id="hostPromptText" class="host-prompt-text"></p>
-            <div id="hostQuestionSwapHint" class="host-question-swap-hint hidden">📋 Tap question to swap round from deck</div>
+            <div class="host-question-row">
+              <p id="hostPromptText" class="host-prompt-text"></p>
+              <button id="hostQuickSwapRoundBtn" type="button" class="top-btn gold host-quick-swap-btn hidden" onclick="event.stopPropagation(); hostRandomizeCurrentRound();" title="Swap to another random unplayed question of the same level">🎲 Swap</button>
+            </div>
+            <div id="hostQuestionSwapHint" class="host-question-swap-hint hidden">📋 Tap question to pick another round from deck</div>
           </div>
 
           <!-- Clickable Survey Answers (1–8) -->
@@ -862,11 +952,16 @@
               <p class="brand-sub">Combined Total: <strong id="hostFmTotal" style="color:#fff;">0</strong> / 200 <span id="hostFmNeedBadge" style="color:#fde68a; font-weight:700; margin-left:6px;">(Need 200 more)</span></p>
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+              <button id="hostBtnFmBackToBoard" type="button" class="top-btn" onclick="hostSwitchStage('main')" title="Return to the main survey board">🎯 Back to Board</button>
+              <button id="hostBtnFmEndMatch" type="button" class="top-btn gold" onclick="hostShowWinnerScreen()" title="Finish Fast Money and open Winner &amp; Next Match screen">🏆 Finish &amp; Winner Screen</button>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; width:100%;">
               <span id="hostFmClock" class="display-font" style="font-size:32px; color:var(--gold); margin-right:6px;">20s</span>
               <button class="top-btn" onclick="hostSetFmClock(20)">20s</button>
               <button class="top-btn" onclick="hostSetFmClock(25)">25s</button>
               <button id="hostBtnFmTimer" class="top-btn gold" onclick="hostToggleFmClock()">Start</button>
               <button class="top-btn" style="background:#991b1b;" onclick="hostFmDuplicateBuzz()">Dup ❌</button>
+              <button id="hostBtnFmReadyP2" type="button" class="top-btn gold hidden" onclick="hostFmReadyPlayer2()" title="Hide Player 1 answers on TV and set clock to 25s for Player 2">⏭️ Ready Player 2</button>
               <button class="top-btn" onclick="hostToggleFmHideP1()">🙈 Hide/Show P1</button>
               <button class="top-btn" onclick="hostResetFm()">Reset</button>
             </div>
@@ -884,6 +979,9 @@
         </div>
       </div>
     </div>
+
+    <!-- STICKY BOTTOM ACTION BAR ON MOBILE HOST VIEW -->
+    <div id="hostMobileStickyBar" class="host-mobile-sticky-bar hidden"></div>
   </section>
 
   <!-- =====================================================================

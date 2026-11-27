@@ -12,6 +12,7 @@ window.Feud = window.Feud || {};
 (function (Feud) {
   let activeRole = "lobby"; // 'lobby' | 'host' | 'tv' | 'buzzer1' | 'buzzer2' | 'solo'
   let currentRoomCode = "";
+  let localBuzzerToken = "";
   let roomState = Feud.createDefaultRoomState("1234");
 
   let lastStrikeSeq = 0;
@@ -280,6 +281,17 @@ window.Feud = window.Feud || {};
         Boolean(roomState.questionRevealed) &&
         !roomState.buzzerWinner;
       roomState = { ...roomState, ...incoming };
+      if (activeRole === "buzzer1" || activeRole === "buzzer2") {
+        const tKey = activeRole === "buzzer1" ? "t1" : "t2";
+        const expectedTok = incoming.buzzerTokens && incoming.buzzerTokens[tKey];
+        if (localBuzzerToken && expectedTok && expectedTok !== localBuzzerToken) {
+          roomState._localBuzzerStale = true;
+          renderActiveView();
+          if (Feud.cleanupSync) Feud.cleanupSync();
+          Feud.showToast("🏁 Match Over — New teams are playing!");
+          return;
+        }
+      }
       const nowBuzzArmed =
         (roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready")) === "faceoff-buzz" &&
         Boolean(roomState.questionRevealed) &&
@@ -383,7 +395,7 @@ window.Feud = window.Feud || {};
       Feud.DECK_CATALOG = [
         {
           id: "starter",
-          label: "🎉 Starter Party Deck (6 Rounds)",
+          label: "🎉 Classic Party Mix (25 Rounds)",
           file: null,
           builtin: "starter"
         }
@@ -391,8 +403,6 @@ window.Feud = window.Feud || {};
     }
     return Feud.DECK_CATALOG;
   }
-
-  let activeDeckSearchQuery = "";
 
   function isCatalogItemSelected(item, activeDeckName) {
     return Boolean(
@@ -410,11 +420,6 @@ window.Feud = window.Feud || {};
     );
   }
 
-  function onDeckFilterInput(query) {
-    activeDeckSearchQuery = String(query || "").trim().toLowerCase();
-    populateDeckCatalogSelect();
-  }
-
   function populateDeckCatalogSelect() {
     const sel = document.getElementById("deckManagerSelect");
     if (!sel) return;
@@ -422,22 +427,7 @@ window.Feud = window.Feud || {};
     const catalog = getCatalogList();
     const activeDeckName =
       roomState.customDeck && roomState.customDeck.name ? roomState.customDeck.name : null;
-
-    const filtered = catalog.filter((item) => {
-      if (activeDeckSearchQuery) {
-        const haystack = [
-          item.id,
-          item.label,
-          item.data && item.data.deckName,
-          item.meta && item.meta.deckName
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(activeDeckSearchQuery)) return false;
-      }
-      return true;
-    });
+    const filtered = catalog;
 
     sel.innerHTML = "";
     let matched = false;
@@ -474,7 +464,7 @@ window.Feud = window.Feud || {};
     } else if (!activeDeckName && !matched && filtered.length > 0) {
       const starterOpt = document.createElement("option");
       starterOpt.value = "__custom__";
-      starterOpt.textContent = `🎉 Active: Starter Party Deck`;
+      starterOpt.textContent = `🎉 Active: Classic Party Mix`;
       starterOpt.selected = true;
       sel.appendChild(starterOpt);
     }
@@ -804,7 +794,28 @@ window.Feud = window.Feud || {};
     }
     syncTournamentFormatAvailability();
     syncDeckManagerBrandingInputs();
+    updateSetupRulesSummary();
     Feud.renderBranding(roomState);
+  }
+
+  function updateSetupRulesSummary() {
+    const pill = document.getElementById("setupRulesSummaryPill");
+    if (!pill) return;
+    const rdsSel = document.getElementById("setupRoundsPerMatchSelect");
+    const timerSel = document.getElementById("setupTurnTimerSelect");
+    const themeSel = document.getElementById("setupBoardThemeSelect");
+    const fmCheck = document.getElementById("setupEnableFastMoneyCheckbox");
+
+    const rdsVal = rdsSel ? parseInt(rdsSel.value, 10) : Number(roomState.roundsPerMatch ?? 4);
+    const rdsLabel = rdsVal === 0 ? "All Rds" : `${rdsVal} Rds`;
+    const timerVal = timerSel ? parseInt(timerSel.value, 10) || 10 : Number(roomState.turnTimerDuration || 10);
+    const rawThemeText =
+      themeSel && themeSel.selectedOptions && themeSel.selectedOptions[0]
+        ? themeSel.selectedOptions[0].textContent.trim()
+        : "Classic";
+    const themeLabel = rawThemeText.replace(/^[^\w]+/, "").split("(")[0].split("&")[0].trim() || "Classic";
+    const fmOn = fmCheck ? Boolean(fmCheck.checked && !fmCheck.disabled) : Boolean(roomState.enableFastMoney);
+    pill.textContent = `${rdsLabel} • ${timerVal}s • ${themeLabel} • ${fmOn ? "Fast Money On" : "Fast Money Off"}`;
   }
 
   function syncDeckManagerBrandingInputs() {
@@ -829,32 +840,50 @@ window.Feud = window.Feud || {};
     return Boolean(openedTvPopupWindow && !openedTvPopupWindow.closed);
   }
 
+  function isDesktopTvCapable() {
+    if (isFileProtocol()) return true;
+    if (typeof window === "undefined") return true;
+    const isTouchOnly =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    return !isTouchOnly && window.innerWidth >= 900;
+  }
+
   function getDefaultTvSetupMode() {
     if (isFileProtocol()) return "local";
-    return typeof window !== "undefined" && window.innerWidth >= 900 ? "local" : "qr";
+    return isDesktopTvCapable() ? "local" : "qr";
   }
 
   function getSelectedTvSetupMode() {
-    if (!selectedTvSetupMode) {
+    let savedPref = selectedTvSetupMode;
+    if (!savedPref) {
       try {
         const saved = localStorage.getItem(TV_SETUP_MODE_KEY);
         if (saved === "local" || saved === "qr") {
+          savedPref = saved;
           selectedTvSetupMode = saved;
         }
       } catch (e) {}
     }
-    let mode = selectedTvSetupMode || getDefaultTvSetupMode();
+    let mode = savedPref || getDefaultTvSetupMode();
+    if (!isDesktopTvCapable() && mode === "local") {
+      mode = "qr";
+    }
     if (isFileProtocol() && mode === "qr") {
       mode = "local";
     }
-    selectedTvSetupMode = mode;
     return mode;
   }
 
   function syncTvSetupModeUi() {
     const mode = getSelectedTvSetupMode();
     const isFile = isFileProtocol();
+    const desktopCapable = isDesktopTvCapable();
     const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+    const localBtn = document.getElementById("tvModeBtnLocal");
+    if (localBtn) {
+      localBtn.classList.toggle("hidden", !desktopCapable);
+    }
     const qrBtn = document.getElementById("tvModeBtnQr");
     if (qrBtn) {
       qrBtn.disabled = isFile;
@@ -870,21 +899,17 @@ window.Feud = window.Feud || {};
     if (hintEl) {
       if (mode === "local") {
         if (isFile || isOffline) {
-          hintEl.textContent =
-            'Offline HDMI mode: Host & TV sync locally with no internet. Phone QR buzzers require internet — have players buzz in verbally/on the table and tap "Team 1 / Team 2 Buzzed" on the Host screen.';
+          hintEl.textContent = "Offline HDMI mode — Host & TV sync locally; tap team buzz buttons on Host.";
           hintEl.style.color = "#fde68a";
         } else {
-          hintEl.textContent =
-            'HDMI dual-screen mode: opens a local TV window right away. Phone QR buzzers still work if you have internet — or just tap "Team 1 / Team 2 Buzzed" on the Host screen.';
+          hintEl.textContent = "Opens a local TV window for HDMI (phone buzzers join via the TV Welcome Screen).";
           hintEl.style.color = "#cbd5e1";
         }
       } else if (isOffline) {
-        hintEl.textContent =
-          "⚠️ Remote TV & Phone QR buzzers require internet. Switch to Pop-Out TV (HDMI) for offline play.";
+        hintEl.textContent = "⚠️ Remote TV & phone buzzers require internet.";
         hintEl.style.color = "#fde68a";
       } else {
-        hintEl.textContent =
-          "Remote TV mode: shows a QR code & link to open the TV board on another device (phone QR buzzers also available).";
+        hintEl.textContent = "Connect any TV or iPad by QR/link — phone buzzers join via the TV Welcome Screen.";
         hintEl.style.color = "#cbd5e1";
       }
     }
@@ -892,6 +917,9 @@ window.Feud = window.Feud || {};
 
   function selectTvSetupMode(mode) {
     if (mode !== "local" && mode !== "qr") return;
+    if (!isDesktopTvCapable() && mode === "local") {
+      mode = "qr";
+    }
     if (isFileProtocol() && mode === "qr") {
       Feud.showToast("Remote TV QR requires HTTP/HTTPS — using Pop-Out TV.");
       mode = "local";
@@ -1162,6 +1190,10 @@ window.Feud = window.Feud || {};
       pot: 0,
       strikes: 0,
       buzzerWinner: 0,
+      buzzerTokens: { t1: Feud.generateRoomCode(), t2: Feud.generateRoomCode() },
+      buzzerStatus: { b1: false, b2: false, combo: false },
+      showTvWelcome: mode === "host" && !isFileProtocol(),
+      tvWelcomeInfo: null,
       fmClock: 20,
       fmHideP1: false,
       fmEntries: slice.matchFastMoney.map(() => ({ p1Ans: "", p1Pts: 0, p2Ans: "", p2Pts: 0 }))
@@ -1177,6 +1209,9 @@ window.Feud = window.Feud || {};
     qrModalOpenedForTvSetup = false;
 
     currentRoomCode = code;
+    if (roomState.showTvWelcome) {
+      roomState.tvWelcomeInfo = buildTvWelcomeInfo("individual", null, code);
+    }
     syncSequenceCounters(roomState);
     Feud.saveRoomStateToStorage(code, roomState);
     syncDeckQueryParam(document.getElementById("deckManagerSelect")?.value || "starter");
@@ -1213,7 +1248,7 @@ window.Feud = window.Feud || {};
 
     const starterRounds = Array.isArray(Feud.DEFAULT_ROUNDS) ? Feud.DEFAULT_ROUNDS : [];
     const starterTitle =
-      (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) || "Starter Party Deck";
+      (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) || "Classic Party Mix";
     const starterIcon = (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameIcon) || "🎉";
     const fresh = Feud.createDefaultRoomState("1234");
     const demoRounds = starterRounds.map((r, i) => ({ ...r, sourceIdx: i }));
@@ -1232,6 +1267,8 @@ window.Feud = window.Feud || {};
       roundIdx: 0,
       roundPhase: "faceoff-buzz",
       questionRevealed: true,
+      showTvWelcome: false,
+      tvWelcomeInfo: null,
       buzzerWinner: 0,
       controllingTeam: 0,
       faceoffFirstTeam: 0,
@@ -1288,8 +1325,20 @@ window.Feud = window.Feud || {};
     const code = document.getElementById("joinRoomCodeInput").value.trim().toUpperCase();
     const pin = document.getElementById("hostJoinPin").value.trim();
 
-    if (code.length < 4 || pin.length < 4) {
-      Feud.showToast("Enter the 4-character Room Code and 4-digit Host PIN.");
+    if (code.length < 4) {
+      Feud.showToast("Enter the 4-character Room Code.");
+      return;
+    }
+
+    if (pin.length < 4) {
+      Feud.showToast(`Checking Room ${code}…`);
+      const probe = await Feud.joinExistingRoomSync({ code, role: "tv" });
+      if (Feud.cleanupSync) Feud.cleanupSync();
+      if (!probe.ok) {
+        Feud.showToast(probe.error || `Room "${code}" not found.`);
+        return;
+      }
+      Feud.showToast(`Room ${code} found! Enter the 4-digit Host PIN to unlock.`);
       return;
     }
 
@@ -1302,10 +1351,49 @@ window.Feud = window.Feud || {};
 
     roomState = { ...roomState, ...res.state };
     currentRoomCode = code;
+    if (roomState.showTvWelcome) {
+      roomState.tvWelcomeInfo = buildTvWelcomeInfo("individual", null, code);
+    }
     syncSequenceCounters(roomState);
     Feud.saveLastSession("host", code, pin);
     enterRole("host", code);
     Feud.showToast(`Unlocked Host Mode for Room ${code}!`);
+  }
+
+  async function connectAndMaybeOpenPopup({
+    code,
+    role,
+    autoLaunched,
+    windowName,
+    features,
+    connectingMsg,
+    retryMsg
+  }) {
+    Feud.showToast(connectingMsg);
+    let res = await Feud.joinExistingRoomSync({ code, role });
+    if (!res.ok && autoLaunched && retryMsg && !(res.error && res.error.includes("already open"))) {
+      Feud.showToast(retryMsg);
+      await new Promise((r) => setTimeout(r, 1500));
+      res = await Feud.joinExistingRoomSync({ code, role });
+    }
+    if (!res.ok) {
+      Feud.showToast(res.error || `Room "${code}" not found.`);
+      return null;
+    }
+
+    if (!autoLaunched && windowName) {
+      const popupWin = openRoleWindow(code, role, windowName, features);
+      if (popupWin) {
+        if (Feud.cleanupSync) Feud.cleanupSync();
+        if (role === "buzzer1" || role === "buzzer2" || role === "buzzer_combo") {
+          openedBuzzerPopups[role] = popupWin;
+          refreshLobbyBuzzerLocks(false);
+        }
+        return { handedOffToPopup: true };
+      }
+    }
+
+    return { handedOffToPopup: false, state: res.state };
   }
 
   async function joinTvDisplay(opts) {
@@ -1317,18 +1405,17 @@ window.Feud = window.Feud || {};
       return;
     }
 
-    if (!autoLaunched) {
-      if (openTvDisplayWindow(code)) return;
-    }
+    const conn = await connectAndMaybeOpenPopup({
+      code,
+      role: "tv",
+      autoLaunched,
+      windowName: "partyFeudTvDisplay",
+      features: "popup=yes,width=1280,height=720",
+      connectingMsg: `Connecting TV to Room ${code}…`
+    });
+    if (!conn || conn.handedOffToPopup) return;
 
-    Feud.showToast(`Connecting TV to Room ${code}…`);
-    const res = await Feud.joinExistingRoomSync({ code, role: "tv" });
-    if (!res.ok) {
-      Feud.showToast(res.error || `Room "${code}" not found.`);
-      return;
-    }
-
-    roomState = { ...roomState, ...res.state };
+    roomState = { ...roomState, ...conn.state };
     currentRoomCode = code;
     syncSequenceCounters(roomState);
     // An auto-launched TV window shares localStorage with the Host window — don't overwrite the Host's saved session/PIN
@@ -1405,32 +1492,30 @@ window.Feud = window.Feud || {};
     }
 
     const role = teamNum === 1 ? "buzzer1" : "buzzer2";
-    if (!autoLaunched) {
-      const popupWin = openRoleWindow(
-        code,
-        role,
-        `partyFeudBuzzer${teamNum}`,
-        "popup=yes,width=480,height=780"
-      );
-      if (popupWin) {
-        openedBuzzerPopups[role] = popupWin;
-        refreshLobbyBuzzerLocks(false);
-        return;
-      }
-    }
-    Feud.showToast(`Connecting Team ${teamNum} Buzzer to ${code}…`);
-    let res = await Feud.joinExistingRoomSync({ code, role });
-    if (!res.ok && autoLaunched && !(res.error && res.error.includes("already open"))) {
-      Feud.showToast(`Retrying Team ${teamNum} Buzzer connection…`);
-      await new Promise((r) => setTimeout(r, 1500));
-      res = await Feud.joinExistingRoomSync({ code, role });
-    }
-    if (!res.ok) {
-      Feud.showToast(res.error || `Room "${code}" not found.`);
+    const conn = await connectAndMaybeOpenPopup({
+      code,
+      role,
+      autoLaunched,
+      windowName: `partyFeudBuzzer${teamNum}`,
+      features: "popup=yes,width=480,height=780",
+      connectingMsg: `Connecting Team ${teamNum} Buzzer to ${code}…`,
+      retryMsg: `Retrying Team ${teamNum} Buzzer connection…`
+    });
+    if (!conn || conn.handedOffToPopup) return;
+
+    const urlBt = (new URLSearchParams(window.location.search).get("bt") || "").trim();
+    const tKey = teamNum === 1 ? "t1" : "t2";
+    const expectedTok = (conn.state && conn.state.buzzerTokens && conn.state.buzzerTokens[tKey]) || "";
+    if (urlBt && expectedTok && urlBt !== expectedTok) {
+      roomState = { ...roomState, ...conn.state, _localBuzzerStale: true };
+      currentRoomCode = code;
+      enterRole(role, code);
+      if (Feud.cleanupSync) Feud.cleanupSync();
+      Feud.showToast("🏁 This QR code expired — scan the new team's QR!");
       return;
     }
-
-    roomState = { ...roomState, ...res.state };
+    localBuzzerToken = urlBt || expectedTok;
+    roomState = { ...roomState, ...conn.state, _localBuzzerStale: false };
     currentRoomCode = code;
     syncSequenceCounters(roomState);
     Feud.saveLastSession(role, code);
@@ -1449,32 +1534,18 @@ window.Feud = window.Feud || {};
     }
 
     const role = "buzzer_combo";
-    if (!autoLaunched) {
-      const popupWin = openRoleWindow(
-        code,
-        role,
-        "partyFeudComboBuzzer",
-        "popup=yes,width=540,height=860"
-      );
-      if (popupWin) {
-        openedBuzzerPopups[role] = popupWin;
-        refreshLobbyBuzzerLocks(false);
-        return;
-      }
-    }
-    Feud.showToast(`Connecting Combo Buzzer to ${code}…`);
-    let res = await Feud.joinExistingRoomSync({ code, role });
-    if (!res.ok && autoLaunched && !(res.error && res.error.includes("already open"))) {
-      Feud.showToast("Retrying Combo Buzzer connection…");
-      await new Promise((r) => setTimeout(r, 1500));
-      res = await Feud.joinExistingRoomSync({ code, role });
-    }
-    if (!res.ok) {
-      Feud.showToast(res.error || `Room "${code}" not found.`);
-      return;
-    }
+    const conn = await connectAndMaybeOpenPopup({
+      code,
+      role,
+      autoLaunched,
+      windowName: "partyFeudComboBuzzer",
+      features: "popup=yes,width=540,height=860",
+      connectingMsg: `Connecting Combo Buzzer to ${code}…`,
+      retryMsg: "Retrying Combo Buzzer connection…"
+    });
+    if (!conn || conn.handedOffToPopup) return;
 
-    roomState = { ...roomState, ...res.state };
+    roomState = { ...roomState, ...conn.state };
     currentRoomCode = code;
     syncSequenceCounters(roomState);
     Feud.saveLastSession(role, code);
@@ -1704,7 +1775,69 @@ window.Feud = window.Feud || {};
     document.getElementById("wakeLockBadge")?.classList.add("hidden");
     document.getElementById("btnLeaveRoom").classList.add("hidden");
     document.getElementById("roleSubtitle").textContent = "Live Party Multiplayer";
+    refreshLobbyResumeBanner();
     Feud.renderBranding(roomState);
+  }
+
+  function refreshLobbyResumeBanner() {
+    const banner = document.getElementById("lobbyResumeBanner");
+    if (!banner) return;
+    const last = Feud.loadLastSession ? Feud.loadLastSession() : null;
+    const stored =
+      last && last.role === "host" && last.code && last.code !== "SOLO" && Feud.loadRoomStateFromStorage
+        ? Feud.loadRoomStateFromStorage(last.code)
+        : null;
+    if (!stored || stored.isDemoMode) {
+      banner.classList.add("hidden");
+      return;
+    }
+    const titleEl = document.getElementById("lobbyResumeTitle");
+    const subEl = document.getElementById("lobbyResumeSub");
+    const t1 = stored.team1Name || "Team 1";
+    const t2 = stored.team2Name || "Team 2";
+    const s1 = Number(stored.team1Score) || 0;
+    const s2 = Number(stored.team2Score) || 0;
+    const rdNum = (Number(stored.roundIdx) || 0) + 1;
+    if (titleEl) titleEl.textContent = `🔄 Resume Active Game — Room ${last.code}`;
+    if (subEl) subEl.textContent = `${t1} (${s1}) vs. ${t2} (${s2}) • Round ${rdNum}`;
+    banner.classList.remove("hidden");
+  }
+
+  async function resumeLastHostSession() {
+    Feud.unlockAudio();
+    const last = Feud.loadLastSession ? Feud.loadLastSession() : null;
+    if (!last || last.role !== "host" || !last.code) {
+      refreshLobbyResumeBanner();
+      return;
+    }
+    const stored = Feud.loadRoomStateFromStorage ? Feud.loadRoomStateFromStorage(last.code) : null;
+    if (!stored || stored.isDemoMode) {
+      Feud.clearLastSession && Feud.clearLastSession();
+      refreshLobbyResumeBanner();
+      Feud.showToast("Saved room session is no longer available.");
+      return;
+    }
+    roomState = { ...roomState, ...stored };
+    currentRoomCode = last.code;
+    syncSequenceCounters(roomState);
+    enterRole("host", last.code);
+    await Feud.startHostRoomSync(last.code, roomState);
+    updateHostDevicesPill();
+    Feud.showToast(`🔄 Resumed hosting Room ${last.code}!`);
+  }
+
+  function dismissResumeHostBanner() {
+    const last = Feud.loadLastSession ? Feud.loadLastSession() : null;
+    if (Feud.clearLastSession) Feud.clearLastSession();
+    const joinEl = document.getElementById("joinRoomCodeInput");
+    const pinEl = document.getElementById("hostJoinPin");
+    if (joinEl && last && joinEl.value.trim().toUpperCase() === last.code) {
+      joinEl.value = "";
+    }
+    if (pinEl && last && last.pin && pinEl.value === String(last.pin)) {
+      pinEl.value = "";
+    }
+    refreshLobbyResumeBanner();
   }
 
   // =====================================================================
@@ -1945,6 +2078,23 @@ window.Feud = window.Feud || {};
       nextTournament = Feud.createTournamentBracket(nextTournament.teams);
     }
 
+    const oldTokens = (roomState && roomState.buzzerTokens) || { t1: "T1A", t2: "T2A" };
+    const t1Changed = String(t1).trim().toLowerCase() !== String(roomState.team1Name || "").trim().toLowerCase();
+    const t2Changed = String(t2).trim().toLowerCase() !== String(roomState.team2Name || "").trim().toLowerCase();
+    const nextTokens = {
+      t1: t1Changed ? Feud.generateRoomCode() : oldTokens.t1,
+      t2: t2Changed ? Feud.generateRoomCode() : oldTokens.t2
+    };
+    const curBz = Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {};
+    const nextBz = {
+      b1: t1Changed ? false : Boolean(curBz.b1),
+      b2: t2Changed ? false : Boolean(curBz.b2),
+      combo: Boolean(curBz.combo)
+    };
+    roomState.buzzerTokens = nextTokens;
+    const qrSupported =
+      activeRole === "host" && !isFileProtocol() && currentRoomCode !== "SOLO" && currentRoomCode !== "DEMO";
+
     closeNextMatchModal();
     await pushRoomPatch({
       stage: "main",
@@ -1971,6 +2121,10 @@ window.Feud = window.Feud || {};
       pot: 0,
       strikes: 0,
       buzzerWinner: 0,
+      buzzerTokens: nextTokens,
+      buzzerStatus: nextBz,
+      showTvWelcome: qrSupported,
+      tvWelcomeInfo: qrSupported ? buildTvWelcomeInfo(null, nextBz, currentRoomCode) : null,
       team1Name: t1,
       team2Name: t2,
       team1Score: 0,
@@ -2211,7 +2365,14 @@ window.Feud = window.Feud || {};
   function buildQrJoinUrl(role) {
     const code = currentRoomCode || "SOLO";
     const baseUrl = getQrBaseUrl();
-    return `${baseUrl}?room=${encodeURIComponent(code)}&role=${encodeURIComponent(role)}`;
+    const tokens = (roomState && roomState.buzzerTokens) || {};
+    let url = `${baseUrl}?room=${encodeURIComponent(code)}&role=${encodeURIComponent(role)}`;
+    if (role === "buzzer1" && tokens.t1) {
+      url += `&bt=${encodeURIComponent(tokens.t1)}`;
+    } else if (role === "buzzer2" && tokens.t2) {
+      url += `&bt=${encodeURIComponent(tokens.t2)}`;
+    }
+    return url;
   }
 
   async function copyQrJoinUrl(role = "tv") {
@@ -2359,6 +2520,85 @@ window.Feud = window.Feud || {};
     return false;
   }
 
+  function buildTvWelcomeInfo(qrModeOverride, bz, codeOverride) {
+    const code = codeOverride || currentRoomCode || "SOLO";
+    const info = bz || (Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {});
+    const prevMode =
+      roomState && roomState.tvWelcomeInfo && roomState.tvWelcomeInfo.qrMode
+        ? roomState.tvWelcomeInfo.qrMode
+        : "individual";
+    const qrMode =
+      qrModeOverride === "buzzer_combo" || qrModeOverride === "individual"
+        ? qrModeOverride
+        : info.combo
+        ? "buzzer_combo"
+        : prevMode;
+    const offline = isFileProtocol() || code === "SOLO" || code === "DEMO";
+    return {
+      roomCode: code,
+      qrMode,
+      url1: offline ? "" : buildQrJoinUrl("buzzer1"),
+      url2: offline ? "" : buildQrJoinUrl("buzzer2"),
+      urlCombo: offline ? "" : buildQrJoinUrl("buzzer_combo"),
+      b1Connected: Boolean(info.b1),
+      b2Connected: Boolean(info.b2),
+      comboConnected: Boolean(info.combo)
+    };
+  }
+
+  function syncTvWelcomeWithBuzzers(bz) {
+    if (activeRole !== "host" || !roomState) return;
+    const info = bz || (Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {});
+    const prevStatus = roomState.buzzerStatus || {};
+    const nextStatus = {
+      b1: Boolean(info.b1),
+      b2: Boolean(info.b2),
+      combo: Boolean(info.combo)
+    };
+    const statusChanged =
+      Boolean(prevStatus.b1) !== nextStatus.b1 ||
+      Boolean(prevStatus.b2) !== nextStatus.b2 ||
+      Boolean(prevStatus.combo) !== nextStatus.combo;
+
+    const patch = {};
+    if (statusChanged) patch.buzzerStatus = nextStatus;
+
+    if (roomState.showTvWelcome) {
+      const nextInfo = buildTvWelcomeInfo(null, nextStatus, currentRoomCode);
+      const prev = roomState.tvWelcomeInfo || {};
+      if (
+        prev.b1Connected !== nextInfo.b1Connected ||
+        prev.b2Connected !== nextInfo.b2Connected ||
+        prev.comboConnected !== nextInfo.comboConnected ||
+        prev.qrMode !== nextInfo.qrMode ||
+        prev.url1 !== nextInfo.url1 ||
+        prev.url2 !== nextInfo.url2
+      ) {
+        patch.tvWelcomeInfo = nextInfo;
+      }
+    }
+    if (Object.keys(patch).length > 0) {
+      pushRoomPatch(patch);
+    }
+  }
+
+  async function hostToggleTvWelcome() {
+    if (activeRole !== "host") return;
+    if (isFileProtocol() || currentRoomCode === "SOLO" || currentRoomCode === "DEMO") {
+      if (roomState.showTvWelcome) {
+        await pushRoomPatch({ showTvWelcome: false, tvWelcomeInfo: null });
+      }
+      Feud.showToast("ℹ️ TV Welcome Screen is only shown when QR phone buzzers are supported.");
+      return;
+    }
+    const nextShow = !roomState.showTvWelcome;
+    await pushRoomPatch({
+      showTvWelcome: nextShow,
+      tvWelcomeInfo: nextShow ? buildTvWelcomeInfo(null, null, currentRoomCode) : roomState.tvWelcomeInfo
+    });
+    Feud.showToast(nextShow ? "👋 TV Welcome Screen shown." : "📺 Switched TV to Game Board.");
+  }
+
   function buildTvQrOverlayPayload(qrRole, bz, code) {
     const info = bz || (Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {});
     const shortUrl = getShortJoinDisplayUrl();
@@ -2448,7 +2688,11 @@ window.Feud = window.Feud || {};
     if (activeRole === "host" && roomState) {
       if (nextRole) {
         const code = currentRoomCode || "SOLO";
-        pushRoomPatch({ tvQrOverlay: buildTvQrOverlayPayload(nextRole, bz, code) });
+        const patch = { tvQrOverlay: buildTvQrOverlayPayload(nextRole, bz, code) };
+        if (roomState.showTvWelcome && (nextRole === "individual" || nextRole === "buzzer_combo")) {
+          patch.tvWelcomeInfo = buildTvWelcomeInfo(nextRole, bz, code);
+        }
+        pushRoomPatch(patch);
       } else {
         pushRoomPatch({ tvQrOverlay: null });
       }
@@ -2485,7 +2729,7 @@ window.Feud = window.Feud || {};
     const fileProto = isFileProtocol();
     const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
     document.getElementById("qrRemoteTvBox")?.classList.toggle("hidden", fileProto);
-    document.getElementById("qrBuzzersSection")?.classList.toggle("hidden", fileProto);
+    document.getElementById("qrBuzzersSection")?.classList.toggle("hidden", fileProto || qrModalOpenedForTvSetup);
     document.getElementById("qrFileModeHint")?.classList.toggle("hidden", !fileProto && !isOffline);
     const diag = Feud.getSyncDiagnostics ? Feud.getSyncDiagnostics() : { relayOk: true };
     updateQrRelayWarning(diag.relayOk);
@@ -2622,6 +2866,7 @@ window.Feud = window.Feud || {};
       if (roomState.buzzerWinner) {
         await pushRoomPatch({
           questionRevealed: true,
+          showTvWelcome: false,
           roundPhase: "faceoff-p1",
           turnTimerRemaining: dur,
           turnTimerRunning: true
@@ -2631,6 +2876,7 @@ window.Feud = window.Feud || {};
       } else {
         await pushRoomPatch({
           questionRevealed: true,
+          showTvWelcome: false,
           roundPhase: "faceoff-buzz",
           turnTimerRemaining: dur,
           turnTimerRunning: false
@@ -2639,6 +2885,12 @@ window.Feud = window.Feud || {};
           "📺 Question Revealed on TV! Players have unlimited time until the first person buzzes."
         );
       }
+      return;
+    }
+
+    if (roomState.showTvWelcome) {
+      await pushRoomPatch({ showTvWelcome: false });
+      Feud.showToast("📺 Switched TV to Game Board.");
       return;
     }
 
@@ -2797,6 +3049,8 @@ window.Feud = window.Feud || {};
     await pushRoomPatch({
       roundPhase: "faceoff-buzz",
       questionRevealed: true,
+      showTvWelcome: false,
+      tvWelcomeInfo: null,
       buzzerWinner: 0,
       buzzerWinnerAt: 0,
       buzzerRunnerUpDeltaMs: 0,
@@ -2844,6 +3098,7 @@ window.Feud = window.Feud || {};
     Feud.playFaceOffTone(cleanTeam);
     await pushRoomPatch({
       questionRevealed: true,
+      showTvWelcome: false,
       roundPhase: "faceoff-p1",
       faceoffFirstTeam: cleanTeam,
       controllingTeam: cleanTeam,
@@ -4002,6 +4257,10 @@ window.Feud = window.Feud || {};
     Feud.unlockAudio();
     pushUndoSnapshot();
     stopLocalTurnTimerInterval();
+    clearInterval(hostFmTimerInterval);
+    hostFmTimerInterval = null;
+    const fmBtn = document.getElementById("hostBtnFmTimer");
+    if (fmBtn) fmBtn.textContent = "Start";
     await pushRoomPatch({
       stage: "winner",
       turnTimerRunning: false
@@ -4020,6 +4279,10 @@ window.Feud = window.Feud || {};
       return;
     }
     stopLocalTurnTimerInterval();
+    clearInterval(hostFmTimerInterval);
+    hostFmTimerInterval = null;
+    const fmBtn = document.getElementById("hostBtnFmTimer");
+    if (fmBtn) fmBtn.textContent = "Start";
     await pushRoomPatch({ stage, turnTimerRunning: false });
   }
 
@@ -4111,6 +4374,16 @@ window.Feud = window.Feud || {};
 
   async function hostToggleFmHideP1() {
     await pushRoomPatch({ fmHideP1: !roomState.fmHideP1 });
+  }
+
+  async function hostFmReadyPlayer2() {
+    Feud.unlockAudio();
+    clearInterval(hostFmTimerInterval);
+    hostFmTimerInterval = null;
+    const btn = document.getElementById("hostBtnFmTimer");
+    if (btn) btn.textContent = "Start";
+    await pushRoomPatch({ fmHideP1: true, fmClock: 25 });
+    Feud.showToast("🙈 Player 1 hidden & 25s clock ready for Player 2!");
   }
 
   async function hostResetFm() {
@@ -4507,7 +4780,6 @@ window.Feud = window.Feud || {};
 
     Feud.populateRoundDropdowns(roomState);
     syncSetupModalInputsFromState();
-    syncSetupModalInputsFromState();
     if (closeModals) {
       closeDeckManagerModal();
       closeEditRoundModal();
@@ -4520,7 +4792,7 @@ window.Feud = window.Feud || {};
     Feud.saveCustomRounds({});
     const defTitle =
       (Feud.DEFAULT_DECK && (Feud.DEFAULT_DECK.deckName || Feud.DEFAULT_DECK.gameTitle)) ||
-      "Starter Party Deck";
+      "Classic Party Mix";
     const defIcon = (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.gameIcon) || "🎉";
     Feud.saveGameTitle(defTitle);
     Feud.saveGameIcon(defIcon);
@@ -4559,11 +4831,10 @@ window.Feud = window.Feud || {};
 
     Feud.populateRoundDropdowns(roomState);
     syncSetupModalInputsFromState();
-    syncSetupModalInputsFromState();
     if (closeModals) {
       closeDeckManagerModal();
     }
-    Feud.showToast(`${defIcon} Restored the default Starter Party Deck!`);
+    Feud.showToast(`${defIcon} Restored the default Classic Party Mix!`);
   }
 
   function triggerFileDownload(filename, content, mimeType) {
@@ -4614,18 +4885,26 @@ window.Feud = window.Feud || {};
   }
 
   function syncFullscreenBodyClass() {
+    const isMediaFs = Boolean(
+      window.matchMedia && window.matchMedia("(display-mode: fullscreen)").matches
+    );
     const isFs = Boolean(
       document.fullscreenElement ||
         document.webkitFullscreenElement ||
-        (window.innerHeight >= window.screen.height - 2 &&
-          window.innerWidth >= window.screen.width - 2)
+        isMediaFs ||
+        (window.innerHeight >= window.screen.height - 4 &&
+          window.innerWidth >= window.screen.width - 4)
     );
     document.body.classList.toggle("is-fullscreen", isFs);
   }
 
   document.addEventListener("fullscreenchange", syncFullscreenBodyClass);
   document.addEventListener("webkitfullscreenchange", syncFullscreenBodyClass);
-  window.addEventListener("resize", syncFullscreenBodyClass);
+  window.addEventListener("resize", () => {
+    syncFullscreenBodyClass();
+    syncTvSetupModeUi();
+  });
+  syncFullscreenBodyClass();
 
   function toggleFullScreen() {
     const el = document.documentElement;
@@ -4656,13 +4935,46 @@ window.Feud = window.Feud || {};
       hostToggleAnswer(slot);
     } else if (e.key === " ") {
       e.preventDefault();
-      hostRevealQuestionAndStartTimer();
+      const phase =
+        roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready");
+      if (!roomState.questionRevealed || phase === "faceoff-ready") {
+        hostRevealQuestionAndStartTimer();
+      } else if (phase === "round-over") {
+        const round = Feud.getRoundData(roomState, roomState.roundIdx);
+        const revCount = Array.isArray(roomState.revealed) ? roomState.revealed.length : 0;
+        if (revCount < (round.answers || []).length) {
+          hostRevealNextAnswer();
+        } else {
+          const isTie = Feud.isTieBreakerRound ? Feud.isTieBreakerRound(round) : false;
+          const regCount = Feud.getRegularRoundCount
+            ? Feud.getRegularRoundCount(roomState)
+            : Feud.getRoundCount(roomState);
+          const tbUnlocked = Feud.isTieBreakerUnlocked
+            ? Feud.isTieBreakerUnlocked(roomState)
+            : false;
+          const clinched = Feud.getClinchedWinnerInfo
+            ? Boolean(Feud.getClinchedWinnerInfo(roomState).clinched)
+            : false;
+          const isLastRegular = !isTie && roomState.roundIdx + 1 >= regCount;
+          const isLast = isTie || (isLastRegular && !tbUnlocked) || clinched;
+          if (!isLast || (isLastRegular && tbUnlocked)) {
+            hostNextRound();
+          } else {
+            hostShowWinnerScreen();
+          }
+        }
+      }
     } else if (e.key === "r" || e.key === "R") {
       hostRestartTurnTimer();
     } else if (e.key === "t" || e.key === "T") {
       hostToggleTurnTimer();
     } else if (e.key === "x" || e.key === "X") {
       hostHandleWrongAnswer({ fromTimer: false });
+    } else if (e.key === "b" || e.key === "B") {
+      hostBeSpecificBuzz();
+    } else if (e.key === "z" || e.key === "Z") {
+      e.preventDefault();
+      hostUndo();
     } else if (e.key === "c" || e.key === "C") {
       hostClearStrikes();
     } else if (e.key === "Escape") {
@@ -4678,8 +4990,10 @@ window.Feud = window.Feud || {};
 
   function applyHostScriptCollapsed(collapsed) {
     const wrap = document.getElementById("hostScriptCollapseWrap");
+    const sub = document.getElementById("hostFlowSubtext");
     const btn = document.getElementById("hostScriptToggleBtn");
     if (wrap) wrap.classList.toggle("hidden", collapsed);
+    if (sub) sub.classList.toggle("hidden", !collapsed);
     if (btn) btn.textContent = collapsed ? "🎙️ Script" : "🎙️ Hide";
   }
 
@@ -4919,11 +5233,13 @@ window.Feud = window.Feud || {};
       titleEl.textContent = "⌨️ Host Keyboard Shortcuts";
       bodyEl.innerHTML = `
         <div class="host-popover-section" style="display:grid; grid-template-columns:auto 1fr; gap:6px 12px; font-size:12px; align-items:center;">
-          <strong>Space</strong><span>Show Question on TV</span>
+          <strong>Space</strong><span>Smart Advance (Show Q → Reveal Next → Next Round)</span>
           <strong>1 – 8</strong><span>Reveal / Toggle Answer #1–8</span>
           <strong>X</strong><span>Wrong Guess / Add Strike</span>
+          <strong>B</strong><span>Be More Specific (+5s)</span>
           <strong>R</strong><span>Start / Restart Shot-Clock Timer</span>
           <strong>T</strong><span>Pause / Resume Timer</span>
+          <strong>Z / Ctrl+Z</strong><span>Undo Last Action</span>
           <strong>C</strong><span>Clear All Strikes</span>
           <strong>← / →</strong><span>Previous / Next Round</span>
           <strong>? / Esc</strong><span>Open / Close This Popover</span>
@@ -4976,8 +5292,10 @@ window.Feud = window.Feud || {};
     toggleMute,
     toggleFullScreen,
     leaveToLobby,
+    resumeLastHostSession,
+    dismissResumeHostBanner,
     onSelectCatalogDeck,
-    onDeckFilterInput,
+    updateSetupRulesSummary,
     scanLocalDecksFolder,
     rescanSavedDecksFolder,
     onLocalDecksFolderInputChange,
@@ -5060,6 +5378,7 @@ window.Feud = window.Feud || {};
     hostSetTurnTimerDuration,
     hostToggleAutoStartTimerOnStrike,
     hostReArmBuzzers,
+    hostToggleTvWelcome,
     hostSetFaceOffWinner,
     hostSetControllingTeam,
     hostToggleAnswer,
@@ -5092,6 +5411,7 @@ window.Feud = window.Feud || {};
     hostToggleFmClock,
     hostFmDuplicateBuzz,
     hostToggleFmHideP1,
+    hostFmReadyPlayer2,
     hostResetFm,
     toggleHostScript,
     setHostMobileTab,
@@ -5176,6 +5496,7 @@ window.Feud = window.Feud || {};
         return;
       }
       syncTvQrOverlayWithBuzzers(null, true);
+      syncTvWelcomeWithBuzzers(null);
       refreshQrGridCards();
       applyBuzzerButtonLocks();
     });
@@ -5197,7 +5518,15 @@ window.Feud = window.Feud || {};
         updateHostDevicesPill(detail.buzzers, detail.tvCount);
         updateQrTvStatusBadge();
         syncTvQrOverlayWithBuzzers(detail.buzzers, true);
+        syncTvWelcomeWithBuzzers(detail.buzzers);
         applyBuzzerButtonLocks(detail.buzzers);
+        if (
+          activeRole === "host" &&
+          roomState &&
+          (!roomState.questionRevealed || (roomState.roundPhase || "faceoff-ready") === "faceoff-ready")
+        ) {
+          renderActiveView();
+        }
       }
       ["buzzerConnStatusPill", "comboConnStatusPill"].forEach((id) => {
         const connPill = document.getElementById(id);
@@ -5409,6 +5738,7 @@ window.Feud = window.Feud || {};
           if (pinEl) pinEl.value = last.pin;
         }
       }
+      refreshLobbyResumeBanner();
       setTimeout(() => refreshLobbyBuzzerLocks(true), 200);
     }
   }
