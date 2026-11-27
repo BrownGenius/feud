@@ -69,9 +69,12 @@ This document summarizes the architecture, priorities, coding style, and develop
    - Do **not** manually bump `?v=YYYYMMDDx` on feature branches (to avoid merge conflicts across `index.html`, `review.html`, and `sw.js`).
    - `.github/workflows/bump-cache-version.yml` automatically runs `node scripts/bump-cache-version.js` on push to `main` (incrementing `a, b, ..., z, aa, ab, ...` per UTC date) and commits the updated version.
    - Remind users to hard-reload (`Ctrl + Shift + R`) when testing `file://` or cached tabs.
-3. **Documentation Sync:**
+3. **Documentation & Screenshots Sync:**
    - Keep `README.md` accurate whenever user-facing features, modes, or controls are added, changed, or temporarily disabled.
+   - Update affected screenshots in `docs/screenshots/` (and `docs/screenshots/demo.gif`) whenever UI changes affect them; if `docs/screenshots/tv-board.png` changes, regenerate `docs/screenshots/social-preview.png` (`1280x640`).
 4. **Verification Checklist:**
+   - Always add E2E test coverage in `scripts/test-ui-e2e.js` for all new features and bug fixes (and unit tests in `scripts/test-core.js` where applicable).
+   - Run `node scripts/validate-repo.js`, `node scripts/test-core.js`, and `node scripts/test-ui-e2e.js` before finishing (also run in `.github/workflows/validate-pr.yml`).
    - Check `git status -s` / `git diff` before finishing.
    - Verify Host View (Wizard + un-scrolled Answer Key + embedded 16:9 TV monitor) on desktop and mobile widths.
    - Verify Face-Off flow (`faceoff-ready` → reveal → buzz → `faceoff-p1` wrong-guess auto-timer → `faceoff-p2` → `pass-or-play` → `playing` → 3 strikes `steal` → `round-over`).

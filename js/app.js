@@ -275,7 +275,23 @@ window.Feud = window.Feud || {};
         incoming.roundIdx !== roomState.roundIdx;
 
       const prevStage = roomState.stage;
+      const prevBuzzArmed =
+        (roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready")) === "faceoff-buzz" &&
+        Boolean(roomState.questionRevealed) &&
+        !roomState.buzzerWinner;
       roomState = { ...roomState, ...incoming };
+      const nowBuzzArmed =
+        (roomState.roundPhase || (roomState.questionRevealed ? "faceoff-buzz" : "faceoff-ready")) === "faceoff-buzz" &&
+        Boolean(roomState.questionRevealed) &&
+        !roomState.buzzerWinner;
+      if (
+        !prevBuzzArmed &&
+        nowBuzzArmed &&
+        navigator.vibrate &&
+        (activeRole === "buzzer1" || activeRole === "buzzer2" || activeRole === "buzzer_combo")
+      ) {
+        navigator.vibrate(30);
+      }
 
       if (incoming.buzzerWinner && incoming.buzzerWinner !== lastBuzzerWinner) {
         if (activeRole === "tv" || activeRole === "host" || activeRole === "solo") {
@@ -288,6 +304,30 @@ window.Feud = window.Feud || {};
             const myTeam = activeRole === "buzzer1" ? 1 : 2;
             navigator.vibrate(incoming.buzzerWinner === myTeam ? [80, 40, 80] : 30);
           }
+        }
+        const flashBuzzerEl = (id, cls) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.classList.remove("buzz-win-flash", "buzz-lose-flash");
+          void el.offsetWidth;
+          el.classList.add(cls);
+          setTimeout(() => el.classList.remove(cls), 900);
+        };
+        if (activeRole === "buzzer1" || activeRole === "buzzer2") {
+          const myTeam = activeRole === "buzzer1" ? 1 : 2;
+          flashBuzzerEl(
+            "giantBuzzerBtn",
+            incoming.buzzerWinner === myTeam ? "buzz-win-flash" : "buzz-lose-flash"
+          );
+        } else if (activeRole === "buzzer_combo") {
+          flashBuzzerEl(
+            "comboBtnTeam1",
+            incoming.buzzerWinner === 1 ? "buzz-win-flash" : "buzz-lose-flash"
+          );
+          flashBuzzerEl(
+            "comboBtnTeam2",
+            incoming.buzzerWinner === 2 ? "buzz-win-flash" : "buzz-lose-flash"
+          );
         }
         if (activeRole === "host" && incoming.turnTimerRunning) {
           startLocalTurnTimerLoop();
@@ -2749,6 +2789,26 @@ window.Feud = window.Feud || {};
     );
   }
 
+  async function hostReArmBuzzers() {
+    Feud.unlockAudio();
+    pushUndoSnapshot();
+    stopLocalTurnTimerInterval();
+    const dur = Number(roomState.turnTimerDuration) || 10;
+    await pushRoomPatch({
+      roundPhase: "faceoff-buzz",
+      questionRevealed: true,
+      buzzerWinner: 0,
+      buzzerWinnerAt: 0,
+      buzzerRunnerUpDeltaMs: 0,
+      buzzerArmedTeam: 0,
+      controllingTeam: 0,
+      faceoffFirstTeam: 0,
+      turnTimerRemaining: dur,
+      turnTimerRunning: false
+    });
+    Feud.showToast("🔔 Buzzers cleared & re-armed!");
+  }
+
   async function hostSetFaceOffWinner(teamNum) {
     Feud.unlockAudio();
     pushUndoSnapshot();
@@ -4719,6 +4779,9 @@ window.Feud = window.Feud || {};
             } onclick="hostAwardPot(${teamNum}); closeHostPopover();">
               🏆 Award Round Pot (${pot} pts)
             </button>
+            <button type="button" class="top-btn" onclick="hostSwapTeamSides().then(()=>closeHostPopover())">
+              ⇄ Swap Team 1 ↔ Team 2 (Sides &amp; Scores)
+            </button>
           </div>
         </div>
       `;
@@ -4869,6 +4932,34 @@ window.Feud = window.Feud || {};
     }
   }
 
+  function swapSetupTeamSides() {
+    const t1El = document.getElementById("setupTeam1Input");
+    const t2El = document.getElementById("setupTeam2Input");
+    if (!t1El || !t2El) return;
+    const tmp = t1El.value;
+    t1El.value = t2El.value;
+    t2El.value = tmp;
+    Feud.showToast("⇄ Swapped Team 1 & Team 2!");
+  }
+
+  async function hostSwapTeamSides() {
+    Feud.unlockAudio();
+    pushUndoSnapshot();
+    const flip = (n) => (Number(n) === 1 ? 2 : Number(n) === 2 ? 1 : Number(n) || 0);
+    await pushRoomPatch({
+      team1Name: roomState.team2Name || "Team 2",
+      team2Name: roomState.team1Name || "Team 1",
+      team1Score: Number(roomState.team2Score) || 0,
+      team2Score: Number(roomState.team1Score) || 0,
+      controllingTeam: flip(roomState.controllingTeam),
+      faceoffFirstTeam: flip(roomState.faceoffFirstTeam),
+      faceoffWinnerTeam: flip(roomState.faceoffWinnerTeam),
+      buzzerWinner: flip(roomState.buzzerWinner),
+      roundWinnerTeam: flip(roomState.roundWinnerTeam)
+    });
+    Feud.showToast("⇄ Swapped Team 1 & Team 2 sides & scores!");
+  }
+
   function openHostPopover(kind) {
     activePopoverKind = kind;
     renderHostPopoverBody(kind);
@@ -4896,6 +4987,8 @@ window.Feud = window.Feud || {};
     openNewGameModal,
     closeNewGameModal,
     cycleSetupTeamPresets,
+    swapSetupTeamSides,
+    hostSwapTeamSides,
     syncTournamentFormatAvailability,
     onSetupMatchFormatChange,
     onBoardThemeChange,
@@ -4966,6 +5059,7 @@ window.Feud = window.Feud || {};
     hostStopResetTurnTimer,
     hostSetTurnTimerDuration,
     hostToggleAutoStartTimerOnStrike,
+    hostReArmBuzzers,
     hostSetFaceOffWinner,
     hostSetControllingTeam,
     hostToggleAnswer,

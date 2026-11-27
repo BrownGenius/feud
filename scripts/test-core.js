@@ -377,6 +377,8 @@ async function runTest(name, fn) {
     const patch1 = Feud.buildBuzzPatch(state, 2);
     assert.ok(patch1, "First buzz in faceoff-buzz should be accepted");
     assert.strictEqual(patch1.buzzerWinner, 2);
+    assert.ok(patch1.buzzerWinnerAt > 0, "Winning buzz should record buzzerWinnerAt timestamp");
+    assert.strictEqual(patch1.buzzerRunnerUpDeltaMs, 0, "Winning buzz should reset buzzerRunnerUpDeltaMs");
     assert.strictEqual(patch1.controllingTeam, 2);
     assert.strictEqual(patch1.roundPhase, "faceoff-p1");
 
