@@ -961,6 +961,60 @@ async function runStep(name, fn) {
         assert.strictEqual(typeof tvInfo.diag.trysteroReady, "boolean", "Diagnostics should expose trysteroReady");
         assert.strictEqual(typeof tvInfo.diag.relayOk, "boolean", "Diagnostics should expose relayOk");
         assert.strictEqual(tvConn.tabCdp.pageErrors.length, 0);
+
+        // Welcome Screen test: Host toggles Welcome Screen ON -> appears on both Host Mini TV & remote TV with all 3 QRs (Team A, Combo, Team B)
+        await cdp.eval(`window.hostToggleTvWelcome()`);
+        await cdp.waitFor("!document.getElementById('tvWelcomeWrap').classList.contains('hidden')");
+        await tvConn.tabCdp.waitFor("!document.getElementById('tvWelcomeWrap').classList.contains('hidden')");
+        const welcomeCheck = await tvConn.tabCdp.eval(`({
+          roomCode: document.getElementById('tvWelcomeRoomCode')?.textContent.trim(),
+          t1: document.getElementById('tvWelcomeT1Name')?.textContent.trim(),
+          t2: document.getElementById('tvWelcomeT2Name')?.textContent.trim(),
+          qr1Visible: !document.getElementById('tvWelcomeQrImgWrapT1').classList.contains('hidden'),
+          qrComboVisible: !document.getElementById('tvWelcomeQrImgWrapCombo').classList.contains('hidden'),
+          qr2Visible: !document.getElementById('tvWelcomeQrImgWrapT2').classList.contains('hidden'),
+          qr1Width: document.getElementById('tvWelcomeQrImgWrapT1').getBoundingClientRect().width,
+          qr1Src: document.getElementById('tvWelcomeQrImgT1')?.getAttribute('src') || '',
+          qr1Caption: document.getElementById('tvWelcomeQrCaptionT1')?.textContent.trim() || '',
+          qr2Caption: document.getElementById('tvWelcomeQrCaptionT2')?.textContent.trim() || '',
+          flowSummary: document.querySelector('.tv-welcome-flow-summary')?.textContent.trim() || ''
+        })`);
+        assert.strictEqual(welcomeCheck.roomCode, roomCode);
+        assert.strictEqual(welcomeCheck.t1, "BLUE BLAZERS");
+        assert.strictEqual(welcomeCheck.t2, "RED ROCKETS");
+        assert.strictEqual(welcomeCheck.qr1Visible, true, "Team A QR should be visible on Welcome Screen");
+        assert.strictEqual(welcomeCheck.qrComboVisible, true, "Center Combo QR should be visible on Welcome Screen");
+        assert.strictEqual(welcomeCheck.qr2Visible, true, "Team B QR should be visible on Welcome Screen");
+        assert.ok(welcomeCheck.qr1Width >= 180, `Team A QR should be sofa-scannable (>=180px), got: ${welcomeCheck.qr1Width}`);
+        assert.ok(welcomeCheck.qrSrc ? true : welcomeCheck.qr1Src.includes("size=300x300"), "Welcome QR should request 300x300 resolution");
+        assert.ok(/Buzzer/i.test(welcomeCheck.qr1Caption), `Team A QR caption should explain it is for mobile buzzer, got: ${welcomeCheck.qr1Caption}`);
+        assert.ok(/Buzzer/i.test(welcomeCheck.qr2Caption), `Team B QR caption should explain it is for mobile buzzer, got: ${welcomeCheck.qr2Caption}`);
+        assert.ok(/Face-Off/i.test(welcomeCheck.flowSummary));
+
+        // Revealing question auto-dismisses Welcome Screen back to the Round 1 board
+        await cdp.eval(`window.hostRevealQuestionAndStartTimer()`);
+        await tvConn.tabCdp.waitFor("document.getElementById('tvWelcomeWrap').classList.contains('hidden')");
+        await cdp.waitFor("document.getElementById('tvWelcomeWrap').classList.contains('hidden')");
+
+        // When QR buzzers are unsupported (empty URLs / local play), Welcome Screen must remain hidden even if showTvWelcome is true
+        const noQrHidden = await tvConn.tabCdp.eval(`(() => {
+          window.Feud.renderTvView({
+            ...window.Feud.createDefaultRoomState('1234'),
+            showTvWelcome: true,
+            tvWelcomeInfo: { roomCode: 'LOCL', url1: '', url2: '', urlCombo: '' }
+          }, 'tv', {});
+          return document.getElementById('tvWelcomeWrap').classList.contains('hidden');
+        })()`);
+        assert.strictEqual(noQrHidden, true, "Welcome Screen must not display when QR buzzers are unsupported");
+
+        // Fullscreen mode must hide the TV floating sound/fullscreen HUD controls
+        const tvFsHidden = await tvConn.tabCdp.eval(`(() => {
+          document.body.classList.add('is-fullscreen');
+          const d = getComputedStyle(document.querySelector('#tvView .tv-floating-controls')).display;
+          document.body.classList.remove('is-fullscreen');
+          return d === 'none';
+        })()`);
+        assert.strictEqual(tvFsHidden, true, "TV floating sound/fullscreen controls must hide in fullscreen mode");
       } finally {
         await tvConn.close();
       }

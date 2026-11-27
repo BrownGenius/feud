@@ -1162,6 +1162,8 @@ window.Feud = window.Feud || {};
       pot: 0,
       strikes: 0,
       buzzerWinner: 0,
+      showTvWelcome: mode === "host" && !isFileProtocol(),
+      tvWelcomeInfo: null,
       fmClock: 20,
       fmHideP1: false,
       fmEntries: slice.matchFastMoney.map(() => ({ p1Ans: "", p1Pts: 0, p2Ans: "", p2Pts: 0 }))
@@ -1177,6 +1179,9 @@ window.Feud = window.Feud || {};
     qrModalOpenedForTvSetup = false;
 
     currentRoomCode = code;
+    if (roomState.showTvWelcome) {
+      roomState.tvWelcomeInfo = buildTvWelcomeInfo("individual", null, code);
+    }
     syncSequenceCounters(roomState);
     Feud.saveRoomStateToStorage(code, roomState);
     syncDeckQueryParam(document.getElementById("deckManagerSelect")?.value || "starter");
@@ -1232,6 +1237,8 @@ window.Feud = window.Feud || {};
       roundIdx: 0,
       roundPhase: "faceoff-buzz",
       questionRevealed: true,
+      showTvWelcome: false,
+      tvWelcomeInfo: null,
       buzzerWinner: 0,
       controllingTeam: 0,
       faceoffFirstTeam: 0,
@@ -1314,6 +1321,9 @@ window.Feud = window.Feud || {};
 
     roomState = { ...roomState, ...res.state };
     currentRoomCode = code;
+    if (roomState.showTvWelcome) {
+      roomState.tvWelcomeInfo = buildTvWelcomeInfo("individual", null, code);
+    }
     syncSequenceCounters(roomState);
     Feud.saveLastSession("host", code, pin);
     enterRole("host", code);
@@ -1377,6 +1387,9 @@ window.Feud = window.Feud || {};
 
     roomState = { ...roomState, ...conn.state };
     currentRoomCode = code;
+    if (roomState.showTvWelcome) {
+      roomState.tvWelcomeInfo = buildTvWelcomeInfo("individual", null, code);
+    }
     syncSequenceCounters(roomState);
     // An auto-launched TV window shares localStorage with the Host window — don't overwrite the Host's saved session/PIN
     if (!autoLaunched) Feud.saveLastSession("tv", code);
@@ -1465,6 +1478,9 @@ window.Feud = window.Feud || {};
 
     roomState = { ...roomState, ...conn.state };
     currentRoomCode = code;
+    if (roomState.showTvWelcome) {
+      roomState.tvWelcomeInfo = buildTvWelcomeInfo("individual", null, code);
+    }
     syncSequenceCounters(roomState);
     Feud.saveLastSession(role, code);
     enterRole(role, code);
@@ -1495,6 +1511,9 @@ window.Feud = window.Feud || {};
 
     roomState = { ...roomState, ...conn.state };
     currentRoomCode = code;
+    if (roomState.showTvWelcome) {
+      roomState.tvWelcomeInfo = buildTvWelcomeInfo("individual", null, code);
+    }
     syncSequenceCounters(roomState);
     Feud.saveLastSession(role, code);
     enterRole(role, code);
@@ -1990,6 +2009,11 @@ window.Feud = window.Feud || {};
       pot: 0,
       strikes: 0,
       buzzerWinner: 0,
+      showTvWelcome: activeRole === "host" && !isFileProtocol() && currentRoomCode !== "SOLO" && currentRoomCode !== "DEMO",
+      tvWelcomeInfo:
+        activeRole === "host" && !isFileProtocol() && currentRoomCode !== "SOLO" && currentRoomCode !== "DEMO"
+          ? buildTvWelcomeInfo(null, null, currentRoomCode)
+          : null,
       team1Name: t1,
       team2Name: t2,
       team1Score: 0,
@@ -2378,6 +2402,63 @@ window.Feud = window.Feud || {};
     return false;
   }
 
+  function buildTvWelcomeInfo(qrModeOverride, bz, codeOverride) {
+    const code = codeOverride || currentRoomCode || "SOLO";
+    const info = bz || (Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {});
+    const prevMode =
+      roomState && roomState.tvWelcomeInfo && roomState.tvWelcomeInfo.qrMode
+        ? roomState.tvWelcomeInfo.qrMode
+        : "individual";
+    const qrMode =
+      qrModeOverride === "buzzer_combo" || qrModeOverride === "individual"
+        ? qrModeOverride
+        : info.combo
+        ? "buzzer_combo"
+        : prevMode;
+    const offline = isFileProtocol() || code === "SOLO" || code === "DEMO";
+    return {
+      roomCode: code,
+      qrMode,
+      url1: offline ? "" : buildQrJoinUrl("buzzer1"),
+      url2: offline ? "" : buildQrJoinUrl("buzzer2"),
+      urlCombo: offline ? "" : buildQrJoinUrl("buzzer_combo"),
+      b1Connected: Boolean(info.b1),
+      b2Connected: Boolean(info.b2),
+      comboConnected: Boolean(info.combo)
+    };
+  }
+
+  function syncTvWelcomeWithBuzzers(bz) {
+    if (activeRole !== "host" || !roomState || !roomState.showTvWelcome) return;
+    const nextInfo = buildTvWelcomeInfo(null, bz, currentRoomCode);
+    const prev = roomState.tvWelcomeInfo || {};
+    if (
+      prev.b1Connected !== nextInfo.b1Connected ||
+      prev.b2Connected !== nextInfo.b2Connected ||
+      prev.comboConnected !== nextInfo.comboConnected ||
+      prev.qrMode !== nextInfo.qrMode
+    ) {
+      pushRoomPatch({ tvWelcomeInfo: nextInfo });
+    }
+  }
+
+  async function hostToggleTvWelcome() {
+    if (activeRole !== "host") return;
+    if (isFileProtocol() || currentRoomCode === "SOLO" || currentRoomCode === "DEMO") {
+      if (roomState.showTvWelcome) {
+        await pushRoomPatch({ showTvWelcome: false, tvWelcomeInfo: null });
+      }
+      Feud.showToast("ℹ️ TV Welcome Screen is only shown when QR phone buzzers are supported.");
+      return;
+    }
+    const nextShow = !roomState.showTvWelcome;
+    await pushRoomPatch({
+      showTvWelcome: nextShow,
+      tvWelcomeInfo: nextShow ? buildTvWelcomeInfo(null, null, currentRoomCode) : roomState.tvWelcomeInfo
+    });
+    Feud.showToast(nextShow ? "👋 TV Welcome Screen shown." : "📺 Switched TV to Game Board.");
+  }
+
   function buildTvQrOverlayPayload(qrRole, bz, code) {
     const info = bz || (Feud.getConnectedBuzzerTeams ? Feud.getConnectedBuzzerTeams() : {});
     const shortUrl = getShortJoinDisplayUrl();
@@ -2467,7 +2548,11 @@ window.Feud = window.Feud || {};
     if (activeRole === "host" && roomState) {
       if (nextRole) {
         const code = currentRoomCode || "SOLO";
-        pushRoomPatch({ tvQrOverlay: buildTvQrOverlayPayload(nextRole, bz, code) });
+        const patch = { tvQrOverlay: buildTvQrOverlayPayload(nextRole, bz, code) };
+        if (roomState.showTvWelcome && (nextRole === "individual" || nextRole === "buzzer_combo")) {
+          patch.tvWelcomeInfo = buildTvWelcomeInfo(nextRole, bz, code);
+        }
+        pushRoomPatch(patch);
       } else {
         pushRoomPatch({ tvQrOverlay: null });
       }
@@ -2641,6 +2726,7 @@ window.Feud = window.Feud || {};
       if (roomState.buzzerWinner) {
         await pushRoomPatch({
           questionRevealed: true,
+          showTvWelcome: false,
           roundPhase: "faceoff-p1",
           turnTimerRemaining: dur,
           turnTimerRunning: true
@@ -2650,6 +2736,7 @@ window.Feud = window.Feud || {};
       } else {
         await pushRoomPatch({
           questionRevealed: true,
+          showTvWelcome: false,
           roundPhase: "faceoff-buzz",
           turnTimerRemaining: dur,
           turnTimerRunning: false
@@ -2658,6 +2745,12 @@ window.Feud = window.Feud || {};
           "📺 Question Revealed on TV! Players have unlimited time until the first person buzzes."
         );
       }
+      return;
+    }
+
+    if (roomState.showTvWelcome) {
+      await pushRoomPatch({ showTvWelcome: false });
+      Feud.showToast("📺 Switched TV to Game Board.");
       return;
     }
 
@@ -2816,6 +2909,8 @@ window.Feud = window.Feud || {};
     await pushRoomPatch({
       roundPhase: "faceoff-buzz",
       questionRevealed: true,
+      showTvWelcome: false,
+      tvWelcomeInfo: null,
       buzzerWinner: 0,
       buzzerWinnerAt: 0,
       buzzerRunnerUpDeltaMs: 0,
@@ -2863,6 +2958,7 @@ window.Feud = window.Feud || {};
     Feud.playFaceOffTone(cleanTeam);
     await pushRoomPatch({
       questionRevealed: true,
+      showTvWelcome: false,
       roundPhase: "faceoff-p1",
       faceoffFirstTeam: cleanTeam,
       controllingTeam: cleanTeam,
@@ -4633,11 +4729,15 @@ window.Feud = window.Feud || {};
   }
 
   function syncFullscreenBodyClass() {
+    const isMediaFs = Boolean(
+      window.matchMedia && window.matchMedia("(display-mode: fullscreen)").matches
+    );
     const isFs = Boolean(
       document.fullscreenElement ||
         document.webkitFullscreenElement ||
-        (window.innerHeight >= window.screen.height - 2 &&
-          window.innerWidth >= window.screen.width - 2)
+        isMediaFs ||
+        (window.innerHeight >= window.screen.height - 4 &&
+          window.innerWidth >= window.screen.width - 4)
     );
     document.body.classList.toggle("is-fullscreen", isFs);
   }
@@ -4645,6 +4745,7 @@ window.Feud = window.Feud || {};
   document.addEventListener("fullscreenchange", syncFullscreenBodyClass);
   document.addEventListener("webkitfullscreenchange", syncFullscreenBodyClass);
   window.addEventListener("resize", syncFullscreenBodyClass);
+  syncFullscreenBodyClass();
 
   function toggleFullScreen() {
     const el = document.documentElement;
@@ -5079,6 +5180,7 @@ window.Feud = window.Feud || {};
     hostSetTurnTimerDuration,
     hostToggleAutoStartTimerOnStrike,
     hostReArmBuzzers,
+    hostToggleTvWelcome,
     hostSetFaceOffWinner,
     hostSetControllingTeam,
     hostToggleAnswer,
@@ -5195,6 +5297,7 @@ window.Feud = window.Feud || {};
         return;
       }
       syncTvQrOverlayWithBuzzers(null, true);
+      syncTvWelcomeWithBuzzers(null);
       refreshQrGridCards();
       applyBuzzerButtonLocks();
     });
@@ -5216,6 +5319,7 @@ window.Feud = window.Feud || {};
         updateHostDevicesPill(detail.buzzers, detail.tvCount);
         updateQrTvStatusBadge();
         syncTvQrOverlayWithBuzzers(detail.buzzers, true);
+        syncTvWelcomeWithBuzzers(detail.buzzers);
         applyBuzzerButtonLocks(detail.buzzers);
       }
       ["buzzerConnStatusPill", "comboConnStatusPill"].forEach((id) => {

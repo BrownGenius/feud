@@ -909,6 +909,83 @@ window.Feud = window.Feud || {};
     overlayEl.classList.remove("hidden");
   }
 
+  function renderTvWelcomeScreen(roomState) {
+    const welcomeWrap = document.getElementById("tvWelcomeWrap");
+    if (!welcomeWrap) return;
+    const t1 = roomState.team1Name || "Team 1";
+    const t2 = roomState.team2Name || "Team 2";
+    const title = (roomState.gameTitle || "Party Feud").toUpperCase();
+    const icon = roomState.gameIcon || "🎉";
+    const deckName =
+      (roomState.customDeck && roomState.customDeck.name) ||
+      (Feud.DEFAULT_DECK && Feud.DEFAULT_DECK.deckName) ||
+      "Starter Party Deck";
+    const regCount = Feud.getRegularRoundCount ? Feud.getRegularRoundCount(roomState) : Feud.getRoundCount(roomState);
+    const fmSuffix = roomState.enableFastMoney === false ? "" : " + Fast Money";
+
+    const iconEl = document.getElementById("tvWelcomeIcon");
+    const titleEl = document.getElementById("tvWelcomeTitle");
+    const metaEl = document.getElementById("tvWelcomeDeckMeta");
+    const t1El = document.getElementById("tvWelcomeT1Name");
+    const t2El = document.getElementById("tvWelcomeT2Name");
+    if (iconEl) iconEl.textContent = icon;
+    if (titleEl) titleEl.textContent = title;
+    if (metaEl) metaEl.textContent = `${deckName} • ${regCount} Rounds (1x / 2x / 3x)${fmSuffix}`;
+    if (t1El) t1El.textContent = t1.toUpperCase();
+    if (t2El) t2El.textContent = t2.toUpperCase();
+
+    const info = roomState.tvWelcomeInfo || {};
+    const code = info.roomCode || "----";
+    const codeEl = document.getElementById("tvWelcomeRoomCode");
+    if (codeEl) codeEl.textContent = code;
+
+    const hasUrls = Boolean(info.url1 || info.url2 || info.urlCombo);
+    const b1Conn = Boolean(info.b1Connected);
+    const b2Conn = Boolean(info.b2Connected);
+    const comboConn = Boolean(info.comboConnected);
+    const t1Ready = b1Conn || comboConn;
+    const t2Ready = b2Conn || comboConn;
+    const indActive = !comboConn && (b1Conn || b2Conn);
+
+    const setQrImg = (id, url, size) => {
+      const img = document.getElementById(id);
+      if (img && url && img.dataset.qrUrl !== url) {
+        img.dataset.qrUrl = url;
+        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=4&data=${encodeURIComponent(
+          url
+        )}`;
+      }
+    };
+
+    if (hasUrls) {
+      setQrImg("tvWelcomeQrImgT1", info.url1, 300);
+      setQrImg("tvWelcomeQrImgT2", info.url2, 300);
+      setQrImg("tvWelcomeQrImgCombo", info.urlCombo, 300);
+    }
+
+    document.getElementById("tvWelcomeQrImgWrapT1")?.classList.toggle("hidden", !hasUrls || t1Ready);
+    document.getElementById("tvWelcomeQrConnectedT1")?.classList.toggle("hidden", !hasUrls || !t1Ready);
+    document.getElementById("tvWelcomeQrImgWrapT2")?.classList.toggle("hidden", !hasUrls || t2Ready);
+    document.getElementById("tvWelcomeQrConnectedT2")?.classList.toggle("hidden", !hasUrls || !t2Ready);
+
+    const comboBox = document.getElementById("tvWelcomeComboBox");
+    if (comboBox) comboBox.classList.toggle("hidden", !hasUrls);
+    document.getElementById("tvWelcomeQrImgWrapCombo")?.classList.toggle("hidden", !hasUrls || comboConn || indActive);
+    document.getElementById("tvWelcomeQrConnectedCombo")?.classList.toggle("hidden", !hasUrls || !comboConn);
+    document.getElementById("tvWelcomeQrLockedCombo")?.classList.toggle("hidden", !hasUrls || !indActive);
+
+    const p1 = document.getElementById("tvWelcomePillT1");
+    const p2 = document.getElementById("tvWelcomePillT2");
+    if (p1) {
+      p1.textContent = t1Ready ? `✓ ${t1} Connected` : `⏳ ${t1} Waiting…`;
+      p1.className = `tv-welcome-status-pill ${t1Ready ? "is-connected" : "is-waiting"}`;
+    }
+    if (p2) {
+      p2.textContent = t2Ready ? `✓ ${t2} Connected` : `⏳ ${t2} Waiting…`;
+      p2.className = `tv-welcome-status-pill ${t2Ready ? "is-connected" : "is-waiting"}`;
+    }
+  }
+
   function renderTvView(roomState, activeRole, handlers) {
     renderBranding(roomState);
     renderTurnTimerUI(roomState);
@@ -1008,12 +1085,18 @@ window.Feud = window.Feud || {};
     }
 
     const topHud = document.querySelector(".tv-top-hud");
+    const welcomeWrap = document.getElementById("tvWelcomeWrap");
     const mainWrap = document.getElementById("tvMainBoardWrap");
     const fmWrap = document.getElementById("tvFastMoneyWrap");
     const winWrap = document.getElementById("tvWinnerWrap");
 
+    const hasWelcomeQrs = Boolean(
+      roomState.tvWelcomeInfo &&
+        (roomState.tvWelcomeInfo.url1 || roomState.tvWelcomeInfo.url2 || roomState.tvWelcomeInfo.urlCombo)
+    );
     if (roomState.stage === "winner") {
       if (topHud) topHud.classList.add("hidden");
+      if (welcomeWrap) welcomeWrap.classList.add("hidden");
       mainWrap.classList.add("hidden");
       fmWrap.classList.add("hidden");
       if (winWrap) winWrap.classList.remove("hidden");
@@ -1021,13 +1104,23 @@ window.Feud = window.Feud || {};
       return;
     } else if (roomState.stage === "fast") {
       if (topHud) topHud.classList.add("hidden");
+      if (welcomeWrap) welcomeWrap.classList.add("hidden");
       mainWrap.classList.add("hidden");
       fmWrap.classList.remove("hidden");
       if (winWrap) winWrap.classList.add("hidden");
       renderTvFastMoney(roomState);
       return;
+    } else if (roomState.showTvWelcome && hasWelcomeQrs) {
+      if (topHud) topHud.classList.add("hidden");
+      if (welcomeWrap) welcomeWrap.classList.remove("hidden");
+      mainWrap.classList.add("hidden");
+      fmWrap.classList.add("hidden");
+      if (winWrap) winWrap.classList.add("hidden");
+      renderTvWelcomeScreen(roomState);
+      return;
     } else {
       if (topHud) topHud.classList.remove("hidden");
+      if (welcomeWrap) welcomeWrap.classList.add("hidden");
       mainWrap.classList.remove("hidden");
       fmWrap.classList.add("hidden");
       if (winWrap) winWrap.classList.add("hidden");
@@ -1228,6 +1321,16 @@ window.Feud = window.Feud || {};
     const undoBtn = document.getElementById("hostUndoBtn");
     if (undoBtn) {
       undoBtn.disabled = !(handlers && typeof handlers.canUndo === "function" && handlers.canUndo());
+    }
+    const welcomeMenuBtn = document.getElementById("hostBtnToggleWelcome");
+    if (welcomeMenuBtn) {
+      const qrSupported =
+        typeof window !== "undefined" &&
+        window.location &&
+        window.location.protocol !== "file:" &&
+        !(roomState && roomState.isDemoMode);
+      welcomeMenuBtn.classList.toggle("hidden", !qrSupported);
+      welcomeMenuBtn.textContent = roomState && roomState.showTvWelcome ? "👋 Hide Welcome" : "👋 Welcome Screen";
     }
     const demoBanner = document.getElementById("hostDemoBanner");
     if (demoBanner) {

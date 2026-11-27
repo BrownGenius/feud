@@ -23,13 +23,17 @@ Pick from **300+ built-in survey rounds**, cast or plug in a TV, hand phones to 
 | :---: | :---: |
 | ![Lobby View](docs/screenshots/lobby.png) | ![Host Remote](docs/screenshots/host-remote.png) |
 
-| 16:9 TV Display Board | Printable Question Review Sheet |
+| 16:9 TV Welcome Screen (Split QRs) | 16:9 TV Display Board |
 | :---: | :---: |
-| ![TV Display](docs/screenshots/tv-board.png) | ![Question Review Sheet](docs/screenshots/review-sheet.png) |
+| ![TV Welcome Screen](docs/screenshots/tv-welcome.png) | ![TV Display](docs/screenshots/tv-board.png) |
 
 | Individual Team Buzzer (Phone) | Combo Buzzer (Shared 1v1 Phone) |
 | :---: | :---: |
 | ![Individual Team Buzzer](docs/screenshots/team-buzzer.png) | ![Combo Buzzer](docs/screenshots/combo-buzzer.png) |
+
+| Printable Question Review Sheet | |
+| :---: | :---: |
+| ![Question Review Sheet](docs/screenshots/review-sheet.png) | |
 
 ---
 
@@ -75,7 +79,7 @@ Launch straight into any bundled question deck with one click — or open the pr
 
 ## ✨ Why Hosts & Players Love It
 
-* **📺 Real TV Show Presentation & Themes:** Big 16:9 board with flipping answer tiles, 4 selectable **Board Themes** (*Classic Blue & Gold*, *Holiday Red & Green*, *FRC Robotics Neon*, *Classroom Clean*), giant red `X` strike overlays, escalating 3-second countdown tension audio, game-show dings/buzzers/fanfare, and a **Match Champion** celebration screen.
+* **📺 Real TV Show Presentation, Welcome Splash & Themes:** Starts with an automatic **TV Welcome Screen** (centered deck, round count, and flow summary at top; **Team A** QR on left, **`VS` + 1-Phone Combo** QR in center, **Team B** QR on right with live `Connected ✓` badges — mirrored in the Host's Mini TV and auto-dismissed on **Show Question (`Space`)** or toggled via `⋯`), then transitions into the 16:9 board with 3D flipping answer tiles, 4 selectable **Board Themes** (*Classic Blue & Gold*, *Holiday Red & Green*, *FRC Robotics Neon*, *Classroom Clean*), giant red `X` strike overlays, escalating 3-second countdown tension audio, game-show dings/buzzers/fanfare, and a **Match Champion** celebration screen.
 * **🎙️ Stress-Free Hosting & 1-Click Demo:** Try the **▶ 10-Second Interactive Demo** right from the Lobby, or host with a full answer key, **live mini TV preview**, **step-by-step coach**, collapsible **Host Script** (`SAY` / `DO`), and **25-step Undo**.
 * **🔔 Phone Buzzers (Haptics, Tie-Lockout Delta & Re-Arm):** Scan a QR code from the TV or Host screen to join as **Team 1 Buzzer**, **Team 2 Buzzer**, or **Combo Buzzer** (both teams on one shared phone/iPad). Includes `pointerdown` instant triggering, a `30ms` "Get Ready" haptic pulse when buzzers arm, win/lose flashes with exact runner-up delta feedback (`Too slow (+0.18s)`), a pre-game **🔔 Test Buzz** ping (Host ↔ Phone), and one-tap **🔄 Re-Arm Buzzers** on Host.
 * **🏆 3-Team & 4-Team Tournament Brackets:** Switch from Classic 2-Team play to a **3-Team Mini Bracket** (`2` games) or **4-Team Tournament** (`3` games: Semifinals → Championship Final) whenever the chosen deck has enough regular rounds to guarantee unique questions across every match.

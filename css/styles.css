@@ -1235,6 +1235,13 @@ body.is-fullscreen .top-bar {
   display: none !important;
 }
 
+@media (display-mode: fullscreen) {
+  .tv-floating-controls,
+  .top-bar {
+    display: none !important;
+  }
+}
+
 #tvView {
   position: relative;
   flex: 1 1 0;
@@ -4248,6 +4255,269 @@ body[data-theme="rose"] .tile-num-badge {
 
 .giant-buzzer-btn.buzz-lose-flash {
   animation: buzzLoseFlash 0.4s ease-out;
+}
+
+/* =====================================================================
+   TV WELCOME / GRAB YOUR PHONES SPLASH SCREEN (SPLIT 3-COLUMN)
+   ===================================================================== */
+.tv-welcome-wrap {
+  width: 100%;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 18px;
+}
+
+.tv-welcome-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.tv-welcome-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tv-welcome-icon {
+  font-size: clamp(22px, 2.6vw, 30px);
+  line-height: 1;
+}
+
+.tv-welcome-title {
+  font-size: clamp(20px, 2.6vw, 28px);
+  text-align: center;
+  margin: 0;
+}
+
+.tv-welcome-deck-meta {
+  font-size: 12.5px;
+  color: #e2e8f0;
+  font-weight: 700;
+}
+
+.tv-welcome-flow-summary {
+  font-size: 12px;
+  color: #fde68a;
+  font-weight: 700;
+}
+
+.tv-welcome-room-pill {
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.8);
+  border: 2px solid rgba(251, 191, 36, 0.6);
+  color: #fde68a;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.tv-welcome-room-pill strong {
+  color: #ffffff;
+  font-size: 14px;
+  margin-left: 4px;
+}
+
+.tv-welcome-split-grid {
+  display: grid;
+  grid-template-columns: 4.5fr 3fr 4.5fr;
+  gap: 12px;
+  align-items: stretch;
+  flex: 1 1 auto;
+}
+
+.tv-welcome-team-col {
+  background: rgba(2, 6, 23, 0.52);
+  border-radius: 18px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.tv-welcome-team-col.t1 {
+  border: 2px solid rgba(96, 165, 250, 0.72);
+  background: rgba(30, 58, 138, 0.28);
+}
+
+.tv-welcome-team-col.t2 {
+  border: 2px solid rgba(248, 113, 113, 0.72);
+  background: rgba(127, 29, 29, 0.28);
+}
+
+.tv-welcome-team {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: clamp(16px, 2.2vw, 24px);
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tv-welcome-team.t1 {
+  background: rgba(37, 99, 235, 0.3);
+  border: 1.5px solid rgba(96, 165, 250, 0.65);
+}
+
+.tv-welcome-team.t2 {
+  background: rgba(220, 38, 38, 0.3);
+  border: 1.5px solid rgba(248, 113, 113, 0.65);
+}
+
+.tv-welcome-center-col {
+  background: rgba(15, 23, 42, 0.62);
+  border: 2px solid rgba(148, 163, 184, 0.45);
+  border-radius: 18px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: center;
+}
+
+.tv-welcome-vs-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.9);
+  border: 2px solid rgba(148, 163, 184, 0.65);
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.tv-welcome-combo-card {
+  width: 100%;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tv-welcome-combo-title {
+  font-size: 11px;
+  font-weight: 900;
+  color: #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tv-welcome-qr-caption {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fde68a;
+  letter-spacing: 0.03em;
+}
+
+.tv-welcome-qr-img-wrap {
+  background: #ffffff;
+  padding: 8px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(148px, 19vw, 236px);
+  height: clamp(148px, 19vw, 236px);
+}
+
+.tv-welcome-qr-img-wrap.combo-size {
+  padding: 7px;
+  border-radius: 12px;
+  width: clamp(112px, 14vw, 170px);
+  height: clamp(112px, 14vw, 170px);
+}
+
+.tv-welcome-qr-img-wrap img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.tv-welcome-connected-box {
+  width: clamp(148px, 19vw, 236px);
+  height: clamp(148px, 19vw, 236px);
+  border-radius: 14px;
+  background: rgba(6, 95, 70, 0.48);
+  border: 2px solid #34d399;
+  color: #a7f3d0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 18px;
+  padding: 10px;
+}
+
+.tv-welcome-connected-box.combo-size {
+  width: clamp(112px, 14vw, 170px);
+  height: clamp(112px, 14vw, 170px);
+  font-size: 13px;
+  padding: 8px;
+}
+
+.tv-welcome-locked-box {
+  width: clamp(112px, 14vw, 170px);
+  height: clamp(112px, 14vw, 170px);
+  padding: 10px 8px;
+  border-radius: 12px;
+  background: rgba(30, 41, 59, 0.78);
+  border: 1.5px solid rgba(148, 163, 184, 0.45);
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tv-welcome-status-pill {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.tv-welcome-status-pill.is-waiting {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1.5px solid rgba(251, 191, 36, 0.45);
+  color: #fde68a;
+}
+
+.tv-welcome-status-pill.is-connected {
+  background: rgba(16, 185, 129, 0.22);
+  border: 1.5px solid rgba(52, 211, 153, 0.65);
+  color: #a7f3d0;
+}
+
+.tv-welcome-wait-msg {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #cbd5e1;
 }
 
 .ai-builder-textarea {

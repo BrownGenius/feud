@@ -641,6 +641,75 @@
       </div>
     </div>
 
+    <!-- TV WELCOME / GRAB YOUR PHONES SPLASH (AUTO-SHOWN BEFORE ROUND 1) -->
+    <div id="tvWelcomeWrap" class="marquee-panel tv-welcome-wrap hidden">
+      <div class="tv-welcome-header">
+        <div class="tv-welcome-brand">
+          <span id="tvWelcomeIcon" class="tv-welcome-icon">🎉</span>
+          <h2 id="tvWelcomeTitle" class="hero-title display-font tv-welcome-title">PARTY FEUD</h2>
+          <div class="tv-welcome-room-pill">
+            ROOM: <strong id="tvWelcomeRoomCode" class="display-font">----</strong>
+          </div>
+          <span id="tvWelcomeDeckMeta" class="tv-welcome-deck-meta">Starter Party Deck • 6 Rounds (1x / 2x / 3x)</span>
+        </div>
+        <div class="tv-welcome-flow-summary">
+          Face-Off → Play or Pass → 3 Strikes Steal → Fast Money
+        </div>
+      </div>
+
+      <div id="tvWelcomeGrid" class="tv-welcome-split-grid">
+        <!-- Left Half: Team A -->
+        <div class="tv-welcome-team-col t1">
+          <div id="tvWelcomeT1Name" class="tv-welcome-team t1 display-font">TEAM A</div>
+          <div id="tvWelcomeQrCaptionT1" class="tv-welcome-qr-caption">📱 Scan for Mobile Buzzer</div>
+          <div id="tvWelcomeQrImgWrapT1" class="tv-welcome-qr-img-wrap">
+            <img id="tvWelcomeQrImgT1" src="" alt="Team 1 Buzzer QR" width="220" height="220" />
+          </div>
+          <div id="tvWelcomeQrConnectedT1" class="tv-welcome-connected-box hidden">
+            <span>✅</span>
+            <span class="display-font">Ready!</span>
+          </div>
+          <span id="tvWelcomePillT1" class="tv-welcome-status-pill is-waiting">⏳ Team A Waiting…</span>
+        </div>
+
+        <!-- Center Column: VS + Shared Combo QR -->
+        <div class="tv-welcome-center-col">
+          <div class="tv-welcome-vs-badge display-font">VS</div>
+          <div id="tvWelcomeComboBox" class="tv-welcome-combo-card">
+            <div class="tv-welcome-combo-title">⚡ 1-Phone Combo Buzzer</div>
+            <div id="tvWelcomeQrImgWrapCombo" class="tv-welcome-qr-img-wrap combo-size">
+              <img id="tvWelcomeQrImgCombo" src="" alt="Combo Buzzer QR" width="160" height="160" />
+            </div>
+            <div id="tvWelcomeQrConnectedCombo" class="tv-welcome-connected-box combo-size hidden">
+              <span>✅</span>
+              <span class="display-font">Combo Active</span>
+            </div>
+            <div id="tvWelcomeQrLockedCombo" class="tv-welcome-locked-box hidden">
+              <span>🔒 Individual Mode</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Half: Team B -->
+        <div class="tv-welcome-team-col t2">
+          <div id="tvWelcomeT2Name" class="tv-welcome-team t2 display-font">TEAM B</div>
+          <div id="tvWelcomeQrCaptionT2" class="tv-welcome-qr-caption">📱 Scan for Mobile Buzzer</div>
+          <div id="tvWelcomeQrImgWrapT2" class="tv-welcome-qr-img-wrap">
+            <img id="tvWelcomeQrImgT2" src="" alt="Team 2 Buzzer QR" width="220" height="220" />
+          </div>
+          <div id="tvWelcomeQrConnectedT2" class="tv-welcome-connected-box hidden">
+            <span>✅</span>
+            <span class="display-font">Ready!</span>
+          </div>
+          <span id="tvWelcomePillT2" class="tv-welcome-status-pill is-waiting">⏳ Team B Waiting…</span>
+        </div>
+      </div>
+
+      <div class="tv-welcome-wait-msg">
+        Scan your team's QR (or the center 1-Phone Combo QR) • Waiting for Host to start Round 1…
+      </div>
+    </div>
+
     <!-- MAIN ROUND BOARD ON TV (FULL WIDTH AT BOTTOM) -->
     <div id="tvMainBoardWrap" class="tv-board-fullwrap">
       <div class="marquee-panel tv-center-board">
@@ -793,6 +862,7 @@
             <div class="host-more-dropdown">
               <button type="button" id="hostTabMain" class="top-btn gold hidden" onclick="hostSwitchStage('main'); closeHostMoreMenu()">🎯 Main Board</button>
               <button type="button" id="hostTabFm" class="top-btn" onclick="hostSwitchStage('fast'); closeHostMoreMenu()">⚡ Fast Money</button>
+              <button type="button" id="hostBtnToggleWelcome" class="top-btn" onclick="hostToggleTvWelcome(); closeHostMoreMenu()" title="Show or hide the TV Welcome Screen">👋 Welcome Screen</button>
               <button type="button" class="top-btn gold" onclick="reopenTvWindow(); closeHostMoreMenu()" title="Open or focus the separate TV Display window">📺 Pop Out TV</button>
               <button type="button" class="top-btn gold" onclick="hostRandomizeCurrentRound(); closeHostMoreMenu()" title="Pick a random unplayed question of the same multiplier level (1x / 2x / 3x) from the deck">🎲 Randomize Round</button>
               <button type="button" class="top-btn" onclick="hostResetRound(); closeHostMoreMenu()">↺ Reset Round</button>

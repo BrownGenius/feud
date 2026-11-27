@@ -939,6 +939,8 @@ window.Feud.ROOM_WORDS = window.Feud.DEFAULT_DECK.roomWords;
       buzzerWinner: 0,
       buzzerWinnerAt: 0,
       buzzerRunnerUpDeltaMs: 0,
+      showTvWelcome: false,
+      tvWelcomeInfo: null,
       tvQrOverlay: null,
       customDeck: customDeck,
       customRounds: loadSavedCustomRounds(),
