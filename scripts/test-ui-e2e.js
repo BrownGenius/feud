@@ -706,10 +706,32 @@ async function runStep(name, fn) {
       assert.strictEqual(midPlay.t1Name, "Blue Blazers");
       assert.strictEqual(midPlay.t2Name, "Red Rockets");
 
-      // Step F: Trigger 3 Wrong Answers (Strikes 1, 2, 3) -> transitions to Steal Mode for Red Rockets!
+      // Verify primary timer button flips to Live Pause / Resume (2.1)
+      await cdp.eval(`document.getElementById('hostPrimaryTimerBtn')?.click()`);
+      await cdp.waitFor("/Pause Timer \\([1-9]s\\)/.test(document.getElementById('hostPrimaryTimerBtn')?.textContent || '')");
+      const runningText = await cdp.eval(`document.getElementById('hostPrimaryTimerBtn')?.textContent.trim() || ''`);
+      await cdp.eval(`document.getElementById('hostPrimaryTimerBtn')?.click()`);
+      await sleep(100);
+      const pausedText = await cdp.eval(`document.getElementById('hostPrimaryTimerBtn')?.textContent.trim() || ''`);
+      assert.ok(/Pause Timer/i.test(runningText), `Primary timer button should flip to Pause while running, got: ${runningText}`);
+      assert.ok(/Resume Timer/i.test(pausedText), `Primary timer button should flip to Resume when paused, got: ${pausedText}`);
+
+      // Step F: Trigger 3 Wrong Answers (Strikes 1, 2, 3) -> verify visual Red X Strike Boxes on TV & Host Strip after Strike 1, then Steal Mode!
       for (let s = 0; s < 3; s++) {
         await cdp.eval(`document.querySelector('#hostAnswersWrongBar button')?.click()`);
         await sleep(120);
+        if (s === 0) {
+          const strikeBoxes = await cdp.eval(`({
+            tvTotal: document.querySelectorAll('#tvBuzzerBanner .tv-strike-box').length,
+            tvStruck: document.querySelectorAll('#tvBuzzerBanner .tv-strike-box.is-struck').length,
+            hostTotal: document.querySelectorAll('#hostStripStrikes .host-strike-box').length,
+            hostStruck: document.querySelectorAll('#hostStripStrikes .host-strike-box.is-struck').length
+          })`);
+          assert.strictEqual(strikeBoxes.tvTotal, 3, "TV bottom banner should render 3 classic strike boxes during Team Play");
+          assert.strictEqual(strikeBoxes.tvStruck, 1, "TV bottom banner should light 1 red X box after Strike 1");
+          assert.strictEqual(strikeBoxes.hostTotal, 3, "Host score strip should render 3 classic strike boxes");
+          assert.strictEqual(strikeBoxes.hostStruck, 1, "Host score strip should light 1 red X box after Strike 1");
+        }
       }
 
       const stealCheck = await cdp.eval(`({
@@ -732,8 +754,15 @@ async function runStep(name, fn) {
       assert.strictEqual(afterSteal.t2Score, "79", "Red Rockets should steal 40 + 24 + 15 = 79 pts");
       assert.strictEqual(afterSteal.pot, "0", "Pot should reset to 0 once awarded");
 
-      // Step H: Test Undo Button restores Steal phase & 64-pt pot
-      await cdp.eval(`document.getElementById('hostUndoBtn').click()`);
+      // Step H: Test Smart Space (reveals next unguessed answer on round-over) and 'Z' Undo shortcut
+      await cdp.eval(`document.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true }))`);
+      await sleep(100);
+      const revAfterSpace = await cdp.eval(`document.querySelectorAll('#tvAnswerGrid .feud-tile.revealed-state').length`);
+      assert.strictEqual(revAfterSpace, 4, "Space on round-over should reveal the next unguessed answer");
+      // Undo the post-round reveal, then undo the steal award via 'Z' keyboard shortcut
+      await cdp.eval(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', code: 'KeyZ', bubbles: true }))`);
+      await sleep(100);
+      await cdp.eval(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', code: 'KeyZ', bubbles: true }))`);
       await sleep(150);
 
       const afterUndo = await cdp.eval(`({
@@ -849,12 +878,16 @@ async function runStep(name, fn) {
       const fmState = await cdp.eval(`({
         hostFmRows: document.querySelectorAll('#hostFmRows .fm-host-card, #hostFmRows > div').length,
         tvFmVisible: !document.getElementById('tvFastMoneyWrap').classList.contains('hidden'),
-        tvFmClock: document.getElementById('tvFmClock')?.textContent.trim()
+        tvFmClock: document.getElementById('tvFmClock')?.textContent.trim(),
+        hasBackBtn: Boolean(document.getElementById('hostBtnFmBackToBoard')),
+        hasEndBtn: Boolean(document.getElementById('hostBtnFmEndMatch'))
       })`);
 
       assert.ok(fmState.hostFmRows >= 5, `Expected 5 Fast Money rows in Host view, got ${fmState.hostFmRows}`);
       assert.strictEqual(fmState.tvFmVisible, true, "TV Fast Money board should be visible");
       assert.strictEqual(fmState.tvFmClock, "20");
+      assert.strictEqual(fmState.hasBackBtn, true, "Fast Money header should include Back to Board button");
+      assert.strictEqual(fmState.hasEndBtn, true, "Fast Money header should include Finish & Winner Screen button");
 
       // Score first answer (42) -> verify live "Need 158" countdown AND one-tap Ready Player 2 button
       await cdp.eval(`window.hostSelectFmChip(0, 1, 'Cheese', 42)`);
@@ -919,6 +952,12 @@ async function runStep(name, fn) {
       assert.strictEqual(fmAfterReset.hostTotal, "0");
       assert.strictEqual(fmAfterReset.tvTotal, "0");
       assert.strictEqual(fmAfterReset.tvClock, "20");
+
+      // Clicking Back to Board exits Fast Money cleanly
+      await cdp.eval(`document.getElementById('hostBtnFmBackToBoard').click()`);
+      await cdp.waitFor("document.getElementById('hostFmControls').classList.contains('hidden')");
+      const backToMainOk = await cdp.eval(`!document.getElementById('hostMainControls').classList.contains('hidden')`);
+      assert.strictEqual(backToMainOk, true, "Back to Board button should return from Fast Money to Main Board");
     });
 
     await runStep("9. Remote Buzzers: Dual Phones vs Combo Buzzer, Host Status Pill, Mutual Exclusion & Fallbacks", async () => {
@@ -1196,11 +1235,15 @@ async function runStep(name, fn) {
         const nextMatchCombo = await cdp.eval(`({
           comboActive: !document.getElementById('tvWelcomeQrConnectedCombo').classList.contains('hidden'),
           t2Name: document.getElementById('tvWelcomeT2Name')?.textContent.trim(),
-          qr2Src: document.getElementById('tvWelcomeQrImgT2')?.getAttribute('src') || ''
+          qr2Src: document.getElementById('tvWelcomeQrImgT2')?.getAttribute('src') || '',
+          showBtnReady: document.getElementById('hostShowQuestionBtn')?.classList.contains('is-buzzers-ready'),
+          showBtnText: document.getElementById('hostShowQuestionBtn')?.textContent.trim() || ''
         })`);
         assert.strictEqual(nextMatchCombo.comboActive, true, "Combo Buzzer should remain active across Next Match");
         assert.strictEqual(nextMatchCombo.t2Name, "GREEN GIANTS");
         assert.ok(nextMatchCombo.qr2Src.includes("bt%3D") || nextMatchCombo.qr2Src.includes("bt="), "Team 2 QR should include per-team token");
+        assert.strictEqual(nextMatchCombo.showBtnReady, true, "Host Show Question CTA should highlight green when all buzzers are ready");
+        assert.ok(/Buzzers Ready/i.test(nextMatchCombo.showBtnText), `Expected Buzzers Ready cue on Host CTA, got: ${nextMatchCombo.showBtnText}`);
         await cdp.eval(`window.hostRevealQuestionAndStartTimer()`);
         await cdp.waitFor("document.getElementById('tvWelcomeWrap').classList.contains('hidden')");
 
@@ -1298,17 +1341,25 @@ async function runStep(name, fn) {
       await cdp.eval(`window.leaveToLobby({ force: true })`);
       await cdp.waitFor("!document.getElementById('lobbyView').classList.contains('hidden')");
 
-      // Verify deck search input is removed & live Rules Summary pill updates dynamically
+      // Verify deck search input is removed, Room Code mobile attributes set, & live Rules Summary pill updates dynamically
       const lobbyCleanCheck = await cdp.eval(`(() => {
         const noSearch = !document.getElementById('deckSearchInput');
+        const rcIn = document.getElementById('joinRoomCodeInput');
+        const roomCodeAttrsOk = Boolean(
+          rcIn &&
+          rcIn.getAttribute('autocapitalize') === 'characters' &&
+          rcIn.getAttribute('autocomplete') === 'off' &&
+          rcIn.getAttribute('spellcheck') === 'false'
+        );
         document.getElementById('setupTurnTimerSelect').value = '15';
         window.updateSetupRulesSummary();
         const summary = document.getElementById('setupRulesSummaryPill')?.textContent.trim() || '';
         document.getElementById('setupTurnTimerSelect').value = '10';
         window.updateSetupRulesSummary();
-        return { noSearch, summary };
+        return { noSearch, roomCodeAttrsOk, summary };
       })()`);
       assert.strictEqual(lobbyCleanCheck.noSearch, true, "Deck search input should be removed from Lobby");
+      assert.strictEqual(lobbyCleanCheck.roomCodeAttrsOk, true, "Room Code input should set mobile uppercase/no-autocorrect attributes");
       assert.ok(/15s/.test(lobbyCleanCheck.summary), `Live Rules Summary pill should reflect 15s timer, got: ${lobbyCleanCheck.summary}`);
 
       // Verify Pop-Out TV (HDMI) is hidden on narrow phone viewports and defaults to Remote TV (QR)
@@ -1530,11 +1581,12 @@ async function runStep(name, fn) {
       await cdp.eval(`window.hostChoosePlayOrPass('play')`);
       await sleep(100);
 
-      // Test Be More Specific (+5s when timer running)
+      // Test Be More Specific via 'B' keyboard shortcut (+5s when timer running)
       await cdp.eval(`(async () => {
         await window.hostRestartTurnTimer();
-        await window.hostBeSpecificBuzz();
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'b', code: 'KeyB', bubbles: true }));
       })()`);
+      await sleep(80);
       const specificTimer = await cdp.eval(`Number(document.getElementById('hostTurnTimerDisplay')?.textContent.replace(/\\D/g, '') || 0)`);
       assert.ok(specificTimer > 10, `Be More Specific should add +5s when timer is running (got ${specificTimer}s)`);
 
@@ -1573,9 +1625,28 @@ async function runStep(name, fn) {
       assert.ok(/Incorrect Host PIN/i.test(pinCheck.badErr));
       assert.strictEqual(pinCheck.goodOk, true, "Correct Host PIN must unlock room");
 
-      // E. Joining Nonexistent Room must verify room exists BEFORE opening popup or switching UI
+      // E. 1-Tap Lobby "Resume Active Room" Banner (1.2) + Joining Nonexistent Room Guard
       await cdp.navigate(`${baseUrl}/index.html`);
       await cdp.waitFor("window.Feud && !document.getElementById('lobbyView').classList.contains('hidden')");
+      const resumeBannerCheck = await cdp.eval(`({
+        visible: !document.getElementById('lobbyResumeBanner')?.classList.contains('hidden'),
+        title: document.getElementById('lobbyResumeTitle')?.textContent.trim() || ''
+      })`);
+      assert.strictEqual(resumeBannerCheck.visible, true, "Lobby should show 1-tap Resume Active Room banner when a recent Host session exists");
+      assert.ok(resumeBannerCheck.title.includes(roomCode), `Resume banner should show room code ${roomCode}, got: ${resumeBannerCheck.title}`);
+
+      // Clicking Resume instantly re-enters Host View with scores intact
+      await cdp.eval(`document.getElementById('btnResumeHostSession').click()`);
+      await cdp.waitFor("!document.getElementById('hostView').classList.contains('hidden')");
+      const resumedScore = await cdp.eval(`document.getElementById('tvTeam1Score')?.textContent.trim()`);
+      assert.strictEqual(resumedScore, "40", "1-tap Resume should restore the saved room scores immediately");
+
+      // Navigate back to Lobby and dismiss the Resume banner
+      await cdp.navigate(`${baseUrl}/index.html`);
+      await cdp.waitFor("window.Feud && !document.getElementById('lobbyResumeBanner').classList.contains('hidden')");
+      await cdp.eval(`document.getElementById('btnDismissResumeBanner').click()`);
+      const resumeDismissed = await cdp.eval(`document.getElementById('lobbyResumeBanner').classList.contains('hidden')`);
+      assert.strictEqual(resumeDismissed, true, "Dismiss button should hide the Resume banner and clear saved session");
       const missingRoomCheck = await cdp.eval(`(async () => {
         let openCalls = 0;
         const origOpen = window.open;

@@ -383,6 +383,17 @@
       </div>
     </section>
 
+    <div id="lobbyResumeBanner" class="marquee-panel lobby-resume-banner hidden" role="region" aria-label="Resume Active Room">
+      <div class="lobby-resume-info">
+        <span id="lobbyResumeTitle" class="lobby-resume-title display-font">🔄 Resume Active Room</span>
+        <span id="lobbyResumeSub" class="lobby-resume-sub">Pick up right where you left off.</span>
+      </div>
+      <div class="lobby-resume-actions">
+        <button id="btnResumeHostSession" type="button" class="action-btn btn-gold display-font lobby-resume-btn" onclick="resumeLastHostSession()">▶ Resume as Host</button>
+        <button id="btnDismissResumeBanner" type="button" class="top-btn" onclick="dismissResumeHostBanner()" title="Dismiss saved room">✕</button>
+      </div>
+    </div>
+
     <div class="lobby-grid-2">
       <!-- LEFT PRIMARY CARD: HOST A NEW GAME (INLINE 1-CLICK SETUP) -->
       <article id="lobbyHostCard" class="role-card lobby-host-card">
@@ -560,7 +571,7 @@
 
         <div class="field-row">
           <label class="field-label" for="joinRoomCodeInput">Room Code</label>
-          <input id="joinRoomCodeInput" class="lobby-input" type="text" maxlength="4" placeholder="GA42" />
+          <input id="joinRoomCodeInput" class="lobby-input" type="text" maxlength="4" placeholder="GA42" autocapitalize="characters" autocomplete="off" spellcheck="false" />
         </div>
 
         <div class="field-row join-role-stack">
@@ -909,6 +920,7 @@
             <div class="host-strip-pot" onclick="openHostPopover('phase')" title="Tap to override phase or strikes">
               <span class="host-strip-pot-label">POT</span>
               <span id="hostStripPotVal" class="host-strip-pot-val display-font">0</span>
+              <div id="hostStripStrikes" class="host-strip-strikes" aria-label="Strikes: 0 of 3"></div>
             </div>
             <button type="button" id="hostStripTeam2" class="host-strip-team team-2" onclick="openHostPopover('team2')" title="Tap to edit Team 2 name, score, or make active">
               <span id="hostStripT2Name" class="host-strip-name">Team 2</span>
@@ -940,6 +952,10 @@
               <p class="brand-sub">Combined Total: <strong id="hostFmTotal" style="color:#fff;">0</strong> / 200 <span id="hostFmNeedBadge" style="color:#fde68a; font-weight:700; margin-left:6px;">(Need 200 more)</span></p>
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+              <button id="hostBtnFmBackToBoard" type="button" class="top-btn" onclick="hostSwitchStage('main')" title="Return to the main survey board">🎯 Back to Board</button>
+              <button id="hostBtnFmEndMatch" type="button" class="top-btn gold" onclick="hostShowWinnerScreen()" title="Finish Fast Money and open Winner &amp; Next Match screen">🏆 Finish &amp; Winner Screen</button>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; width:100%;">
               <span id="hostFmClock" class="display-font" style="font-size:32px; color:var(--gold); margin-right:6px;">20s</span>
               <button class="top-btn" onclick="hostSetFmClock(20)">20s</button>
               <button class="top-btn" onclick="hostSetFmClock(25)">25s</button>
