@@ -31,7 +31,7 @@
   <meta name="twitter:image:alt" content="Party Feud 16:9 TV Display Board showing revealed survey answers and scores" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
-  <link rel="stylesheet" href="./css/styles.css?v=20261122f" />
+  <link rel="stylesheet" href="./css/styles.css?v=20261126g" />
 </head>
 <body>
 
@@ -401,7 +401,6 @@
               </div>
               <div class="deck-filter-bar">
                 <input id="deckSearchInput" type="search" class="fm-txt deck-search-input" placeholder="🔍 Search decks by name or topic…" oninput="onDeckFilterInput(this.value)" />
-                <div id="deckTagPills" class="deck-tag-pills"></div>
               </div>
               <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-width:0;">
                 <select id="deckManagerSelect" class="fm-txt" style="flex:1 1 180px; min-width:0; max-width:100%; font-size:13px; text-transform:none;" onchange="onSelectCatalogDeck(this.value)"></select>
@@ -596,6 +595,7 @@
 
     <!-- COMPACT FLOATING TV CORNER CONTROLS (REPLACES FULL TOP BAR ON CAST TV) -->
     <div class="tv-floating-controls">
+      <button id="tvAudioUnlockBadge" type="button" class="top-btn gold hidden" onclick="Feud.unlockAudio && Feud.unlockAudio()" title="Click anywhere on TV to enable sound effects">🔊 Click TV to Enable Audio</button>
       <button id="tvMuteBtn" type="button" class="top-btn" onclick="toggleMute()" title="Mute / Unmute Sound">🔊</button>
       <button type="button" class="top-btn gold" onclick="toggleFullScreen()" title="Toggle TV Fullscreen">⛶ Fullscreen</button>
     </div>
@@ -615,9 +615,8 @@
       <div class="tv-center-hud">
         <div class="tv-center-hud-main">
           <div class="pot-box">
-            <div class="pot-label">Round Pot</div>
             <div id="tvPotValue" class="pot-value display-font">0</div>
-            <div id="tvMultBadge" class="mult-pill">1x Single Points</div>
+            <div id="tvMultBadge" class="mult-pill">Round 1 (1X)</div>
           </div>
 
           <div id="tvTurnTimerBadge" class="turn-timer-pill tv-hero-timer display-font">
@@ -627,10 +626,7 @@
         </div>
 
         <div class="tv-center-hud-meta">
-          <span class="pill-badge" id="tvThemeBadge">Live Party Poll</span>
-          <span class="pill-badge tv-strikes-pill" id="tvStrikesBadge">
-            Strikes: 0 / 3
-          </span>
+          <span class="pill-badge tv-category-pill" id="tvThemeBadge">Live Party Poll</span>
         </div>
       </div>
 
@@ -657,7 +653,6 @@
         </div>
 
         <div id="tvPromptBanner" class="prompt-banner">
-          <div id="tvRoundCounter" class="brand-sub" style="color:var(--gold);">Round 1</div>
           <h2 id="tvPromptText" class="prompt-question">Loading prompt...</h2>
         </div>
 
@@ -790,6 +785,7 @@
             🎙️ Hide Script
           </button>
           <button type="button" id="hostUndoBtn" class="top-btn" onclick="hostUndo()" disabled title="Undo last host action">↩️ Undo</button>
+          <button type="button" id="hostShortcutsBtn" class="top-btn" onclick="openHostPopover('shortcuts')" title="Keyboard Shortcuts (?)">❓</button>
           <details id="hostMoreMenu" class="host-more-menu">
             <summary class="top-btn host-more-summary" title="Menu & Extra Controls">⋯</summary>
             <div class="host-more-dropdown">
@@ -1055,19 +1051,20 @@
   </div>
 
   <footer class="app-footer-bar">
-    <span id="appBuildBadge" class="app-build-badge">Build v20261122f</span>
+    <span id="appBuildBadge" class="app-build-badge">Build v20261126g</span>
     <button id="btnOpenBugReportFooter" type="button" class="top-btn" style="min-height:26px; padding:2px 10px; font-size:11px;" onclick="openBugReportModal()">🐛 Report Bug / Vote</button>
   </footer>
 
   <!-- Classic script tags work both on GitHub Pages (https://) and locally via file:// -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js" async></script>
-  <script src="./js/audio.js?v=20261122f"></script>
-  <script src="./js/state.js?v=20261122f"></script>
-  <script src="./js/formats.js?v=20261122f"></script>
-  <script src="./js/decks.js?v=20261122f"></script>
-  <script src="./js/sync.js?v=20261122f"></script>
-  <script src="./js/feedback.js?v=20261122f"></script>
-  <script src="./js/views.js?v=20261122f"></script>
-  <script src="./js/app.js?v=20261122f"></script>
+  <script src="./js/audio.js?v=20261126g"></script>
+  <script src="./js/state.js?v=20261126g"></script>
+  <script src="./js/formats.js?v=20261126g"></script>
+  <script src="./js/decks.js?v=20261126g"></script>
+  <script src="./js/sync.js?v=20261126g"></script>
+  <script src="./js/feedback.js?v=20261126g"></script>
+  <script src="./js/views.js?v=20261126g"></script>
+  <script src="./js/ai-builder.js?v=20261126g"></script>
+  <script src="./js/app.js?v=20261126g"></script>
 </body>
 </html>
